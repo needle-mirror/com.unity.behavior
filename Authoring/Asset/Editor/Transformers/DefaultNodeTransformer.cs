@@ -70,7 +70,9 @@ namespace Unity.Behavior
             node.Conditions ??= new List<Condition>();
             foreach (ConditionModel conditionModel in conditionalNodeModel.ConditionModels)
             {
-                node.Conditions.Add(Activator.CreateInstance(conditionModel.ConditionType) as Condition);
+                var condition = Activator.CreateInstance(conditionModel.ConditionType) as Condition;
+                condition.Graph = graphAssetProcessor.GraphModule;
+                node.Conditions.Add(condition);
             }
                 
             // Set LinkField values from the condition models to the runtime condition variables.

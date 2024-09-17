@@ -143,7 +143,14 @@ namespace Unity.Behavior.GraphFramework
             m_LinkButton.pickingMode = PickingMode.Position;
             m_LinkButton.AddToClassList("LinkButton");
             m_LinkButton.AddManipulator(new Pressable(OnLinkButton));
-            Add(m_LinkButton);
+            linkButtonContainer.Add(m_LinkButton);
+            
+            VisualElement fieldSpacer = new VisualElement();
+            fieldSpacer.name = "FieldSpacer";
+            fieldSpacer.AddToClassList("LinkButtonSpacer");
+            fieldSpacer.style.position = Position.Relative;
+            fieldSpacer.style.visibility = Visibility.Hidden;
+            hierarchy.Add(fieldSpacer);
 
             m_UnlinkButton = new Icon();
             m_UnlinkButton.AddToClassList("UnlinkButton");

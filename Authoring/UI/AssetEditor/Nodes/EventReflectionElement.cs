@@ -73,34 +73,50 @@ namespace Unity.Behavior
 
             if (message != null)
             {
-                // Populate StartOnEvent node with the full message label and assign fields.
-                m_ChannelMessageCaption.Add(new Label(GetMessageWithoutBrackets(message)));
-                if (messageFieldTypes.Length != 0)
-                {
-                    PopulateAssignFields(message, messageFieldTypes);
-                    m_AssignFieldsElement.EnableInClassList("Hidden", false);
-                }
-                else
-                {
-                    m_AssignFieldsElement.EnableInClassList("Hidden", true);
-                    m_StartNodeTitle.AddToClassList("NoMessageTypes");
-                }
-                m_StartNodeTitle.AddToClassList("TwoLineNodeTitle");
-                m_StartNodeTitle.RemoveFromClassList("OneLineNodeTitle");
+                PopulateStartOnEventElement(message, messageFieldTypes);
             }
             else
             {
-                m_ChannelMessageCaption.EnableInClassList("Hidden", true);
-                m_AssignFieldsElement.EnableInClassList("Hidden", true);
-                m_StartNodeTitle.AddToClassList("OneLineNodeTitle");
-                m_StartNodeTitle.RemoveFromClassList("TwoLineNodeTitle");
+                CollapseStartOnEventElement();
             }
+        }
+
+        private void PopulateStartOnEventElement(string message, Type[] messageFieldTypes)
+        {
+            ClearAssignFields();
+            // Populate StartOnEvent node with the full message label and assign fields.
+            if (!string.IsNullOrEmpty(message))
+            {
+                m_ChannelMessageCaption.EnableInClassList("Hidden", false);
+            }
+            m_ChannelMessageCaption.Clear();
+            m_ChannelMessageCaption.Add(new Label(GetMessageWithoutBrackets(message)));
+            if (messageFieldTypes.Length != 0)
+            {
+                PopulateAssignFields(message, messageFieldTypes);
+                m_AssignFieldsElement.EnableInClassList("Hidden", false);
+            }
+            else
+            {
+                m_AssignFieldsElement.EnableInClassList("Hidden", true);
+                m_StartNodeTitle.AddToClassList("NoMessageTypes");
+            }
+            m_StartNodeTitle.AddToClassList("TwoLineNodeTitle");
+            m_StartNodeTitle.RemoveFromClassList("OneLineNodeTitle");
+        }
+
+        private void CollapseStartOnEventElement()
+        {
+            ClearAssignFields();
+            m_ChannelMessageCaption.EnableInClassList("Hidden", true);
+            m_AssignFieldsElement.EnableInClassList("Hidden", true);
+            m_StartNodeTitle.AddToClassList("OneLineNodeTitle");
+            m_StartNodeTitle.RemoveFromClassList("TwoLineNodeTitle");
         }
 
         internal void InitializeUI(string message, Type[] messageFieldTypes)
         {
             AddToClassList("Behavior-EventReflection");
-
             ResourceLoadAPI.Load<VisualTreeAsset>("Packages/com.unity.behavior/Authoring/UI/AssetEditor/Assets/EventNodesLayout.uxml").CloneTree(this);
             styleSheets.Add(ResourceLoadAPI.Load<StyleSheet>("Packages/com.unity.behavior/Authoring/UI/AssetEditor/Assets/EventNodesStylesheet.uss"));
 
@@ -115,7 +131,7 @@ namespace Unity.Behavior
             PopulateChannelLine();
         }
 
-        void AddEventNodePrefix()
+        private void AddEventNodePrefix()
         {
             if (m_IsSendNode)
             {
@@ -136,7 +152,7 @@ namespace Unity.Behavior
             }
         }
 
-        void PopulateChannelLine()
+        private void PopulateChannelLine()
         {
             if (m_IsRootNode)
             {
@@ -170,7 +186,7 @@ namespace Unity.Behavior
             }
         }
 
-        void PopulateMessageFields(string message, Type[] eventMessageTypes)
+        private void PopulateMessageFields(string message, Type[] eventMessageTypes)
         {
             bool noMessage = string.IsNullOrEmpty(message);
             if (noMessage && eventMessageTypes == null)
@@ -183,8 +199,10 @@ namespace Unity.Behavior
             PopulateMessageFieldsWithMessage(message, eventMessageTypes);
         }
 
-        void PopulateAssignFields(string message, Type[] eventMessageTypes)
+        private void PopulateAssignFields(string message, Type[] eventMessageTypes)
         {
+            ClearAssignFields();
+            
             int messageFieldIndex = 0;
             string[] messageWords = message.Split(" ");
             for (int i = 0; i < messageWords.Length; ++i)
@@ -209,7 +227,7 @@ namespace Unity.Behavior
             }
         }
 
-        void CreateAssignFieldLineElement(string fieldName, BaseLinkField linkField)
+        private void CreateAssignFieldLineElement(string fieldName, BaseLinkField linkField)
         {
             VisualElement assignFieldLine = new VisualElement();
             assignFieldLine.name = "AssignFieldLine";
@@ -219,7 +237,7 @@ namespace Unity.Behavior
             m_AssignFieldsElement.Add(assignFieldLine);
         }
 
-        void PopulateMessageFieldsWithMessage(string message, Type[] eventMessageTypes)
+        private void PopulateMessageFieldsWithMessage(string message, Type[] eventMessageTypes)
         {
             int messageFieldIndex = 0;
             string[] messageWords = message.Split(" ");
@@ -262,7 +280,7 @@ namespace Unity.Behavior
             m_Message.Add(new Label(currentLabelContents));
         }
 
-        void UpdateFields(Type eventChannelType)
+        private void UpdateFields(Type eventChannelType)
         {
             // Clear serialized data for message fields
             m_NodeModel.m_FieldValues.RemoveAll(field => field.FieldName != m_ChannelFieldName);
@@ -271,6 +289,15 @@ namespace Unity.Behavior
             {
                 ClearAssignFields();
                 ClearChannelMessageCaption();
+                if (m_ChannelField.LinkedVariable == null)
+                {
+                    CollapseStartOnEventElement();
+                }
+                else
+                {
+                    (string message, Type[] fieldTypes) = EventChannelUtility.GetMessageDataFromChannelType(m_NodeModel.EventChannelType);
+                    PopulateStartOnEventElement(message, fieldTypes);
+                }
             }
             else
             {
@@ -283,8 +310,7 @@ namespace Unity.Behavior
                 (string message, Type[] fieldTypes) = EventChannelUtility.GetMessageDataFromChannelType(eventChannelType);
                 if (m_IsRootNode)
                 {
-                    PopulateAssignFields(message, fieldTypes);
-                    m_ChannelMessageCaption.Add(new Label(GetMessageWithoutBrackets(message)));
+                    PopulateStartOnEventElement(message, fieldTypes);
                 }
                 else
                 {
@@ -297,19 +323,18 @@ namespace Unity.Behavior
             }
         }
 
-        void ClearAssignFields()
+        private void ClearAssignFields()
         {
             m_AssignFieldsElement.Clear();
         }
 
-        void ClearChannelMessageCaption()
+        private void ClearChannelMessageCaption()
         {
             m_ChannelMessageCaption.Clear();
         }
 
-        void ClearMessageLine()
+        private void ClearMessageLine()
         {
-
             // Remove node UI
             foreach (var field in m_MessageFields)
             {
@@ -320,7 +345,7 @@ namespace Unity.Behavior
             m_Message.Clear();
         }
 
-        string GetMessageWithoutBrackets(string message)
+        private string GetMessageWithoutBrackets(string message)
         {
             message = message.Replace("[", "");
             message = message.Replace("]", "");

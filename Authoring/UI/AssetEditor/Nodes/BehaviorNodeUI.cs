@@ -6,6 +6,15 @@ namespace Unity.Behavior
 {
     internal class BehaviorNodeUI : NodeUI
     {
+        public override NodeModel Model {
+            get => base.Model;
+            set
+            {
+                base.Model = value;
+                UpdateLinkFields();
+            }
+        }
+
         public BehaviorNodeUI(NodeModel nodeModel) : base(nodeModel) 
         {
             styleSheets.Add(ResourceLoadAPI.Load<StyleSheet>("Packages/com.unity.behavior/Authoring/UI/AssetEditor/Assets/BehaviorNodeStylesheet.uss"));

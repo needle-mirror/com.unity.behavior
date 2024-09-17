@@ -31,7 +31,7 @@ BaseLinkField {
 
 .Linked {
     margin: 0;
-    margin-left: 2px;
+    margin-left: 0;
     margin-right: 0;
     background-color: initial;
     border-color: initial;
@@ -78,20 +78,33 @@ BaseLinkField {
 
 .LinkButtonContainer {
     position: absolute;
-    right: 0px;
-    height: 120%;
+    right: 0;
+    height: 20px;
     width: 20px;
+    justify-content: center;
 }
 
 .LinkButton {
     width: 12px;
     height: 12px;
-    right: 0px;
-    margin-left: 4px;
-    margin-right: 6px;
     position: absolute;
+    right: 6px;
+    align-self: center;
     flex-shrink: 0;
     color: var(--appui-foregrounds-50);
+}
+
+.LinkButtonSpacer {
+    width: 12px;
+    height: 100%;
+    margin-left: 4px;
+    margin-right: 6px;
+    flex-shrink: 0;
+    color: var(--appui-foregrounds-50);
+}
+
+.Linked #FieldSpacer {
+    display: none;
 }
 
 .LinkButton:disabled {
@@ -107,7 +120,7 @@ BaseLinkField {
 }
 
 BaseLinkField {
-    padding-left: 6px;
+    padding-left: 4px;
 }
 
 BaseLinkField .LinkButton {
@@ -281,6 +294,50 @@ EnumLinkField #appui-picker__caret {
 #appui-vector4field__row {
     margin-right: 4px;
     margin-bottom: 0;
+}
+
+.BehaviorVectorField #InputField {
+    background-color: initial;
+    padding-right: 0;
+    padding-left: 0;
+}
+
+.BehaviorVectorField .LinkButtonContainer {
+    background-color: var(--appui-alias-field-background-color-default);
+    border-radius: var(--appui-border-radius-md);
+    border-width: 1px;
+    border-color: var(--appui-alias-field-border-color-default);
+    height: 20px;
+    width: 20px;
+    min-height: 20px;
+    min-width: 20px;
+    padding: 0 6px;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    margin-left: 2px;
+}
+
+.BehaviorVectorField .LinkButton {
+    position: relative;
+    right: 0;
+    align-self: center;
+}
+
+.BehaviorVectorField .LinkButtonSpacer {
+    display: none;
+}
+
+.BehaviorVectorField FloatField {
+    margin-right: 2px;
+}
+
+.BehaviorVectorField IntField {
+    margin-right: 2px;
+}
+
+.BehaviorVectorField #appui-vector4field__row {
+    margin-right: 0;
 }
 
 .appui-toggle {

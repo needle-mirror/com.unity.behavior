@@ -87,23 +87,33 @@ namespace Unity.Behavior
             }
             if (type == typeof(Vector2))
             {
-                return new BehaviorLinkField<Vector2, Vector2Field>();
+                BehaviorLinkField<Vector2, Vector2Field> field = new BehaviorLinkField<Vector2, Vector2Field>();
+                field.AddToClassList("BehaviorVectorField");
+                return field;
             }
             if (type == typeof(Vector3))
             {
-                return new BehaviorLinkField<Vector3, Vector3Field>();
+                BehaviorLinkField<Vector3, Vector3Field> field = new BehaviorLinkField<Vector3, Vector3Field>();
+                field.AddToClassList("BehaviorVectorField");
+                return field;
             }
             if (type == typeof(Vector4))
             {
-                return new BehaviorLinkField<Vector4, Vector4Field>();
+                BehaviorLinkField<Vector4, Vector4Field> field = new BehaviorLinkField<Vector4, Vector4Field>();
+                field.AddToClassList("BehaviorVectorField");
+                return field;
             }
             if (type == typeof(Vector2Int))
             {
-                return new BehaviorLinkField<Vector2Int, Vector2IntField>();
+                BehaviorLinkField<Vector2Int, Vector2IntField> field = new BehaviorLinkField<Vector2Int, Vector2IntField>();
+                field.AddToClassList("BehaviorVectorField");
+                return field;
             }
             if (type == typeof(Vector3Int))
             {
-                return new BehaviorLinkField<Vector3Int, Vector3IntField>();
+                BehaviorLinkField<Vector3Int, Vector3IntField> field = new BehaviorLinkField<Vector3Int, Vector3IntField>();
+                field.AddToClassList("BehaviorVectorField");
+                return field;
             }
             if (type == typeof(Color))
             {

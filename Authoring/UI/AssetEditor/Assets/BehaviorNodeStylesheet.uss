@@ -15,7 +15,7 @@
 #Content Label {
     margin-top: 0;
     margin-bottom: 0;
-    margin-right: 2px;
+    margin: 0 2px;
     padding: 0;
     align-self: center;
 }

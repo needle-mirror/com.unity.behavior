@@ -47,10 +47,7 @@ namespace Unity.Behavior.GraphFramework
 
             m_Field.RegisterValueChangedCallback(OnValueChanged);
 
-            VisualElement linkFieldSpacer = new VisualElement();
-            linkFieldSpacer.AddToClassList("LinkButton");
-            linkFieldSpacer.style.position = Position.Relative;
-            linkFieldSpacer.style.visibility = Visibility.Hidden;
+            VisualElement linkFieldSpacer = this.Q<VisualElement>("FieldSpacer");
             m_Field.hierarchy.Add(linkFieldSpacer);
         }
 

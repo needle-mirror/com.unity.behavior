@@ -692,9 +692,9 @@ namespace Unity.Behavior.GraphFramework
             List<GraphElement> elementsToSelect = new List<GraphElement>();
             foreach (NodeModel selected in nodeModelsToSelect)
             {
-                if (m_NodeModelToNodeUI.TryGetValue(selected.ID, out var node))
+                if (m_NodeModelToNodeUI.TryGetValue(selected.ID, out NodeUI nodeUI))
                 {
-                    elementsToSelect.Add(node);
+                    elementsToSelect.Add(nodeUI);
                 }
             }
             SetSelected(elementsToSelect);

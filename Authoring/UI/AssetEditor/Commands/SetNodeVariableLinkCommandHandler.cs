@@ -10,13 +10,11 @@ namespace Unity.Behavior
 
         public override bool Process(SetNodeVariableLinkCommand command)
         {
-            Asset.MarkUndo("Link variable");
             IVariableLink field = command.NodeModel.GetVariableLink(command.VariableName, command.LinkVariableType);
             if (field != null)
             {
                 field.BlackboardVariable = command.Link;
             }
-
             // Have we processed the command and wish to block further processing?
             return true;
         }

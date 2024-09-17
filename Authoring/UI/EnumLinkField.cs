@@ -66,7 +66,7 @@ namespace Unity.Behavior
             m_Field.RegisterValueChangedCallback(OnValueChanged);
 
             VisualElement linkFieldSpacer = new VisualElement();
-            linkFieldSpacer.AddToClassList("LinkButton");
+            linkFieldSpacer.AddToClassList("LinkButtonSpacer");
             linkFieldSpacer.style.position = Position.Relative;
             linkFieldSpacer.style.visibility = Visibility.Hidden;
             m_Field.Q<VisualElement>("appui-picker__trailingcontainer").Add(linkFieldSpacer);

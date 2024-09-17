@@ -168,12 +168,17 @@ namespace Unity.Behavior
         }
 
         private static readonly string[] kExcludedNamespaces =
-            {
-                "Editor",
-                "Muse",
-                "Behavior",
-                "AppUI"
-            };
+        {
+            "Editor",
+            "Muse",
+            "AppUI"
+        };
+
+        private static readonly string[] kExcludedNamespacesExact =
+        {
+            "Unity.Behavior",
+            "Unity.Behavior.GraphFramework"
+        };
 
         internal static bool IsExcludedNamespaceOrType(Type type)
         {
@@ -189,6 +194,14 @@ namespace Unity.Behavior
             foreach (string excludedNamespace in kExcludedNamespaces)
             {
                 if (type.Namespace.Contains(excludedNamespace))
+                {
+                    return true;
+                }
+            }
+
+            foreach (string excludedNamespace in kExcludedNamespacesExact)
+            {
+                if (type.Namespace.Equals(excludedNamespace))
                 {
                     return true;
                 }

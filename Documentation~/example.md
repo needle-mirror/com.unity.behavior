@@ -39,8 +39,6 @@ To create this behavior graph, perform the following steps:
    2. Hover your cursor over the bottom of the **On Start** node until a connector arrow appears.
    3. Drag the connector arrow from the **On Start** node to the **Talk** node.
 
-       ![Connect nodes](Images/talk-node.png)
-
 8. Create the variables required in the behavior graph. In this example, you need three variables: `Self`, `Target`, and `Speed`. By default, the `Self` variable is already available on the **Blackboard**.
 
     To create the remaining variables, perform the following steps on the **Blackboard**.
@@ -148,8 +146,6 @@ To update the variables available on the **Blackboard** in real time, perform th
 3. In the **Inspector** window of the Unity Editor, scroll down to the **Behavior Graph Agent (Script)** section.
 
     The **Inspector** window displays all the variables used in the current scene.
-
-    ![Behavior Graph Agent](Images/update-variables.png)
 
    The example graph described in this section displays the following **Blackboard** variables:
 

@@ -12,8 +12,7 @@ namespace Unity.Behavior
         category: "Action/Resource",
         id: "45b0abd81036c6ba1089944eb166dc54",
         description: "Plays a ParticleSystem at the Target location. " +
-        "\nIt is possible to choose to spawn the AudioSource on either the Target itself or as a new empty GameObject." +
-        "\nResource are internally pooled and shared across all [Play Audio] nodes.")]
+        "\nThe ParticleSystems are internally pooled and reused when possible.")]
     internal partial class PlayParticleSystemAction : Action
     {
         [SerializeReference] public BlackboardVariable<GameObject> ParticleSystem;
@@ -24,6 +23,8 @@ namespace Unity.Behavior
         [Tooltip("Time between each recycling attempt of a spawmed particle system. " +
             "Lower values can be usefull to recycle short bursts of particles more often.")]
         [SerializeReference] public BlackboardVariable<float> RecyclingFrequency = new BlackboardVariable<float>(1);
+        [Tooltip("[Out Value] This field is assigned with the spawned particle system's gameObject.")]
+        [SerializeReference] public BlackboardVariable<GameObject> InstantiatedObject;
 
         private Stack<ParticleSystem> m_PrivatePool = null;
         private List<ParticleSystem> m_ChildSystemsBuffer = new List<ParticleSystem>(4);
@@ -43,13 +44,21 @@ namespace Unity.Behavior
                 return Status.Failure;
             }
 
-            ParticleSystem vfx;
+            ParticleSystem vfx = null;
             if (m_PrivatePool != null && m_PrivatePool.Count > 0)
             {
-                vfx = m_PrivatePool.Pop();
-                vfx.gameObject.SetActive(true);
+                do
+                {
+                    vfx = m_PrivatePool.Pop();
+                } while (vfx == null && m_PrivatePool.Count > 0);
+
+                if (vfx)
+                {
+                    vfx.gameObject.SetActive(true);
+                }
             }
-            else
+
+            if (vfx == null)
             {
                 vfx = GameObject.Instantiate(ParticleSystemComponent);
                 vfx.gameObject.name = "VFX: " + ParticleSystem.Value.name;
@@ -66,6 +75,8 @@ namespace Unity.Behavior
             {
                 vfx.Play();
             }
+
+            InstantiatedObject.Value = vfx.gameObject;
 
             // If the particle system loop, we don't try to recycle it.
             if (vfx.main.loop)
@@ -90,6 +101,12 @@ namespace Unity.Behavior
 
         private async void Awaitable_ReleaseParticleSystem(ParticleSystem system)
         {
+            // System is invalid or has been destroyed.
+            if (system == null)
+            {
+                return;
+            }
+
             var childSystems = system.GetComponentsInChildren<ParticleSystem>(false);
 
             do
@@ -97,6 +114,12 @@ namespace Unity.Behavior
                 await Awaitable.WaitForSecondsAsync(RecyclingFrequency.Value);
             }
             while (AnySystemRunning());
+
+            // System is invalid or has been destroyed.
+            if (system == null)
+            {
+                return;
+            }
 
             system.gameObject.SetActive(false);
 
@@ -109,6 +132,12 @@ namespace Unity.Behavior
 
             bool AnySystemRunning()
             {
+                // System is invalid or has been destroyed.
+                if (system == null)
+                {
+                    return false;
+                }
+
                 foreach (var child in childSystems)
                 {
                     if (child.isPlaying)

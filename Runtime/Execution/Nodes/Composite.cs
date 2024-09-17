@@ -48,6 +48,12 @@ namespace Unity.Behavior
             child?.AddParent(this);
         }
 
+        internal void Insert(int index, Node child)
+        {
+            Children.Insert(index, child);
+            child?.AddParent(this);
+        }
+
         /// <inheritdoc cref="AddParent" />
         internal override void AddParent(Node parent)
         {

@@ -19,7 +19,10 @@ namespace Unity.Behavior
         private readonly Dictionary<NodeModel, Node> m_NodeModelToNode = new ();
 
         private readonly BehaviorAuthoringGraph m_Asset;
-        private readonly BehaviorGraphModule m_GraphModule;
+        
+        private BehaviorGraphModule m_GraphModule;
+        internal BehaviorGraphModule GraphModule => m_GraphModule;
+        
         internal BlackboardReference BlackboardReference => m_GraphModule.BlackboardReference;
         internal List<BlackboardReference> BlackboardReferences => m_GraphModule.BlackboardGroupReferences;
         private readonly BehaviorGraph m_Graph;
@@ -122,13 +125,25 @@ namespace Unity.Behavior
             else
             {
                 var parallelRoot = new ParallelAllComposite{ Graph = m_GraphModule };
-                foreach (NodeModel root in m_Asset.Roots)
+                
+                // Iterating backwards to maintain StartOnEvent model's order.
+                for (var index = 0; index < m_Asset.Roots.Count; index++)
                 {
+                    var root = m_Asset.Roots[index];
                     var child = BuildBranch(root);
-                    if (child != null) {
-                        parallelRoot.Add(child);
+                    if (child != null)
+                    {
+                        if (root is StartOnEventModel)
+                        {
+                            parallelRoot.Insert(0, child);
+                        }
+                        else
+                        {
+                            parallelRoot.Add(child);
+                        }
                     }
                 }
+
                 m_GraphModule.Root = parallelRoot;
             }
 

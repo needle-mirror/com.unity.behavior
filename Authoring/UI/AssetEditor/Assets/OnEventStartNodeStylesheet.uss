@@ -25,9 +25,10 @@
     height: 35px;
 }
 
-#NodeTitle LinkField {
+#NodeTitle .LinkField {
     background-color: transparent;
     border-width: 0;
+    align-self: center;
 }
 
 #NodeTitle #InputField {
@@ -63,6 +64,12 @@
     margin: 0;
 }
 
+#ChannelLine > Label {
+    align-self: center;
+    margin-left: 2px;
+    margin-right: 2px;
+}
+
 #ChannelLine Icon {
     --unity-image-tint-color: var(--appui-color-white);
 }
@@ -77,14 +84,10 @@
 #ChannelLine {
     flex-direction: row;
     justify-content: center;
+    height: 20px;
 }
 
-#ChannelLine > Label {
-    padding-left: 2px;
-    padding-right: 2px;
-}
-
-#ChannelLine LinkField {
+#ChannelLine .LinkField {
     height: 16px;
 }
 
@@ -111,7 +114,7 @@
     justify-content: space-between;
 }
 
-#AssignFieldLine LinkField Label {
+#AssignFieldLine .LinkField Label {
     overflow: hidden;
     text-overflow: ellipsis;
     -unity-text-align: middle-left;

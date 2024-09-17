@@ -32,25 +32,24 @@ namespace Unity.Behavior
             
             m_EnumLinkField.RegisterCallback<LinkFieldTypeChangeEvent>(evt =>
             {
-                nodeModel.Asset.MarkUndo("Assign new enum to switch node");
-                nodeModel.RemoveOutputPortModels();
+                Model.RemoveOutputPortModels();
                 
                 if (evt.FieldType is { IsEnum: true })
                 {
                     foreach (var member in Enum.GetNames(evt.FieldType))
                     {
-                        nodeModel.AddPortModel(new PortModel(member, PortDataFlowType.Output) { IsFloating = true });
+                        Model.AddPortModel(new PortModel(member, PortDataFlowType.Output) { IsFloating = true });
                     }
-                    nodeModel.Asset.CreateNodePortsForNode(nodeModel);
+                    Model.Asset.CreateNodePortsForNode(Model);
                 }
             });
 
             m_EnumLinkField.OnLinkChanged += (newLink =>
             {
-                m_EnumLinkField.Dispatcher.DispatchImmediate(new SetNodeVariableLinkCommand(nodeModel, m_EnumLinkField.FieldName, m_EnumLinkField.LinkVariableType, m_EnumLinkField.LinkedVariable, true));
+                m_EnumLinkField.Dispatcher.DispatchImmediate(new SetNodeVariableLinkCommand(Model, m_EnumLinkField.FieldName, m_EnumLinkField.LinkVariableType, m_EnumLinkField.LinkedVariable, true));
                 if (newLink == null)
                 {
-                    nodeModel.RemoveOutputPortModels();
+                    Model.RemoveOutputPortModels();
                     RefreshOutputPortUIs();
                 }
             });

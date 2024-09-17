@@ -45,9 +45,6 @@ For example:
 5. Create variables required in the behavior graph on the **Blackboard**.
 
     1. Click the plus (![](Images/plus-icon.png)) icon.
-
-       ![Variables](Images/variables.png)
-
     2. Select the relevant variable. For example, if you want to create a `Target` variable, select **Object** as it's a GameObject. 
     3. Click the new variable to rename the GameObject. For example, `Target`. 
     

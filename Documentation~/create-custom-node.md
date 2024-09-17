@@ -48,8 +48,6 @@ To create a custom node, perform the following steps:
 
     Unity Behavior generates a new `C#` script that defines the logic of the node. It has the story (as defined previously) as an attribute and the link fields as **Blackboard** variables. Additionally, it contains some empty overrides for the three possible entry points for a node's logic: `OnStart`, `OnUpdate`, and `OnEnd`.
 
-     ![Code](Images/c.png)
-
    The new action type appears in the context menu when you select `Add` > `Action` > `[sub_category]` > `[new_node]`.
 
      ![New node](Images/node-creation.png)

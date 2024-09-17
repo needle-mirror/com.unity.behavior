@@ -4,7 +4,7 @@ using Random = UnityEngine.Random;
 
 namespace Unity.Behavior.SerializationExample
 {
-    public class Serialization : MonoBehaviour
+    public class SerializationExampleSceneController : MonoBehaviour
     {
         private class GameObjectResolver : RuntimeSerializationUtility.IUnityObjectResolver<string>
         {

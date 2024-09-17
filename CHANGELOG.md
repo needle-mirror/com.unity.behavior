@@ -5,7 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0-pre.1] - 2024-09-11
+## [1.0.0] - 2024-09-17
+
+### Added
+- PlayParticleSystem node can now assign the spawned object to InstantiatedObject.
+- Conditions can now reference the GameObject associated with the graph.
+- Updated the vector LinkField UI to new improved design.
+
+### Changed
+- Renamed `Unity Serialization Example` to `Runtime Serialization` and `Serialization` `MonoBehaviour` class to `SerializationExampleSceneController`.
+
+### Fixed
+
+- Switch enum child ports weren't interacting correctly after editing the enum while the graph is open.
+
+## [1.0.0-pre.1] - 2024-09-13
 
 ### Added
 - BlackboardVariable support for various Resource types.
@@ -72,6 +86,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Conditions not getting copied properly when a conditional node was duplicated.
 - Fixed navigation nodes sometimes stalling after being called successively.
 - Fixed click events going through to elements underneath search menu items.
+- Fixed UI styling issues on the Start On Event node. 
+- Fixed warnings being logged unnecessarily in the BehaviorGraphAgent API's.
 
 ### Known Issues
 - Clearing a node field, saving and reverting the asset in source control does not restore the field value.

@@ -9,7 +9,7 @@ namespace Unity.Behavior.GraphFramework
     {
         public override VisualElement contentContainer { get; }
         private NodeModel m_NodeModel;
-        public NodeModel Model
+        public virtual NodeModel Model
         {
             get => m_NodeModel;
             set

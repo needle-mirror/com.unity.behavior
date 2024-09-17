@@ -40,8 +40,15 @@ namespace Unity.Behavior
 
         protected override Status OnStart()
         {
-            if (Agent?.Value == null || Waypoints?.Value == null)
+            if (Agent.Value == null)
             {
+                LogFailure("No agent assigned.");
+                return Status.Failure;
+            }
+
+            if (Waypoints.Value == null || Waypoints.Value.Count == 0)
+            {
+                LogFailure("No waypoints to patrol assigned.");
                 return Status.Failure;
             }
 
