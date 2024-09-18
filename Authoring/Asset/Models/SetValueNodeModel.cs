@@ -1,5 +1,5 @@
 using System;
-using Unity.Properties;
+using UnityEngine;
 
 namespace Unity.Behavior
 {
@@ -34,14 +34,16 @@ namespace Unity.Behavior
             }
 
             Type variableType = variableField?.LinkedVariable?.Type;
-            if (variableType == null || valueField == null) 
+            if (variableType == null || valueField == null)
             {
                 return;
             }
-            
+
             // If the value field types do not match the variable field type, clear the linked variable and local value.
-            if (valueField.LinkedVariable?.Type != variableType)
+            Type linkType = valueField.LinkedVariable?.Type;
+            if (valueField.LinkedVariable != null && !variableType.IsAssignableFrom(linkType) && GraphAssetProcessor.GetBlackboardVariableConverter(linkType, variableType) == null)
             {
+                Debug.LogWarning($"{Asset.name}: Linked variable of type {linkType} cannot be assigned to type {variableType} and no suitable converter was found. Resetting the link.", Asset);
                 valueField.LinkedVariable = null;
             }
             if (valueField.LocalValue?.Type != variableType)

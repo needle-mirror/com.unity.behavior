@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2024-09-18
+
+### Fixed
+- Fixed an issue with the LinkField search menu popup element causing an exception on Event nodes.
+- Set variable value didn't save the value if it was a cast blackboard variable.
+- Text alignment for conditions in the inspector will now center correctly.
+- Added missing space in variable comparison condition text.
+
+
 ## [1.0.0] - 2024-09-17
 
 ### Added
@@ -18,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Switch enum child ports weren't interacting correctly after editing the enum while the graph is open.
+- Fixed a hang when deleting runtime assets when blackboards are referenced.
 
 ## [1.0.0-pre.1] - 2024-09-13
 

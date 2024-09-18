@@ -49,7 +49,6 @@ namespace Unity.Behavior
         {
             AddToClassList("BehaviorGraphView");
             RegisterCallback<KeyDownEvent>(OnKeyDown);
-            RegisterCallback<FocusInEvent>(_ => RefreshFromAsset());
         }
 
         protected override void OnInitAsset(GraphAsset value)

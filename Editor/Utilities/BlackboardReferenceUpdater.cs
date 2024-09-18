@@ -39,7 +39,7 @@ namespace Unity.Behavior
             // Rebuild all assets that reference the changed assets.
             foreach ((BehaviorAuthoringGraph referencingGraph, string blackboardName) in s_AssetsToRebuild)
             {
-                Debug.Log($"Blackboard: \"{blackboardName}\" updated. Rebuilding referencing graph \"{referencingGraph.name}\".");
+                //Debug.Log($"Blackboard: \"{blackboardName}\" updated. Rebuilding referencing graph \"{referencingGraph.name}\".");
                 referencingGraph.BuildRuntimeGraph();
             }
             

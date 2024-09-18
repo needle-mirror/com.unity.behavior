@@ -1,7 +1,7 @@
 {
   "name": "com.unity.behavior",
   "displayName": "Behavior",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "unity": "6000.0",
   "unityRelease": "16f1",
   "description": "Unity Behavior is a graph-based tool to create and run behavior trees. Besides including a comprehensive library of pre-built nodes, the interface provides node customization options and real-time debugging. While fully functional on its own, a Unity Muse subscription enhances your experience by using large language models (LLM) to generate behavior trees from text prompts and create code for custom action nodes. This subscription is completely optional, providing a powerful addition for those looking to accelerate their development process. ",
@@ -33,18 +33,18 @@
     }
   ],
   "relatedPackages": {
-    "com.unity.behavior.tests": "1.0.0"
+    "com.unity.behavior.tests": "1.0.1"
   },
   "_upm": {
-    "changelog": "### Added\n- PlayParticleSystem node can now assign the spawned object to InstantiatedObject.\n- Conditions can now reference the GameObject associated with the graph.\n- Updated the vector LinkField UI to new improved design.\n\n### Changed\n- Renamed `Unity Serialization Example` to `Runtime Serialization` and `Serialization` `MonoBehaviour` class to `SerializationExampleSceneController`.\n\n### Fixed\n\n- Switch enum child ports weren't interacting correctly after editing the enum while the graph is open."
+    "changelog": "### Fixed\n- Fixed an issue with the LinkField search menu popup element causing an exception on Event nodes.\n- Set variable value didn't save the value if it was a cast blackboard variable.\n- Text alignment for conditions in the inspector will now center correctly.\n- Added missing space in variable comparison condition text."
   },
   "upmCi": {
-    "footprint": "7ba8ba94da3397fc893ad1115586d33773007c8f"
+    "footprint": "60dbbe80a8c837f45f7df6d8d33a721d1902db83"
   },
   "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.behavior@1.0/manual/index.html",
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.ai.designer-monorepo.git",
     "type": "git",
-    "revision": "802705b8d8744dac683df1022e862aed206543e2"
+    "revision": "36d916ec6f10782752b7c2ce7f42aaacd8b29167"
   }
 }

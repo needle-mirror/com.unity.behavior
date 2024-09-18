@@ -288,14 +288,14 @@ namespace Unity.Behavior
         /// <see cref="Behavior.BlackboardReference.GetVariable{TValue}(string,out Unity.Behavior.BlackboardVariable{TValue})"/>
         public bool GetVariable<TValue>(string variableName, out BlackboardVariable<TValue> variable)
         {
-            if (BlackboardReference.GetVariable(variableName, out variable, false))
+            if (BlackboardReference.GetVariable(variableName, out variable))
             {
                 return true;
             }
 
             foreach (var blackboardReference in BlackboardGroupReferences)
             {
-                if (blackboardReference.GetVariable(variableName, out variable, false))
+                if (blackboardReference.GetVariable(variableName, out variable))
                 {
                     return true;
                 }
@@ -307,14 +307,14 @@ namespace Unity.Behavior
         /// <see cref="Behavior.BlackboardReference.GetVariable(string, out BlackboardVariable)"/>
         public bool GetVariable(string variableName, out BlackboardVariable variable)
         {
-            if (BlackboardReference.GetVariable(variableName, out variable, false))
+            if (BlackboardReference.GetVariable(variableName, out variable))
             {
                 return true;
             }
 
             foreach (var blackboardReference in BlackboardGroupReferences)
             {
-                if (blackboardReference.GetVariable(variableName, out variable, false))
+                if (blackboardReference.GetVariable(variableName, out variable))
                 {
                     return true;
                 }
@@ -326,14 +326,14 @@ namespace Unity.Behavior
         /// <see cref="Behavior.BlackboardReference.GetVariable(Unity.Behavior.GraphFramework.SerializableGUID,out Unity.Behavior.BlackboardVariable)"/>
         public bool GetVariable(SerializableGUID guid, out BlackboardVariable variable)
         {
-            if (BlackboardReference.GetVariable(guid, out variable, false))
+            if (BlackboardReference.GetVariable(guid, out variable))
             {
                 return true;
             }
 
             foreach (var blackboardReference in BlackboardGroupReferences)
             {
-                if (blackboardReference.GetVariable(guid, out variable, false))
+                if (blackboardReference.GetVariable(guid, out variable))
                 {
                     return true;
                 }
@@ -345,14 +345,14 @@ namespace Unity.Behavior
         /// <see cref="Behavior.BlackboardReference.GetVariable{TValue}(SerializableGUID, out BlackboardVariable{TValue})"/>
         public bool GetVariable<TValue>(SerializableGUID guid, out BlackboardVariable<TValue> variable)
         {
-            if (BlackboardReference.GetVariable(guid, out variable, false))
+            if (BlackboardReference.GetVariable(guid, out variable))
             {
                 return true;
             }
 
             foreach (var blackboardReference in BlackboardGroupReferences)
             {
-                if (blackboardReference.GetVariable(guid, out variable, false))
+                if (blackboardReference.GetVariable(guid, out variable))
                 {
                     return true;
                 }
@@ -364,14 +364,14 @@ namespace Unity.Behavior
         /// <inheritdoc cref="Behavior.BlackboardReference.GetVariableID"/>
         public bool GetVariableID(string variableName, out SerializableGUID id)
         {
-            if (BlackboardReference.GetVariableID(variableName, out id, false))
+            if (BlackboardReference.GetVariableID(variableName, out id))
             {
                 return true;
             }
 
             foreach (var blackboardReference in BlackboardGroupReferences)
             {
-                if (blackboardReference.GetVariableID(variableName, out id, false))
+                if (blackboardReference.GetVariableID(variableName, out id))
                 {
                     return true;
                 }
@@ -383,14 +383,14 @@ namespace Unity.Behavior
         /// <see cref="Behavior.BlackboardReference.SetVariableValue{TValue}(SerializableGUID, TValue)"/>
         public bool SetVariableValue<TValue>(SerializableGUID guid, TValue value)
         {
-            if (BlackboardReference.SetVariableValue(guid, value, false))
+            if (BlackboardReference.SetVariableValue(guid, value))
             {
                 return true;
             }
 
             foreach (var blackboardReference in BlackboardGroupReferences)
             {
-                if (blackboardReference.SetVariableValue(guid, value, false))
+                if (blackboardReference.SetVariableValue(guid, value))
                 {
                     return true;
                 }
@@ -402,14 +402,14 @@ namespace Unity.Behavior
         /// <see cref="Behavior.BlackboardReference.SetVariableValue{TValue}(string,TValue)"/>
         public bool SetVariableValue<TValue>(string variableName, TValue value)
         {
-            if (BlackboardReference.SetVariableValue(variableName, value, false))
+            if (BlackboardReference.SetVariableValue(variableName, value))
             {
                 return true;
             }
 
             foreach (var blackboardReference in BlackboardGroupReferences)
             {
-                if (blackboardReference.SetVariableValue(variableName, value, false))
+                if (blackboardReference.SetVariableValue(variableName, value))
                 {
                     return true;
                 }

@@ -239,12 +239,11 @@ namespace Unity.Behavior.GraphFramework
                     HandleDrop(evt.position, dropTarget);
                 }
             }
-            
-            m_GraphViewState.RefreshFromAsset(false); 
 
 #if UNITY_EDITOR
             if (m_IsDragging)
             {
+                m_GraphViewState.RefreshFromAsset(false);
                 UnityEditor.Undo.CollapseUndoOperations(undoGroup); 
             }
 #endif

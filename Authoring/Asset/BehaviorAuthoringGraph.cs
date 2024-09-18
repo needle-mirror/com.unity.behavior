@@ -319,7 +319,7 @@ namespace Unity.Behavior
         }
 
 #if UNITY_EDITOR
-        public static BehaviorGraphDebugInfo GetOrCreateGraphDebugInfo(BehaviorAuthoringGraph assetObject)
+        public BehaviorGraphDebugInfo GetOrCreateGraphDebugInfo(BehaviorAuthoringGraph assetObject)
         {
             string assetPath = AssetDatabase.GetAssetPath(assetObject);
             if (!EditorUtility.IsPersistent(assetObject) || string.IsNullOrEmpty(assetPath))
@@ -329,15 +329,14 @@ namespace Unity.Behavior
 
             BehaviorGraph graph = GetOrCreateGraph(assetObject);
             string graphPath = AssetDatabase.GetAssetPath(graph);
-
             BehaviorGraphDebugInfo debugInfo = AssetDatabase.LoadAssetAtPath<BehaviorGraphDebugInfo>(graphPath);
             if (!debugInfo)
             {
                 debugInfo = CreateInstance<BehaviorGraphDebugInfo>();
                 debugInfo.name = assetObject.name + " Debug Info";
                 AssetDatabase.AddObjectToAsset(debugInfo, graph);
-                AssetDatabase.SaveAssets();
                 EditorUtility.SetDirty(assetObject);
+                AssetDatabase.SaveAssetIfDirty(assetObject);
             }
             assetObject.m_DebugInfo = debugInfo;
             return debugInfo;

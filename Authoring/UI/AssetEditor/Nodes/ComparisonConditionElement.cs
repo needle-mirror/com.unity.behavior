@@ -179,20 +179,20 @@ namespace Unity.Behavior
                 {
                     case ConditionOperator.Equal:
                     case ConditionOperator.NotEqual:
-                        m_CompareRelationLabel.text = " to";
+                        m_CompareRelationLabel.text = " to ";
                         break;
 
                     case ConditionOperator.Greater:
                     case ConditionOperator.GreaterOrEqual:
                     case ConditionOperator.Lower:
                     case ConditionOperator.LowerOrEqual:
-                        m_CompareRelationLabel.text = " than";
+                        m_CompareRelationLabel.text = " than ";
                         break;
                 }
             }
             else
             {
-                m_CompareRelationLabel.text = " to";
+                m_CompareRelationLabel.text = " to ";
             }
         }
 

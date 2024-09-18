@@ -37,14 +37,15 @@ ComparisonConditionElement {
     flex-direction: row;
     height: 20px;
     align-content: center;
+    align-items: center;
 }
 
 ComparisonConditionElement > Label {
-    margin-top: 2px;
+    margin-top: 0px;
     padding: 0;
     -unity-text-align: middle-left;
     flex-wrap: wrap;
-    white-space: normal;
+    white-space: pre;
 }
 
 .ConditionElement BaseLinkField {
@@ -59,6 +60,7 @@ ComparisonConditionElement > Label {
     align-self: center;
     margin-right: 2px;
     margin-left: 2px;
+    margin-top: 0px;
     padding: 0;
     -unity-text-align: middle-left;
     flex-wrap: wrap;

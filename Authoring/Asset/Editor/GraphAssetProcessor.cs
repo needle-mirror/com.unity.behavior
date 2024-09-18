@@ -36,8 +36,8 @@ namespace Unity.Behavior
         [DidReloadScripts]
         private static void OnScriptsReloaded()
         {
+            CreateVariableConverters();
             s_NodeTypeToNodeTransformerDictionary = new Dictionary<Type, INodeTransformer>();
-            s_BlackboardVariableConverters = new List<IBlackboardVariableConverter>();
             
             var cachedNodeTransformers = UnityEditor.TypeCache.GetTypesDerivedFrom<INodeTransformer>();
             foreach (Type type in cachedNodeTransformers)
@@ -53,7 +53,13 @@ namespace Unity.Behavior
                     s_NodeTypeToNodeTransformerDictionary.Add(nodeTransformer.NodeModelType, nodeTransformer);
                 }
             }
-            
+        }
+#endif
+
+        private static void CreateVariableConverters()
+        {
+#if UNITY_EDITOR
+            s_BlackboardVariableConverters = new List<IBlackboardVariableConverter>();
             var blackboardVariableConverters = UnityEditor.TypeCache.GetTypesDerivedFrom<IBlackboardVariableConverter>();
             foreach (Type type in blackboardVariableConverters)
             {
@@ -65,8 +71,8 @@ namespace Unity.Behavior
                 var converter = Activator.CreateInstance(type) as IBlackboardVariableConverter;
                 s_BlackboardVariableConverters.Add(converter);
             }
-        }
 #endif
+        }
 
         private static INodeTransformer GetNodeTransformer(Type nodeModelType)
         {
@@ -103,7 +109,7 @@ namespace Unity.Behavior
             InitializeBlackboard();
             m_Graph.RootGraph = BuildGraph();
 #if UNITY_EDITOR
-            m_Graph.m_DebugInfo = BehaviorAuthoringGraph.GetOrCreateGraphDebugInfo(m_Asset);
+            m_Graph.m_DebugInfo = m_Asset.GetOrCreateGraphDebugInfo(m_Asset);
 #endif
         }
 
@@ -328,6 +334,15 @@ namespace Unity.Behavior
 
         public static IBlackboardVariableConverter GetBlackboardVariableConverter(Type from, Type to)
         {
+            if (from == null || to == null)
+            {
+                return null;
+            }
+            if (s_BlackboardVariableConverters == null)
+            {
+                CreateVariableConverters();
+            }
+
             foreach (var converter in s_BlackboardVariableConverters)
             {
                 if (converter.CanConvert(from, to))
