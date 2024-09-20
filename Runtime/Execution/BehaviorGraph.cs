@@ -14,7 +14,7 @@ namespace Unity.Behavior
     [Serializable, GeneratePropertyBag]
     public partial class BehaviorGraph : ScriptableObject, ISerializationCallbackReceiver
     {
-        internal static readonly SerializableGUID k_GraphOwnerID = new SerializableGUID(1, 0);
+        internal static readonly SerializableGUID k_GraphSelfOwnerID = new SerializableGUID(1, 0);
 
         /// <summary>
         /// The blackboard reference used for accessing variables.

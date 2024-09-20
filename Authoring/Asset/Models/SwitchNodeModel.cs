@@ -11,6 +11,7 @@ namespace Unity.Behavior
     internal class SwitchNodeModel : BehaviorGraphNodeModel
     {
         public override bool HasDefaultOutputPort => false;
+        internal bool UpdatedPorts = false;
 
         public SwitchNodeModel(NodeInfo nodeInfo) : base(nodeInfo) { }
 
@@ -59,6 +60,7 @@ namespace Unity.Behavior
                 // Sort the order of the ports.
                 SortOutputPortModelsBy(enumNames.ToList());
                 Asset.CreateNodePortsForNode(this);
+                UpdatedPorts = true;
             }
         }
     }

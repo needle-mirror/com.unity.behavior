@@ -1,6 +1,5 @@
 ﻿using System;
 using Unity.Behavior.GraphFramework;
-using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Unity.Behavior
@@ -41,6 +40,7 @@ namespace Unity.Behavior
                         Model.AddPortModel(new PortModel(member, PortDataFlowType.Output) { IsFloating = true });
                     }
                     Model.Asset.CreateNodePortsForNode(Model);
+                    this.schedule.Execute(AlignImmediateChildren);
                 }
             });
 
@@ -69,6 +69,21 @@ namespace Unity.Behavior
                 RefreshOutputPortUIs();
             }
             m_LastAssignedEnumVariable = m_EnumLinkField.LinkedVariable;
+
+            if (Model is SwitchNodeModel model && model.UpdatedPorts)
+            {
+                AlignImmediateChildren();
+                model.UpdatedPorts = false;
+            }
+        }
+
+        private void AlignImmediateChildren()
+        {
+            this.schedule.Execute(_ =>
+            {
+                var nodePositions = GraphUILayoutUtility.ComputeChildNodePositions(this);
+                GraphUILayoutUtility.ScheduleNodeMovement(this, Model.Asset, nodePositions);
+            });
         }
         
         private void RefreshOutputPortUIs()

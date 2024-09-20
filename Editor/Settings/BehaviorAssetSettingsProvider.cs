@@ -12,7 +12,7 @@ namespace Unity.Behavior
 
         public override void OnGUI(string search)
         {
-            string defaultGraphOwnerName = GraphPrefsUtility.GetString(k_PrefsKeyGraphOwnerName, BehaviorGraphEditor.k_DefaultGraphOwnerName, true);
+            string defaultGraphOwnerName = GraphPrefsUtility.GetString(k_PrefsKeyGraphOwnerName, BehaviorGraphEditor.k_SelfDefaultGraphOwnerName, true);
             
             EditorGUI.BeginChangeCheck();
             EditorGUILayout.BeginHorizontal();

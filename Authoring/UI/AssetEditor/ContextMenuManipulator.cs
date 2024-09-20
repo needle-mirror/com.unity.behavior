@@ -234,7 +234,7 @@ namespace Unity.Behavior
                 Group sequenceUI = rootUI!.GetFirstAncestorOfType<Group>();
                 Target.Asset.MarkUndo("Align Child Nodes");
                 var nodePositions = GraphUILayoutUtility.ComputeChildNodePositions(sequenceUI ?? rootUI);
-                GraphUILayoutUtility.ScheduleNodeMovement(Target, nodePositions);
+                GraphUILayoutUtility.ScheduleNodeMovement(Target, Target.Asset, nodePositions);
             }
         }
 
@@ -252,7 +252,7 @@ namespace Unity.Behavior
                 Group sequenceUI = rootUI!.GetFirstAncestorOfType<Group>();
                 Target.Asset.MarkUndo("Align Subgraph");
                 var nodePositions = GraphUILayoutUtility.ComputeSubgraphNodePositions(sequenceUI ?? rootUI);
-                GraphUILayoutUtility.ScheduleNodeMovement(Target, nodePositions);
+                GraphUILayoutUtility.ScheduleNodeMovement(Target, Target.Asset, nodePositions);
             }
         }
 

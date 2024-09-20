@@ -57,7 +57,11 @@ namespace Unity.Behavior.GraphFramework
             
             m_VariableListView.horizontalScrollingEnabled = false;
             m_VariableListView.virtualizationMethod = CollectionVirtualizationMethod.DynamicHeight;
-            
+
+#if UNITY_2023_2_OR_NEWER
+            BlackboardView.SetupDragAndDropArgs(m_VariableListView);
+#endif
+
             RegisterCallback<AttachToPanelEvent>(OnAttachToPanel);
         }
 

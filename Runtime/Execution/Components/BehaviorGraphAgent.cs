@@ -83,7 +83,7 @@ namespace Unity.Behavior
             SynchronizeOverridesWithBlackboard();
             
             // Automatically assign graph owner variable to this game object.
-            SerializableGUID graphOwnerID = BehaviorGraph.k_GraphOwnerID;
+            SerializableGUID graphOwnerID = BehaviorGraph.k_GraphSelfOwnerID;
             if (m_BlackboardOverrides.TryGetValue(graphOwnerID, out BlackboardVariable ownerVariableOverride))
             {
                 // An override already exists, so set its value to this GameObject.
@@ -135,7 +135,7 @@ namespace Unity.Behavior
             }
 
             // Ensure Self variable is set.
-            SerializableGUID graphOwnerID = BehaviorGraph.k_GraphOwnerID;
+            SerializableGUID graphOwnerID = BehaviorGraph.k_GraphSelfOwnerID;
             if (m_BlackboardOverrides.TryGetValue(graphOwnerID, out BlackboardVariable ownerVariableOverride))
             {
                 if (ownerVariableOverride.ObjectValue != null)
@@ -481,7 +481,7 @@ namespace Unity.Behavior
         {
             foreach (var varOverride in m_BlackboardOverrides)
             {
-                if (varOverride.Key == BehaviorGraph.k_GraphOwnerID && varOverride.Value is BlackboardVariable<GameObject> gameObjectBlackboardVariable && gameObjectBlackboardVariable.Value == null)
+                if (varOverride.Key == BehaviorGraph.k_GraphSelfOwnerID && varOverride.Value is BlackboardVariable<GameObject> gameObjectBlackboardVariable && gameObjectBlackboardVariable.Value == null)
                 {
                     gameObjectBlackboardVariable.Value = gameObject;
                 }

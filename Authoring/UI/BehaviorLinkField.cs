@@ -14,5 +14,15 @@ namespace Unity.Behavior
             }
             return base.IsAssignable(type);
         }
+
+        internal override void OnDragEnter(VariableModel variable)
+        {
+            LinkedLabelPrefix = Util.GetBlackboardVariablePrefix(Model.Asset, variable);
+        }
+
+        internal override void OnDragExit()
+        {
+            Util.UpdateLinkFieldBlackboardPrefixes(this);
+        }
     }
 }

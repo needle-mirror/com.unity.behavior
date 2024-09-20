@@ -20,10 +20,10 @@ namespace Unity.Behavior
 
         public void ProcessNode(GraphAssetProcessor graphAssetProcessor, NodeModel nodeModel, Node node)
         {
-            ProcessNoodeFields(graphAssetProcessor, nodeModel, node);
+            ProcessNodeFields(graphAssetProcessor, nodeModel, node);
         }
 
-        public static void ProcessNoodeFields(GraphAssetProcessor graphAssetProcessor, NodeModel nodeModel, Node node)
+        public static void ProcessNodeFields(GraphAssetProcessor graphAssetProcessor, NodeModel nodeModel, Node node)
         {
             BehaviorGraphNodeModel behaviorGraphNodeModel = nodeModel as BehaviorGraphNodeModel;
             NodeInfo nodeInfo = NodeRegistry.GetInfoFromTypeID(behaviorGraphNodeModel.NodeTypeID);

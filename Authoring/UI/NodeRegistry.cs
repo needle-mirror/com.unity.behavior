@@ -319,7 +319,7 @@ namespace Unity.Behavior
 
         private static IEnumerable<string> GetNamesOfChildren(Type type)
         {
-            FieldInfo[] fields = type.GetFields(BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public);
+            FieldInfo[] fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public);
 
             foreach (FieldInfo field in fields)
             {

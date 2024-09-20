@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace Unity.Behavior.GraphFramework
 {
@@ -41,17 +42,17 @@ namespace Unity.Behavior.GraphFramework
         {
             graphView.Asset.MarkUndo("Align Child Nodes");
             var nodePositions = ComputeChildNodePositions(graphView.ViewState.Selected);
-            ScheduleNodeMovement(graphView, nodePositions);
+            ScheduleNodeMovement(graphView, graphView.Asset, nodePositions);
         }
 
         public static void AlignSelectedNodesAndAllChildren(GraphView graphView)
         {
             graphView.Asset.MarkUndo("Align Subgraph");
             var nodePositions = ComputeSubgraphNodePositions(graphView.ViewState.Selected);
-            ScheduleNodeMovement(graphView, nodePositions);
+            ScheduleNodeMovement(graphView, graphView.Asset, nodePositions);
         }
 
-        public static void ScheduleNodeMovement(GraphView graphView, IEnumerable<KeyValuePair<NodeUI, Vector2>> nodesWithEndPositions)
+        public static void ScheduleNodeMovement(VisualElement element, GraphAsset graphAsset, IEnumerable<KeyValuePair<NodeUI, Vector2>> nodesWithEndPositions)
         {
             // Schedule move
             float accumulated = 0f;
@@ -61,7 +62,7 @@ namespace Unity.Behavior.GraphFramework
                 nodeAndEndPos.Key.Model, nodeAndEndPos.Key.transform.position, nodeAndEndPos.Value)).ToList();
 
             // Animate moving of nodes into position.
-            graphView.schedule.Execute((t) =>
+            element.schedule.Execute((t) =>
             {
                 accumulated += t.deltaTime;
                 float fractionOfTimePassed = accumulated / duration;
@@ -70,19 +71,19 @@ namespace Unity.Behavior.GraphFramework
                     node.Position = Vector2.Lerp(startPos, endPos, Math.Min(1.0f, fractionOfTimePassed));
                 }
 
-                graphView.Asset.SetAssetDirty(false);
-                graphView.Asset.HasOutstandingChanges = true;
+                graphAsset.SetAssetDirty(false);
+                graphAsset.HasOutstandingChanges = true;
             }).Every(msPerIteration).ForDuration(duration);
 
             // Ensure final position.
-            graphView.schedule.Execute((t) =>
+            element.schedule.Execute((t) =>
             {
                 foreach ((NodeModel node, _, Vector2 endPos) in nodeData)
                 {
                     node.Position = endPos;
                 }
 
-                graphView.Asset.SetAssetDirty();
+                graphAsset.SetAssetDirty();
             }).ExecuteLater(duration);
         }
 

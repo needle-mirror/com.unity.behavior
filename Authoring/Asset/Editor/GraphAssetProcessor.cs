@@ -174,7 +174,7 @@ namespace Unity.Behavior
             }
 
             // Set m_GraphOwnerVariable 
-            BlackboardReference.Blackboard.GetVariable(BehaviorGraph.k_GraphOwnerID, out m_GraphOwnerVariable);
+            BlackboardReference.Blackboard.GetVariable(BehaviorGraph.k_GraphSelfOwnerID, out m_GraphOwnerVariable);
             ReplaceBlackboardWithOverrides(BlackboardReference, variableOverrides);
             
             m_VariableModelToVariable.Clear();

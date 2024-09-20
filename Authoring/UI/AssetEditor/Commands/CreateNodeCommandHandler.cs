@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Unity.Behavior.GraphFramework;
+﻿using Unity.Behavior.GraphFramework;
 
 namespace Unity.Behavior
 {
@@ -25,6 +22,14 @@ namespace Unity.Behavior
                 Asset.AddNodeToSequence(newNode, command.SequenceToAddTo, command.SequenceToAddTo.Nodes.Count);
                 return true;
             }
+
+            void AlignNewNode()
+            {
+                SelectAndAlignNode(newNode);
+                GraphView.ViewState.ViewStateUpdated -= AlignNewNode;
+            }
+            GraphView.ViewState.ViewStateUpdated += AlignNewNode;
+            
 
             if (command.ConnectedPort == null)
             {
@@ -56,6 +61,19 @@ namespace Unity.Behavior
             graphView!.ConnectPorts(outputPortModel, inputPortModel);
 
             return true;
+        }
+
+        private void SelectAndAlignNode(NodeModel newNode)
+        {
+            GraphView.schedule.Execute(_ =>
+            {
+                if (GraphView.ViewState.m_NodeModelToNodeUI.TryGetValue(newNode.ID, out NodeUI nodeUI))
+                {
+                    GraphView.ViewState.DeselectAll();
+                    GraphView.ViewState.AddSelected(nodeUI);
+                    GraphUILayoutUtility.AlignSelectedNodesImmediateChildren(GraphView);
+                }
+            });
         }
     }
 }

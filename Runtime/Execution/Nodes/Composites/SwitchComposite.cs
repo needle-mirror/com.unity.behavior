@@ -42,7 +42,6 @@ namespace Unity.Behavior
             Node child = Children[m_CurrentChild];
             if (child == null)
             {
-                Debug.LogWarning($"The current enum value '{EnumVariable.ObjectValue}' is not connected to a child node.");
                 return DefaultStatus;
             }
 

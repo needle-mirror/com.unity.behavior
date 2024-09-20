@@ -39,10 +39,7 @@ namespace Unity.Behavior
                 }   
             }
 
-            if (RequiredBlackboard != null)
-            {
-                TrySetVariablesOnSubgraph();
-            }
+            TrySetVariablesOnSubgraph();
 
             return Subgraph.StartNode(Subgraph.Root) switch
             {
@@ -92,56 +89,67 @@ namespace Unity.Behavior
 
         private void TrySetVariablesOnSubgraph()
         {
-            if (RequiredBlackboard == null || DynamicOverrides == null)
+            if (DynamicOverrides == null)
             {
                 return;
             }
 
+            ApplyOverridesToBlackboardReference(Subgraph.BlackboardReference);
+
             bool matchingBlackboard = false;
 
-            foreach (BlackboardReference reference in Subgraph.BlackboardGroupReferences)
+            if (RequiredBlackboard != null)
             {
-                if (reference.SourceBlackboardAsset.AssetID != RequiredBlackboard.AssetID)
+                foreach (BlackboardReference reference in Subgraph.BlackboardGroupReferences)
                 {
-                    continue;
-                }
-
-                foreach (DynamicBlackboardVariableOverride dynamicOverride in DynamicOverrides)
-                {
-                    foreach (BlackboardVariable variable in reference.Blackboard.Variables)
+                    if (reference.SourceBlackboardAsset.AssetID != RequiredBlackboard.AssetID)
                     {
-                        if (variable.Name != dynamicOverride.Name || variable.Type != dynamicOverride.Variable.Type)
-                        {
-                            continue;
-                        }
-
-                        variable.ObjectValue = dynamicOverride.Variable.ObjectValue;
-
-                        // If the variable is a Blackboard Variable and not a local value assigned from the Inspector.
-                        if (string.IsNullOrEmpty(dynamicOverride.Variable.Name))
-                        {
-                            continue;
-                        }
-
-                        if (variable.GUID == dynamicOverride.Variable.GUID)
-                        {
-                            continue;
-                        }
-
-                        variable.OnValueChanged += () =>
-                        {
-                            // Update the original assigned variable if it has been modified in the subgraph.
-                            dynamicOverride.Variable.ObjectValue = variable.ObjectValue;
-                        };
+                        continue;
                     }
+
+                    ApplyOverridesToBlackboardReference(reference);
+
+                    matchingBlackboard = true;
                 }
 
-                matchingBlackboard = true;
+                if (!matchingBlackboard)
+                {
+                    Debug.LogWarning($"No matching Blackboard of type {RequiredBlackboard.name} found for graph {SubgraphVariable.Value.name}. Any assigned variables will not be set.");
+                }
             }
+        }
 
-            if (!matchingBlackboard)
+        private void ApplyOverridesToBlackboardReference(BlackboardReference reference)
+        {
+            foreach (DynamicBlackboardVariableOverride dynamicOverride in DynamicOverrides)
             {
-                Debug.LogWarning($"No matching Blackboard of type {RequiredBlackboard.name} found for graph {SubgraphVariable.Value.name}. Any assigned variables will not be set.");
+                foreach (BlackboardVariable variable in reference.Blackboard.Variables)
+                {
+                    if (variable.GUID == dynamicOverride.Variable.GUID)
+                    {                    
+                        variable.ObjectValue = dynamicOverride.Variable.ObjectValue;
+                        continue;
+                    }
+                    
+                    if (variable.Name != dynamicOverride.Name || variable.Type != dynamicOverride.Variable.Type)
+                    {
+                        continue;
+                    }
+
+                    variable.ObjectValue = dynamicOverride.Variable.ObjectValue;
+
+                    // If the variable is a Blackboard Variable and not a local value assigned from the Inspector.
+                    if (string.IsNullOrEmpty(dynamicOverride.Variable.Name))
+                    {
+                        continue;
+                    }
+
+                    variable.OnValueChanged += () =>
+                    {
+                        // Update the original assigned variable if it has been modified in the subgraph.
+                        dynamicOverride.Variable.ObjectValue = variable.ObjectValue;
+                    };
+                }
             }
         }
     }

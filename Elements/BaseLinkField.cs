@@ -182,6 +182,9 @@ namespace Unity.Behavior.GraphFramework
             return LinkVariableType.IsAssignableFrom(type);
         }
 
+        internal virtual void OnDragEnter(VariableModel variable) { }
+        internal virtual void OnDragExit() { }
+
 #if UNITY_EDITOR
         private void OnDragEnterEvent(DragEnterEvent evt)
         {
@@ -189,7 +192,8 @@ namespace Unity.Behavior.GraphFramework
             if (variableModel != null && IsAssignable(variableModel.Type))
             {
                 UnityEditor.DragAndDrop.visualMode = UnityEditor.DragAndDropVisualMode.Link;
-                
+
+                OnDragEnter(variableModel);
                 SetLinkVisuals(variableModel);
                 this.CapturePointer(PointerId.mousePointerId);
             }
@@ -210,6 +214,7 @@ namespace Unity.Behavior.GraphFramework
             {
                 this.ReleasePointer(PointerId.mousePointerId);
             }
+            OnDragExit();
             SetLinkVisuals(LinkedVariable);
         }
 
@@ -219,6 +224,7 @@ namespace Unity.Behavior.GraphFramework
             {
                 this.ReleasePointer(PointerId.mousePointerId);
             }
+            OnDragExit();
             SetLinkVisuals(LinkedVariable);
         }
 

@@ -316,16 +316,14 @@ namespace Unity.Behavior
         
         public static void UpdateLinkFieldBlackboardPrefixes(BaseLinkField linkField)
         {
-            if (linkField.LinkedVariable == null)
-            {
-                linkField.LinkedLabelPrefix = string.Empty;
-                return;
-            }
+            linkField.LinkedLabelPrefix = GetBlackboardVariablePrefix(linkField.Model.Asset, linkField.LinkedVariable);
+        }
 
-            if (linkField.Model.Asset is not BehaviorAuthoringGraph authoringGraph)
+        public static string GetBlackboardVariablePrefix(GraphAsset graphAsset, VariableModel variableModel)
+        {
+            if (variableModel == null || graphAsset == null || graphAsset is not BehaviorAuthoringGraph authoringGraph)
             {
-                linkField.LinkedLabelPrefix = string.Empty;
-                return;
+                return string.Empty;
             }
 
             for (int index = 0; index < authoringGraph.m_Blackboards.Count; index++)
@@ -333,19 +331,18 @@ namespace Unity.Behavior
                 BehaviorBlackboardAuthoringAsset blackboard = authoringGraph.m_Blackboards[index];
                 foreach (VariableModel variable in blackboard.Variables)
                 {
-                    if (variable.ID != linkField.LinkedVariable.ID)
+                    if (variable.ID != variableModel.ID)
                     {
                         continue;
                     }
 
                     // If the variable can be found from a Blackboard, update the linked variable label prefix with the matched Blackboard asset name.
-                    linkField.LinkedLabelPrefix = $"{blackboard.name} {BlackboardUtils.GetArrowUnicode()} ";
-                    return;
+                    return $"{blackboard.name} {BlackboardUtils.GetArrowUnicode()} ";
                 }
             }
 
             // If no matching blackboard is found, set the prefix back to empty.
-            linkField.LinkedLabelPrefix = string.Empty;
+            return string.Empty;
         }
     }
 }

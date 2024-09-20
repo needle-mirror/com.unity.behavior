@@ -43,6 +43,18 @@ StoryFieldWithValidation TextArea {
     padding-left: 4px;
 }
 
+.StoryDropdown #appui-actionbutton__label {
+    flex-wrap: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-right: 8px;
+}
+
+.StoryDropdown Icon {
+    position: absolute;
+    right: 4px;
+}
+
 #StoryEditor .PropertyField Label {
     width: 50%;
     -unity-font-definition: url('/Packages/com.unity.dt.app-ui/PackageResources/Fonts/Inter-SemiBold.ttf');

@@ -55,8 +55,9 @@ namespace Unity.Behavior
                 if (subgraphNodeModel.RequiredBlackboard != null)
                 {
                     subgraphDynamic!.RequiredBlackboard = subgraphNodeModel.RequiredBlackboard.BuildRuntimeBlackboard();
-                    subgraphDynamic.DynamicOverrides = GetDynamicOverrides(subgraphNodeModel, graphAssetProcessor);
                 }
+                
+                subgraphDynamic!.DynamicOverrides = GetDynamicOverrides(subgraphNodeModel, graphAssetProcessor);
             }
             else
             {
@@ -132,6 +133,16 @@ namespace Unity.Behavior
         {
             List<DynamicBlackboardVariableOverride> dynamicOverrides = new ();
             
+            graphAssetProcessor.BlackboardReference.GetVariable(BehaviorGraph.k_GraphSelfOwnerID, out BlackboardVariable selfVariable);
+            if (selfVariable != null)
+            {
+                dynamicOverrides.Add(new DynamicBlackboardVariableOverride
+                {
+                    Name = BehaviorGraphEditor.k_SelfDefaultGraphOwnerName,
+                    Variable = selfVariable,
+                });
+            }
+            
             foreach (BehaviorGraphNodeModel.FieldModel fieldModel in subgraphNodeModel.Fields)
             {
                 if (!IsFieldVariableOverride(fieldModel))
@@ -145,9 +156,12 @@ namespace Unity.Behavior
                     continue;
                 }
                 
-                DynamicBlackboardVariableOverride dynamicOverride = new DynamicBlackboardVariableOverride();
-                dynamicOverride.Name = fieldModel.FieldName;
-                dynamicOverride.Variable = variableToAssign;
+                DynamicBlackboardVariableOverride dynamicOverride = new DynamicBlackboardVariableOverride
+                {
+                    Name = fieldModel.FieldName,
+                    Variable = variableToAssign
+                };
+                
                 dynamicOverrides.Add(dynamicOverride);
             }
 

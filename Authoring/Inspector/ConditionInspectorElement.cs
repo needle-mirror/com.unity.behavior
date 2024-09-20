@@ -93,10 +93,11 @@ namespace Unity.Behavior
                         m_ConditionListView.RefreshItems();
                     });
 #if UNITY_EDITOR
-                    menu.AddItem("Edit Script", () =>
+                    ConditionInfo info = ConditionUtility.GetInfoForConditionType(m_NodeModel.ConditionModels[index].ConditionType);
+                    bool isConditionBuiltIn = info.Type.Assembly == typeof(Condition).Assembly;
+                    menu.AddItem(isConditionBuiltIn ? "Inspect Script" : "Edit Script", () =>
                     {
                         // Open the script found through the condition info path.
-                        ConditionInfo info = ConditionUtility.GetInfoForConditionType(m_NodeModel.ConditionModels[index].ConditionType);
                         if (string.IsNullOrEmpty(info.FilePath))
                         {
                             Debug.LogWarning($"File path to the script asset of {info.Name} can not be found.");

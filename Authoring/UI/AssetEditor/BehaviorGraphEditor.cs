@@ -43,7 +43,7 @@ namespace Unity.Behavior
         internal event Action<int> DebugAgentSelected;
 
         private static readonly string k_PrefsKeyDefaultGraphOwnerName = "DefaultGraphOwnerName";
-        public static readonly string k_DefaultGraphOwnerName = "Self";
+        public static readonly string k_SelfDefaultGraphOwnerName = "Self";
         private static readonly string k_PrefsKeySequenceTutorialShown = "SequenceTutorialShown";
         private static readonly string k_PrefsKeyEdgeTutorialShown = "EdgeTutorialShown";
         private bool IsInEditorContext => panel?.contextType == ContextType.Editor;
@@ -239,11 +239,11 @@ namespace Unity.Behavior
             // If no preferred name has been set, add the default name.
             if (panel != null && !GraphPrefsUtility.HasKey(k_PrefsKeyDefaultGraphOwnerName, IsInEditorContext))
             {
-                SetDefaultGraphOwnerName(k_DefaultGraphOwnerName);
+                SetDefaultGraphOwnerName(k_SelfDefaultGraphOwnerName);
             }
 
             // Check if asset already has a graph owner variable.
-            if (asset.Blackboard.Variables.Any(variable => variable.ID == BehaviorGraph.k_GraphOwnerID && variable.Type == typeof(GameObject)))
+            if (asset.Blackboard.Variables.Any(variable => variable.ID == BehaviorGraph.k_GraphSelfOwnerID && variable.Type == typeof(GameObject)))
             {
                 return;
             }
@@ -260,8 +260,8 @@ namespace Unity.Behavior
             
             asset.Blackboard.Variables.Add(new TypedVariableModel<GameObject>()
             {
-                ID = BehaviorGraph.k_GraphOwnerID,
-                Name = GraphPrefsUtility.GetString(k_PrefsKeyDefaultGraphOwnerName, k_DefaultGraphOwnerName, IsInEditorContext)
+                ID = BehaviorGraph.k_GraphSelfOwnerID,
+                Name = GraphPrefsUtility.GetString(k_PrefsKeyDefaultGraphOwnerName, k_SelfDefaultGraphOwnerName, IsInEditorContext)
             });
         }
 
@@ -680,11 +680,9 @@ namespace Unity.Behavior
                         }, icon: null, null, true, 1);
                 }
 #endif
-                
                 foreach (VariableModel variableDecl in Asset.Blackboard.Variables)
                 {
-                    bool isNotEventChannel = variableDecl.Type.BaseType != typeof(EventChannelBase);
-                    if (field.IsAssignable(variableDecl.Type) && isNotEventChannel)
+                    if (field.IsAssignable(variableDecl.Type))
                     {
                         builder.Add($"{variableDecl.Name}",
                             () => { OnLinkFromSearcher(variableDecl, field); }, icon);
@@ -796,9 +794,9 @@ namespace Unity.Behavior
                         
             // If a graph owner variable exists in the both assets, link them.
             VariableModel assetGraphOwner = Asset.Blackboard.Variables.FirstOrDefault(variable =>
-                variable.ID == BehaviorGraph.k_GraphOwnerID && variable.Type == typeof(GameObject));
+                variable.ID == BehaviorGraph.k_GraphSelfOwnerID && variable.Type == typeof(GameObject));
             VariableModel subgraphOwner = subgraphAsset.Blackboard.Variables.FirstOrDefault(variable =>
-                variable.ID == BehaviorGraph.k_GraphOwnerID && variable.Type == typeof(GameObject));
+                variable.ID == BehaviorGraph.k_GraphSelfOwnerID && variable.Type == typeof(GameObject));
 
             if (assetGraphOwner == null || subgraphOwner == null)
             {

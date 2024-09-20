@@ -260,7 +260,7 @@ namespace Unity.Behavior
                     if (targetAgent.m_BlackboardOverrides.ContainsKey(variable.GUID))
                     {
                         // Is the variable we're checking the graph owner and is it set to the target agent?
-                        bool isGraphOwnerVariableOverriden = variable.GUID == BehaviorGraph.k_GraphOwnerID && ReferenceEquals(targetAgent.m_BlackboardOverrides[variable.GUID].ObjectValue, targetAgent.gameObject);
+                        bool isGraphOwnerVariableOverriden = variable.GUID == BehaviorGraph.k_GraphSelfOwnerID && ReferenceEquals(targetAgent.m_BlackboardOverrides[variable.GUID].ObjectValue, targetAgent.gameObject);
                         isOverride = !isGraphOwnerVariableOverriden;
                     }
                 }
@@ -857,7 +857,7 @@ namespace Unity.Behavior
             {
                 if (targetAgent.m_BlackboardOverrides.ContainsKey(guid))
                 {
-                    if (guid == BehaviorGraph.k_GraphOwnerID)
+                    if (guid == BehaviorGraph.k_GraphSelfOwnerID)
                     {
                         targetAgent.m_BlackboardOverrides[guid].ObjectValue = targetAgent.gameObject;
                     }

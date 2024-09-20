@@ -46,10 +46,7 @@ namespace Unity.Behavior
                     continue;
                 }
 
-                if (CollidedObject.Value != null)
-                {
-                    CollidedObject.Value = hitCollider.gameObject;
-                }
+                CollidedObject.Value = hitCollider.gameObject;
             
                 return Status.Success;
             }

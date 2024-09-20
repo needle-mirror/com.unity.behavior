@@ -58,18 +58,18 @@ namespace Unity.Behavior.GraphFramework
             VariableListView.RegisterCallback<BlurEvent>(OnBlurEvent);
 
 #if UNITY_2023_2_OR_NEWER
-            SetupDragAndDropArgs();
+            SetupDragAndDropArgs(VariableListView);
 #endif
         }
 
 #if UNITY_2023_2_OR_NEWER
-        private void SetupDragAndDropArgs()
+        internal static void SetupDragAndDropArgs(ListView variableListView)
         {
-            VariableListView.canStartDrag += CanStartDragAndDrop;
-            VariableListView.setupDragAndDrop += SetupDragAndDrop;
+            variableListView.canStartDrag += CanStartDragAndDrop;
+            variableListView.setupDragAndDrop += SetupDragAndDrop;
         }
 
-        private StartDragArgs SetupDragAndDrop(SetupDragAndDropArgs args)
+        private static StartDragArgs SetupDragAndDrop(SetupDragAndDropArgs args)
         {
             var draggedBlackboardElement = args.draggedElement?.Q<BlackboardVariableElement>();
             if (draggedBlackboardElement == null)
@@ -81,7 +81,7 @@ namespace Unity.Behavior.GraphFramework
             return startDragArgs;
         }
 
-        private bool CanStartDragAndDrop(CanStartDragArgs args)
+        private static bool CanStartDragAndDrop(CanStartDragArgs args)
         {
             return args.draggedElement?.Q<BlackboardVariableElement>() != null;
         }

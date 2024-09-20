@@ -100,6 +100,7 @@ namespace Unity.Behavior
                     void OnSearchItemSelected(SearchView.Item item)
                     {
                         OnPropertyDropdownValueChanged(actionButton, item);
+                        actionButton.tooltip = item.Name;
                     }
                     SearchWindow.ShowInPopover("Variable Type", m_SupportedTypesSearchItems, OnSearchItemSelected, 260, 400, actionButton, false, sortSearchItems: false);
                 };
@@ -109,8 +110,7 @@ namespace Unity.Behavior
                     var dropdownIndex = SupportedTypes.FindIndex(a => a.Type.Type == wordTypePair.Type);
                     actionButton.label = SupportedTypes[dropdownIndex].Name;
                 }
-
-
+                
                 propertyUI.Add(actionButton);
                 return propertyUI;
             }
