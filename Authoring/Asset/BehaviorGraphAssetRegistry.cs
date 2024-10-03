@@ -109,6 +109,24 @@ namespace Unity.Behavior
             return GlobalRegistry.m_GuidToAsset.TryGetValue(id, out asset);
         }
 
+        public static BehaviorAuthoringGraph TryGetAssetFromGraphBlackboard(BehaviorBlackboardAuthoringAsset blackboard)
+        {
+            if (blackboard == null)
+            {
+                return null;
+            }
+            
+            foreach (BehaviorAuthoringGraph asset in GlobalRegistry.Assets)
+            {
+                if (asset.Blackboard.AssetID == blackboard.AssetID)
+                {
+                    return asset;
+                }
+            }
+
+            return null;
+        }
+
         private void PurgeNullAndDuplicateAssets()
         {
             Assets.RemoveAll(asset => asset == null);

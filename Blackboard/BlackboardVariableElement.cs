@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using ContextMenu = Unity.Behavior.GraphFramework.ContextMenu;
 using TextField = Unity.AppUI.UI.TextField;
+using Toggle = Unity.AppUI.UI.Toggle;
 
 internal class BlackboardVariableElement : VisualElement
 {
@@ -35,6 +36,8 @@ internal class BlackboardVariableElement : VisualElement
         set => m_VariableTypeLabel.text = value;
     }
 
+    public VisualElement InfoTitle => m_InfoTitle;
+
     internal delegate void NameChangedCallback(string name, VariableModel variable);
     internal NameChangedCallback OnNameChanged;
 
@@ -46,6 +49,8 @@ internal class BlackboardVariableElement : VisualElement
     private Label m_VariableTypeLabel;
     private TextField m_NameField;
     private bool m_TitleEditing;
+    private Toggle m_ExposedToggle;
+    private Toggle m_SharedToggle;
 
     internal bool IsEditable { get; set; } = true;
 
@@ -63,8 +68,11 @@ internal class BlackboardVariableElement : VisualElement
         m_InfoTitle = this.Q("Info");
         // m_Icon = this.Q("Icon");
         m_NameField.size = Size.S;
+        m_ExposedToggle = this.Q<Toggle>("ExposedToggle");
+        m_SharedToggle = this.Q<Toggle>("SharedToggle");
+        
         IsEditable = true;
-
+        
         RegisterCallbacks();
     }
 
@@ -77,6 +85,37 @@ internal class BlackboardVariableElement : VisualElement
     {
         m_View = view;
         m_VariableModel = variableModel;
+
+        m_ExposedToggle.value = VariableModel.IsExposed;
+        m_SharedToggle.value = VariableModel.IsShared;
+        
+        SetSharedVariableVisualization();
+    }
+
+    private void SetupTogglesForVariable()
+    {
+        // Do not allow setting the Self variable to Shared.
+        if (VariableModel.ID == k_ReservedID)
+        {
+            m_SharedToggle.enabledSelf = false;
+        }
+
+        m_ExposedToggle.RegisterValueChangedCallback(evt =>
+        {
+            m_VariableModel.IsExposed = evt.newValue;
+            OnToggleExposeVariable();
+        });
+        m_SharedToggle.RegisterValueChangedCallback(evt =>
+        {
+            m_View.SetVariableIsShared(VariableModel, evt.newValue);
+            OnToggleSharedVariable();
+            SetSharedVariableVisualization();
+        });
+    }
+
+    private void SetSharedVariableVisualization()
+    {
+        EnableInClassList("SharedVariable", m_VariableModel.IsShared);
     }
 
     private void RegisterCallbacks()
@@ -97,6 +136,17 @@ internal class BlackboardVariableElement : VisualElement
                     m_NameField.SetValueWithoutNotify(Name);
                     ToggleTitleFields();
                     break;
+            }
+        });
+        RegisterCallback<AttachToPanelEvent>(_ =>
+        {
+            if (IsEditable)
+            {
+                SetupTogglesForVariable();
+            }
+            else
+            {
+                this.Q<VisualElement>("VariableToggleContainer").Hide();
             }
         });
     }
@@ -144,30 +194,6 @@ internal class BlackboardVariableElement : VisualElement
             }
             menu.AddItem("Rename", ToggleTitleFields);
             menu.AddItem("Copy GUID", OnCopyGUID);
-            menu.AddSeparator();
-            if (VariableModel.IsExposed)
-            {
-                menu.AddItemCheckmarked("Expose", OnToggleExposeVariable);
-            }
-            else
-            {
-                menu.AddItem("Expose", OnToggleExposeVariable);
-            }
-            if (VariableModel.ID == k_ReservedID)
-            {
-                menu.AddDisabledItem("Shared");
-            }
-            else
-            {
-                if (VariableModel.IsShared)
-                {
-                    menu.AddItemCheckmarked("Shared", OnToggleSharedVariable);
-                }
-                else
-                {
-                    menu.AddItem("Shared", OnToggleSharedVariable);
-                }
-            }
             
             menu.Show();
         }
@@ -185,28 +211,12 @@ internal class BlackboardVariableElement : VisualElement
 
     private void OnToggleExposeVariable()
     {
-        if (VariableModel.IsExposed)
-        {
-            m_View.Asset.MarkUndo($"Unexpose variable: {VariableModel.Name}.");
-        }
-        else
-        {
-            m_View.Asset.MarkUndo($"Expose variable: {VariableModel.Name}.");
-        }
-        VariableModel.IsExposed = !VariableModel.IsExposed;
+        m_View.Asset.MarkUndo(VariableModel.IsExposed ? $"Unexpose variable: {VariableModel.Name}." : $"Expose variable: {VariableModel.Name}.");
     }
 
     private void OnToggleSharedVariable()
     {
-        if (VariableModel.IsShared)
-        {
-            m_View.Asset.MarkUndo($"Make variable not global: {VariableModel.Name}.");
-        }
-        else
-        {
-            m_View.Asset.MarkUndo($"Make variable global: {VariableModel.Name}.");
-        }
-        VariableModel.IsShared = !VariableModel.IsShared;
+        m_View.Asset.MarkUndo(VariableModel.IsShared ? $"Make variable not global: {VariableModel.Name}." : $"Make variable global: {VariableModel.Name}.");
     }
 
     private void OnTitlePointerUp(PointerUpEvent evt)

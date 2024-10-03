@@ -69,9 +69,16 @@ namespace Unity.Behavior
         {
             if (!EventChannel)
             {
+                LogFailure("No EventChannel assigned.");
                 return Status.Failure;
             }
 
+            return Status.Running;
+        }
+
+        /// <inheritdoc cref="OnUpdate" />
+        protected override Status OnUpdate()
+        {
             EventChannel.SendEventMessage(MessageVariables);
             return Status.Success;
         }

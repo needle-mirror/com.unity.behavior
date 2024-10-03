@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Unity.AppUI.UI;
 using UnityEngine;
 using UnityEngine.UIElements;
-using UnityEngine.UIExtras;
 
 namespace Unity.Behavior.GraphFramework
 {
@@ -50,7 +49,7 @@ namespace Unity.Behavior.GraphFramework
             styleSheets.Add(ResourceLoadAPI.Load<StyleSheet>(stylesheetFile));
             VisualTreeAsset visualTree = ResourceLoadAPI.Load<VisualTreeAsset>(layoutfile);
             visualTree.CloneTree(this);
-            
+
             m_Toolbar = this.Q<GraphToolbar>();
             Dispatcher = new Dispatcher(this);
             Blackboard = CreateBlackboardView();
@@ -59,13 +58,13 @@ namespace Unity.Behavior.GraphFramework
             if (Inspector != null)
             {
                 Inspector.GraphEditor = this;
-            }            
-            
+            }
+
             if (GraphView.parent == null)
             {
                 this.Q("EditorPanel")?.Add(GraphView);
             }
-            
+
             Blackboard.Dispatcher = Dispatcher;
             GraphView.Dispatcher = Dispatcher;
 
@@ -84,7 +83,7 @@ namespace Unity.Behavior.GraphFramework
             {
                 return;
             }
-            
+
             Dispatcher.Tick();
             if (Asset.HasOutstandingChanges)
             {
@@ -105,7 +104,7 @@ namespace Unity.Behavior.GraphFramework
             }
             Blackboard.Load(Asset.Blackboard);
             GraphView.Load(asset);
-            
+
             m_Toolbar.AssetTitle.text = Asset.name;
         }
 
@@ -186,12 +185,13 @@ namespace Unity.Behavior.GraphFramework
             Dispatcher.RegisterHandler<CreateVariableCommand, CreateVariableCommandHandler>();
             Dispatcher.RegisterHandler<RenameVariableCommand, RenameVariableCommandHandler>();
             Dispatcher.RegisterHandler<DeleteVariableCommand, DeleteVariableCommandHandler>();
+            Dispatcher.RegisterHandler<SetVariableIsSharedCommand, SetVariableIsSharedCommandHandler>();
         }
 
         public virtual SearchMenuBuilder CreateBlackboardOptions()
         {
             SearchMenuBuilder builder = new SearchMenuBuilder();
-            
+
             void CreateVariableFromMenuAction(string variableTypeName, Type type)
             {
                 Dispatcher.DispatchImmediate(new CreateVariableCommand($"New {variableTypeName}", BlackboardUtils.GetVariableModelTypeForType(type)));
@@ -229,11 +229,11 @@ namespace Unity.Behavior.GraphFramework
             return new BlackboardView(CreateBlackboardOptions);
         }
 
-        protected virtual InspectorView CreateNodeInspector()  
+        protected virtual InspectorView CreateNodeInspector()
         {
             return new InspectorView();
         }
-        
+
         private void ToggleBlackboard(bool displayValue)
         {
             VisualElement editorPanel = this.Q<VisualElement>("EditorPanel");
@@ -244,7 +244,7 @@ namespace Unity.Behavior.GraphFramework
                     FloatingPanel blackboardPanel = FloatingPanel.Create(Blackboard, GraphView, "Blackboard");
                     blackboardPanel.IsCollapsable = true;
                     editorPanel.Add(blackboardPanel);
-                }   
+                }
             }
             else
             {
@@ -265,7 +265,7 @@ namespace Unity.Behavior.GraphFramework
                     FloatingPanel nodeInspectorPanel = FloatingPanel.Create(Inspector, GraphView, "Inspector", FloatingPanel.DefaultPosition.TopRight);
                     nodeInspectorPanel.IsCollapsable = true;
                     editorPanel.Add(nodeInspectorPanel);
-                }   
+                }
             }
             else
             {

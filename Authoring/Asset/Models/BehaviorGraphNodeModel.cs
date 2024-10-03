@@ -37,24 +37,85 @@ namespace Unity.Behavior
             foreach (FieldModel fieldModelOriginal in nodeModelOriginal.Fields)
             {
                 VariableModel linkedVariable = fieldModelOriginal.LinkedVariable;
-                if (linkedVariable != null && asset.Blackboard.Variables.All(variable => variable.ID != linkedVariable.ID))
+                
+                bool foundLinkedVariable = GetLinkedVariableFromBlackboard(asset.Blackboard, linkedVariable) != null;
+                
+                // Check other linked blackboards
+                if(!foundLinkedVariable)
                 {
-                    // Skip links to variables that do not exist in this asset, which can occur when copying nodes between assets.
-                    continue;
+                    foreach (var blackboard in asset.m_Blackboards)
+                    {
+                        foundLinkedVariable = GetLinkedVariableFromBlackboard(blackboard, linkedVariable) != null;
+                        if (foundLinkedVariable)
+                        {
+                            break;
+                        }
+                    }
                 }
                 
+                if (!foundLinkedVariable)
+                {
+                    continue;
+                }
+
                 m_FieldValues.Add(fieldModelOriginal.Duplicate());
             }
+        }
+
+        private static VariableModel GetLinkedVariableFromBlackboard(BlackboardAsset blackboard, VariableModel linkedVariable)
+        {
+            for (int i = 0; i < blackboard.Variables.Count; i++)
+            {
+                if (linkedVariable != null && blackboard.Variables[i].ID == linkedVariable.ID)
+                {
+                    return blackboard.Variables[i];
+                }
+            }
+
+            return null;
         }
 
         public override void OnValidate()
         {
             base.OnValidate();
 
+            EnsureLinkedVariablesAreUpToDate();
             EnsureFieldValuesAreUpToDate();
             EnsurePortsAreUpToDate();
         }
 
+        private void EnsureLinkedVariablesAreUpToDate()
+        {
+            if (Asset is not BehaviorAuthoringGraph behaviorGraph)
+            {
+                return;
+            }
+            
+            // Update all fields with linked variables the correct VariableModels from the authoring graph Blackboards. 
+            foreach (FieldModel field in m_FieldValues)
+            {
+                if (field.LinkedVariable == null)
+                {
+                    continue;
+                }
+
+                VariableModel foundVariable = GetLinkedVariableFromBlackboard(behaviorGraph.Blackboard, field.LinkedVariable);
+                if (foundVariable != null)
+                {
+                    field.LinkedVariable = foundVariable;
+                }
+
+                foreach (BehaviorBlackboardAuthoringAsset blackboard in behaviorGraph.m_Blackboards)
+                {
+                    VariableModel foundBlackboardVariable = GetLinkedVariableFromBlackboard(blackboard, field.LinkedVariable);
+                    if (foundBlackboardVariable != null)
+                    {
+                        field.LinkedVariable = foundBlackboardVariable;
+                    }
+                }
+            }
+        }
+        
         public override void OnDefineNode()
         {
             base.OnDefineNode();

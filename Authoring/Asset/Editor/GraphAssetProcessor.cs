@@ -14,15 +14,15 @@ namespace Unity.Behavior
     internal class GraphAssetProcessor
     {
         internal const BindingFlags k_bindingFlags = BindingFlags.Instance | BindingFlags.Public;
-        
-        private readonly Dictionary<SerializableGUID, BlackboardVariable> m_VariableModelToVariable = new ();
-        private readonly Dictionary<NodeModel, Node> m_NodeModelToNode = new ();
+
+        private readonly Dictionary<SerializableGUID, BlackboardVariable> m_VariableModelToVariable = new();
+        private readonly Dictionary<NodeModel, Node> m_NodeModelToNode = new();
 
         private readonly BehaviorAuthoringGraph m_Asset;
-        
+
         private BehaviorGraphModule m_GraphModule;
         internal BehaviorGraphModule GraphModule => m_GraphModule;
-        
+
         internal BlackboardReference BlackboardReference => m_GraphModule.BlackboardReference;
         internal List<BlackboardReference> BlackboardReferences => m_GraphModule.BlackboardGroupReferences;
         private readonly BehaviorGraph m_Graph;
@@ -31,6 +31,7 @@ namespace Unity.Behavior
 
         private static Dictionary<Type, INodeTransformer> s_NodeTypeToNodeTransformerDictionary;
         private static List<IBlackboardVariableConverter> s_BlackboardVariableConverters;
+        private static List<GraphAssetProcessor> s_ProcessorsPendingRebuild = new List<GraphAssetProcessor>();
 
 #if UNITY_EDITOR
         [DidReloadScripts]
@@ -38,7 +39,7 @@ namespace Unity.Behavior
         {
             CreateVariableConverters();
             s_NodeTypeToNodeTransformerDictionary = new Dictionary<Type, INodeTransformer>();
-            
+
             var cachedNodeTransformers = UnityEditor.TypeCache.GetTypesDerivedFrom<INodeTransformer>();
             foreach (Type type in cachedNodeTransformers)
             {
@@ -53,6 +54,18 @@ namespace Unity.Behavior
                     s_NodeTypeToNodeTransformerDictionary.Add(nodeTransformer.NodeModelType, nodeTransformer);
                 }
             }
+
+            if (s_ProcessorsPendingRebuild.Count == 0)
+            {
+                return;
+            }
+
+            foreach (var processor in s_ProcessorsPendingRebuild)
+            {
+                processor.ProcessGraph();
+            }
+
+            s_ProcessorsPendingRebuild.Clear();
         }
 #endif
 
@@ -80,6 +93,7 @@ namespace Unity.Behavior
             {
                 return null;
             }
+
             if (s_NodeTypeToNodeTransformerDictionary.TryGetValue(nodeModelType, out INodeTransformer nodeTransformer))
             {
                 return nodeTransformer;
@@ -105,8 +119,18 @@ namespace Unity.Behavior
 
         internal void ProcessGraph()
         {
+            // If the node transformer dictionary is not yet initialized, we need to wait for the next script reload.
+            // This can happen if the processor is created before the script reload event is called
+            // - i.e. an InitializeOnLoad class calling AssetDatabase.SaveAssets.
+            if (s_NodeTypeToNodeTransformerDictionary == null)
+            {
+                s_ProcessorsPendingRebuild.Add(this);
+                return;
+            }
+
             Cleanup();
             InitializeBlackboard();
+
             m_Graph.RootGraph = BuildGraph();
 #if UNITY_EDITOR
             m_Graph.m_DebugInfo = m_Asset.GetOrCreateGraphDebugInfo(m_Asset);
@@ -130,8 +154,8 @@ namespace Unity.Behavior
             }
             else
             {
-                var parallelRoot = new ParallelAllComposite{ Graph = m_GraphModule };
-                
+                var parallelRoot = new ParallelAllComposite { Graph = m_GraphModule };
+
                 // Iterating backwards to maintain StartOnEvent model's order.
                 for (var index = 0; index < m_Asset.Roots.Count; index++)
                 {
@@ -176,7 +200,7 @@ namespace Unity.Behavior
             // Set m_GraphOwnerVariable 
             BlackboardReference.Blackboard.GetVariable(BehaviorGraph.k_GraphSelfOwnerID, out m_GraphOwnerVariable);
             ReplaceBlackboardWithOverrides(BlackboardReference, variableOverrides);
-            
+
             m_VariableModelToVariable.Clear();
             foreach (var blackboardVariable in BlackboardReference.Blackboard.Variables)
             {
@@ -198,7 +222,7 @@ namespace Unity.Behavior
                 foreach (var blackboardVariable in reference.Blackboard.Variables)
                 {
                     m_VariableModelToVariable[blackboardVariable.GUID] = blackboardVariable;
-                }   
+                }
                 BlackboardReferences.Add(reference);
             }
         }
@@ -215,11 +239,11 @@ namespace Unity.Behavior
                 {
                     continue;
                 }
-                
+
                 blackboardReference.Blackboard.ReplaceBlackboardVariable(variableOverride.Key, variableOverride.Value);
             }
         }
-        
+
         // Recursively builds the graph branch from a given node downward.
         private Node BuildBranch(NodeModel branchRootNode)
         {
@@ -233,7 +257,7 @@ namespace Unity.Behavior
                 }
                 return null;
             }
-            
+
             // Otherwise, do we have an implicit sequence? (a single action node with links)?
             if (IsImplicitSequence(branchRootNode))
             {
@@ -264,22 +288,22 @@ namespace Unity.Behavior
                 {
                     parent.Add(null);
                 }
-                
+
                 foreach (NodeModel connection in connections)
                 {
                     if (!m_NodeModelToNode.TryGetValue(connection, out Node child))
                     {
                         child = BuildBranch(connection);
                     }
-                    
+
                     // Check for the switch hack
                     if (child == null && parent is not SwitchComposite)
                     {
                         continue;
                     }
-                    
+
                     parent.Add(child);
-                    
+
                     if (!outputPortModel.IsDefaultOutputPort && TryFindingField(parent.GetType(), outputPortModel.Name, out FieldInfo fieldInfo))
                     {
                         fieldInfo.SetValue(parent, child);
@@ -299,12 +323,13 @@ namespace Unity.Behavior
             {
                 return existingNode;
             }
-            
+
             INodeTransformer nodeTransformer = GetNodeTransformer(nodeModel.GetType());
             if (nodeTransformer == null)
             {
-                throw new Exception($"No node transformer found for {nodeModel.GetType()}");
+                throw new Exception($"No node transformer found for '{nodeModel.Asset}'({nodeModel.GetType()}) in graph {Graph.name}.");
             }
+          
             Node node = nodeTransformer.CreateNodeFromModel(this, nodeModel);
             node.ID = nodeModel.ID;
             node.Graph = m_GraphModule;
@@ -326,7 +351,8 @@ namespace Unity.Behavior
                 if (converter != null)
                 {
                     valueVariable = converter.Convert(fieldModel.LinkedVariable.Type, fieldModel.LocalValue.Type, valueVariable);
-                }   
+                }
+                
                 return valueVariable;
             }
             return fieldModel.LocalValue;
@@ -338,6 +364,7 @@ namespace Unity.Behavior
             {
                 return null;
             }
+            
             if (s_BlackboardVariableConverters == null)
             {
                 CreateVariableConverters();
@@ -352,7 +379,7 @@ namespace Unity.Behavior
             }
             return null;
         }
-        
+
         private static List<NodeModel> GetSortedConnections(PortModel portModel)
         {
             List<NodeModel> connectedNodeModels = new List<NodeModel>();
@@ -360,14 +387,14 @@ namespace Unity.Behavior
             {
                 connectedNodeModels.Add(portModel.Connections[i].NodeModel);
             }
-            
+
             connectedNodeModels.Sort((node1, node2) =>
             {
                 float x1 = node1.Position.x;
                 float x2 = node2.Position.x;
                 return Comparer<float>.Default.Compare(x1, x2);
             });
-            
+
             return connectedNodeModels;
         }
 

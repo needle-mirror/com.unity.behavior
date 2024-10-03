@@ -136,12 +136,13 @@ namespace Unity.Behavior
         
         private void CacheDependentAssets()
         {
-            Dictionary<BehaviorAuthoringGraph, long> graphAssets = new Dictionary<BehaviorAuthoringGraph, long>();
-
             if (Asset == null)
             {
                 return;
             }
+            
+            // Listen for changes on the default graph Blackboard asset in case the sub-asset has been opened in a BlackboardEditor.
+            m_BlackboardDependencies.TryAdd((BehaviorBlackboardAuthoringAsset)Asset.Blackboard, Asset.Blackboard.VersionTimestamp);
 
             foreach (BehaviorBlackboardAuthoringAsset blackboard in Asset.m_Blackboards)
             {
@@ -601,7 +602,7 @@ namespace Unity.Behavior
                 {
                     builder.Add($"Create Event Channel.../New {channelInfo.Name}", () =>
                     {
-                        OnCreateFromLinkSearch(field, $"New {channelInfo.Name}", channelInfo.VariableModelType);
+                        OnCreateFromLinkSearch(field, $"{channelInfo.Name}", channelInfo.VariableModelType);
                     }, icon: null, null, true, 1);
                 }
 #endif
@@ -619,7 +620,7 @@ namespace Unity.Behavior
                     builder.Add("New Subgraph...",
                         () =>
                         {
-                            OnCreateFromLinkSearch(field, $"New Subgraph",
+                            OnCreateFromLinkSearch(field, $"Subgraph",
                                 BlackboardUtils.GetVariableModelTypeForType(variableType));
                         }, icon: null, null, true, 1);
                     // Populate subgraph link field options from subgraph type Blackboard variables.
@@ -655,7 +656,7 @@ namespace Unity.Behavior
                         builder.Add($"Create Enum Variable.../New {enumVariableType.Name}",
                             () =>
                             {
-                                OnCreateFromLinkSearch(field, $"New {enumVariableType.Name}",
+                                OnCreateFromLinkSearch(field, $"{enumVariableType.Name}",
                                     BlackboardUtils.GetVariableModelTypeForType(enumVariableType));
                             }, icon: null, null, true, 1);
                     }
@@ -666,7 +667,7 @@ namespace Unity.Behavior
                     builder.Add($"New {BlackboardUtils.GetNameForType(variableType)}...",
                         () =>
                         {
-                            OnCreateFromLinkSearch(field, $"New {BlackboardUtils.GetNameForType(variableType)}",
+                            OnCreateFromLinkSearch(field, $"{BlackboardUtils.GetNameForType(variableType)}",
                                 BlackboardUtils.GetVariableModelTypeForType(variableType));
                         }, icon: null, null, true, 1);
                 }
@@ -675,7 +676,7 @@ namespace Unity.Behavior
                     builder.Add($"New {BlackboardUtils.GetNameForType(variableType)}...",
                         () =>
                         {
-                            OnCreateFromLinkSearch(field, $"New {BlackboardUtils.GetNameForType(variableType)}",
+                            OnCreateFromLinkSearch(field, $"{BlackboardUtils.GetNameForType(variableType)}",
                                 BlackboardUtils.GetVariableModelTypeForType(variableType));
                         }, icon: null, null, true, 1);
                 }

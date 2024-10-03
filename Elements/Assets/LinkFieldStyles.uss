@@ -187,6 +187,12 @@ BaseLinkField .LinkButton {
     display: none;
 }
 
+.SharedVariable .LinkedLabel {
+    border-bottom-width: 1px;
+    border-bottom-color: #C9B33F;
+    height: 14px;
+}
+
 .FieldNameLabel {
     color: #BCBCBC;
     margin: 0;

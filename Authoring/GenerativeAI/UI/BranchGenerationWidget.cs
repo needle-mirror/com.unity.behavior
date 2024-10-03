@@ -1,10 +1,10 @@
 #if ENABLE_MUSE_BEHAVIOR
+using JetBrains.Annotations;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
-using Unity.Behavior.GraphFramework;
-using JetBrains.Annotations;
 using Unity.AppUI.UI;
+using Unity.Behavior.GraphFramework;
+using UnityEngine;
 using UnityEngine.UIElements;
 using Button = Unity.AppUI.UI.Button;
 
@@ -21,7 +21,7 @@ namespace Unity.Behavior.GenerativeAI
         private readonly Button m_CreateButton;
         private AppBar m_WidgetAppBar;
         internal ActionButton CloseButton;
-        
+
         public delegate void BranchGeneratedCallback();
 #pragma warning disable 67
         public event BranchGeneratedCallback OnBranchGenerated;
@@ -72,10 +72,10 @@ namespace Unity.Behavior.GenerativeAI
 
         private void OnCreateClicked(BehaviorGraphView graphView, TextArea textField)
         {
-            string userDescription = textField.value;
+            string userDescription = textField.value?.Trim();
             if (string.IsNullOrEmpty(userDescription))
             {
-                Debug.LogError("Cannot generate branch without a description of the desired behavior.");
+                Debug.LogWarning("Cannot generate branch without a description of the desired behavior.");
                 return;
             }
 
@@ -103,8 +103,8 @@ namespace Unity.Behavior.GenerativeAI
                 OnBranchGenerated?.Invoke();
             }, "branch-generation");
         }
-        
-        private void GenerateBranch(BehaviorGraphView graphView, Vector2 position, string response,
+
+        private bool GenerateBranch(BehaviorGraphView graphView, Vector2 position, string response,
             List<NodeInfo> nodeInfos)
         {
             m_GeneratedNodes = BranchGeneratorUtility.GenerateNodes(graphView.Asset, position, response, nodeInfos);
@@ -116,7 +116,13 @@ namespace Unity.Behavior.GenerativeAI
 
             if (m_GeneratedNodes?.Count > 0)
             {
-                CreateCorrectionFrame(graphView);
+                // TODO: Disabled corrections for now, when we have a backend history again this can be re-enabled.
+                // CreateCorrectionFrame(graphView);
+                return true;
+            }
+            else
+            {
+                return false;
             }
         }
 
@@ -128,10 +134,10 @@ namespace Unity.Behavior.GenerativeAI
             panelContent.styleSheets.Add(ResourceLoadAPI.Load<StyleSheet>("Packages/com.unity.behavior/Authoring/GenerativeAI/UI/Assets/BranchGenerationWidgetStylesheet.uss"));
             ResourceLoadAPI.Load<VisualTreeAsset>("Packages/com.unity.behavior/Authoring/GenerativeAI/UI/Assets/BranchGenerationWidgetLayout.uxml").CloneTree(panelContent);
             panelContent.AddToClassList("HideHelpText");
-            
-            FloatingPanel frame = FloatingPanel.Create(panelContent, graphView, panelContent.name, FloatingPanel.DefaultPosition.BottomRight, true);
-            frame.Title = "Correction?";
-            graphEditor.Q<VisualElement>("EditorPanel").Add(frame);
+
+            FloatingPanel correctionPanel = FloatingPanel.Create(panelContent, graphView, panelContent.name, FloatingPanel.DefaultPosition.BottomRight, true);
+            correctionPanel.Title = "Correction?";
+            graphEditor.Q<VisualElement>("EditorPanel").Add(correctionPanel);
 
             TextArea textField = panelContent.Q<TextArea>("PromptTextField");
 #if UNITY_2023_1_OR_NEWER
@@ -142,19 +148,17 @@ namespace Unity.Behavior.GenerativeAI
             Button generateButton = panelContent.Q<Button>("CreateButton");
             generateButton.title = "Apply Correction";
 
-            generateButton.clickable.clicked += () => OnCorrectClicked(graphView, frame, textField);
+            generateButton.clickable.clicked += () => OnCorrectClicked(graphView, textField);
         }
 
-        private void OnCorrectClicked(BehaviorGraphView graphView, FloatingPanel floatingPanel, TextArea textField)
+        private void OnCorrectClicked(BehaviorGraphView graphView, TextArea textField)
         {
-            string correction = textField.value;
+            string correction = textField.value?.Trim();
             if (string.IsNullOrEmpty(correction))
             {
-                Debug.LogError("Please input something to correct.");
+                Debug.LogWarning("Cannot generate correction without a description of the desired behavior.");
                 return;
             }
-
-            floatingPanel.Remove();
 
             string correctionPrompt = ResourceLoadAPI.Load<TextAsset>("Packages/com.unity.behavior/Authoring/GenerativeAI/Assets/Prompts/CorrectionPrompt.txt").text;
             correctionPrompt = correctionPrompt.Replace("{correction}", correction);
@@ -162,14 +166,20 @@ namespace Unity.Behavior.GenerativeAI
             m_LanguageModel.Chat(correctionPrompt, response =>
             {
                 if (response.output.Contains("Unable"))
+                {
+                    Debug.LogWarning("Unable to generate a correction from the provided description. Please try again.");
                     return;
+                }
 
-                // Delete existing nodes
-                foreach (NodeModel node in m_GeneratedNodes)
-                    graphView.Asset.DeleteNode(node);
-
+                List<NodeModel> previousNodes = new List<NodeModel>(m_GeneratedNodes);
                 List<NodeInfo> nodeInfos = NodeRegistry.NodeInfos;
-                GenerateBranch(graphView, transform.position, response.output, nodeInfos);
+                if (GenerateBranch(graphView, transform.position, response.output, nodeInfos))
+                {
+                    // Delete existing nodes
+                    foreach (NodeModel node in previousNodes)
+                        graphView.Asset.DeleteNode(node);
+                }
+
                 MuseBehaviorUtilities.UpdateUsage();
             }, "branch-generation-correction", m_ConversationId);
         }
@@ -180,7 +190,7 @@ namespace Unity.Behavior.GenerativeAI
             m_GraphView.ViewState.ViewStateUpdated -= AlignNodesAfterNextUIUpdate;
             AlignNodesAndCenter();
         }
-        
+
         private void AlignNodesAndCenter()
         {
             // Nodes have been created in the asset. During the next frame, UI will be created.

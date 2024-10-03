@@ -18,6 +18,8 @@ namespace Unity.Behavior
             "\nIf you only provide the Scene name, Unity loads the first Scene in the list that matches.")]
         [SerializeReference] public BlackboardVariable<string> SceneName;
         [SerializeReference] public BlackboardVariable<LoadSceneMode> Mode;
+        [Tooltip("Only applicable if LoadSceneMode is Additive. Set the loaded scene as the active scene.")]
+        [SerializeReference] public BlackboardVariable<bool> MakeActiveScene = new (false);
 
         [CreateProperty] private bool m_PendingOperation;
         private AsyncOperation m_AsyncOperation;
@@ -42,10 +44,26 @@ namespace Unity.Behavior
             {
                 if (CurrentStatus == Status.Waiting)
                 {
+                    if (MakeActiveScene)
+                    {
+                        SetActiveScene();
+                    }
+
                     AwakeNode(this);
                 }
             };
-            return m_AsyncOperation.isDone ? Status.Success : Status.Waiting;
+
+            if (m_AsyncOperation.isDone)
+            {
+                if (MakeActiveScene)
+                {
+                    SetActiveScene();
+                }
+
+                return Status.Success;
+            }
+
+            return Status.Waiting;
         }
 
         protected override Status OnUpdate()
@@ -71,6 +89,17 @@ namespace Unity.Behavior
             {
                 CurrentStatus = Status.Running;
             }
+        }
+
+        private void SetActiveScene()
+        {
+            if (Mode.Value != LoadSceneMode.Additive)
+            {
+                return;
+            }
+
+            var scene = SceneManager.GetSceneByName(SceneName.Value);
+            SceneManager.SetActiveScene(scene);
         }
     }
 }

@@ -41,6 +41,6 @@ To continue your journey, explore the sample scene and add some more actions in 
 
 ## Additional resources
 
+* [Install Muse Common with the Package Manager](install-muse-common.md)
 * [Create a behavior graph](create-behavior-graph.md)
 * [Unity Behavior editor user interface](user-interface.md)
-* [Behavior graph example](example.md)

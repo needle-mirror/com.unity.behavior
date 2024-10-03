@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
 
 namespace Unity.Behavior
 {

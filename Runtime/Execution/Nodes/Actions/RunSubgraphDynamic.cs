@@ -14,7 +14,7 @@ namespace Unity.Behavior
         protected override Status OnStart()
         {
             SubgraphVariable.OnValueChanged += OnSubgraphChanged;
-            
+
             if (SubgraphVariable?.ObjectValue == null)
             {
                 return Status.Failure;
@@ -35,11 +35,11 @@ namespace Unity.Behavior
                     {
                         Debug.LogWarning($"Running {SubgraphVariable.Value.name} will create a cycle and can not be used as subgraph for {graph}. Select a different graph to run dynamically.");
                         return Status.Failure;
-                    }   
-                }   
+                    }
+                }
             }
 
-            TrySetVariablesOnSubgraph();
+            InitChannelAndBlackboard();
 
             return Subgraph.StartNode(Subgraph.Root) switch
             {
@@ -65,7 +65,7 @@ namespace Unity.Behavior
         protected override void OnEnd()
         {
             SubgraphVariable.OnValueChanged -= OnSubgraphChanged;
-            
+
             if (SubgraphVariable.ObjectValue == null)
             {
                 return;
@@ -82,14 +82,31 @@ namespace Unity.Behavior
             if (Subgraph != null)
             {
                 SubgraphVariable.OnValueChanged -= OnSubgraphChanged;
-                TrySetVariablesOnSubgraph();
+                InitChannelAndBlackboard();
                 StartNode(this);
             }
         }
 
-        private void TrySetVariablesOnSubgraph()
+        private void InitChannelAndBlackboard()
         {
-            if (DynamicOverrides == null)
+            // Initialize default event channels for unassigned channel variables.
+            foreach (BlackboardVariable variable in Subgraph.Blackboard.Variables)
+            {
+                if (typeof(EventChannelBase).IsAssignableFrom(variable.Type) && variable.ObjectValue == null)
+                {
+                    ScriptableObject channel = ScriptableObject.CreateInstance(variable.Type);
+                    channel.name = $"Default {variable.Name} Channel";
+                    variable.ObjectValue = channel;
+                }
+            }
+
+            SetVariablesOnSubgraph();
+        }
+
+        private void SetVariablesOnSubgraph()
+        {
+            // Blackboard value cannot be null but the list can be empty.
+            if (DynamicOverrides.Count == 0)
             {
                 return;
             }
@@ -125,12 +142,18 @@ namespace Unity.Behavior
             {
                 foreach (BlackboardVariable variable in reference.Blackboard.Variables)
                 {
+                    // Shared variables cannot be assigned/modified by this node.
+                    if (reference.SourceBlackboardAsset.IsSharedVariable(variable.GUID))
+                    {
+                        continue;
+                    }
+
                     if (variable.GUID == dynamicOverride.Variable.GUID)
-                    {                    
+                    {
                         variable.ObjectValue = dynamicOverride.Variable.ObjectValue;
                         continue;
                     }
-                    
+
                     if (variable.Name != dynamicOverride.Name || variable.Type != dynamicOverride.Variable.Type)
                     {
                         continue;

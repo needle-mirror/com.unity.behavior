@@ -1,8 +1,7 @@
+using Unity.AppUI.UI;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
-using Unity.AppUI.UI;
-using Unity.Behavior.GenerativeAI;
 using UnityEngine.UIElements;
 
 namespace Unity.Behavior
@@ -61,7 +60,7 @@ namespace Unity.Behavior
 
             EditorApplication.playModeStateChanged += OnEditorStateChange;
             m_Editor.OnSave += base.SaveChanges;
-            m_Editor.DebugAgentSelected += agentID => { m_DebugAgentId = agentID;};
+            m_Editor.DebugAgentSelected += agentID => { m_DebugAgentId = agentID; };
             m_Editor.SetActiveGraphToDebugAgent(m_DebugAgentId);
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
         }

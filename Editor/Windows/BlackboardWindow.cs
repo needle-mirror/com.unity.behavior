@@ -67,11 +67,6 @@ namespace Unity.Behavior
             rootVisualElement.UnregisterCallback<GeometryChangedEvent>(OnGeometryChanged);
             EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
         }
-        
-        private void OnLostFocus()
-        {
-            AutoSaveIfEnabledInEditor();
-        }
 
         private void OnEditorStateChange(PlayModeStateChange stateChange)
         {
@@ -128,6 +123,30 @@ namespace Unity.Behavior
             }
 
             SetWindowTitleFromAsset();
+            UpdateBlackboardEditor();
+        }
+        
+        private void OnLostFocus()
+        {
+            AutoSaveIfEnabledInEditor();
+            UpdateBlackboardEditor();
+        }
+        
+        private void UpdateBlackboardEditor()
+        {
+            if (Editor == null)
+            {
+                return;
+            }
+
+            // Reload the editor if any graph or blackboard assets which the graph is depending on has changed.
+            if (Editor.GraphDependency.Item1 != null)
+            {
+                if (Editor.HasGraphDependencyChanged())
+                {
+                    Editor.Load(Asset);
+                }   
+            }
         }
         
         [InitializeOnLoadMethod]

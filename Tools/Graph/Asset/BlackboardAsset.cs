@@ -55,7 +55,7 @@ namespace Unity.Behavior.GraphFramework
         /// <summary>
         /// Delegate for deleted blackboard assets.
         /// </summary>
-        public delegate void BlackboardDeletedCallback();
+        public delegate void BlackboardDeletedCallback(BlackboardAsset blackboard);
         
         /// <summary>
         /// Callback used for notifying when the asset is deleted.
@@ -65,7 +65,7 @@ namespace Unity.Behavior.GraphFramework
         /// <summary>
         /// Invokes the OnBlackboardDeleted callback.
         /// </summary>
-        public void InvokeBlackboardDeleted() => OnBlackboardDeleted.Invoke();
+        public void InvokeBlackboardDeleted() => OnBlackboardDeleted.Invoke(this);
 
         internal virtual void OnValidate()
         {

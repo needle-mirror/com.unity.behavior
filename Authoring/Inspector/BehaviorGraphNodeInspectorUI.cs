@@ -187,6 +187,12 @@ namespace Unity.Behavior
         {
             string nicifiedFieldName = Util.NicifyVariableName(fieldName);
             BaseLinkField field = LinkFieldUtility.CreateNodeLinkField(fieldName, fieldType);
+
+            if (field == null)
+            {
+                return null;
+            }
+            
             VisualElement fieldContainer = new VisualElement();
             fieldContainer.AddToClassList("Inspector-FieldContainer");
             fieldContainer.Add(new Label(nicifiedFieldName));

@@ -35,6 +35,12 @@ namespace Unity.Behavior
             }
             reflectionElement.CreateFields(nodeInfo);
             reflectionElement.Node = Model as BehaviorGraphNodeModel;
+            
+            // Keep the linked label prefix updated on Blackboard asset group variables.
+            foreach (BaseLinkField field in GetLinkFields())
+            {
+                Util.UpdateLinkFieldBlackboardPrefixes(field);
+            }
         }
     }
 }

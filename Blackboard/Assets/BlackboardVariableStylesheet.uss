@@ -1,7 +1,7 @@
 .BlackboardVariable {
     height: auto;
-    margin-top: 4px;
-    margin-bottom: 4px;
+    padding-top: 4px;
+    padding-bottom: 4px;
     flex-direction: column;
     align-items: flex-start;
     justify-content: space-between;
@@ -27,19 +27,13 @@
     background-color: var(--appui-backgrounds-300);
 }
 
-/*.BlackboardVariableValue_SingleLine {
-    flex-direction: row;
-    align-items: center;
-    flex-shrink: 0;
-}*/
-
 #Info {
     justify-content: space-between;
     align-items: center;
     align-self: stretch;
     flex-direction: row;
-    height: 20px;
-    max-height: 20px;
+    height: 24px;
+    max-height: 24px;
 }
 
 #Info Label {
@@ -79,7 +73,7 @@
 }
 
 #VariableTypeContainer {
-    height: 20px;
+    height: 100%;
     max-width: 50%;
     align-self: flex-start;
     align-items: center;
@@ -92,22 +86,28 @@
     padding: 0;
 }
 
-.Expanded #ValueContainer {
-    display: flex;
+#ExpandedContainer {
+    width: 100%;
 }
 
-.Collapsed #ValueContainer {
+.Expanded #ExpandedContainer {
+    display: flex;
+    margin-top: 2px;
+}
+
+.Collapsed #ExpandedContainer {
     display: none;
 }
 
 .Collapsed {
-    height: 20px;
+    height: 28px;
 }
 
 .Collapsed #VariableContainer {
     background-color: initial;
-    height: 20px;
-    max-height: 20px;
+    min-height: 24px;
+    height: 24px;
+    max-height: 24px;
     align-items: center;
 }
 
@@ -120,6 +120,7 @@
     flex-direction: row;
     height: auto;
     min-height: 20px;
+    width: 100%;
     flex-grow: 1;
 }
 
@@ -219,6 +220,35 @@ ScrollView {
 }
 
 .unity-object-field {
-    margin-left: 0px;
-    margin-right: 0px;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.SharedVariable #NameContainer {
+    height: 18px;
+}
+
+.SharedVariable #Name {
+    border-bottom-width: 1px;
+    border-bottom-color: #C9B33F;
+}
+
+#VariableToggleContainer {
+    flex-direction: row;
+    height: 20px;
+    margin-top: 4px;
+}
+
+#ExposedToggle {
+    margin-right: 12px;
+}
+
+#SharedToggle {
+    margin-right: 12px;
+}
+
+#SharedToggle #appui-toggle__label {
+    border-bottom-width: 1px;
+    border-bottom-color: #C9B33F;
+    height: 15px;
 }

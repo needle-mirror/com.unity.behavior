@@ -9,7 +9,7 @@ namespace Unity.Behavior
         public override bool Process(CreateVariableFromLinkFieldCommand command)
         {
             VariableModel variable = Activator.CreateInstance(command.VariableType, command.Args) as VariableModel;
-            variable.Name = command.Name;
+            variable.Name = BlackboardUtils.GetNewVariableName(command.Name, BlackboardAsset);
             DispatcherContext.BlackboardAsset.Variables.Add(variable);
             BlackboardView.FocusOnVariableNameField(variable);
 

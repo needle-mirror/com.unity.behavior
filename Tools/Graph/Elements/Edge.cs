@@ -83,6 +83,7 @@ namespace Unity.Behavior.GraphFramework
         private const int kMaxCircleRadius = 12;
         private const float kPadding = 2.0f;
         private float m_Thickness = 2.0f;
+        private const float kArrowHalfThickness = 8.0f;
         private float k_MinWidth => m_Thickness + 2 * kPadding;
 
         // Cached vertex data
@@ -234,8 +235,8 @@ namespace Unity.Behavior.GraphFramework
         {
             // Draw the arrow at the end.
             Vector2 arrowEndPosition = endPosition - Vector2.up;
-            DrawLine(arrowEndPosition + new Vector2(-8, -8), arrowEndPosition, obj, color, thickness);
-            DrawLine(arrowEndPosition + new Vector2(+8, -8), arrowEndPosition, obj, color, thickness);
+            DrawLine(arrowEndPosition + new Vector2(-kArrowHalfThickness, -kArrowHalfThickness), arrowEndPosition, obj, color, thickness);
+            DrawLine(arrowEndPosition + new Vector2(+kArrowHalfThickness, -kArrowHalfThickness), arrowEndPosition, obj, color, thickness);
 
             // Draw the triangle at the start
             DrawTriangle(startPosition, obj, color, 12 /* Triangle Size */);
@@ -404,13 +405,29 @@ namespace Unity.Behavior.GraphFramework
         {
             Vector2 startPositionWorld = m_StartWorldPosition;
             Vector2 endPositionWorld = m_EndWorldPosition;
-            Vector2 center = (startPositionWorld + endPositionWorld) / 2;
-            Vector3 scale = m_GraphView != null ? m_GraphView.Viewport.transform.scale : Vector3.one;
-            float width = Math.Max(Math.Abs(endPositionWorld.x - startPositionWorld.x)/scale.x, k_MinWidth) + k_MinWidth;
-            float height = Math.Max(Math.Abs(endPositionWorld.y - startPositionWorld.y)/scale.y, k_MinWidth) + k_MinWidth;
-            this.transform.position = m_GraphView != null ? m_GraphView.Viewport.WorldToLocal(center - new Vector2(width, height) / 2) : center;
-            this.style.width = width;
-            this.style.height = height;
+            Vector2 topLeftWorld = new Vector2(Mathf.Min(startPositionWorld.x, endPositionWorld.x), Mathf.Min(startPositionWorld.y, endPositionWorld.y));
+            Vector2 bottomRightWorld = new Vector2(Mathf.Max(startPositionWorld.x, endPositionWorld.x), Mathf.Max(startPositionWorld.y, endPositionWorld.y));
+            
+            Vector2 scale = worldTransform.lossyScale;
+            float xPadding = kPadding + kArrowHalfThickness;
+            float yPadding = kVerticalMargins + kPadding;
+
+            if (startPositionWorld.y > endPositionWorld.y - (kVerticalMargins + kMaxCircleRadius))
+            {
+                topLeftWorld.y -= yPadding * scale.y;
+                bottomRightWorld.y += yPadding * scale.y;
+            }
+            
+            topLeftWorld.x -= xPadding * scale.x;
+            bottomRightWorld.x += xPadding * scale.x;
+             
+            float width = Math.Abs(bottomRightWorld.x - topLeftWorld.x)/scale.x;
+            float height = Math.Abs(bottomRightWorld.y - topLeftWorld.y)/scale.y;
+            
+            transform.position = m_GraphView != null ? m_GraphView.Viewport.WorldToLocal(topLeftWorld) : topLeftWorld;
+            
+            style.width = width;
+            style.height = height;
         }
 
         private void InitEdgeDrawData()

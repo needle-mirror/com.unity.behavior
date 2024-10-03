@@ -24,14 +24,18 @@ namespace Unity.Behavior
         internal static BaseLinkField CreateNodeLinkField(string label, Type type)
         {
             BaseLinkField field = CreateForType(label, type);
-            field.OnLinkChanged += _ =>
+
+            if (field != null)
             {
-                field.Dispatcher.DispatchImmediate(new SetNodeVariableLinkCommand(field.Model as NodeModel, field.FieldName, field.LinkVariableType, field.LinkedVariable, true));
-            };
-            field.RegisterCallback<LinkFieldValueChangeEvent>(evt =>
-            {
-                field.Dispatcher.DispatchImmediate(new SetNodeVariableValueCommand(field.Model as NodeModel, field.FieldName, evt.Value, true));
-            });
+                field.OnLinkChanged += _ =>
+                {
+                    field.Dispatcher.DispatchImmediate(new SetNodeVariableLinkCommand(field.Model as NodeModel, field.FieldName, field.LinkVariableType, field.LinkedVariable, true));
+                };
+                field.RegisterCallback<LinkFieldValueChangeEvent>(evt =>
+                {
+                    field.Dispatcher.DispatchImmediate(new SetNodeVariableValueCommand(field.Model as NodeModel, field.FieldName, evt.Value, true));
+                });
+            }
 
             return field;
         }

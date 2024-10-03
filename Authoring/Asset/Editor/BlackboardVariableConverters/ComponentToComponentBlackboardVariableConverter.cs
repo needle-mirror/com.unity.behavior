@@ -7,6 +7,11 @@ namespace Unity.Behavior
     {
         public bool CanConvert(Type fromType, Type toType)
         {
+            if (fromType == toType)
+            {
+                return false;
+            }
+            
             return fromType.IsSubclassOf(typeof(Component)) && toType.IsSubclassOf(typeof(Component));
         }
 

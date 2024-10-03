@@ -287,18 +287,84 @@ namespace Unity.Behavior
                     variables.Add(new VariableInfo { Name = property.Name, Type = property.PropertyType, DefaultValue = property.GetValue(objInstance), Tooltip = GetVariableTooltip(property) } );
                 }
             }
-
+            
             FieldInfo[] fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public);
             foreach (FieldInfo field in fields)
             {
                 if (typeof(BlackboardVariable).IsAssignableFrom(field.FieldType))
                 {
+                    if (!HasSerializeFieldAttribute(field))
+                    {
+                        Debug.LogWarning("SerializeReference attribute missing from field " + field.Name + " on type " + type.Name);
+                    }
+
+                    Type invalidType = null;
+                    if (!IsBlackboardVariableTypeValid(field, ref invalidType)) 
+                    {
+                        Debug.LogWarning("Invalid generic type for field " + field.Name + " of type " + invalidType + " on " + type.FullName + ". BlackboardVariable types must derive from UnityEngine.Object.");
+                    }
+                    
                     variables.Add(new VariableInfo { Name = field.Name, Type = field.FieldType, DefaultValue = field.GetValue(objInstance), Tooltip = GetVariableTooltip(field) } );
                 }
+                else if (field.FieldType == typeof(Node) && type.IsSubclassOf(typeof(Composite)))
+                {
+                    if (!HasSerializeFieldAttribute(field))
+                    {
+                        Debug.LogWarning("SerializeReference attribute missing from field " + field.Name + " on type " + type.Name);
+                    }
+                }
+                
             }
             return variables;
         }
 
+        internal static bool HasSerializeFieldAttribute(FieldInfo field)
+        {
+            object[] attributes = field.GetCustomAttributes(false);
+
+            foreach (var attribute in attributes)
+            {
+                if (attribute is SerializeReference)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        internal static bool IsBlackboardVariableTypeValid(FieldInfo field, ref Type invalidType)
+        {
+            Type underlyingSystemType = field.FieldType.UnderlyingSystemType;
+
+            if (!underlyingSystemType.IsGenericType) 
+            { 
+                return true;
+            }
+
+            bool allArgumentsValid = true; 
+  
+            foreach (Type type in underlyingSystemType.GenericTypeArguments)
+            {
+                bool isObject = type.IsSubclassOf(typeof(UnityEngine.Object));
+                bool isPrimitive = type.IsPrimitive;
+                bool isEnum = type.IsEnum;
+                bool isStatic = Util.GetSupportedTypes().Contains(type);
+                    
+                if (!isObject && 
+                    !isPrimitive &&
+                    !isEnum &&
+                    !isStatic)
+                {
+                    invalidType = type;
+                    allArgumentsValid = false; 
+                    break;
+                }
+            }
+
+            return allArgumentsValid;
+        } 
+        
         internal static List<string> GetStoryVariableNames(string story)
         {
             List<string> splits = story.Split(' ').ToList();

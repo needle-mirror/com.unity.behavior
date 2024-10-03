@@ -20,6 +20,8 @@ namespace Unity.Behavior
         
         public bool AutoSaveIsEnabled = true;
         
+        public (BehaviorAuthoringGraph, long) GraphDependency;
+        
         BlackboardView IDispatcherContext.BlackboardView => m_Blackboard;
         GraphEditor IDispatcherContext.GraphEditor => null;
         GraphView IDispatcherContext.GraphView => null;
@@ -94,6 +96,13 @@ namespace Unity.Behavior
             m_AssetIcon.Show();
 
             DispatchOutstandingAssetCommands();
+            
+            // Save a dependency to the graph if the blackboard is a graph blackboard.
+            BehaviorAuthoringGraph graph = BehaviorGraphAssetRegistry.TryGetAssetFromGraphBlackboard(Asset);
+            if (graph != null)
+            {
+                GraphDependency = (graph, graph.VersionTimestamp);
+            }
         }
         
         private void DispatchOutstandingAssetCommands()
@@ -111,6 +120,7 @@ namespace Unity.Behavior
             Dispatcher.RegisterHandler<CreateVariableCommand, CreateVariableCommandHandler>();
             Dispatcher.RegisterHandler<RenameVariableCommand, RenameVariableCommandHandler>();
             Dispatcher.RegisterHandler<DeleteVariableCommand, DeleteVariableCommandHandler>();
+            Dispatcher.RegisterHandler<SetVariableIsSharedCommand, SetVariableIsSharedCommandHandler>();
             
             Dispatcher.RegisterHandler<SetBlackboardVariableValueCommand, SetBlackboardVariableValueCommandHandler>();
             Dispatcher.RegisterHandler<CreateVariableFromSerializedTypeCommand, CreateVariableFromSerializedTypeCommandHandler>();
@@ -138,7 +148,6 @@ namespace Unity.Behavior
             SearchWindow.Show("Open Blackboard", searchItems,
                 item => BlackboardWindowDelegate.Open(item.Data as BehaviorBlackboardAuthoringAsset),
                 this.Q<ActionButton>("OpenAssetButton"), 200, 300);
-            
 #endif
         }
 
@@ -147,6 +156,22 @@ namespace Unity.Behavior
             Asset.BuildRuntimeBlackboard();
             Asset.SaveAsset();
             OnSave?.Invoke();
+        }
+        
+        internal bool HasGraphDependencyChanged()
+        {
+            if (GraphDependency.Item1 == null)
+            {
+                return true;
+            }
+
+            // Check if the graph version timestamp has changed.
+            if (GraphDependency.Item1.VersionTimestamp!= GraphDependency.Item2)
+            {
+                return true;
+            }
+
+            return false;
         }
     }
 }

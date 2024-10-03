@@ -4,60 +4,62 @@ using Unity.Behavior;
 using Unity.Properties;
 using Modifier = Unity.Behavior.Modifier;
 
-[Serializable, GeneratePropertyBag]
-[NodeDescription(
-    name: "Cooldown",
-    description: "Imposes a mandatory wait time between executions to regulate action frequency.",
-    story: "Cooldowns for [duration] seconds after execution",
-    category: "Flow",
-    id: "a9ff45a058927aa68b4328a5daf34161")]
-internal partial class CooldownModifier : Modifier
+namespace Unity.Behavior
 {
-    [SerializeReference] public BlackboardVariable<float> Duration;
-    [CreateProperty] private float m_CooldownRemainingTime;
-
-    protected override Status OnStart()
+    [Serializable, GeneratePropertyBag]
+    [NodeDescription(
+        name: "Cooldown",
+        description: "Imposes a mandatory wait time between executions to regulate action frequency.",
+        story: "Cooldowns for [duration] seconds after execution",
+        category: "Flow",
+        id: "a9ff45a058927aa68b4328a5daf34161")]
+    internal partial class CooldownModifier : Modifier
     {
-        if (m_CooldownRemainingTime > 0)
+        [SerializeReference] public BlackboardVariable<float> Duration;
+        [CreateProperty] private float m_CooldownRemainingTime;
+
+        protected override Status OnStart()
         {
-            return Status.Failure;
+            if (m_CooldownRemainingTime > 0)
+            {
+                return Status.Failure;
+            }
+
+            m_CooldownRemainingTime = Duration.Value;
+
+            if (Child == null)
+            {
+                return Status.Success;
+            }
+
+            var status = StartNode(Child);
+            if (status == Status.Running)
+            {
+                return Status.Waiting;
+            }
+
+            return status;
         }
 
-        m_CooldownRemainingTime = Duration.Value;
-
-        if (Child == null)
+        protected override Status OnUpdate()
         {
-            return Status.Success;
+            if (m_CooldownRemainingTime > 0)
+            {
+                m_CooldownRemainingTime -= Time.deltaTime;
+            }
+
+            var status = Child.CurrentStatus;
+            if (status == Status.Running)
+            {
+                return Status.Waiting;
+            }
+
+            return status;
         }
 
-        var status = StartNode(Child);
-        if (status == Status.Running)
+        protected override void OnEnd()
         {
-            return Status.Waiting;
+            m_CooldownRemainingTime = 0;
         }
-        
-        return status;
-    }
-
-    protected override Status OnUpdate()
-    {
-        if (m_CooldownRemainingTime > 0)
-        {
-            m_CooldownRemainingTime -= Time.deltaTime;
-        }
-
-        var status = Child.CurrentStatus;
-        if (status == Status.Running)
-        {
-            return Status.Waiting;
-        }
-
-        return status;
-    }
-
-    protected override void OnEnd()
-    {
-        m_CooldownRemainingTime = 0;
     }
 }
-

@@ -177,12 +177,13 @@ NodeConditionElement {
 }
 
 .SwitchNodeUI #Content {
-    min-width: 160px;
+    min-width: 111px;
     flex-direction: column;
 }
 
-.SwitchNodeUI LinkField {
+.SwitchNodeUI BehaviorLinkField {
     flex-grow: 1;
+    margin: 0;
 }
 
 /* Event node styles */

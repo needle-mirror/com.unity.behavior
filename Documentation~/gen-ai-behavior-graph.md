@@ -17,11 +17,6 @@ To create a behavior graph or a branch of an exiting behavior graph using genera
     ![New brach with nodes](Images/gen-ai-graph.png)
     
     If you specify an action that doesn't exist in the project, Unity Behavior creates a placeholder node in the behavior graph. For more information on how to work with placeholder nodes, refer to [Placeholder node in a behavior graph](placeholder-nodes.md).
-3. (Optional) To refine the generated behavior, type the changes you want to make in the **Correction?** panel. For example, `Instead of sequence, I want these actions to be done in parallel.`.
-4. Select **Apply Correction**.
-
-    ![Updated branch](Images/corrected-node.png)
-    Note that the new **Run In Parallel** node replaces the **Sequence** node used in the behavior graph generated in Step 2.
 
 After generating a branch, you can modify the behavior graph as needed. You can rearrange the nodes to fit your requirements, including adding, deleting, or editing the nodes and branches. Generative AI typically provides a good foundation for the behavior, making it easier for you to refine and customize.
 

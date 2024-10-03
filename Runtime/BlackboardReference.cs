@@ -29,14 +29,14 @@ namespace Unity.Behavior
                 m_Source = value;
                 if (value != null)
                 {
-                    m_Blackboard = m_Blackboard.CopyBlackboard(value.Blackboard, SourceBlackboardAsset);   
+                    m_Blackboard.GenerateInstanceData(value.Blackboard, SourceBlackboardAsset);   
                 }
             }
         }
         
         /// <summary>
         /// Adds a variable of a given type and value to the blackboard. A variable will only be added if one with the
-        /// same name and type does not already exist within the blackboard's variables.
+        /// same name does not already exist within the blackboard's variables.
         /// </summary>
         /// <param name="name">The name of the variable</param> 
         /// <param name="value">The value to assign to be assigned to the variable</param>

@@ -6,6 +6,9 @@ uid: predefined-node
 
 Use this section to apply the pre-defined action, event, and flow nodes to the behavior graph.
 
+> [!NOTE]  
+> You can't modify the pre-defined nodes, but you can inspect their script using the **Inspect Script** option in Behavior graph's **Inspector**. Review these nodes to learn and gain valuable insights on how to create your own custom nodes.
+
 1. Right-click an empty area of the Unity Behavior graph editor and click **Add**.
 
     The **Add Node** window appears.  

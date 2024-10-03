@@ -241,26 +241,28 @@ namespace Unity.Behavior
             {
                 CreateSharedVariableElement(variable.Name, variable.Type);
             }
-            else
+            else if (variable.IsExposed)
             {
                 CreateField(variable.Name, variable.Type);   
             }
         }
 
-        private VisualElement CreateSharedVariableElement(string fieldName, Type fieldType)
+        private void CreateSharedVariableElement(string fieldName, Type fieldType)
         {
-            string nicifiedFieldName = Util.NicifyVariableName(fieldName);
             BaseLinkField field = LinkFieldUtility.CreateNodeLinkField(fieldName, fieldType);
             VisualElement fieldContainer = new VisualElement();
             fieldContainer.AddToClassList("Inspector-FieldContainer");
-            fieldContainer.Add(new Label($"{nicifiedFieldName} (Shared)"));
+            Label label = new Label(fieldName);
+            label.AddToClassList("SharedVariableLabel");
+            VisualElement labelContainer = new VisualElement();
+            labelContainer.name = "SharedVariableLabelContainer";
+            labelContainer.Add(label);
+            fieldContainer.Add(labelContainer);
             fieldContainer.Add(field);
             NodeProperties.Add(fieldContainer);
             field.AddToClassList("LinkField-Light");
             field.SetEnabled(false);
-            field.tooltip = "Variables marked as 'Shared' can not be assigned through a subgraph node.";
-
-            return field;
+            field.tooltip = "Variables marked as 'Shared' can not be assigned through a subgraph node. Set the shared variable value from the blackboard that it belongs to.";
         }
     }
 }

@@ -9,9 +9,9 @@ namespace Unity.Behavior
     /// </summary>
     [Serializable, GeneratePropertyBag]
     [NodeDescription(
-        name: "Start On Event Message", 
-        category: "Events", 
-        story: "When a message is received on [ChannelVariable]", 
+        name: "Start On Event Message",
+        category: "Events",
+        story: "When a message is received on [ChannelVariable]",
         description: "Starts the subgraph upon receiving an event message.",
         id: "a90ecb9b9ff9932eb96f04424549494c")]
     internal partial class StartOnEvent : Modifier
@@ -65,9 +65,9 @@ namespace Unity.Behavior
         {
             if (Child != null)
             {
-                EndNode(Child);                
+                EndNode(Child);
             }
-            
+
             // Otherwise, reset and wait for next message.
             m_BranchRunning = false;
             if (Mode == TriggerBehavior.Default)
@@ -79,7 +79,7 @@ namespace Unity.Behavior
         }
 
         /// <inheritdoc cref="OnEnd" />
-        protected override void OnEnd() 
+        protected override void OnEnd()
         {
             UnregisterListener();
             if (ChannelVariable != null)
@@ -110,13 +110,16 @@ namespace Unity.Behavior
             {
                 m_CurrentChannel.UnregisterListener(m_CaptureVariablesDelegate);
             }
-            
+
             // No subgraph exists. Awaken this node. 
             if (Child == null)
             {
                 AwakeNode(this);
                 return;
             }
+
+            // Ensures the node is Waiting state before starting the subgraph.
+            CurrentStatus = Status.Waiting;
 
             // A subgraph exists but is not running. Start it.
             if (!m_BranchRunning)
@@ -132,7 +135,7 @@ namespace Unity.Behavior
                 StartNode(Child);
                 return;
             }
-            
+
             // The subgraph is running. Check for interrupt.
             if (Mode == TriggerBehavior.Restart)
             {
@@ -140,7 +143,7 @@ namespace Unity.Behavior
                 StartNode(Child);
             }
         }
-        
+
         private void RegisterListener()
         {
             m_CurrentChannel = EventChannel;
@@ -150,7 +153,7 @@ namespace Unity.Behavior
                 m_CurrentChannel.RegisterListener(m_CaptureVariablesDelegate);
             }
         }
-        
+
         private void UnregisterListener()
         {
             if (m_CurrentChannel)

@@ -71,7 +71,8 @@ namespace Unity.Behavior
                 RunSubgraph runSubgraph = node as RunSubgraph;
                 GraphAssetProcessor subgraphAssetProcessor = new GraphAssetProcessor(subgraphAsset, graphAssetProcessor.Graph);
                 subgraphAssetProcessor.Cleanup();
-                subgraphAssetProcessor.InitializeBlackboard(GetVariableOverridesFromFields(graphAssetProcessor, subgraphNodeModel, subgraphAsset));
+                var variableOverridesFromFields = GetVariableOverridesFromFields(graphAssetProcessor, subgraphNodeModel, subgraphAsset);
+                subgraphAssetProcessor.InitializeBlackboard(variableOverridesFromFields);
                 BehaviorGraphModule subgraph = subgraphAssetProcessor.BuildGraph();
 
                 // The only value assigned to the runtime node is an instance of the runtime graph.
@@ -93,7 +94,7 @@ namespace Unity.Behavior
                 BlackboardVariable variableToAssign = graphAssetProcessor.GetVariableFromFieldModel(fieldModel);
                 if (variableToAssign.GUID == default)
                 {
-                    variableToAssign = variableToAssign.Duplicate();
+                    variableToAssign.Name = fieldModel.FieldName;
                     variableToAssign.GUID = SerializableGUID.Generate();
                 }
                 if (variableToAssign == null) // If no variable is linked to the field, it is not an override.
@@ -110,6 +111,7 @@ namespace Unity.Behavior
                 if (variableToReplace != null)
                 {
                     variableOverrides.TryAdd(variableToReplace.ID, variableToAssign);
+                    variableToReplace = null;
                 }
 
                 // Additionally, check for variables in the added blackboards.

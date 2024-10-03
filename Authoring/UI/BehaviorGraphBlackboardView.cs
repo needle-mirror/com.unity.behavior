@@ -47,9 +47,17 @@ namespace Unity.Behavior
                 });
                 
                 // Register change callbacks.
+                blackboardAsset.OnBlackboardChanged -= InitializeListView;
                 blackboardAsset.OnBlackboardChanged += InitializeListView;
-                blackboardAsset.OnBlackboardDeleted += () => { Dispatcher.DispatchImmediate(new RemoveBlackboardAssetFromGraphCommand(GraphAsset, blackboardAsset, false)); };
+
+                blackboardAsset.OnBlackboardDeleted -= OnRemoveBlackboardAssetFromGraphCommand;
+                blackboardAsset.OnBlackboardDeleted += OnRemoveBlackboardAssetFromGraphCommand;
             }
+        }
+
+        private void OnRemoveBlackboardAssetFromGraphCommand(BlackboardAsset blackboardAsset)
+        {
+            Dispatcher.DispatchImmediate(new RemoveBlackboardAssetFromGraphCommand(GraphAsset, (BehaviorBlackboardAuthoringAsset)blackboardAsset, false));
         }
 
         private BlackboardAssetElement CreateAndGetBlackboardAssetElement(BlackboardAsset asset)

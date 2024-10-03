@@ -234,7 +234,7 @@ namespace Unity.Behavior
 
             void CreateVariableFromMenuAction(string variableTypeName, Type type)
             {
-                dispatcher.DispatchImmediate(new CreateVariableCommand($"New {variableTypeName}", BlackboardUtils.GetVariableModelTypeForType(type)));
+                dispatcher.DispatchImmediate(new CreateVariableCommand(variableTypeName, BlackboardUtils.GetVariableModelTypeForType(type)));
             }
 
             List<BlackboardOption> blackboardTypes = BlackboardRegistry.GetDefaultBlackboardOptions();
@@ -316,7 +316,10 @@ namespace Unity.Behavior
         
         public static void UpdateLinkFieldBlackboardPrefixes(BaseLinkField linkField)
         {
-            linkField.LinkedLabelPrefix = GetBlackboardVariablePrefix(linkField.Model.Asset, linkField.LinkedVariable);
+            if (linkField.Model != null && linkField.Model.Asset != null)
+            {
+                linkField.LinkedLabelPrefix = GetBlackboardVariablePrefix(linkField.Model.Asset, linkField.LinkedVariable);   
+            }
         }
 
         public static string GetBlackboardVariablePrefix(GraphAsset graphAsset, VariableModel variableModel)

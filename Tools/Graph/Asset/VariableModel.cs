@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Unity.Behavior.GraphFramework
 {
@@ -30,8 +31,36 @@ namespace Unity.Behavior.GraphFramework
         /// <summary>
         /// Bool indicating whether the variable is shared.
         /// </summary>
-        [SerializeField]
-        public bool IsShared = false;
+        public bool IsShared
+        {
+            get => m_IsShared;
+            set
+            {
+                if (m_IsShared != value)
+                {
+                    m_IsShared = value;
+                    IsSharedChanged?.Invoke();
+                }
+            }
+        }
+        
+        [SerializeField, FormerlySerializedAs("IsShared")]
+        private bool m_IsShared = false;
+        
+        /// <summary>
+        /// Delegate for variable shared setting changes.
+        /// </summary>
+        public delegate void IsSharedChangedCallback();
+
+        /// <summary>
+        /// Callback used for changes in the variable IsShared value.
+        /// </summary>
+        public event IsSharedChangedCallback IsSharedChanged = delegate { };
+        
+        /// <summary>
+        /// Invokes the OnIsSharedChanged callback.
+        /// </summary>
+        internal void InvokeIsSharedChanged() => IsSharedChanged.Invoke();
 
         /// <summary>
         /// Interface for getting or setting the value of the variable.

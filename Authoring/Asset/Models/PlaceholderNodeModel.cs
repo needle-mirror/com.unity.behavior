@@ -57,23 +57,23 @@ namespace Unity.Behavior
             NamedChildren = nodeInfo.NamedChildren;
         }
 
-        public PlaceholderNodeModel(BehaviorAuthoringGraph.NodeModelInfo nodeInfo) : base()
+        internal PlaceholderNodeModel(BehaviorAuthoringGraph.NodeModelInfo nodeModelInfo) : base()
         {
-            Name = nodeInfo.Name;
-            Story = nodeInfo.Story;
-            if (nodeInfo.Variables != null)
+            Name = nodeModelInfo.Name;
+            Story = nodeModelInfo.Story;
+            if (nodeModelInfo.Variables != null)
             {
                 Variables = new List<VariableInfo>();
-                foreach (VariableInfo variable in nodeInfo.Variables)
+                foreach (VariableInfo variable in nodeModelInfo.Variables)
                 {
                     Variables.Add(new VariableInfo { Name = variable.Name, Type = variable.Type });
                 }
             }
-            NamedChildren = nodeInfo.NamedChildren;
+            NamedChildren = nodeModelInfo.NamedChildren;
         }
 
-        protected PlaceholderNodeModel(PlaceholderNodeModel nodeModelOriginal, BehaviorAuthoringGraph asset)
-            : base(nodeModelOriginal, asset)
+        protected PlaceholderNodeModel(PlaceholderNodeModel nodeModelOriginal, BehaviorAuthoringGraph asset) : 
+            base(nodeModelOriginal, asset)
         {
             Name = nodeModelOriginal.Name;
             Story = nodeModelOriginal.Story;

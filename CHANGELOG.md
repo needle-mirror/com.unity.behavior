@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.3] - 2024-10-03
+
+### Added
+- TriggerEvent now logs message when EventChannel is not assigned.
+- Added MakeSceneActive option to LoadLevel node for Additive mode. 
+- Added new UI visualization for Shared blackboard variables.
+
+### Changed
+- Improved logging details when an exception is raised about an invalid node transformer.
+- Added logging on domain reload when any node BlackboardVariable is found that doesn't have the [SerializeReference] attribute.
+- Added logging on domain reload when any Composite field of type Node is found that doesn't have the [SerializeReference] attribute.
+- Added missing Switch node inspector.
+- Fixed Shared Blackboard Variable causing a stack overflow in case it was referencing itself.
+- Fixed invalid generation of Shared Blackboard Variable on the source runtime blackboard asset.
+- Blackboard variable Exposed and Shared values can now be toggled on and off from the variable instead of right-clicking. 
+- Changed variable renaming to trim out any leading or trailing whitespace. 
+- The branch generation correction feature has been disabled for backend related issues.
+
+### Fixed
+- Fixed dynamic subgraph not initializing local event channels.
+- Fixed dynamic subgraph overriding shared blackboard variables.
+- Fixed static subgraphs not passing down same type component variables properly.
+- Fixed audio resources being able to be passed into an audio clip link field when they shouldn't be.
+- Fixed any component being able to be passed into any component link field instead of only when it's a subclass.
+- Fixed cast variable types not working correctly in subgraphs.
+- Fixed subgraph blackboard variables not marked as exposed showing in parent graph node inspector.
+- Fixed a bug where StartOnEvent node (Restart mode) would only execute the first node of a sequence after restarting in case it was restarted by a TriggerEvent node on the same frame.
+- Fixed an issue with node wizard preview not displaying when typed variable fields were added.
+- Fixed Muse branch generation correction deleting the previously generated branch if a valid output failed to be generated.
+- Fixed placeholders not generating properly with generative AI.
+- Fixed top and bottom lines of edge where the end is above the start not being selectable.
+- Fixed Blackboard editor not syncing with changes from graph when the graph default blackboard was being edited.
+- Fixed nullref exception caused by renaming a type serialized in a Blackboard Variable.
+- Fixed blackboard and graph editor toolbar height changing on smaller window sizes.
+
 ## [1.0.2] - 2024-09-20
 
 ### Added
@@ -14,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Nodes that generate their own children (for example Switch and Flow nodes with named ports) will auto align their children better than before.
 - Condition context menu will show "Inspect Script" instead of "Edit Script" when opened for a built-in condition.
 - Switch Node: Removed the warnings about no connected child during operation to avoid spamming the log.
+- Creating or renaming variables with a duplicate name is not allowed anymore within a Blackboard asset. 
 
 ### Fixed
 - Text truncate issues on story editor dropdown elements.
@@ -22,6 +58,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Nodes with inherited named children (i.e. Node connections) weren't showing the base class' nodes.
 - Fixed Event Channel variables not appearing in link searches for non-event nodes.
 - Fixed the Self variable not working in Dynamic Subgraphs.
+- Fixed `GraphAssetProcessor` throwing exception when `AssetDatabase.SaveAssets` is called before the end of domain reload.
+- Fixed dynamic subgraph not initializing local event channels.
+- Fixes a bug where the StartOnEvent node could stop working if it received a message the same frame its subgraph ended.
+- Fixed slowdown when adding lots of variables to a blackboard asset referenced in a graph.
 
 ## [1.0.1] - 2024-09-18
 
@@ -30,6 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Set variable value didn't save the value if it was a cast blackboard variable.
 - Text alignment for conditions in the inspector will now center correctly.
 - Added missing space in variable comparison condition text.
+- Fixed link fields being empty when duplicating a node that has a reference to an external blackboard variable.
 
 
 ## [1.0.0] - 2024-09-17

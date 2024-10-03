@@ -17,8 +17,13 @@ Label {
 }
 
 .LinkField {
-	flex-grow: 2;
+	flex-grow: 1;
 	width: 60%;
+}
+
+BehaviorLinkField {
+	flex-shrink: 0;
+	flex-grow: 1;
 }
 
 .LinkedLabelContainer > Label {
@@ -259,4 +264,23 @@ ActionButton {
 
 .ToggleOptionField Toggle {
 	width: auto;
+}
+
+#SharedVariableLabelContainer {
+	flex-grow: 1;
+	flex-basis: 0;
+	width: 40%;
+}
+
+.SharedVariableLabel {
+	flex-grow: 0;
+	flex-shrink: 1;
+	align-self: flex-start;
+	-unity-text-align: middle-left;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	margin: 0 4px 0 0;
+	padding: 0;
+	border-bottom-width: 1px;
+	border-bottom-color: #C9B33F;
 }

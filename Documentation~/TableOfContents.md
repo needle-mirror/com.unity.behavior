@@ -5,6 +5,7 @@
    * [Unity Behavior user interface](user-interface.md)
 * [Get started with Unity Behavior](get-started.md)
    * [Install Unity Behavior with the Package Manager](install-behavior.md)
+   * [Install Muse Common with the Package Manager](install-muse-common.md)
    * [Create a behavior graph](create-behavior-graph.md)
      * [Create a custom node](create-custom-node.md)
      * [Use a pre-defined node](predefined-node.md)
@@ -19,3 +20,4 @@
        * [Best practices for using generative AI](gen-ai-best-practices.md)
    * [Behavior graph example](example.md)
    * [Debug the Agent in real time during Play mode](debug.md)
+   * [Troubleshooting issues with Unity Behavior](troubleshoot.md)

@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -74,6 +75,47 @@ namespace Unity.Behavior.GraphFramework
         public static string GetArrowUnicode()
         {
             return "\u2192";
+        }
+
+        public static string GetNewVariableName(string typeName, BlackboardAsset asset)
+        {
+            string variableName = $"New {typeName}";
+            
+            string pattern = @"^" + Regex.Escape(variableName) + @"(?: \((\d+)\))?$";
+
+            if (asset == null)
+            {
+                return variableName;
+            }
+
+            int nextPostfix = 0;
+            bool variableNameWithNoPostfixFound = false;
+            foreach (VariableModel variable in asset.Variables)
+            {
+                if (variable.Name == variableName)
+                {
+                    variableNameWithNoPostfixFound = true;
+                }
+                Match match = Regex.Match(variable.Name, pattern);
+                if (match.Success)
+                {
+                    if (match.Groups[1].Success)
+                    {
+                        int currentPostfix = int.Parse(match.Groups[1].Value);
+                        if (currentPostfix > nextPostfix)
+                        {
+                            nextPostfix = currentPostfix;
+                        }
+                    }
+                }
+            }
+
+            if (!variableNameWithNoPostfixFound)
+            {
+                return variableName;
+            }
+
+            return nextPostfix == 0 ? variableName + " (1)" : variableName + " (" + (nextPostfix + 1) + ")";
         }
 
         public static string GetNameForType(Type type)

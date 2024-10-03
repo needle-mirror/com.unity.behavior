@@ -120,20 +120,23 @@ namespace Unity.Behavior.GraphFramework
 
             // Check for removed variables, which can occur on undo.
             GraphEditor editor = GetFirstAncestorOfType<GraphEditor>();
-            VariableListView.Query<BlackboardVariableElement>()
-                .Where(elem => asset.Variables.All(variable => variable.ID != elem.VariableModel.ID))
-                .ForEach(elem => editor.SendEvent(VariableDeletedEvent.GetPooled(editor, elem.VariableModel)));
-            VariableListView.Query<BlackboardVariableElement>()
-                .ForEach(elem =>
-                {
-                    VariableModel matchingVariableInAsset = asset.Variables.FirstOrDefault(variableModel =>
-                        variableModel.ID == elem.VariableModel.ID);
-                    if (matchingVariableInAsset != null && matchingVariableInAsset.Name != elem.VariableModel.Name)
+            if (editor != null)
+            {
+                VariableListView.Query<BlackboardVariableElement>()
+                    .Where(elem => asset.Variables.All(variable => variable.ID != elem.VariableModel.ID))
+                    .ForEach(elem => editor.SendEvent(VariableDeletedEvent.GetPooled(editor, elem.VariableModel)));
+                VariableListView.Query<BlackboardVariableElement>()
+                    .ForEach(elem =>
                     {
-                        editor.SendEvent(VariableRenamedEvent.GetPooled(editor, matchingVariableInAsset));
-                    }
-                });
-
+                        VariableModel matchingVariableInAsset = asset.Variables.FirstOrDefault(variableModel =>
+                            variableModel.ID == elem.VariableModel.ID);
+                        if (matchingVariableInAsset != null && matchingVariableInAsset.Name != elem.VariableModel.Name)
+                        {
+                            editor.SendEvent(VariableRenamedEvent.GetPooled(editor, matchingVariableInAsset));
+                        }
+                    });
+   
+            }
             UpdateVariableCache();
             InitializeListView();
         }
@@ -158,18 +161,19 @@ namespace Unity.Behavior.GraphFramework
                 BlackboardVariableElement variableUI = variableUIType == null ? new BlackboardVariableElement(this, variable) :
                     Activator.CreateInstance(variableUIType, this, variable) as BlackboardVariableElement;
                 variableUI!.IsEditable = isEditable;
-                variableUI!.OnNameChanged += (name, variable) =>
+                variableUI!.OnNameChanged += (nameString, renamedVariable) =>
                 {
-                    RenameVariable(variable, name);
+                    string newName = nameString.Trim();
+                    RenameVariable(renamedVariable, newName);
                     // Selection is set here as a placeholder, should later be replaced by a better solution
-                    int index = Asset.Variables.IndexOf(variable);
+                    int index = Asset.Variables.IndexOf(renamedVariable);
                     listView.SetSelection(index);
                 };
                 // variableUI.IconImage = variable.Type.GetIcon();
                 variableUI.VariableType = GetBlackboardVariableTypeName(variable.Type);
                 if (variable.ID != BlackboardVariableElement.k_ReservedID)
                 {
-                    variableUI.tooltip = GetBlackboardVariableTypeName(variable.Type) + " variable";
+                    variableUI.InfoTitle.tooltip = GetBlackboardVariableTypeName(variable.Type) + " variable";
                 }
                 variableUI.RegisterCallback<PointerDownEvent>(OnPointerDown);
 
@@ -250,6 +254,12 @@ namespace Unity.Behavior.GraphFramework
                 UpdateVariableCache();
             }
         }
+
+        protected internal void RefreshVariableItem(VariableModel variable)
+        {
+            int index = Asset.Variables.IndexOf(variable);
+            VariableListView.RefreshItem(index);
+        }
         
         private void RenameVariable(VariableModel variable, string name)
         {
@@ -259,6 +269,11 @@ namespace Unity.Behavior.GraphFramework
         internal void DeleteVariable(VariableModel variable)
         {
             Dispatcher.DispatchImmediate(new DeleteVariableCommand(variable));
+        }
+        
+        internal void SetVariableIsShared(VariableModel variable, bool value)
+        {
+            Dispatcher.DispatchImmediate(new SetVariableIsSharedCommand(variable, value));
         }
 
         private void OnAddClicked()

@@ -92,7 +92,8 @@ namespace Unity.Behavior
             { 
                 return m_RuntimeBlackboardAsset;
             }
-            
+
+            m_RuntimeBlackboardAsset.VersionTimestamp = VersionTimestamp;
             m_RuntimeBlackboardAsset.Blackboard.m_Variables.Clear();
             m_RuntimeBlackboardAsset.m_SharedBlackboardVariableGuidHashset.Clear();
             foreach (VariableModel variable in Variables)

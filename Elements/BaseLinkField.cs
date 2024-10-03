@@ -101,6 +101,10 @@ namespace Unity.Behavior.GraphFramework
                 m_LinkedVariable = value;
                 SetLinkVisuals(value);
                 OnLinkChanged?.Invoke(value);
+                if (value != null)
+                {
+                    value.IsSharedChanged += () => { SetLinkVisuals(value); };   
+                }
             }
         }
 
@@ -258,7 +262,12 @@ namespace Unity.Behavior.GraphFramework
             SetLinkVisuals(m_LinkedVariable);
         }
 
-        internal void SetLinkVisuals(VariableModel variable)
+        /// <summary>
+        /// Updates the visuals of a link based on whether there is currently a link and whether the link
+        /// is to a shared variable.
+        /// </summary>
+        /// <param name="variable">The variable linked to.</param>
+        public void SetLinkVisuals(VariableModel variable)
         {
             if (variable == null)
             {
@@ -267,6 +276,7 @@ namespace Unity.Behavior.GraphFramework
             }
 
             AddToClassList("Linked");
+            EnableInClassList("SharedVariable", variable.IsShared);
             
             if (!string.IsNullOrEmpty(LinkedLabelPrefix))
             {

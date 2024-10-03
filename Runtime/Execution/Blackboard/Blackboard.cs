@@ -20,12 +20,22 @@ namespace Unity.Behavior
         [SerializeReference]
         internal List<BlackboardVariable> m_Variables = new ();
         private Dictionary<SerializableGUID, BlackboardVariable> m_VariablesMap;
-        
-        internal Blackboard CopyBlackboard(Blackboard sourceBlackboard, RuntimeBlackboardAsset sourceBlackboardAsset)
+
+        /// <summary>
+        /// Duplicates BBV from a source blackboard and generates metadata.
+        /// If the source blackboard has shared BBV, SBBV are generated.
+        /// </summary>
+        internal void GenerateInstanceData(Blackboard sourceBlackboard, RuntimeBlackboardAsset sourceBlackboardAsset)
         {
             m_Variables.Clear();
             foreach (BlackboardVariable variable in sourceBlackboard.Variables)
             {
+                if (variable == null)
+                {
+                    // Skip invalid variable - can happens when a variable serialized type has been renamed.
+                    continue;
+                }
+
                 if (sourceBlackboardAsset.IsSharedVariable(variable.GUID))
                 {
                     var sharedVariable = BlackboardVariable.CreateForType(variable.Type, true);
@@ -44,7 +54,18 @@ namespace Unity.Behavior
             }
             
             CreateMetadata();
-            return this;
+        }
+
+        internal void ValidateVariables()
+        {
+            for (int i = m_Variables.Count - 1; i >= 0; i--)
+            {
+                BlackboardVariable variable = m_Variables[i];
+                if (variable == null)
+                {
+                    m_Variables.RemoveAt(i);
+                }
+            }
         }
 
         internal void ReplaceBlackboardVariable(SerializableGUID guid, BlackboardVariable newVariable)
@@ -61,9 +82,9 @@ namespace Unity.Behavior
         {
             foreach (BlackboardVariable variable in Variables)
             {
-                if (name.Equals(variable.Name) && variable is BlackboardVariable<TValue>)
+                if (name.Equals(variable.Name))
                 {
-                    Debug.LogWarning($"A variable with name {name} and type {typeof(TValue)} has already been added to the blackboard.");
+                    Debug.LogWarning($"A variable with name {name} has already been added to the blackboard.");
                     return false;
                 }
             }

@@ -85,3 +85,9 @@ To use these options, do the following:
 1. Right-click on a variable in the **Blackboard**.
 2. Select **Expose** to expose and access a variable externally.
 3. Select **Shared** to share the variable with other behavior graphs that reference the same **Blackboard**.
+
+## Additional resources
+
+* [Create a behavior graph](create-behavior-graph.md)
+* [Create a custom node](create-custom-node.md)
+* [Use a pre-defined node](predefined-node.md)

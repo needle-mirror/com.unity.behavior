@@ -73,10 +73,9 @@ To use the **Action** nodes, select **Add** > **Action**.
 
 | Node | Description |
 | ---- | ----------- |
-| Start On Event Message | Starts the subgraph upon receiving an event message. |
+| Start On Event Message | Starts the subgraph after receiving an event message.<br>You can change how the node responds to events using different modes:<br> * `Default`: Triggers the node only when it's idle and no child node is running.<br> * `Restart`: Ends all children nodes and then restarts the node.<br> * `Once`: Triggers the node only once and stops to listen to the event channel. |
 | On Start | This is the root of the behavior graph. You can use multiple **On Start** nodes in your graph.|
 | Send Event Message | Sends an event message on the assigned channel. |
-| Start On Event Message | Starts the subgraph upon receiving an event message. |
 | Wait for Event Message | Use this node when you want the game character to wait to receive an event message on the assigned channel. |
 
 ## Flow node types

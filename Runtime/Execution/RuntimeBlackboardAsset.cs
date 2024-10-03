@@ -12,8 +12,7 @@ namespace Unity.Behavior
     public class RuntimeBlackboardAsset : ScriptableObject, ISerializationCallbackReceiver
     {
         [SerializeField][HideInInspector]
-        internal long m_VersionTimestamp;
-        internal long VersionTimestamp => m_VersionTimestamp;
+        internal long VersionTimestamp;
         
         [HideInInspector]
         [SerializeField] 
@@ -37,6 +36,12 @@ namespace Unity.Behavior
 
         private void Awake()
         {
+            // If play mode has already started, handle the current state.
+            if (UnityEditor.EditorApplication.isPlaying && UnityEditor.EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                OnPlaymodeStateChanged(UnityEditor.PlayModeStateChange.EnteredPlayMode);
+            }
+
             UnityEditor.EditorApplication.playModeStateChanged += OnPlaymodeStateChanged;
         }
 
@@ -44,13 +49,19 @@ namespace Unity.Behavior
         {
             if (change == UnityEditor.PlayModeStateChange.EnteredPlayMode)
             {
-                Blackboard blackboard = new Blackboard();
-                blackboard = blackboard.CopyBlackboard(m_Blackboard, this);
-                m_ValueOnEnterPlaymode = blackboard.m_Variables;
+                m_ValueOnEnterPlaymode.Clear();
+                foreach (BlackboardVariable variable in m_Blackboard.Variables)
+                {
+                    m_ValueOnEnterPlaymode.Add(variable.Duplicate());
+                }
             }
             else if (change == UnityEditor.PlayModeStateChange.ExitingPlayMode)
             {
-                m_Blackboard.m_Variables = m_ValueOnEnterPlaymode;
+                m_Blackboard.m_Variables.Clear();
+                foreach (BlackboardVariable variable in m_ValueOnEnterPlaymode)
+                {
+                    m_Blackboard.m_Variables.Add(variable.Duplicate());
+                }
             }
         }
 #endif
@@ -73,6 +84,8 @@ namespace Unity.Behavior
         /// <inheritdoc cref="OnAfterDeserialize"/>
         public void OnAfterDeserialize()
         {
+            Blackboard.ValidateVariables();
+
             if (m_SharedBlackboardVariableGuids == null)
             {
                m_SharedBlackboardVariableGuids = new List<SerializableGUID>();

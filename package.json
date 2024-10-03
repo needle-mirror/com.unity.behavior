@@ -1,7 +1,7 @@
 {
   "name": "com.unity.behavior",
   "displayName": "Behavior",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "unity": "6000.0",
   "unityRelease": "16f1",
   "description": "Unity Behavior is a graph-based tool to create and run behavior trees. Besides including a comprehensive library of pre-built nodes, the interface provides node customization options and real-time debugging. While fully functional on its own, a Unity Muse subscription enhances your experience by using large language models (LLM) to generate behavior trees from text prompts and create code for custom action nodes. This subscription is completely optional, providing a powerful addition for those looking to accelerate their development process. ",
@@ -33,18 +33,18 @@
     }
   ],
   "relatedPackages": {
-    "com.unity.behavior.tests": "1.0.2"
+    "com.unity.behavior.tests": "1.0.3"
   },
   "_upm": {
-    "changelog": "### Added\n- Tooltip to display the variable type name on story editor dropdowns.\n\n### Changed\n- Nodes that generate their own children (for example Switch and Flow nodes with named ports) will auto align their children better than before.\n- Condition context menu will show \"Inspect Script\" instead of \"Edit Script\" when opened for a built-in condition.\n- Switch Node: Removed the warnings about no connected child during operation to avoid spamming the log.\n\n### Fixed\n- Text truncate issues on story editor dropdown elements.\n- Blackboard variables from added blackboard assets can now be dragged and dropped onto fields in nodes.\n- Fixed `CheckCollisionsInRadiusAction` failling to assign collided object if the BBV value was null.\n- Nodes with inherited named children (i.e. Node connections) weren't showing the base class' nodes.\n- Fixed Event Channel variables not appearing in link searches for non-event nodes.\n- Fixed the Self variable not working in Dynamic Subgraphs."
+    "changelog": "### Added\n- TriggerEvent now logs message when EventChannel is not assigned.\n- Added MakeSceneActive option to LoadLevel node for Additive mode. \n- Added new UI visualization for Shared blackboard variables.\n\n### Changed\n- Improved logging details when an exception is raised about an invalid node transformer.\n- Added logging on domain reload when any node BlackboardVariable is found that doesn't have the [SerializeReference] attribute.\n- Added logging on domain reload when any Composite field of type Node is found that doesn't have the [SerializeReference] attribute.\n- Added missing Switch node inspector.\n- Fixed Shared Blackboard Variable causing a stack overflow in case it was referencing itself.\n- Fixed invalid generation of Shared Blackboard Variable on the source runtime blackboard asset.\n- Blackboard variable Exposed and Shared values can now be toggled on and off from the variable instead of right-clicking. \n- Changed variable renaming to trim out any leading or trailing whitespace. \n- The branch generation correction feature has been disabled for backend related issues.\n\n### Fixed\n- Fixed dynamic subgraph not initializing local event channels.\n- Fixed dynamic subgraph overriding shared blackboard variables.\n- Fixed static subgraphs not passing down same type component variables properly.\n- Fixed audio resources being able to be passed into an audio clip link field when they shouldn't be.\n- Fixed any component being able to be passed into any component link field instead of only when it's a subclass.\n- Fixed cast variable types not working correctly in subgraphs.\n- Fixed subgraph blackboard variables not marked as exposed showing in parent graph node inspector.\n- Fixed a bug where StartOnEvent node (Restart mode) would only execute the first node of a sequence after restarting in case it was restarted by a TriggerEvent node on the same frame.\n- Fixed an issue with node wizard preview not displaying when typed variable fields were added.\n- Fixed Muse branch generation correction deleting the previously generated branch if a valid output failed to be generated.\n- Fixed placeholders not generating properly with generative AI.\n- Fixed top and bottom lines of edge where the end is above the start not being selectable.\n- Fixed Blackboard editor not syncing with changes from graph when the graph default blackboard was being edited.\n- Fixed nullref exception caused by renaming a type serialized in a Blackboard Variable.\n- Fixed blackboard and graph editor toolbar height changing on smaller window sizes."
   },
   "upmCi": {
-    "footprint": "5dafc971d03f43c26202698f9e33e5da8bf1dd7d"
+    "footprint": "17335d68bed1e496d478c0c75be641b3c5f1c5ac"
   },
   "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.behavior@1.0/manual/index.html",
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.ai.designer-monorepo.git",
     "type": "git",
-    "revision": "2ba41fdb9f860b8d796d6385da6f92e127582466"
+    "revision": "4f76ddd91f5343c1fa6e000c7d02d2b765c39ba7"
   }
 }
