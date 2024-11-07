@@ -54,7 +54,6 @@ namespace Unity.Behavior
 
             Initialize();
 
-            m_CurrentPatrolPoint = PreserveLatestPatrolPoint.Value ? m_CurrentPatrolPoint - 1 : -1; 
             m_Waiting = false;
             m_WaypointWaitTimer = 0.0f;
 
@@ -64,7 +63,7 @@ namespace Unity.Behavior
 
         protected override Status OnUpdate()
         {
-            if (ReferenceEquals(Agent?.Value, null) || ReferenceEquals(Waypoints?.Value, null))
+            if (Agent.Value == null || Waypoints.Value == null)
             {
                 return Status.Failure;
             }
@@ -86,6 +85,13 @@ namespace Unity.Behavior
             {
                 float distance = GetDistanceToWaypoint();
                 Vector3 agentPosition = Agent.Value.transform.position;
+                
+                // If we are using navmesh, get the animator speed out of the velocity.
+                if (m_Animator != null && m_NavMeshAgent != null)
+                {
+                    m_Animator.SetFloat(AnimatorSpeedParam, m_NavMeshAgent.velocity.magnitude);
+                }
+
                 if (distance <= DistanceThreshold)
                 {
                     if (m_Animator != null)
@@ -129,11 +135,20 @@ namespace Unity.Behavior
             }
         }
 
+        protected override void OnDeserialize()
+        {
+            Initialize();
+        }
+
         private void Initialize()
         {
             m_Animator = Agent.Value.GetComponentInChildren<Animator>();
-            m_NavMeshAgent = Agent.Value.GetComponentInChildren<NavMeshAgent>();
+            if (m_Animator != null)
+            {
+                m_Animator.SetFloat(AnimatorSpeedParam, 0);
+            }
 
+            m_NavMeshAgent = Agent.Value.GetComponentInChildren<NavMeshAgent>();
             if (m_NavMeshAgent != null)
             {
                 if (m_NavMeshAgent.isOnNavMesh)
@@ -144,6 +159,8 @@ namespace Unity.Behavior
                 m_PreviousStoppingDistance = m_NavMeshAgent.stoppingDistance;
                 m_NavMeshAgent.stoppingDistance = DistanceThreshold;
             }
+
+            m_CurrentPatrolPoint = PreserveLatestPatrolPoint.Value ? m_CurrentPatrolPoint - 1 : -1;
         }
 
         private float GetDistanceToWaypoint()
@@ -164,16 +181,17 @@ namespace Unity.Behavior
 
         private void MoveToNextWaypoint()
         {
-            m_CurrentPatrolPoint = (m_CurrentPatrolPoint + 1) % Waypoints.Value.Count;
-            if (m_Animator != null)
-            {
-                m_Animator.SetFloat(AnimatorSpeedParam, Speed.Value);
-            }
+            m_CurrentPatrolPoint = (m_CurrentPatrolPoint + 1) % Waypoints.Value.Count;            
 
             m_CurrentTarget = Waypoints.Value[m_CurrentPatrolPoint].transform.position;
             if (m_NavMeshAgent != null)
             {
                 m_NavMeshAgent.SetDestination(m_CurrentTarget);
+            }
+            else if (m_Animator != null)
+            {
+                // We set the animator speed once if we are using transform.
+                m_Animator.SetFloat(AnimatorSpeedParam, Speed.Value);
             }
         }
     }

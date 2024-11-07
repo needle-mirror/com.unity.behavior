@@ -42,15 +42,15 @@ namespace Unity.Behavior.GraphFramework
 
             // Get the button position to offset the popup by.
             VisualElement searchButton = evt.target as VisualElement;
-#if ENABLE_INPUT_SYSTEM && USE_NEW_INPUT_SYSTEM
-            Vector2 mousePos = UnityEngine.InputSystem.Mouse.current.position.ReadValue();
-#else
-            Vector2 mousePos = Input.mousePosition;
-#endif
-            mousePos.y = Screen.height - mousePos.y;
             Vector2 pos = Vector2.zero;
             if (searchButton.panel.contextType == ContextType.Player)
             {
+#if ENABLE_INPUT_SYSTEM && USE_NEW_INPUT_SYSTEM
+                Vector2 mousePos = UnityEngine.InputSystem.Mouse.current.position.ReadValue();
+#else
+                Vector2 mousePos = Input.mousePosition;
+#endif
+                mousePos.y = Screen.height - mousePos.y;
                 pos = RuntimePanelUtils.ScreenToPanel(searchButton.panel, mousePos);
             }
             else

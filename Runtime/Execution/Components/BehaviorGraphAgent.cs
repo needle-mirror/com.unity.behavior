@@ -394,6 +394,19 @@ namespace Unity.Behavior
                     }
                 }
 
+                foreach (var bbref in graph.BlackboardGroupReferences)
+                {
+                    foreach (BlackboardVariable variable in bbref.Blackboard.Variables)
+                    {
+                        if (typeof(EventChannelBase).IsAssignableFrom(variable.Type) && variable.ObjectValue == null)
+                        {
+                            ScriptableObject channel = ScriptableObject.CreateInstance(variable.Type);
+                            channel.name = $"Default {variable.Name} Channel";
+                            variable.ObjectValue = channel;
+                        }
+                    }
+                }
+
                 foreach (Node node in graph.Nodes())
                 {
                     node.Graph = graph;

@@ -273,6 +273,7 @@ namespace Unity.Behavior
                     field.LocalValue = localCopy;
                 }
             }
+            
             // If no default value was specified, create an empty variable (with the C# default value).
             field.LocalValue ??= BlackboardVariable.CreateForType(variableType);
             return field;

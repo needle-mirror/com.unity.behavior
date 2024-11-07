@@ -64,10 +64,10 @@ namespace Unity.Behavior
             {
                 return false;
             }
-            bool isValid = Field.value.Replace(" ", string.Empty).IsValidIdentifier();
+            bool isValid = InvalidIdentifierValidator.IsValidIdentifier(Field.value.Replace(" ", string.Empty));
             if (Field is VisualElement element)
             {
-                element.tooltip = isValid ? null : Util.InvalidIdentifierErrorMessage;  
+                element.tooltip = isValid ? null : InvalidIdentifierValidator.k_InvalidIdentifierErrorMessage;  
             }
 
             return isValid;
@@ -143,7 +143,6 @@ namespace Unity.Behavior
     internal partial class StoryFieldWithValidation : InputFieldWithValidation
     {
         internal WordTypeSentence Sentence;
-        private const string k_InvalidIdentifierErrorMessage = "Variable name must start with letter or '_'.\nIt can only contain letters, '_', and numbers.";
         private TextArea m_TextArea => Field as TextArea;
         
 #if !ENABLE_UXML_UI_SERIALIZATION
@@ -175,7 +174,7 @@ namespace Unity.Behavior
             {
                 foreach (WordTypePair parameter in Sentence.WordTypeParameters)
                 {
-                    IsValid = parameter.Word.Replace(" ", string.Empty).IsValidIdentifier();
+                    IsValid = InvalidIdentifierValidator.IsValidIdentifier(parameter.Word.Replace(" ", string.Empty));
                     if (!IsValid)
                     {
                         break;
@@ -184,7 +183,7 @@ namespace Unity.Behavior
             }
 
             m_TextArea.invalid = !IsValid;
-            tooltip = IsValid ? null : k_InvalidIdentifierErrorMessage;
+            tooltip = IsValid ? null : InvalidIdentifierValidator.k_VariableInvalidIdentifierErrorMessage;
 
             return IsValid;
         }

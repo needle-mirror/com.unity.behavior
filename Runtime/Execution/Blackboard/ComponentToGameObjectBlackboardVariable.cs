@@ -7,8 +7,8 @@ namespace Unity.Behavior
     internal class ComponentToGameObjectBlackboardVariable<SourceType> : BlackboardVariableCaster<SourceType, GameObject>
         where SourceType : Component
     {
-        protected override SourceType GetSourceObjectFromTarget(GameObject value) => value.GetComponent<SourceType>();
-        protected override GameObject GetTargetObjectFromSource(SourceType variable) => variable.gameObject;
+        protected override SourceType GetSourceObjectFromTarget(GameObject value) => value != null ? value.GetComponent<SourceType>() : null;
+        protected override GameObject GetTargetObjectFromSource(SourceType variable) => variable != null ? variable.gameObject : null;
 
         // Required for serialization
         public ComponentToGameObjectBlackboardVariable() { }

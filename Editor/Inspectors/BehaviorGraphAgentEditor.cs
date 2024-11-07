@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace Unity.Behavior
 {
-    [CustomEditor(typeof(BehaviorGraphAgent))]
+    [CustomEditor(typeof(BehaviorGraphAgent), editorForChildClasses: true)]
     [CanEditMultipleObjects]
     internal class BehaviorGraphAgentEditor : Editor
     {
@@ -113,8 +113,18 @@ namespace Unity.Behavior
             return Util.GetVariableValueCopy(blackboardVariable.Value);
         }
 
+        private readonly string[] kPropertiesToExclude = new string[]
+        {
+            "m_Script",
+            "m_Graph",
+            "NetcodeRunOnlyOnOwner"
+        };
+
         public override void OnInspectorGUI()
         {
+            DrawPropertiesExcluding(serializedObject, kPropertiesToExclude);
+            serializedObject.ApplyModifiedProperties();
+
             FindSharedGraph();
             // Draw the graph field. If a new runtime graph is assigned, set the graph on the target and mark it dirty.
             EditorGUI.BeginChangeCheck();

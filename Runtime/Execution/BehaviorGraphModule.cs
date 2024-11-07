@@ -449,7 +449,7 @@ namespace Unity.Behavior
         private void GatherActiveNodes(Node origin, ref HashSet<Node> outCollection)
         {   
             // If the node is not running or already explored, we don't need to got further.
-            if (!origin.IsRunning || outCollection.Contains(origin))
+            if (origin == null || !origin.IsRunning || outCollection.Contains(origin))
             {
                 return;
             }

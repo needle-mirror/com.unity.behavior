@@ -155,12 +155,40 @@ namespace Unity.Behavior
         {
             foreach (BlackboardVariable variable in Variables)
             {
-                if (name.Equals(variable.Name) && variable is BlackboardVariable<TValue> typedVariable)
+                if (!name.Equals(variable.Name))
+                {
+                    continue;
+                }
+                
+                if (variable is BlackboardVariable<TValue> typedVariable)
                 {
                     typedVariable.Value = value;
                     return true; 
                 }
+                if (value == null)
+                {
+                    if (variable.Type.IsValueType)
+                    {
+                        variable.ObjectValue = Activator.CreateInstance(variable.Type);
+                    }
+                    else
+                    {
+                        variable.ObjectValue = null;
+                    }
+                    return true; 
+                }
+
+                if (value.GetType().IsAssignableFrom(variable.Type))
+                {
+                    var convertedValue = Convert.ChangeType(value, variable.Type);
+                    if (convertedValue != null)
+                    {
+                        variable.ObjectValue = convertedValue;
+                        return true; 
+                    }
+                }
             }
+            
             return false;
         }
         
@@ -224,16 +252,35 @@ namespace Unity.Behavior
                 typedVar.Value = value;
                 return true;
             }
-            else if (var is BlackboardVariable<GameObject> gameObjectVar && gameObjectVar.Type == typeof(TValue))
+            if (var is BlackboardVariable<GameObject> gameObjectVar && gameObjectVar.Type == typeof(TValue))
             {
                 gameObjectVar.ObjectValue = value;
                 return true;
             }
-            else
+            if (value == null)
             {
-                Debug.LogError($"Incorrect value type ({typeof(TValue)}) specified for variable of type {var.Type}.");
-                return false;
+                if (var.Type.IsValueType)
+                {
+                    var.ObjectValue = Activator.CreateInstance(var.Type);
+                }
+                else
+                {
+                    var.ObjectValue = null;
+                }
+                return true; 
             }
+            if (value.GetType().IsAssignableFrom(var.Type))
+            {
+                var convertedValue = Convert.ChangeType(value, var.Type);
+                if (convertedValue != null)
+                {
+                    var.ObjectValue = convertedValue;
+                    return true; 
+                }
+            }
+            
+            Debug.LogError($"Incorrect value type ({typeof(TValue)}) specified for variable of type {var.Type}.");
+            return false;
         }
         
         internal void CreateMetadata()

@@ -5,7 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.3] - 2024-10-03
+## [1.0.4] - 2024-11-07
+
+### Added
+
+### Changed
+- Updated AppUI dependency to `"2.0.0-pre.11`.
+- Label displaying the graph description text removed from the subgraph node inspector.
+- Increased variable link search view width a bit and increase the text's width in the search options.
+- Changed the output location of IL2CPP link files so as to not pollute the Assets directory.
+- If a NavMeshAgent is available, the Patrol node now uses its speed to feed the animator's speed parameter.
+- Set `BehaviorGraphAgentEditor`'s `editorForChildClasses` to `true` in its `CustomEditor` property and added a call to `DrawPropertiesExcluding` in `OnInspectorGUI`.
+
+### Fixed
+- Fixed node wizard validation step not accepting other character sets than ASCII in variable names.
+- Fixed Event Channel wizard not filling in types for variables with a matching name on the Blackboard when editing the event message.
+- Fixed Event Channel wizard NodeUI preview not applying the correct margin styles on the message label.
+- Removed additional "New" from the variable name when creating a new Event Channel or Enum variable on the Blackboard.
+- Fixed an issue where the Blackboard would be reloaded when opening the asset searcher on a variable asset field.
+- Fixed not assigned EventChannels not generating local instances by BehaviorGraphAgent when the BlackboardVariable was part of a BlackboardReference.
+- Fixed blackboard variables added through the subgraph story representation having extra spaces between words.
+- Deleting a Blackboard Asset will correctly remove references in other graphs and unset variable links that reference its variables.
+- ComponentToComponentBlackboardVariableCaster now checks the source object type for polymorphic type before using GetComponent.
+- Pressing Spacebar in the graph to open the search menu will no longer throw an exception if using InputSystem with no Mouse support.
+- Navigate and Patrol actions will correctly check for null and not throw an exception due to incorrect use of ReferenceEquals.
+- Fixed a runtime type construct serialization issue, where a types with multiple generic components were failing.
+- Fixed FindClosestWithTagAction condition that was preventing the node to be executed when a null target was provided.
+- Fixed PlayAudioAction nullreference when the pooling was attempting to release an AudioSource that has already been destroyed.
+- Adds runtime serialization support to Switch and Patrol node.
+- Fixed runtime serialization support for MathTypesCastBlackboardVariables.
+- BlackboardVariables from added Blackboard Assets that can be cast to a field weren't shown as link options.
+- Fixed an issue in Conditions causing linked variables blackboard asset prefix to be removed when using the graph.
+- Fixed both Blackboard.SetVariableValue api's to allow for setting a variable via an object.
+- Cooldown node will correctly initialize its wait time and won't block graph execution while waiting.
+- Being unable to zoom in the graph after opening another graph with the Open button.
+
+## [1.0.3] - 2024-10-14
 
 ### Added
 - TriggerEvent now logs message when EventChannel is not assigned.
@@ -39,6 +74,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed Blackboard editor not syncing with changes from graph when the graph default blackboard was being edited.
 - Fixed nullref exception caused by renaming a type serialized in a Blackboard Variable.
 - Fixed blackboard and graph editor toolbar height changing on smaller window sizes.
+- The Node Inspector will correctly save values edited in its fields when clicking outside the node inspector after editing.
+- Fixed null exceptions when casting a GameObject or Component variable but the source is null (IN-87592).
 
 ## [1.0.2] - 2024-09-20
 

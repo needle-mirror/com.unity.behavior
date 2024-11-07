@@ -13,15 +13,16 @@ namespace Unity.Behavior
         id: "66251d9e7971a8112ab0517c0279d08f")]
     internal partial class FindClosestWithTagAction : Action
     {
+        [Tooltip("[Out Value] If a target is found, the field is assigned with it.")]
         [SerializeReference] public BlackboardVariable<GameObject> Target;
         [SerializeReference] public BlackboardVariable<GameObject> Agent;
         [SerializeReference] public BlackboardVariable<string> Tag;
 
         protected override Status OnStart()
         {
-            if (Agent.Value == null || Target.Value == null)
+            if (Agent.Value == null)
             {
-                LogFailure("No agent or target provided.");
+                LogFailure("No agent provided.");
                 return Status.Failure;
             }
 

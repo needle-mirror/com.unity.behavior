@@ -10,6 +10,10 @@ namespace Unity.Behavior
         protected BlackboardVariable<OriginalType> m_SourceVariable;
         protected CastType m_CachedValue;
         private bool m_CallbackRegistered = false;
+
+        // Required for serialization
+        public BaseCastBlackboardVariable() { }
+
         public BaseCastBlackboardVariable(BlackboardVariable<OriginalType> linkedVariable)
         {
             m_SourceVariable = linkedVariable;
@@ -41,6 +45,8 @@ namespace Unity.Behavior
 
     internal class Vector2ToVector3BlackboardVariable : BaseCastBlackboardVariable<Vector2, Vector3>
     {
+        public Vector2ToVector3BlackboardVariable() { }
+
         public Vector2ToVector3BlackboardVariable(BlackboardVariable<Vector2> linkedVariable) : base(linkedVariable)
         {
         }
@@ -58,6 +64,8 @@ namespace Unity.Behavior
 
     internal class Vector2ToVector4BlackboardVariable : BaseCastBlackboardVariable<Vector2, Vector4>
     {
+        public Vector2ToVector4BlackboardVariable() { }
+
         public Vector2ToVector4BlackboardVariable(BlackboardVariable<Vector2> linkedVariable) : base(linkedVariable)
         {
         }
@@ -75,6 +83,8 @@ namespace Unity.Behavior
 
     internal class Vector3ToVector2BlackboardVariable : BaseCastBlackboardVariable<Vector3, Vector2>
     {
+        public Vector3ToVector2BlackboardVariable() { }
+
         public Vector3ToVector2BlackboardVariable(BlackboardVariable<Vector3> linkedVariable) : base(linkedVariable)
         {
         }
@@ -92,6 +102,8 @@ namespace Unity.Behavior
 
     internal class Vector3ToVector4BlackboardVariable : BaseCastBlackboardVariable<Vector3, Vector4>
     {
+        public Vector3ToVector4BlackboardVariable() { }
+
         public Vector3ToVector4BlackboardVariable(BlackboardVariable<Vector3> linkedVariable) : base(linkedVariable)
         {
         }
@@ -109,6 +121,8 @@ namespace Unity.Behavior
 
     internal class Vector4ToVector2BlackboardVariable : BaseCastBlackboardVariable<Vector4, Vector2>
     {
+        public Vector4ToVector2BlackboardVariable() { }
+
         public Vector4ToVector2BlackboardVariable(BlackboardVariable<Vector4> linkedVariable) : base(linkedVariable)
         {
         }
@@ -126,6 +140,8 @@ namespace Unity.Behavior
 
     internal class Vector4ToVector3BlackboardVariable : BaseCastBlackboardVariable<Vector4, Vector3>
     {
+        public Vector4ToVector3BlackboardVariable() { }
+
         public Vector4ToVector3BlackboardVariable(BlackboardVariable<Vector4> linkedVariable) : base(linkedVariable)
         {
         }
@@ -143,6 +159,8 @@ namespace Unity.Behavior
 
     internal class FloatToDoubleBlackboardVariable : BaseCastBlackboardVariable<float, double>
     {
+        public FloatToDoubleBlackboardVariable() { }
+
         public FloatToDoubleBlackboardVariable(BlackboardVariable<float> linkedVariable) : base(linkedVariable)
         {
         }
@@ -160,6 +178,8 @@ namespace Unity.Behavior
 
     internal class FloatToIntBlackboardVariable : BaseCastBlackboardVariable<float, int>
     {
+        public FloatToIntBlackboardVariable() { }
+
         public FloatToIntBlackboardVariable(BlackboardVariable<float> linkedVariable) : base(linkedVariable)
         {
         }
@@ -177,6 +197,8 @@ namespace Unity.Behavior
 
     internal class DoubleToFloatBlackboardVariable : BaseCastBlackboardVariable<double, float>
     {
+        public DoubleToFloatBlackboardVariable() { }
+
         public DoubleToFloatBlackboardVariable(BlackboardVariable<double> linkedVariable) : base(linkedVariable)
         {
         }
@@ -194,6 +216,8 @@ namespace Unity.Behavior
 
     internal class DoubleToIntBlackboardVariable : BaseCastBlackboardVariable<double, int>
     {
+        public DoubleToIntBlackboardVariable() { }
+
         public DoubleToIntBlackboardVariable(BlackboardVariable<double> linkedVariable) : base(linkedVariable)
         {
         }
@@ -211,6 +235,8 @@ namespace Unity.Behavior
 
     internal class IntToFloatBlackboardVariable : BaseCastBlackboardVariable<int, float>
     {
+        public IntToFloatBlackboardVariable() { }
+
         public IntToFloatBlackboardVariable(BlackboardVariable<int> linkedVariable) : base(linkedVariable)
         {
         }
@@ -228,6 +254,8 @@ namespace Unity.Behavior
 
     internal class IntToDoubleBlackboardVariable : BaseCastBlackboardVariable<int, double>
     {
+        public IntToDoubleBlackboardVariable() { }
+
         public IntToDoubleBlackboardVariable(BlackboardVariable<int> linkedVariable) : base(linkedVariable)
         {
         }

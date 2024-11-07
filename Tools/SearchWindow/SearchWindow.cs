@@ -32,15 +32,22 @@ namespace UnityEngine.UIExtras
                 {
                     return;
                 }
-                
+
                 if (closeOnSelection)
                 {
                     IsClosing = true;
+                    popover.dismissed += (p, reason) =>
+                    {
+                        onSelection?.Invoke(e);
+                        parent?.Focus();
+                    };
                     popover.Dismiss();
                 }
-                
-                onSelection?.Invoke(e);
-                parent?.Focus();
+                else
+                {
+                    onSelection?.Invoke(e);
+                    parent?.Focus();
+                }
             };
             searchView.style.width = width;
             searchView.style.height = height;
@@ -90,9 +97,12 @@ namespace UnityEngine.UIExtras
                 }
 
                 IsClosing = true;
-                onSelection?.Invoke(e);
+                popover.dismissed += (p, reason) =>
+                {
+                    onSelection?.Invoke(e);
+                    parent?.Focus();
+                };
                 popover.Dismiss();
-                parent?.Focus();
             };
             searchView.style.width = width;
             searchView.style.height = height;

@@ -30,7 +30,7 @@ namespace Unity.Behavior
 
         protected override Status OnStart()
         {
-            if (ReferenceEquals(Agent?.Value, null) || ReferenceEquals(Location?.Value, null))
+            if (Agent.Value == null || Location.Value == null)
             {
                 return Status.Failure;
             }
@@ -40,7 +40,7 @@ namespace Unity.Behavior
 
         protected override Status OnUpdate()
         {
-            if (ReferenceEquals(Agent?.Value, null) || ReferenceEquals(Location, null))
+            if (Agent.Value == null || Location.Value == null)
             {
                 return Status.Failure;
             }

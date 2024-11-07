@@ -353,5 +353,7 @@ namespace Unity.Behavior.GraphFramework
         }
 
         internal virtual void SetValue(object value) { }
+        
+        internal virtual void SetValueWithoutNotify(object value) { }
     }
 }

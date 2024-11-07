@@ -32,6 +32,7 @@ namespace Unity.Behavior
                 BaseLinkField field = LinkFieldUtility.CreateConditionLinkField(variableName, type, m_Model);
                 field.FieldName = variableName;
                 field.Model = m_Model;
+                Util.UpdateLinkFieldBlackboardPrefixes(field);
                 return field;
             }, (fieldName, comparisonEnum) => new ComparisonConditionElement(m_Model, fieldName, comparisonEnum));   
         }

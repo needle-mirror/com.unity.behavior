@@ -19,7 +19,7 @@ namespace Unity.Behavior
         internal Status DefaultStatus = Status.Success;
 
         [SerializeReference] public BlackboardVariable EnumVariable;
-
+        [CreateProperty]
         private int m_CurrentChild = -1;
 
         /// <inheritdoc cref="OnStart" />

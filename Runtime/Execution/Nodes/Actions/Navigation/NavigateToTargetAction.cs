@@ -33,7 +33,7 @@ namespace Unity.Behavior
 
         protected override Status OnStart()
         {
-            if (ReferenceEquals(Agent?.Value, null) || ReferenceEquals(Target?.Value, null))
+            if (Agent.Value == null || Target.Value == null)
             {
                 return Status.Failure;
             }
@@ -43,7 +43,7 @@ namespace Unity.Behavior
 
         protected override Status OnUpdate()
         {
-            if (ReferenceEquals(Agent?.Value, null) || ReferenceEquals(Target, null))
+            if (Agent.Value == null || Target.Value == null)
             {
                 return Status.Failure;
             }

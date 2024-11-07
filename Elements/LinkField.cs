@@ -81,5 +81,10 @@ namespace Unity.Behavior.GraphFramework
                 this.value = (TValueType)value;
             }
         }
+        
+        internal override void SetValueWithoutNotify(object value)
+        {
+            SetValueWithoutNotify((TValueType)value);
+        }
     }
 }

@@ -1,16 +1,16 @@
 {
   "name": "com.unity.behavior",
   "displayName": "Behavior",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "unity": "6000.0",
   "unityRelease": "16f1",
-  "description": "Unity Behavior is a graph-based tool to create and run behavior trees. Besides including a comprehensive library of pre-built nodes, the interface provides node customization options and real-time debugging. While fully functional on its own, a Unity Muse subscription enhances your experience by using large language models (LLM) to generate behavior trees from text prompts and create code for custom action nodes. This subscription is completely optional, providing a powerful addition for those looking to accelerate their development process. ",
+  "description": "Unity Behavior is a graph-based tool to create and run behavior trees. Besides including a comprehensive library of pre-built nodes, the interface provides node customization options and real-time debugging. While fully functional on its own, a Unity Muse subscription enhances your experience by using large language models (LLM) to generate behavior trees from text prompts and create code for custom action nodes. This subscription, although optional, provides a powerful addition for those looking to accelerate their development process.\n\nA demo showcasing this package can be found in the Asset Store <a href=https://assetstore.unity.com/packages/templates/tutorials/behavior-demo-for-unity-298313>https://assetstore.unity.com/packages/templates/tutorials/behavior-demo-for-unity-298313</a>.",
   "keywords": [
     "ai",
     "behaviour trees"
   ],
   "dependencies": {
-    "com.unity.dt.app-ui": "2.0.0-pre.10",
+    "com.unity.dt.app-ui": "2.0.0-pre.11",
     "com.unity.modules.unitywebrequest": "1.0.0",
     "com.unity.modules.animation": "1.0.0",
     "com.unity.modules.ai": "1.0.0",
@@ -33,18 +33,18 @@
     }
   ],
   "relatedPackages": {
-    "com.unity.behavior.tests": "1.0.3"
+    "com.unity.behavior.tests": "1.0.4"
   },
   "_upm": {
-    "changelog": "### Added\n- TriggerEvent now logs message when EventChannel is not assigned.\n- Added MakeSceneActive option to LoadLevel node for Additive mode. \n- Added new UI visualization for Shared blackboard variables.\n\n### Changed\n- Improved logging details when an exception is raised about an invalid node transformer.\n- Added logging on domain reload when any node BlackboardVariable is found that doesn't have the [SerializeReference] attribute.\n- Added logging on domain reload when any Composite field of type Node is found that doesn't have the [SerializeReference] attribute.\n- Added missing Switch node inspector.\n- Fixed Shared Blackboard Variable causing a stack overflow in case it was referencing itself.\n- Fixed invalid generation of Shared Blackboard Variable on the source runtime blackboard asset.\n- Blackboard variable Exposed and Shared values can now be toggled on and off from the variable instead of right-clicking. \n- Changed variable renaming to trim out any leading or trailing whitespace. \n- The branch generation correction feature has been disabled for backend related issues.\n\n### Fixed\n- Fixed dynamic subgraph not initializing local event channels.\n- Fixed dynamic subgraph overriding shared blackboard variables.\n- Fixed static subgraphs not passing down same type component variables properly.\n- Fixed audio resources being able to be passed into an audio clip link field when they shouldn't be.\n- Fixed any component being able to be passed into any component link field instead of only when it's a subclass.\n- Fixed cast variable types not working correctly in subgraphs.\n- Fixed subgraph blackboard variables not marked as exposed showing in parent graph node inspector.\n- Fixed a bug where StartOnEvent node (Restart mode) would only execute the first node of a sequence after restarting in case it was restarted by a TriggerEvent node on the same frame.\n- Fixed an issue with node wizard preview not displaying when typed variable fields were added.\n- Fixed Muse branch generation correction deleting the previously generated branch if a valid output failed to be generated.\n- Fixed placeholders not generating properly with generative AI.\n- Fixed top and bottom lines of edge where the end is above the start not being selectable.\n- Fixed Blackboard editor not syncing with changes from graph when the graph default blackboard was being edited.\n- Fixed nullref exception caused by renaming a type serialized in a Blackboard Variable.\n- Fixed blackboard and graph editor toolbar height changing on smaller window sizes."
+    "changelog": "### Added\n\n### Changed\n- Updated AppUI dependency to `\"2.0.0-pre.11`.\n- Label displaying the graph description text removed from the subgraph node inspector.\n- Increased variable link search view width a bit and increase the text's width in the search options.\n- Changed the output location of IL2CPP link files so as to not pollute the Assets directory.\n- If a NavMeshAgent is available, the Patrol node now uses its speed to feed the animator's speed parameter.\n- Set `BehaviorGraphAgentEditor`'s `editorForChildClasses` to `true` in its `CustomEditor` property and added a call to `DrawPropertiesExcluding` in `OnInspectorGUI`.\n\n### Fixed\n- Fixed node wizard validation step not accepting other character sets than ASCII in variable names.\n- Fixed Event Channel wizard not filling in types for variables with a matching name on the Blackboard when editing the event message.\n- Fixed Event Channel wizard NodeUI preview not applying the correct margin styles on the message label.\n- Removed additional \"New\" from the variable name when creating a new Event Channel or Enum variable on the Blackboard.\n- Fixed an issue where the Blackboard would be reloaded when opening the asset searcher on a variable asset field.\n- Fixed not assigned EventChannels not generating local instances by BehaviorGraphAgent when the BlackboardVariable was part of a BlackboardReference.\n- Fixed blackboard variables added through the subgraph story representation having extra spaces between words.\n- Deleting a Blackboard Asset will correctly remove references in other graphs and unset variable links that reference its variables.\n- ComponentToComponentBlackboardVariableCaster now checks the source object type for polymorphic type before using GetComponent.\n- Pressing Spacebar in the graph to open the search menu will no longer throw an exception if using InputSystem with no Mouse support.\n- Navigate and Patrol actions will correctly check for null and not throw an exception due to incorrect use of ReferenceEquals.\n- Fixed a runtime type construct serialization issue, where a types with multiple generic components were failing.\n- Fixed FindClosestWithTagAction condition that was preventing the node to be executed when a null target was provided.\n- Fixed PlayAudioAction nullreference when the pooling was attempting to release an AudioSource that has already been destroyed.\n- Adds runtime serialization support to Switch and Patrol node.\n- Fixed runtime serialization support for MathTypesCastBlackboardVariables.\n- BlackboardVariables from added Blackboard Assets that can be cast to a field weren't shown as link options.\n- Fixed an issue in Conditions causing linked variables blackboard asset prefix to be removed when using the graph.\n- Fixed both Blackboard.SetVariableValue api's to allow for setting a variable via an object.\n- Cooldown node will correctly initialize its wait time and won't block graph execution while waiting.\n- Being unable to zoom in the graph after opening another graph with the Open button."
   },
   "upmCi": {
-    "footprint": "17335d68bed1e496d478c0c75be641b3c5f1c5ac"
+    "footprint": "4a9d37fb1b8d78853be4b004ce056931448767ee"
   },
   "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.behavior@1.0/manual/index.html",
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.ai.designer-monorepo.git",
     "type": "git",
-    "revision": "4f76ddd91f5343c1fa6e000c7d02d2b765c39ba7"
+    "revision": "f21b7eb442bffd8a73c8303446ac9c07b26f1a0f"
   }
 }

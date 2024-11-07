@@ -14,7 +14,6 @@ namespace Unity.Behavior
             }
 
             // Detect if the subgraph has any references to this node's graph asset.
-            bool blackboardDetected = false;
             HashSet<BehaviorAuthoringGraph> visitedSubgraphs = new() { graph };
             List<BehaviorAuthoringGraph> subgraphsToCheck = new() { graph };
             while (subgraphsToCheck.Count != 0)
@@ -24,21 +23,23 @@ namespace Unity.Behavior
 
                 if (subgraph.m_Blackboards.Any(foundBlackboardAsset => foundBlackboardAsset == blackboard))
                 {
-                    blackboardDetected = true;
-                    break;
+                    return true;
                 }
                 
                 // Queue subgraphs for checking
                 foreach (var subgraphNode in subgraph.Nodes.OfType<SubgraphNodeModel>())
                 {
+                    if (subgraphNode.RequiredBlackboard == blackboard)
+                    {
+                        return true;
+                    }
                     if (subgraphNode.RuntimeSubgraph && visitedSubgraphs.Add(subgraphNode.SubgraphAuthoringAsset))
                     {
                         subgraphsToCheck.Add(subgraphNode.SubgraphAuthoringAsset);
                     }
                 }
             }
-
-            return blackboardDetected;
+            return false;
         }
     }
 }

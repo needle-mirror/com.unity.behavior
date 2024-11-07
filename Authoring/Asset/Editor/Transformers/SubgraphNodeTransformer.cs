@@ -97,19 +97,22 @@ namespace Unity.Behavior
                     variableToAssign.Name = fieldModel.FieldName;
                     variableToAssign.GUID = SerializableGUID.Generate();
                 }
-                if (variableToAssign == null) // If no variable is linked to the field, it is not an override.
-                {
-                    continue;
-                }
-
+                
                 VariableModel variableToReplace =
                     // Find a matching blackboard variable by name/type, then assign the new variable as an override.
                     subgraphAsset.Blackboard.Variables.FirstOrDefault(variable =>
                         variable.Type == variableToAssign.Type
-                        && variable.Name.Equals(fieldModel.FieldName, StringComparison.CurrentCultureIgnoreCase));
+                        && variable.Name.Equals(fieldModel.FieldName, StringComparison.CurrentCultureIgnoreCase) 
+                        && variable.IsExposed);
 
                 if (variableToReplace != null)
                 {
+                    // If we have no linked variable & there is no overriden local variable value.
+                    if (fieldModel.LinkedVariable == null && fieldModel.LocalValue.ObjectValue == variableToReplace.ObjectValue)
+                    {
+                        continue;
+                    }
+                    
                     variableOverrides.TryAdd(variableToReplace.ID, variableToAssign);
                     variableToReplace = null;
                 }
@@ -119,11 +122,18 @@ namespace Unity.Behavior
                 {
                     variableToReplace = blackboard.Variables.FirstOrDefault(variable =>
                         variable.Type == variableToAssign.Type
-                        && variable.Name.Equals(fieldModel.FieldName, StringComparison.CurrentCultureIgnoreCase));
+                        && variable.Name.Equals(fieldModel.FieldName, StringComparison.CurrentCultureIgnoreCase) 
+                        && variable.IsExposed);
                 }
 
                 if (variableToReplace != null)
                 {
+                    // If we have no linked variable & there is no overriden local variable value.
+                    if (fieldModel.LinkedVariable == null && fieldModel.LocalValue.ObjectValue == variableToReplace.ObjectValue)
+                    {
+                        continue;
+                    }
+                    
                     variableOverrides.TryAdd(variableToReplace.ID, variableToAssign);
                 }
             }
@@ -181,7 +191,6 @@ namespace Unity.Behavior
             {
                 return false;
             }
-
             return true;
         }
     }

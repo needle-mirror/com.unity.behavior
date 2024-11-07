@@ -11,7 +11,8 @@ namespace Unity.Behavior
 
     [Serializable]
     internal abstract class BlackboardVariableCaster<SourceType, TargetType> : BlackboardVariable<TargetType>, IBlackboardVariableCast
-        where TargetType : class
+        where SourceType : UnityEngine.Object
+        where TargetType : UnityEngine.Object
     {
         [SerializeReference]
         private BlackboardVariable<SourceType> m_LinkedVariable;
@@ -43,7 +44,18 @@ namespace Unity.Behavior
 
                 return m_LinkedObject;
             }
-            set => m_LinkedVariable.Value = GetSourceObjectFromTarget(value);
+            set
+            {
+                if (value == null)
+                {
+                    m_LinkedVariable.Value = null;
+                    // OnValueChanged callbacks will reset m_LinkedObject.
+                    return;
+                }
+
+                m_LinkedVariable.Value = GetSourceObjectFromTarget(value);
+            }
+
         }
 
         protected abstract SourceType GetSourceObjectFromTarget(TargetType value);

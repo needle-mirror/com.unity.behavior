@@ -58,7 +58,17 @@ namespace Unity.Behavior.GraphFramework
             RegisterCallback<AttachToPanelEvent>(OnAttachToPanelEvent);
         }
 
-        public virtual void CreateDefaultInspector() { }
+        public void CreateDefaultInspector()
+        {
+            m_NodeInspectorUI?.RemoveFromHierarchy();
+            m_NodeInspectorUI = CreateDefaultInspectorImpl();
+            if (m_NodeInspectorUI != null)
+            {
+                Add(m_NodeInspectorUI);
+            }
+        }
+
+        protected virtual NodeInspectorUI CreateDefaultInspectorImpl() { return null; }
 
         private void OnAttachToPanelEvent(AttachToPanelEvent evt)
         {
@@ -97,12 +107,23 @@ namespace Unity.Behavior.GraphFramework
 
         private void CreateNodeInspectorUI(NodeModel nodeModel)
         {
-            m_NodeInspectorUI?.RemoveFromHierarchy();
+            if (m_NodeInspectorUI != null)
+            {
+                var oldInspectorUI = m_NodeInspectorUI;
+                oldInspectorUI.Blur();
+                oldInspectorUI.style.display = DisplayStyle.None;
+
+                // Delay removal to allow focus out event messages to be sent from fields so their value is updated correctly.
+                this.schedule.Execute(() =>
+                {
+                    oldInspectorUI?.RemoveFromHierarchy();
+                });
+            }
+
             m_NodeInspectorUI = null;
 
             if (nodeModel == null)
             {
-                Clear();
                 CreateDefaultInspector();
                 return;
             }
@@ -113,10 +134,8 @@ namespace Unity.Behavior.GraphFramework
             }
 
             // Create UI
-            Clear();
             m_NodeInspectorUI = Activator.CreateInstance(nodeInspectorUIType, nodeModel) as NodeInspectorUI;
             Add(m_NodeInspectorUI);
-
         }
     }
 }

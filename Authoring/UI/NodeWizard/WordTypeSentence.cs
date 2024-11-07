@@ -66,13 +66,8 @@ namespace Unity.Behavior
         
         internal Dictionary<string, Type> GetStoryVariables()
         {
-#if UNITY_EDITOR
-            return WordTypeParameters.ToDictionary(p => ObjectNames.NicifyVariableName(p.Word), p => p.Type);
-#else
-            return WordTypeParameters.ToDictionary(p => Util.NicifyVariableName(p.Word), p => p.Type);
-#endif
+            return WordTypeParameters.ToDictionary(p => p.Word, p => p.Type);
         }
-        
 
         internal void UpdateWordTypeList(int cursorIndex, string sentence)
         {

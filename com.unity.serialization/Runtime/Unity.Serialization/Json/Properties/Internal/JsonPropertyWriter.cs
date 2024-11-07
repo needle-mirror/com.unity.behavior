@@ -110,15 +110,21 @@ namespace Unity.Behavior.Serialization.Json
                     if (t.IsGenericType)
                     {
                         // `1 is already in t.Name
-                        sb.Append( "[[");
+                        sb.Append( "[");
                         for (var index = 0; index < t.GenericTypeArguments.Length; index++)
                         {
                             if (index > 0)
+                            {
                                 sb.Append( ", ");
+                            }
+                            
+                            sb.Append( "[");
                             var typeArgument = t.GenericTypeArguments[index];
                             FormatFullTypeNameRecursive(typeArgument,sb, false);
+                            sb.Append( "]");
+
                         }
-                        sb.Append( "]]");
+                        sb.Append( "]");
                     }
 
                     if (!omitAssembly && !t.IsPrimitive && t.Assembly != typeof(int).Assembly)

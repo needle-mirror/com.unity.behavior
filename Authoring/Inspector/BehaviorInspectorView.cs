@@ -15,20 +15,19 @@ namespace Unity.Behavior
 
         public BehaviorInspectorView() { }
 
-        public override void CreateDefaultInspector()
+        protected override NodeInspectorUI CreateDefaultInspectorImpl()
         {
             if (GraphEditor.Asset == null)
             {
-                return;
+                return null;
             }
 
-            Clear();
             BehaviorGraphInspectorUI graphInspector = new BehaviorGraphInspectorUI(GraphEditor.Asset as BehaviorAuthoringGraph);
             if (GraphEditor is BehaviorGraphEditor editor)
             {
                 graphInspector.EditSubgraphStoryButton.clicked += editor.OnSubgraphRepresentationButtonClicked;   
             }
-            Add(graphInspector);
+            return graphInspector;
         }
 
         public override void Refresh()

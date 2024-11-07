@@ -151,6 +151,12 @@ namespace Unity.Behavior
 
         private void ReleaseAudio(AudioSource source)
         {
+            // System is invalid or has been destroyed.
+            if (source == null)
+            {
+                return;
+            }
+
             source.enabled = false;
             source.gameObject.SetActive(false);
             s_SharedPool.Push(source);
@@ -167,6 +173,12 @@ namespace Unity.Behavior
             do
             {
                 await Awaitable.WaitForSecondsAsync(1f);
+
+                // System is invalid or has been destroyed.
+                if (source == null)
+                {
+                    return;
+                }
             }
             while (source.isPlaying);
 

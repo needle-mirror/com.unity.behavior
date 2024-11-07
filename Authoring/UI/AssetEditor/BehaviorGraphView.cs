@@ -71,7 +71,7 @@ namespace Unity.Behavior
             this.AddManipulator(new DuplicateNodeManipulator());
             this.AddManipulator(new CopyNodeManipulator());
             
-            this.AddManipulator(new ContextMenuManipulator());
+            this.AddManipulator(new GraphContextMenuManipulator());
             this.AddManipulator(new PasteNodeManipulator());
         }
 

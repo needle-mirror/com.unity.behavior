@@ -17,7 +17,7 @@
   -unity-font-definition: url('/Packages/com.unity.dt.app-ui/PackageResources/Fonts/Inter-Regular.ttf');
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 90%;
+  max-width: 100%;
   margin: 0;
   align-self: center;
 }

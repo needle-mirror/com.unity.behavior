@@ -15,6 +15,11 @@ namespace Unity.Behavior
 
         public CompositeNodeModel(NodeInfo nodeInfo) : base(nodeInfo)
         {
+            if (nodeInfo == null)
+            {
+                return;
+            }
+            
             m_NamedChildren = nodeInfo.NamedChildren ?? new List<string>();
         }
 
@@ -32,15 +37,20 @@ namespace Unity.Behavior
             {
                 RemovePort(port);
             }
-            foreach (string childName in nodeInfo.NamedChildren)
+
+            if (nodeInfo != null)
             {
-                if (FindPortModelByName(childName) == null)
+                foreach (string childName in nodeInfo.NamedChildren)
                 {
-                    PortModel portModel = new PortModel(childName, PortDataFlowType.Output) { IsFloating = true };
-                    AddPortModel(portModel);
+                    if (FindPortModelByName(childName) == null)
+                    {
+                        PortModel portModel = new PortModel(childName, PortDataFlowType.Output) { IsFloating = true };
+                        AddPortModel(portModel);
+                    }
                 }
+
+                SortOutputPortModelsBy(nodeInfo.NamedChildren);
             }
-            SortOutputPortModelsBy(nodeInfo.NamedChildren);
         }
     }
 }

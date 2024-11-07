@@ -6,7 +6,6 @@ using System.Linq;
 #if !UNITY_EDITOR
 using System.Reflection;
 #endif
-using System.Text.RegularExpressions;
 using Unity.AppUI.UI;
 using Unity.Behavior.GraphFramework;
 using UnityEngine;
@@ -20,10 +19,6 @@ namespace Unity.Behavior
 {
     internal static class Util
     {
-        private const string patternIdentifier = "^[a-zA-Z_][a-zA-Z0-9_]*$";
-        public const string InvalidIdentifierErrorMessage =
-            "Name must start with letter or '_'.\nIt can only contain letters, '_', and numbers.";
-
         private static readonly List<Type> s_StaticallySupportedTypes = new()
         {
             typeof(RegularText),
@@ -106,10 +101,6 @@ namespace Unity.Behavior
             }
 
             return output.ToString().TrimStart(' ');
-        }
-        public static bool IsValidIdentifier(this string nameCandidate)
-        {
-            return Regex.IsMatch(nameCandidate, patternIdentifier);
         }
 
 #if UNITY_EDITOR
@@ -250,7 +241,7 @@ namespace Unity.Behavior
 #endif
             foreach (Type enumType in GetEnumVariableTypes())
             {
-                builder.Add($"Enumeration/{enumType.Name}", onSelected: () => dispatcher.DispatchImmediate(new CreateVariableCommand($"New {enumType.Name}", BlackboardUtils.GetVariableModelTypeForType(enumType))));
+                builder.Add($"Enumeration/{enumType.Name}", onSelected: () => dispatcher.DispatchImmediate(new CreateVariableCommand(enumType.Name, BlackboardUtils.GetVariableModelTypeForType(enumType))));
             }
 
             // Event channels menu
@@ -259,7 +250,7 @@ namespace Unity.Behavior
 #endif
             foreach (EventChannelUtility.EventChannelInfo channelInfo in EventChannelUtility.GetEventChannelTypes())
             {
-                builder.Add($"Events/{channelInfo.Name}", iconName: "enum", onSelected: () => dispatcher.DispatchImmediate(new CreateVariableCommand($"New {channelInfo.Name}", channelInfo.VariableModelType)));
+                builder.Add($"Events/{channelInfo.Name}", iconName: "enum", onSelected: () => dispatcher.DispatchImmediate(new CreateVariableCommand(channelInfo.Name, channelInfo.VariableModelType)));
             }
 
             builder.DefaultTabName = "Common";
@@ -274,11 +265,16 @@ namespace Unity.Behavior
             return builder;
         }
         
-        
         private static void OnCreateNewEventChannel(VisualElement target, SerializableCommandBuffer buffer)
         {
-#if UNITY_EDITOR 
-            EventChannelWizard wizard = EventChannelWizardWindow.GetAndShowWindow(target);
+#if UNITY_EDITOR
+            Dictionary<string, Type> variableSuggestions = null;
+            // Only add suggestions when creating a new event from the graph editor.
+            if (target is GraphEditor graphEditor)
+            {
+                variableSuggestions = GetVariableSuggestions(graphEditor.Asset);
+            }
+            EventChannelWizard wizard = EventChannelWizardWindow.GetAndShowWindow(target, variableSuggestions);
             wizard.OnEventChannelTypeCreated += data =>
             {
                 OnEventChannelTypeCreated(data, buffer);

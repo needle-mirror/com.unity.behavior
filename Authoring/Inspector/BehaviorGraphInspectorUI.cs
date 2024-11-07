@@ -5,14 +5,14 @@ using TextField = Unity.AppUI.UI.TextField;
 
 namespace Unity.Behavior
 {
-    internal class BehaviorGraphInspectorUI : VisualElement
+    internal class BehaviorGraphInspectorUI : NodeInspectorUI
     {
         internal readonly ActionButton EditSubgraphStoryButton;
 
         private const string k_GraphSubtitle = "Behavior Graph";
         private readonly BehaviorAuthoringGraph m_InspectedGraph;
         
-        public BehaviorGraphInspectorUI(BehaviorAuthoringGraph graph)
+        public BehaviorGraphInspectorUI(BehaviorAuthoringGraph graph) : base(null)
         {
             m_InspectedGraph = graph;
             AddToClassList("NodeInspectorUI");

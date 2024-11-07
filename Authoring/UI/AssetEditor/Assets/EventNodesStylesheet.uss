@@ -17,8 +17,7 @@ EventReflectionElement #Icon {
 }
 
 EventReflectionElement Label {
-    margin-top: 0;
-    margin-bottom: 0;
+    margin: 0 2px;
 }
 
 EventReflectionElement #Icon.RootNode {
@@ -85,7 +84,7 @@ EventReflectionElement #Message > Label {
 
 EventReflectionElement #Message .LinkField #unity-text-input.unity-disabled {
     visibility: hidden;
-    width: 0px;
+    width: 0;
 }
 
 EventReflectionElement LinkField {

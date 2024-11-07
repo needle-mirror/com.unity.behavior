@@ -25,6 +25,8 @@ namespace Unity.Behavior
         [SerializeReference]
         private RuntimeBlackboardAsset m_RuntimeBlackboardAsset;
         
+        internal RuntimeBlackboardAsset RuntimeBlackboardAsset => m_RuntimeBlackboardAsset;
+        
         private void OnEnable()
         {
             if (m_RuntimeBlackboardAsset == null)

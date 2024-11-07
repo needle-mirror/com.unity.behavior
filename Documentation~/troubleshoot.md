@@ -6,17 +6,13 @@ uid: troubleshoot
 
 Solve common problems that might arise while working with Unity Behavior.
 
-## Subgraph Blackboard default values are overridden
+## Default values in RunSubgraph node not updating
 
-When using the **RunSubgraph (Static)** node in Unity Behavior, the default values of the subgraph **Blackboard** are overridden.
-
-### Causes 
-
-The **RunSubgraph (Static)** node directly references the graph asset, which replaces the default values of the subgraph **Blackboard**.
+When you change a subgraph's Blackboard Variable (BBV) default value, the RunSubgraph field retains its current value as an override instead of updating to the new default.
 
 ### Resolution: 
 
-To resolve this issue, use **RunSubgraph (Dynamic)** instead. Assign `Subgraph` as `BlackboardVariable`, rather than directly referencing the graph asset to the node.
+Revert the RunSubgraph field to its default value.
 
 ## Stack-overflow issue with `SharedBlackboardVariable`
 

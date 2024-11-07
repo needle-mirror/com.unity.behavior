@@ -423,6 +423,7 @@ namespace Unity.Behavior
                 
                 Blackboard = blackboardAuthoring;
                 Blackboard.name = blackboardName;
+                Blackboard.hideFlags = HideFlags.HideInHierarchy;
 
                 if (existingBlackboard != null)
                 {
@@ -431,7 +432,7 @@ namespace Unity.Behavior
                     AssetDatabase.RemoveObjectFromAsset(existingBlackboard);
                 }
             }
-            else if(blackboardAuthoring != null)
+            else if (blackboardAuthoring != null)
             {
                 if (Blackboard != null && blackboardAuthoring == Blackboard)
                 {
@@ -440,6 +441,8 @@ namespace Unity.Behavior
                     {
                         blackboardAuthoring.name = blackboardName;
                     }   
+                    
+                    Blackboard.hideFlags = HideFlags.HideInHierarchy;
                 }
                 return;
             }

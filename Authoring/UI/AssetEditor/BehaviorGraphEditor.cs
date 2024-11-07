@@ -136,13 +136,13 @@ namespace Unity.Behavior
         
         private void CacheDependentAssets()
         {
+            m_GraphDependencies.Clear();
+            m_BlackboardDependencies.Clear();
+            
             if (Asset == null)
             {
                 return;
             }
-            
-            // Listen for changes on the default graph Blackboard asset in case the sub-asset has been opened in a BlackboardEditor.
-            m_BlackboardDependencies.TryAdd((BehaviorBlackboardAuthoringAsset)Asset.Blackboard, Asset.Blackboard.VersionTimestamp);
 
             foreach (BehaviorBlackboardAuthoringAsset blackboard in Asset.m_Blackboards)
             {
@@ -692,7 +692,7 @@ namespace Unity.Behavior
                 // Check for variables in added Blackboard groups, and display them with the Blackboard asset name first.
                 foreach (BehaviorBlackboardAuthoringAsset blackboard in Asset.m_Blackboards)
                 {
-                    foreach (VariableModel assetVariable in blackboard.Variables.Where(variableModel => variableType.IsAssignableFrom(variableModel.Type) && variableModel.Type.BaseType != typeof(EventChannelBase)))
+                    foreach (VariableModel assetVariable in blackboard.Variables.Where(variableModel => field.IsAssignable(variableModel.Type) && variableModel.Type.BaseType != typeof(EventChannelBase)))
                     {
                         builder.Add($"{blackboard.name} " + BlackboardUtils.GetArrowUnicode() + $" {assetVariable.Name}",
                             () => { OnLinkFromSearcher(assetVariable, field); }, icon);
@@ -767,6 +767,8 @@ namespace Unity.Behavior
             };
             builder.Parent = field;
             builder.ShowIcons = true;
+            builder.Width = 220;
+            builder.ShowIcons = false;
             builder.Show();
         }
 

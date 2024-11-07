@@ -11,6 +11,8 @@ namespace Unity.Behavior
     {
         internal const string k_SubgraphFieldName = "Subgraph";
         internal const string k_BlackboardFieldName = "Blackboard";
+
+        [SerializeField] private List<SerializableGUID> m_OveriddenblackboardVariableGuids = new (); 
         
         public override bool IsSequenceable => true;
 
@@ -76,6 +78,30 @@ namespace Unity.Behavior
             {
                 BlackboardAssetField.LinkedVariable = nodeModelOriginal.BlackboardAssetField.LinkedVariable;
             }
+        }
+
+        public void SetVariableOverride(SerializableGUID variableGuid, bool isOverridden)
+        {
+            if (!isOverridden)
+            {
+                m_OveriddenblackboardVariableGuids.Remove(variableGuid);
+                return;
+            }
+            
+            if (!m_OveriddenblackboardVariableGuids.Contains(variableGuid))
+            {
+                m_OveriddenblackboardVariableGuids.Add(variableGuid);
+            }
+        }
+        
+        public bool IsVariableOverridden(SerializableGUID variableGuid)
+        {
+            return m_OveriddenblackboardVariableGuids.Contains(variableGuid);
+        }
+        
+        public void ClearOverriddenVariables()
+        {
+            m_OveriddenblackboardVariableGuids.Clear();
         }
 
         public override void OnDefineNode()
@@ -274,7 +300,7 @@ namespace Unity.Behavior
         public void CacheRuntimeGraphId()
         {
             BehaviorAuthoringGraph cachedGraph = SubgraphAuthoringAsset;
-            
+            ClearOverriddenVariables();
             if (cachedGraph == null)
             {
                 m_SubgraphAssetId = new SerializableGUID();

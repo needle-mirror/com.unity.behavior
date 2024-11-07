@@ -18,6 +18,9 @@ namespace Unity.Behavior
         public static readonly string k_PrefsKeySavePath = "IL2CPPSavePath";
         public static readonly string k_DefaultFileName = "BehaviorIL2CPPTypes";
 
+        public static readonly string ProjectPath = Path.GetDirectoryName(Application.dataPath);
+        public static readonly string LibraryPath = Path.Combine(ProjectPath, "Library");
+        
         //[MenuItem("Behavior/Generate IL2CPP Build File")]
         public static void GenerateFile()
         {
@@ -112,7 +115,7 @@ namespace Unity.Behavior
     internal static class GraphTypesLinkFileGenerator
     {
         public static string k_PrefsKeySavePath => IL2CPPGenericTypesGenerator.k_PrefsKeySavePath;
-        public static readonly string k_DefaultFileName = "link";
+        public static readonly string k_DefaultFileName = "BehaviorIL2CPPTypesLink";
         public static string k_GraphAssembly => typeof(GraphEditor).Assembly.GetName().Name;
         public static string k_BehaviorAssembly => typeof(BehaviorGraphEditor).Assembly.GetName().Name;
         
@@ -201,7 +204,12 @@ namespace Unity.Behavior
             bool isIL2CPPBuild = PlayerSettings.GetScriptingBackend(namedBuildTarget) == ScriptingImplementation.IL2CPP;
             if (isIL2CPPBuild) 
             {
-                IL2CPPGenericTypesGenerator.CreateAndWriteFile($"{Application.dataPath}/{IL2CPPGenericTypesGenerator.k_DefaultFileName}.cs");
+                string dir = $"{IL2CPPGenericTypesGenerator.LibraryPath}/com.unity.behavior";
+                string path = $"{dir}/{IL2CPPGenericTypesGenerator.k_DefaultFileName}.cs";
+
+                CreateOutputDirectory(dir);
+                
+                IL2CPPGenericTypesGenerator.CreateAndWriteFile(path);
             }
         }
         
@@ -213,11 +221,23 @@ namespace Unity.Behavior
             bool isIL2CPPBuild = PlayerSettings.GetScriptingBackend(namedBuildTarget) == ScriptingImplementation.IL2CPP;
             if (isIL2CPPBuild) 
             {
-                string path = $"{Application.dataPath}/{GraphTypesLinkFileGenerator.k_DefaultFileName}.xml";
+                string dir = $"{IL2CPPGenericTypesGenerator.LibraryPath}/com.unity.behavior";
+                string path = $"{dir}/{GraphTypesLinkFileGenerator.k_DefaultFileName}.xml";
+
+                CreateOutputDirectory(dir);
+
                 GraphTypesLinkFileGenerator.CreateAndWriteFile(path);
                 return path;
             }
             return string.Empty;
+        }
+
+        private void CreateOutputDirectory(string dir)
+        {
+            if (!Directory.Exists(dir))
+            {
+                Directory.CreateDirectory(dir);
+            }
         }
     }
 }

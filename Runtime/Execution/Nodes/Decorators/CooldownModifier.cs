@@ -17,15 +17,16 @@ namespace Unity.Behavior
     {
         [SerializeReference] public BlackboardVariable<float> Duration;
         [CreateProperty] private float m_CooldownRemainingTime;
+        private float m_CooldownEndTime;
 
         protected override Status OnStart()
         {
-            if (m_CooldownRemainingTime > 0)
+            if (Time.time < m_CooldownEndTime)
             {
                 return Status.Failure;
             }
 
-            m_CooldownRemainingTime = Duration.Value;
+            m_CooldownEndTime = Time.time + Duration.Value;
 
             if (Child == null)
             {
@@ -37,29 +38,29 @@ namespace Unity.Behavior
             {
                 return Status.Waiting;
             }
-
             return status;
         }
 
         protected override Status OnUpdate()
         {
-            if (m_CooldownRemainingTime > 0)
-            {
-                m_CooldownRemainingTime -= Time.deltaTime;
-            }
-
             var status = Child.CurrentStatus;
             if (status == Status.Running)
             {
                 return Status.Waiting;
             }
-
+            // Set the cooldown again because the child was still running and we only want to set it after it finished.
+            m_CooldownEndTime = Time.time + Duration.Value;
             return status;
         }
 
-        protected override void OnEnd()
+        protected override void OnSerialize()
         {
-            m_CooldownRemainingTime = 0;
+            m_CooldownRemainingTime = m_CooldownEndTime - Time.time;
+        }
+
+        protected override void OnDeserialize()
+        {
+            m_CooldownEndTime = Time.time + m_CooldownRemainingTime;
         }
     }
 }
