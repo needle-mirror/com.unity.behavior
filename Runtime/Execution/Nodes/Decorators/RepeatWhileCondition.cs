@@ -33,21 +33,21 @@ namespace Unity.Behavior
             {
                 return Status.Failure;
             }
-            
+
             // Early out in case the condition is already filled and prevent DoWhile condition. 
+            foreach (Condition condition in Conditions)
+            {
+                condition.OnStart();
+            }
+
             bool conditionIsTrue = ConditionUtils.CheckConditions(Conditions, RequiresAllConditions);
             if (!conditionIsTrue)
             {
                 return Status.Success;
             }
 
-            foreach (Condition condition in Conditions)
-            {
-                condition.OnStart();
-            }
-            
-            StartNode(Child);
-            return Status.Waiting;
+            Status childStatus = StartNode(Child);
+            return (childStatus == Status.Running || childStatus == Status.Waiting) ? Status.Waiting : Status.Running;
         }
 
         /// <inheritdoc cref="OnUpdate" />
@@ -57,17 +57,17 @@ namespace Unity.Behavior
             // If condition is true, we need to restart the child
             if (conditionIsTrue)
             {
-                RestartChild();
-                return Status.Waiting;
+                Status childStatus = RestartChild();
+                return (childStatus == Status.Running || childStatus == Status.Waiting) ? Status.Waiting : Status.Running;
             }
 
             return Status.Success;
         }
 
-        private void RestartChild()
+        private Status RestartChild()
         {
             EndNode(Child);
-            StartNode(Child);
+            return StartNode(Child);
         }
         
         protected override void OnEnd()

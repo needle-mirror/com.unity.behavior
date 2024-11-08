@@ -53,11 +53,25 @@ namespace Unity.Behavior
             
             if (ConditionUtils.CheckConditions(Conditions, RequiresAllConditions))
             {
+                if (True == null)
+                {
+#if UNITY_EDITOR
+                    Debug.LogWarning("Branching condition evaluated as true, but there is no child to run. Ignore this warning if this is intentional.");
+#endif
+                    return Status.Success;
+                }
                 status = StartNode(True);
                 m_CurrentChild = True;
             }
             else
             {
+                if (False == null)
+                {
+#if UNITY_EDITOR
+                    Debug.LogWarning("Branching condition evaluated as false, but there is no child to run. Ignore this warning if this is intentional.");
+#endif
+                    return Status.Success;
+                }
                 status = StartNode(False);
                 m_CurrentChild = False;
             }

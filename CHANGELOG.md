@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [1.0.5] - 2024-11-08
+
+### Changed
+- Conditional Branch node will log a warning in `UNITY_EDITOR` if it has no child to run. This can be safely ignored if intentional.
+
+### Fixed
+- `Repeat While (RepeatWhileCondition.cs)` node will correctly start its conditions before checking them, and will not wait forever if its children finished on the same frame.
+- Conditional Branch node will no longer throw exceptions if there is no child set.
+
 ## [1.0.4] - 2024-11-07
 
 ### Added

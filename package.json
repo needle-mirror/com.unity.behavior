@@ -1,7 +1,7 @@
 {
   "name": "com.unity.behavior",
   "displayName": "Behavior",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "unity": "6000.0",
   "unityRelease": "16f1",
   "description": "Unity Behavior is a graph-based tool to create and run behavior trees. Besides including a comprehensive library of pre-built nodes, the interface provides node customization options and real-time debugging. While fully functional on its own, a Unity Muse subscription enhances your experience by using large language models (LLM) to generate behavior trees from text prompts and create code for custom action nodes. This subscription, although optional, provides a powerful addition for those looking to accelerate their development process.\n\nA demo showcasing this package can be found in the Asset Store <a href=https://assetstore.unity.com/packages/templates/tutorials/behavior-demo-for-unity-298313>https://assetstore.unity.com/packages/templates/tutorials/behavior-demo-for-unity-298313</a>.",
@@ -33,18 +33,18 @@
     }
   ],
   "relatedPackages": {
-    "com.unity.behavior.tests": "1.0.4"
+    "com.unity.behavior.tests": "1.0.5"
   },
   "_upm": {
-    "changelog": "### Added\n\n### Changed\n- Updated AppUI dependency to `\"2.0.0-pre.11`.\n- Label displaying the graph description text removed from the subgraph node inspector.\n- Increased variable link search view width a bit and increase the text's width in the search options.\n- Changed the output location of IL2CPP link files so as to not pollute the Assets directory.\n- If a NavMeshAgent is available, the Patrol node now uses its speed to feed the animator's speed parameter.\n- Set `BehaviorGraphAgentEditor`'s `editorForChildClasses` to `true` in its `CustomEditor` property and added a call to `DrawPropertiesExcluding` in `OnInspectorGUI`.\n\n### Fixed\n- Fixed node wizard validation step not accepting other character sets than ASCII in variable names.\n- Fixed Event Channel wizard not filling in types for variables with a matching name on the Blackboard when editing the event message.\n- Fixed Event Channel wizard NodeUI preview not applying the correct margin styles on the message label.\n- Removed additional \"New\" from the variable name when creating a new Event Channel or Enum variable on the Blackboard.\n- Fixed an issue where the Blackboard would be reloaded when opening the asset searcher on a variable asset field.\n- Fixed not assigned EventChannels not generating local instances by BehaviorGraphAgent when the BlackboardVariable was part of a BlackboardReference.\n- Fixed blackboard variables added through the subgraph story representation having extra spaces between words.\n- Deleting a Blackboard Asset will correctly remove references in other graphs and unset variable links that reference its variables.\n- ComponentToComponentBlackboardVariableCaster now checks the source object type for polymorphic type before using GetComponent.\n- Pressing Spacebar in the graph to open the search menu will no longer throw an exception if using InputSystem with no Mouse support.\n- Navigate and Patrol actions will correctly check for null and not throw an exception due to incorrect use of ReferenceEquals.\n- Fixed a runtime type construct serialization issue, where a types with multiple generic components were failing.\n- Fixed FindClosestWithTagAction condition that was preventing the node to be executed when a null target was provided.\n- Fixed PlayAudioAction nullreference when the pooling was attempting to release an AudioSource that has already been destroyed.\n- Adds runtime serialization support to Switch and Patrol node.\n- Fixed runtime serialization support for MathTypesCastBlackboardVariables.\n- BlackboardVariables from added Blackboard Assets that can be cast to a field weren't shown as link options.\n- Fixed an issue in Conditions causing linked variables blackboard asset prefix to be removed when using the graph.\n- Fixed both Blackboard.SetVariableValue api's to allow for setting a variable via an object.\n- Cooldown node will correctly initialize its wait time and won't block graph execution while waiting.\n- Being unable to zoom in the graph after opening another graph with the Open button."
+    "changelog": "### Changed\n- Conditional Branch node will log a warning in `UNITY_EDITOR` if it has no child to run. This can be safely ignored if intentional.\n\n### Fixed\n- `Repeat While (RepeatWhileCondition.cs)` node will correctly start its conditions before checking them, and will not wait forever if its children finished on the same frame.\n- Conditional Branch node will no longer throw exceptions if there is no child set."
   },
   "upmCi": {
-    "footprint": "4a9d37fb1b8d78853be4b004ce056931448767ee"
+    "footprint": "a73f5ec674c30f1985bf2780a4dca699f4b4803b"
   },
   "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.behavior@1.0/manual/index.html",
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.ai.designer-monorepo.git",
     "type": "git",
-    "revision": "f21b7eb442bffd8a73c8303446ac9c07b26f1a0f"
+    "revision": "3b11b7eb9bbd8c7171865e822c9504dce1b2fdc8"
   }
 }
