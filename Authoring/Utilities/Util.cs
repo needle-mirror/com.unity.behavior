@@ -189,7 +189,58 @@ namespace Unity.Behavior
 
         public static bool IsPathRelativeToProjectAssets(string path)
         {
+            path = path.Replace("\\", "/").Replace("//", "/");
             return path.StartsWith(Application.dataPath) && Directory.Exists(path);
+        }
+
+        public static string GetAbsolutePathToProjectAssets(string path, bool makeDirectories = true)
+        {
+            path = path.Replace("\\", "/").Replace("//", "/");
+            if (!path.StartsWith(Application.dataPath))
+            {
+                path = $"{Application.dataPath}/{path}";
+            }
+            if (!Directory.Exists(path) && makeDirectories)
+            {
+                MakeFolderPath(path);
+            }
+            return Directory.Exists(path) ? path : Application.dataPath; // Making the directories may still fail. Make sure the path exists.
+        }
+
+        public static void MakeFolderPath(string path)
+        {
+#if UNITY_EDITOR
+            path = MakePathRelativeToProject(path);
+            string[] directories = path.Split('/');
+            string currentDirectory = "Assets";
+            foreach (string directory in directories)
+            {
+                if (!AssetDatabase.IsValidFolder($"{currentDirectory}/{directory}"))
+                {
+                    AssetDatabase.CreateFolder(currentDirectory, directory);
+                }
+                currentDirectory = $"{currentDirectory}/{directory}";
+            }
+#endif
+        }
+
+        public static string MakePathRelativeToProject(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                return "";
+            }
+            path = path.Replace("\\", "/").Replace("//", "/");
+            bool statsWithDataPath = path.StartsWith(Application.dataPath);
+            if (statsWithDataPath)
+            {
+                if (path.Length == Application.dataPath.Length) {
+
+                    return "";
+                }
+                path = path.Remove(0, Application.dataPath.Length + 1);
+            }
+            return path;
         }
 
         public static bool IsNodeInPackageRuntimeAssembly(NodeInfo info)

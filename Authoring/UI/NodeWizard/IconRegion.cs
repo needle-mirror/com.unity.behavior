@@ -12,7 +12,7 @@ namespace Unity.Behavior
     internal class IconRegion : VisualElement
     {
         private const string k_ResourceFolder = "Resources/";
-        private const string k_IconHelpText = "You can set an icon for your node. The file needs to be under a 'Resources' folder to be displayed correctly.";
+        private const string k_IconHelpText = "You can set an icon for your node. The file needs to be under a \"Resources\" folder to be displayed correctly.";
         
         internal string IconPath { get; set; }
         internal ObjectField IconField => m_IconField;
@@ -62,13 +62,13 @@ namespace Unity.Behavior
             }
             if (path.Contains(k_ResourceFolder + "unity_builtin_extra"))
             {
-                m_IconHelpBox.text = "Built in assets cannot be added as an icon. The file needs to be located under a 'Resources' folder to be displayed with the node.";
+                m_IconHelpBox.text = "Built in assets cannot be added as an icon. The file needs to be located under a \"Resources\" folder to be displayed with the node.";
                 m_IconHelpBox.messageType = HelpBoxMessageType.Warning;
                 return false;
             }
             if (!path.Contains(k_ResourceFolder))
             {
-                m_IconHelpBox.text = "Icon file needs to be located under a 'Resources' folder to be displayed with the node.";
+                m_IconHelpBox.text = "Icon file needs to be located under a \"Resources\" folder to be displayed with the node.";
                 m_IconHelpBox.messageType = HelpBoxMessageType.Warning;
                 return false;
             }

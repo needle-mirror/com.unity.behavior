@@ -11,8 +11,26 @@ namespace Unity.Behavior
         public static readonly string ChannelFieldName = "ChannelVariable";
 
         public override bool IsSequenceable => true;
-        public SerializableType EventChannelType =>
-            Fields.FirstOrDefault(field => field.FieldName == ChannelFieldName)?.LinkedVariable?.Type;
+        public SerializableType EventChannelType
+        {
+            get
+            {
+                var field = Fields.FirstOrDefault(field => field.FieldName == ChannelFieldName);
+                if (field == null)
+                {
+                    return null;
+                }
+                if (field.LinkedVariable != null)
+                {
+                    return field.LinkedVariable.Type;
+                }
+                if (field.LocalValue?.ObjectValue != null)
+                {
+                    return field.LocalValue.ObjectValue.GetType();
+                }
+                return null;
+            }
+        }
         
         public EventNodeModel(NodeInfo nodeInfo) : base (nodeInfo) { }
 

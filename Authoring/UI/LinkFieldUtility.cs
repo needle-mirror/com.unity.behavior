@@ -133,8 +133,9 @@ namespace Unity.Behavior
             }
             if (typeof(ScriptableObject).IsAssignableFrom(type))
             {
-                var field = new BehaviorLinkField<ScriptableObject, RuntimeScriptableObjectField>() { LinkVariableType = type };
+                var field = new BehaviorLinkField<Object, RuntimeObjectField>() { LinkVariableType = type };
                 field.Field.label = Util.NicifyVariableName(label).Replace("  ", " ");
+                field.AllowAssetEmbeds = true;
                 // todo: Should this be done by the caller instead of here?
                 if (typeof(EventChannelBase).IsAssignableFrom(type))
                 {

@@ -109,6 +109,7 @@ namespace UnityEngine.UIExtras
         }
 
         public bool AutoSortItems {  get; set; }
+        private bool IsCurrentNodeSearchNode => m_SearchNode != null && m_CurrentNode == m_SearchNode;
 
         private void SortItems(TreeNode<Item> node)
         {
@@ -214,6 +215,24 @@ namespace UnityEngine.UIExtras
                     return;
                 }
                 searchViewItem.Item = m_CurrentNode[index];
+                if (IsCurrentNodeSearchNode)
+                {
+                    string path = m_CurrentNode[index].Value.Path;
+                    searchViewItem.SecondaryLabelTooltip = path;
+
+                    const string kOtherPathString = "Other/";
+                    const string kMonoBehaviourPathString = "Other/MonoBehaviours/";
+                    string pathWithoutName = path.Remove(path.LastIndexOf(m_CurrentNode[index].Value.Name)).TrimEnd('/').Replace(kMonoBehaviourPathString, "").Replace(kOtherPathString, "");
+
+                    if (string.IsNullOrEmpty(pathWithoutName))
+                    {
+                        searchViewItem.SecondaryLabel = "";
+                    }
+                    else
+                    {
+                        searchViewItem.SecondaryLabel = $"({pathWithoutName})";
+                    }
+                }
                 searchViewItem.RegisterCallback<PointerUpEvent>(HandlePointerSelection);
             };
             m_ListView.unbindItem = (element, i) =>
@@ -372,17 +391,16 @@ namespace UnityEngine.UIExtras
                 m_SearchField.placeholder = "";
             }
 
-            bool isCurrentNodeSearchNode = m_SearchNode != null && m_CurrentNode == m_SearchNode;
             if (newValue.Length == 0)
             {
-                if (isCurrentNodeSearchNode)
+                if (IsCurrentNodeSearchNode)
                 {
                     OnNavigationReturn();
                 }
                 return;
             }
 
-            if (!isCurrentNodeSearchNode)
+            if (!IsCurrentNodeSearchNode)
             {
                 m_NavigationStack.Push(m_CurrentNode);
             }
@@ -431,6 +449,7 @@ namespace UnityEngine.UIExtras
                 m_ReturnButton.SetEnabled(true);
                 m_ReturnIcon.style.visibility = Visibility.Visible;
             }
+            EnableInClassList("SearchView_ShowSecondaryLabel", IsCurrentNodeSearchNode);
         }
 
         private void OnNavigationReturn()

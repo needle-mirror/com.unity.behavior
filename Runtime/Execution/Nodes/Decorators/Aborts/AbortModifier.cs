@@ -37,7 +37,14 @@ namespace Unity.Behavior
             {
                 condition.OnStart();
             }
-            
+
+            // If the condition has already been met, don't start running the child and abort now.
+            // We need this because otherwise the child node would be aborted at the next frame during the OnUpdate evaluation.
+            if (Conditions.Count > 0 && ConditionUtils.CheckConditions(Conditions, RequiresAllConditions))
+            {
+                return Status.Failure;
+            }
+
             Status status = StartNode(Child);
             if (status == Status.Success)
                 return Status.Success;

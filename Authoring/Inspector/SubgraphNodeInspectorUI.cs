@@ -354,7 +354,7 @@ namespace Unity.Behavior
             NodeProperties.Add(fieldContainer);
             field.AddToClassList("LinkField-Light");
             field.SetEnabled(false);
-            field.tooltip = "Variables marked as 'Shared' can not be assigned through a subgraph node. Set the shared variable value from the blackboard that it belongs to.";
+            field.tooltip = "Variables marked as \"Shared\" can not be assigned through a subgraph node. Set the shared variable value from the blackboard that it belongs to.";
         }
     }
 }

@@ -1,10 +1,35 @@
-# Changelog
 
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.6] - 2024-11-20
+
+### Added
+- Search popups will show paths for items when a search query was given. A tooltip will be shown when hovered on the path text in case it's truncated.
+- Project settings option to set the save locations for nodes, conditions, enums and event channels.
+- Fields with an asset assigned to them will ping the item on click and select the item on double click.
+- Behavior window will no longer block Shift+Space shortcut to maximize the window when docked.
+
+### Changed
+- Reduce GC allocations related to condition nodes `CheckConditions`.
+- Reduce GC allocations related to condition nodes `Evaluate` where we know the type of the object we're comparing.
+- Changed single quotation marks in dialogues to double quotation marks.
+- Changed single quotation marks in node tooltips to double quotation marks.
+- Changed single quotation marks in logs to double quotation marks.
+- Allow selecting a ScriptableObject from the Assets without having to make a blackboard variable.
+
+### Fixed
+- Fixed the graph asset not being reloaded on window focus if changed externally.
+- Event channel generation will correctly add the relevant namespaces for variables added.
+- Save location wasn't correctly remembering the last location saved.
+- Behavior Graph Agent Inspector should no longer shows unexposed variables during play mode.
+- RuntimeBlackboardAsset will correctly save its variables on entering play mode and reset them on exiting play mode.
+- Fixed choosing an enum value from a blackboard variable dropdown not mapping correctly to assigned enum values.
+- A small hang when debugging if a graph's view was enabled & disabled many times.
+- When debugging the first click when selecting an agent failed.
+- The Abort node now checks its OnStart condition to prevent the child from being interrupted during the next OnUpdate evaluation.
 
 ## [1.0.5] - 2024-11-08
 

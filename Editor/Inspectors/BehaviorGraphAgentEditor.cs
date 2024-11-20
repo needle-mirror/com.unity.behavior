@@ -34,6 +34,10 @@ namespace Unity.Behavior
                 string assetPath = AssetDatabase.GetAssetPath(m_SharedGraph);
                 if (string.IsNullOrEmpty(assetPath))
                 {
+                    if (BehaviorGraphAssetRegistry.TryGetAssetFromId(m_SharedGraph.RootGraph.AuthoringAssetID , out var sharedAuthoringGraph))
+                    {
+                        SharedAuthoringGraph = sharedAuthoringGraph;
+                    }
                     return;
                 }
                 SharedAuthoringGraph = AssetDatabase.LoadAssetAtPath<BehaviorAuthoringGraph>(assetPath);

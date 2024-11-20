@@ -35,7 +35,7 @@ namespace Unity.Behavior
             if (m_CurrentChild >= Children.Count || m_CurrentChild < 0)
             {
                 Debug.LogError(
-                    $"The value '{EnumVariable.ObjectValue.ToString()}' is not available as an output port. This can happen when you manually changed the enum type '{EnumVariable.Type}' and forgot to recompile the graph.");
+                    $"The value \"{EnumVariable.ObjectValue.ToString()}\" is not available as an output port. This can happen when you manually changed the enum type \"{EnumVariable.Type}\" and forgot to recompile the graph.");
                 return DefaultStatus;
             }
 

@@ -44,7 +44,7 @@ namespace Unity.Behavior
             VisualElement typeDropdownContainer = new VisualElement();
             typeDropdownContainer.AddToClassList("DropdownPropertyElement");
             Label label = new Label("Type");
-            label.tooltip = "Select the type of abort node. 'Abort' ends the execution of all the children nodes and returns failure to the parent node. 'Restart' ends all the children nodes and then restarts them.";
+            label.tooltip = "Select the type of abort node. \"Abort\" ends the execution of all the children nodes and returns failure to the parent node. \"Restart\" ends all the children nodes and then restarts them.";
             typeDropdownContainer.Add(label);
             m_TypeDropdown = new Dropdown();
             List<string> types = Enum.GetNames(typeof(AbortNodeModel.AbortType)).ToList();

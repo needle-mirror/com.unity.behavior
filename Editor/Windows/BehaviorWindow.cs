@@ -28,6 +28,7 @@ namespace Unity.Behavior
         private int m_DebugAgentId;
         internal BehaviorGraphEditor m_Editor;
         private Panel m_AppUIPanel;
+        private long m_PreviousVersionTimestamp = 0;
 
         private const string k_WindowDockedKey = "WindowDocked";
         private const string k_WindowXKey = "WindowX";
@@ -60,7 +61,7 @@ namespace Unity.Behavior
 
             EditorApplication.playModeStateChanged += OnEditorStateChange;
             m_Editor.OnSave += base.SaveChanges;
-            m_Editor.DebugAgentSelected += agentID => { m_DebugAgentId = agentID; };
+            m_Editor.DebugAgentSelected += SetDebugAgent;
             m_Editor.SetActiveGraphToDebugAgent(m_DebugAgentId);
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
         }
@@ -68,6 +69,7 @@ namespace Unity.Behavior
         private void OnDisable()
         {
             EditorApplication.playModeStateChanged -= OnEditorStateChange;
+            m_Editor.DebugAgentSelected -= SetDebugAgent;
             AutoSaveIfEnabledInEditor();
             SetWindowPosition();
             rootVisualElement.UnregisterCallback<GeometryChangedEvent>(OnGeometryChanged);
@@ -81,6 +83,11 @@ namespace Unity.Behavior
                 return;
             }
             m_AppUIPanel.forceUseTooltipSystem = (change == PlayModeStateChange.EnteredPlayMode);
+        }
+        
+        private void SetDebugAgent(int agentID)
+        {
+            m_DebugAgentId = agentID;
         }
 
         private void OnGeometryChanged(GeometryChangedEvent evt)
@@ -132,9 +139,12 @@ namespace Unity.Behavior
             }
 
             // Reload the editor if any graph or blackboard assets which the graph is depending on has changed.
-            if (m_Editor.HasBlackboardDependencyChanged() || m_Editor.HasGraphDependencyChanged())
+            if (m_Editor.HasBlackboardDependencyChanged() || 
+                m_Editor.HasGraphDependencyChanged() || 
+                (m_Asset != null && m_Asset.VersionTimestamp != m_PreviousVersionTimestamp))
             {
                 m_Editor.Load(Asset);
+                m_PreviousVersionTimestamp = m_Asset.VersionTimestamp;
             }
         }
 

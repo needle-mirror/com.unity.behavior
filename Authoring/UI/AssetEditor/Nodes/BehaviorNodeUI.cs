@@ -96,7 +96,8 @@ namespace Unity.Behavior
             DebugIconElement.tooltip = $"Current State: {status}.";
 
             var firstInputPort = GetFirstInputPort();
-            if (firstInputPort != null) {
+            if (firstInputPort != null)
+            {
                 bool isRunning = !(status is Node.Status.Uninitialized);
                 foreach (Edge edge in firstInputPort.Edges)
                 {

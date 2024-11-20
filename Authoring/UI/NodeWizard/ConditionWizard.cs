@@ -11,7 +11,7 @@ namespace Unity.Behavior
     {
         private const string k_NameFieldPlaceholderName = "New Condition";
         private const string k_ConditionWizardHelpText = "Create a custom rule to use as a condition on your node. When conditions are evaluated, they return either true or false.";
-        private const string k_ConditionStoryHelpText = "Describe the condition being checked. For example: 'Agent is in proximity to Enemy'";
+        private const string k_ConditionStoryHelpText = "Describe the condition being checked. For example: \"Agent is in proximity to Enemy\"";
 
         private Action<string> m_OnComplete;
         

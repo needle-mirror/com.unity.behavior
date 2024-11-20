@@ -9,7 +9,7 @@ namespace Unity.Behavior
     {
         private List<SettingsProvider> m_SettingsProviders = new List<SettingsProvider>();
         
-        public BehaviorSettingsProvider() : base("Project/Muse Behavior", SettingsScope.Project)
+        public BehaviorSettingsProvider() : base("Project/Behavior", SettingsScope.Project)
         {
             m_SettingsProviders.Add(BehaviorAssetSettingsProvider.CreateCustomSettingsProvider());
         }

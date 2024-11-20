@@ -327,7 +327,7 @@ namespace Unity.Behavior
             INodeTransformer nodeTransformer = GetNodeTransformer(nodeModel.GetType());
             if (nodeTransformer == null)
             {
-                throw new Exception($"No node transformer found for '{nodeModel.Asset}'({nodeModel.GetType()}) in graph {Graph.name}.");
+                throw new Exception($"No node transformer found for \"{nodeModel.Asset}\"({nodeModel.GetType()}) in graph {Graph.name}.");
             }
           
             Node node = nodeTransformer.CreateNodeFromModel(this, nodeModel);

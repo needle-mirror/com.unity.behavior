@@ -36,7 +36,7 @@ namespace Unity.Behavior
             m_AsyncOperation = SceneManager.LoadSceneAsync(SceneName.Value, Mode);
             if (m_AsyncOperation == null)
             {
-                LogFailure($"Failed to load scene '{SceneName.Value}'.", true);
+                LogFailure($"Failed to load scene \"{SceneName.Value}\".", true);
                 return Status.Failure;
             }
 

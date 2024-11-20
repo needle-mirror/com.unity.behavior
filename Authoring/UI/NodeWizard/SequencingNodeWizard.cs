@@ -67,7 +67,7 @@ namespace Unity.Behavior
         protected override void SetHelpTexts()
         {
             SetInfoHelpText("Sequencing nodes control the execution flow of their connected branches, imposing both an order of execution as well as conditions for a sequence's completion.");
-            SetStoryHelpText("Describe your sequencing node. For example: 'Execute children until one succeeds or all fail'.");
+            SetStoryHelpText("Describe your sequencing node. For example: \"Execute children until one succeeds or all fail\".");
         }
 
         internal void SetupEditWizard(NodeInfo info, NodeModel model)

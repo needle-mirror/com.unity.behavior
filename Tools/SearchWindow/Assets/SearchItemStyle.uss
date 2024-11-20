@@ -22,7 +22,7 @@
   align-self: center;
 }
 
-.SearchItem-NextContainer {
+.SearchItem-RightAlignedContainer {
   flex-grow: 1;
   flex-direction: row;
   align-items: center;
@@ -62,4 +62,18 @@
 
 .HiddenIcon {
   visibility: hidden;
+}
+
+.SearchItem-Secondary-Label {
+	-unity-text-align: middle-right;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	font-size: var(--unity-metrics-default-font_semi_small_size);
+	display: none;
+	flex-shrink: 1;
+	opacity: 0.5;
+}
+
+.SearchView_ShowSecondaryLabel .SearchItem-Secondary-Label {
+	display: flex;
 }

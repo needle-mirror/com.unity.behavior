@@ -118,7 +118,7 @@ namespace Unity.Behavior.GraphFramework
             if (portModelNew.IsDefaultPort)
             {
                 throw new Exception(
-                    $"Default ports 'InputPort' and 'OutputPort' cannot be added manually. Use the fields '{nameof(HasDefaultInputPort)}'/'{nameof(HasDefaultOutputPort)}' instead.");
+                    $"Default ports \"InputPort\" and \"OutputPort\" cannot be added manually. Use the fields \"{nameof(HasDefaultInputPort)}\"/\"{nameof(HasDefaultOutputPort)}\" instead.");
             }
 
             foreach (PortModel portModel in PortModels)

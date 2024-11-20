@@ -2,19 +2,16 @@
 using UnityEditor;
 using UnityEngine;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 using Unity.Behavior.GraphFramework;
-using System.Linq;
 
 namespace Unity.Behavior
 {
     internal class NodeGeneratorUtility
     {
-        private static readonly string k_PrefsKeySaveNodePath = "SaveNodePath";
         internal enum NodeType
         {
             Action,
@@ -39,8 +36,23 @@ namespace Unity.Behavior
         internal static bool Create(NodeData data, string postfix)
         {
             string fileName = GeneratorUtils.ToPascalCase(data.Name + postfix);
-            string suggestedSavePath = GraphPrefsUtility.GetString(k_PrefsKeySaveNodePath, Application.dataPath, true);
-            suggestedSavePath = Util.IsPathRelativeToProjectAssets(suggestedSavePath) ? suggestedSavePath : Application.dataPath;
+            string suggestedSavePath = BehaviorProjectSettings.instance.SaveFolder;
+            switch (data.NodeType)
+            {
+                case NodeType.Action:
+                    suggestedSavePath = BehaviorProjectSettings.instance.SaveFolderAction;
+                    break;
+
+                case NodeType.Modifier:
+                    suggestedSavePath = BehaviorProjectSettings.instance.SaveFolderModifier;
+                    break;
+
+                case NodeType.Composite:
+                    suggestedSavePath = BehaviorProjectSettings.instance.SaveFolderFlow;
+                    break;
+            }
+            suggestedSavePath = Util.GetAbsolutePathToProjectAssets(suggestedSavePath);
+
             string path = EditorUtility.SaveFilePanel(
                 $"Create {GetNodeTypeString(data.NodeType)} Node Script",
                 suggestedSavePath,
@@ -64,7 +76,23 @@ namespace Unity.Behavior
 
         internal static void GenerateNodeFile(NodeData data, string path)
         {
-            GraphPrefsUtility.SetString(k_PrefsKeySaveNodePath, Path.GetDirectoryName(path), true);
+            if (BehaviorProjectSettings.instance.AutoSaveLastSaveLocation)
+            {
+                switch (data.NodeType)
+                {
+                    case NodeType.Action:
+                        BehaviorProjectSettings.instance.SaveFolderAction = Path.GetDirectoryName(path);
+                        break;
+
+                    case NodeType.Modifier:
+                        BehaviorProjectSettings.instance.SaveFolderModifier = Path.GetDirectoryName(path);
+                        break;
+
+                    case NodeType.Composite:
+                        BehaviorProjectSettings.instance.SaveFolderFlow = Path.GetDirectoryName(path);
+                        break;
+                }
+            }
             string name = Path.GetFileNameWithoutExtension(path);
             data.ClassName = name;
             var content = MakeClassString(data);
@@ -77,40 +105,13 @@ namespace Unity.Behavior
             AssetDatabase.Refresh();
         }
 
-        internal static List<string> GetNamespaceStrings(Dictionary<string, Type> variables)
-        {
-            HashSet<string> namespaceList = new HashSet<string>();
-            namespaceList.Add("System");
-            namespaceList.Add("UnityEngine");
-            namespaceList.Add("Unity.Behavior");
-            if (variables != null)
-            {
-                foreach (var variable in variables)
-                {
-                    if (!string.IsNullOrEmpty(variable.Value.Namespace))
-                    {
-                        namespaceList.Add(variable.Value.Namespace);
-                    }
-                    if (typeof(IList).IsAssignableFrom(variable.Value))
-                    {
-                        namespaceList.Add("System.Collections.Generic");
-                    }
-                }
-            }
-
-            var sortedList = namespaceList.ToList();
-            sortedList.Sort();
-            return sortedList;
-        }
-
-
         internal static string MakeClassString(NodeData data)
         {
             var builder = new StringBuilder();
 
             string attributeString = GenerateAttributeString(data);
 
-            var namespaceStrings = GetNamespaceStrings(data.Variables);
+            var namespaceStrings = GeneratorUtils.GetNamespaceStrings(data.Variables);
             foreach (var namespaceString in namespaceStrings)
             {
                 builder.AppendLine($"using {namespaceString};");

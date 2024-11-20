@@ -17,7 +17,7 @@ namespace Unity.Behavior
         protected override void SetHelpTexts()
         {
             SetInfoHelpText("Modifiers affect the execution of their connected subgraphs. For example, a repeat modifier causes its branch to perform its operation more than once.");
-            SetStoryHelpText("Describe how the modifier affects the execution of the graph. For example: 'Repeat X times'.");
+            SetStoryHelpText("Describe how the modifier affects the execution of the graph. For example: \"Repeat X times\".");
         }
 
         internal void SetupEditWizard(NodeInfo info)

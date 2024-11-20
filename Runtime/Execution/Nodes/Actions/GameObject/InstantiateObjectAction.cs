@@ -52,7 +52,7 @@ namespace Unity.Behavior
             if (InstantiatedObject is IBlackboardVariableCast)
             {
                 var caster = InstantiatedObject as IBlackboardVariableCast;
-                LogFailure($"Invalid InstantiatedObject variable: Expecting 'GameObject' but is '{caster.SourceTypeName}'. Please provide a valid GameObject variable.");
+                LogFailure($"Invalid InstantiatedObject variable: Expecting \"GameObject\" but is \"{caster.SourceTypeName}\". Please provide a valid GameObject variable.");
                 return Status.Failure;
             }
 

@@ -9,9 +9,7 @@ using UnityEngine;
 namespace Unity.Behavior
 {
     internal static class ConditionGeneratorUtility
-    {
-        private static readonly string k_PrefsKeySaveConditionPath = "SaveConditionPath";
-        
+    {        
         internal class ConditionData
         {
             internal string Name { get; set; }
@@ -24,10 +22,9 @@ namespace Unity.Behavior
         internal static bool CreateConditionAsset(ConditionData data)
         {
             string fileName = GeneratorUtils.ToPascalCase(data.Name) + "Condition";
-            string suggestedSavePath = GraphPrefsUtility.GetString(k_PrefsKeySaveConditionPath, Application.dataPath, true);
-            suggestedSavePath = Util.IsPathRelativeToProjectAssets(suggestedSavePath) ? suggestedSavePath : Application.dataPath;
+            string suggestedSavePath = Util.GetAbsolutePathToProjectAssets(BehaviorProjectSettings.instance.SaveFolderCondition);
             string path = EditorUtility.SaveFilePanel(
-                $"Create Condition '{data.Name}'",
+                $"Create Condition \"{data.Name}\"",
                 suggestedSavePath,
                 fileName,
                 "cs");
@@ -36,7 +33,10 @@ namespace Unity.Behavior
             {
                 return false;
             }
-            GraphPrefsUtility.SetString(k_PrefsKeySaveConditionPath, Path.GetDirectoryName(path), true);
+            if (BehaviorProjectSettings.instance.AutoSaveLastSaveLocation)
+            {
+                BehaviorProjectSettings.instance.SaveFolderCondition = Path.GetDirectoryName(path);
+            }
 
 
             string name = Path.GetFileNameWithoutExtension(path);
@@ -44,7 +44,7 @@ namespace Unity.Behavior
 
             using (var outfile = new StreamWriter(path))
             {
-                var namespaceStrings = NodeGeneratorUtility.GetNamespaceStrings(data.Variables);
+                var namespaceStrings = GeneratorUtils.GetNamespaceStrings(data.Variables);
                 foreach (var namespaceString in namespaceStrings)
                 {
                     outfile.WriteLine($"using {namespaceString};");

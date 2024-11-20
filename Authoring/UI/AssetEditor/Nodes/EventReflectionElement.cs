@@ -14,7 +14,7 @@ namespace Unity.Behavior
         private readonly List<BaseLinkField> m_MessageFields = new();
         private readonly string m_ChannelFieldName = EventNodeModel.ChannelFieldName;
         private string m_ChannelFieldDisplayName = "Event Channel";
-        private BaseLinkField m_ChannelField;
+        private BehaviorLinkField<UnityEngine.Object, RuntimeObjectField> m_ChannelField;
         private VisualElement m_ChannelLine;
         private VisualElement m_ChannelMessageCaption;
         private VisualElement m_MessageLine;
@@ -159,10 +159,11 @@ namespace Unity.Behavior
                 m_ChannelFieldDisplayName = "Message";
             }
 
-            m_ChannelField = LinkFieldUtility.CreateNodeLinkField(m_ChannelFieldDisplayName, typeof(BlackboardVariable<EventChannelBase>));
+            m_ChannelField = LinkFieldUtility.CreateNodeLinkField(m_ChannelFieldDisplayName, typeof(BlackboardVariable<EventChannelBase>)) as BehaviorLinkField<UnityEngine.Object, RuntimeObjectField>;
             m_ChannelField.FieldName = m_ChannelFieldName;
             m_ChannelField.Model = m_NodeModel;
             m_ChannelField.RegisterCallback<LinkFieldTypeChangeEvent>(evt => UpdateFields(evt.FieldType));
+            m_ChannelField.RegisterCallback<LinkFieldValueChangeEvent>(evt => UpdateFields(evt.Value == null ? null : evt.Value.GetType()));
 
             if (!m_IsRootNode)
             {
@@ -289,7 +290,7 @@ namespace Unity.Behavior
             {
                 ClearAssignFields();
                 ClearChannelMessageCaption();
-                if (m_ChannelField.LinkedVariable == null)
+                if (m_ChannelField.LinkedVariable == null && m_ChannelField.value == null)
                 {
                     CollapseStartOnEventElement();
                 }

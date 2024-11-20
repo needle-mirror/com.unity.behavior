@@ -49,7 +49,6 @@ namespace Unity.Behavior
         private bool IsInEditorContext => panel?.contextType == ContextType.Editor;
 
         private BehaviorGraphAgent m_SelectedAgent;
-        private BehaviorGraphModule m_DebugGraphModule;
         private DebugAgentElement m_DebugElement;
         
         private int m_PlaceholderNodeIndex;
@@ -254,7 +253,7 @@ namespace Unity.Behavior
             // Once we introduce more restriction on name/type duplication, this might cause undefined behavior.
             if (asset.VersionTimestamp != default)
             {
-                Debug.LogWarning($"'{asset.name}' embedded blackboard lost its original Self variable. " +
+                Debug.LogWarning($"\"{asset.name}\" embedded blackboard lost its original Self variable. " +
                     $"This should not happen and is required to ensure that each node in the graph can access a valid GameObject property. " +
                     $"Generating a new valid Self variable now.", asset);
             }
@@ -432,7 +431,6 @@ namespace Unity.Behavior
             if (m_SelectedAgent != null)
             {
                 SetupDebugTarget(m_SelectedAgent);
-                BehaviorGraphView.ActiveGraph = m_DebugGraphModule;
             }
         }
 
@@ -441,7 +439,7 @@ namespace Unity.Behavior
             if (obj.Data is (BehaviorGraphAgent agent, BehaviorGraphModule graphModule))
             {
                SetupDebugTarget(agent);
-               BehaviorGraphView.ActiveGraph = graphModule;
+               BehaviorGraphView.ActiveDebugGraph = graphModule;
             }
             else
             {
@@ -449,18 +447,34 @@ namespace Unity.Behavior
             }
         }
 
+#if UNITY_EDITOR
+        private void PostRuntimeDeserializationTargetRefresh()
+        {
+            m_SelectedAgent.OnRuntimeDeserializationEvent -= PostRuntimeDeserializationTargetRefresh;
+            SetupDebugTarget(m_SelectedAgent);
+        }
+#endif
+
         private void SetupDebugTarget(BehaviorGraphAgent agent)
         {
             if (agent == null || !agent.Graph || agent.Graph.RootGraph == null)
             {
+                BehaviorGraphView.ActiveDebugGraph = null;
                 return;
             }
 
             m_SelectedAgent = agent;
+#if UNITY_EDITOR
+            m_SelectedAgent.OnRuntimeDeserializationEvent += PostRuntimeDeserializationTargetRefresh;
+#endif
+            BehaviorGraphView.ActiveDebugGraph = agent.Graph.Graphs.FirstOrDefault(module => module.AuthoringAssetID == Asset.AssetID);
+
             DebugAgentSelected?.Invoke(m_SelectedAgent.GetInstanceID());
 #if UNITY_EDITOR
             if (m_SelectedAgent.gameObject != null)
+            {
                 Selection.activeGameObject = m_SelectedAgent.gameObject;
+            }
 #endif
             m_DebugElement.DebugToggle.value = true;
             m_DebugElement.SetAgentToToggle(m_SelectedAgent.name, true);
@@ -468,7 +482,7 @@ namespace Unity.Behavior
 
         private void UnselectDebugTarget()
         {
-            BehaviorGraphView.ActiveGraph = null;
+            BehaviorGraphView.ActiveDebugGraph = null;
             BehaviorGraphView.ResetNodesUI();
             DebugAgentSelected?.Invoke(0);
         }
@@ -594,7 +608,7 @@ namespace Unity.Behavior
 
             Texture2D icon = null; // variableType.GetIcon();
             SearchMenuBuilder builder = new SearchMenuBuilder();
-            if (evt.target is LinkField<ScriptableObject, RuntimeScriptableObjectField> { Model: EventNodeModel })
+            if (evt.target is BehaviorLinkField<UnityEngine.Object, RuntimeObjectField> { Model: EventNodeModel })
             {
                 icon = typeof(EventChannelBase).GetIcon();
 #if UNITY_EDITOR
@@ -891,9 +905,7 @@ namespace Unity.Behavior
         internal void SetActiveGraphToDebugAgent(int agentId)
         {
             BehaviorGraphAgent agent = GetDebugAgentInScene(agentId);
-            SetupDebugTarget(agent);
-            BehaviorGraphView.ActiveGraph = (!agent || !agent.Graph) ? null : 
-                agent.Graph.Graphs.FirstOrDefault(module => module.AuthoringAssetID == Asset.AssetID);
+            SetupDebugTarget(agent);            
         }
 
         private BehaviorGraphAgent GetDebugAgentInScene(int id)

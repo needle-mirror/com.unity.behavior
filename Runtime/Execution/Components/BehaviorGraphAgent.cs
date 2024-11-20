@@ -46,6 +46,13 @@ namespace Unity.Behavior
         private List<BlackboardVariable> m_BlackboardVariableOverridesList = new ();
         internal Dictionary<SerializableGUID, BlackboardVariable> m_BlackboardOverrides = new ();
 
+#if UNITY_EDITOR
+        /// <summary>
+        /// Events used to notify to the BehaviorGraphEditor that it needs to refresh its graph reference.
+        /// </summary>
+        internal System.Action OnRuntimeDeserializationEvent;
+#endif
+
         private bool m_IsInitialised = false;
 #if NETCODE_FOR_GAMEOBJECTS
         public bool NetcodeRunOnlyOnOwner = false;
@@ -359,6 +366,9 @@ namespace Unity.Behavior
             serializer.Deserialize(serialized, m_Graph, resolver);
             InitChannelsAndMetadata(applyOverride: false);
             m_Graph.DeserializeGraphModules();
+#if UNITY_EDITOR
+            OnRuntimeDeserializationEvent?.Invoke();
+#endif
         }
 
         /// <summary>

@@ -38,7 +38,7 @@ namespace Unity.Behavior
         protected override void SetHelpTexts()
         {
             SetInfoHelpText("Event channels can be used to send and receive messages between nodes, including nodes in other behaviour graphs. For example, an event channel can be used to send a message when an agent spots an enemy.");
-            SetStoryHelpText("Describe a message that will be sent with the event. For example: 'Agent has spotted Enemy'.");
+            SetStoryHelpText("Describe a message that will be sent with the event. For example: \"Agent has spotted Enemy\".");
         }
 
         private void OnNameChanged(ChangingEvent<string> evt)

@@ -1,16 +1,15 @@
 #if UNITY_EDITOR
 using UnityEditor;
-using UnityEngine;
 using System;
 using System.IO;
 using System.Linq;
 using Unity.Behavior.GraphFramework;
+using System.Collections.Generic;
 
 namespace Unity.Behavior
 {
     internal static class EventChannelGeneratorUtility
     {
-        private static readonly string k_PrefsKeySaveEventPath = "SaveEventPath";
         internal class EventChannelData
         {
             internal string Name { get; set; }
@@ -24,8 +23,7 @@ namespace Unity.Behavior
         internal static bool CreateEventChannelAsset(EventChannelData data)
         {
             string fileName = GeneratorUtils.ToPascalCase(data.Name);
-            string suggestedSavePath = GraphPrefsUtility.GetString(k_PrefsKeySaveEventPath, Application.dataPath, true);
-            suggestedSavePath = Util.IsPathRelativeToProjectAssets(suggestedSavePath) ? suggestedSavePath : Application.dataPath;
+            string suggestedSavePath = Util.GetAbsolutePathToProjectAssets(BehaviorProjectSettings.instance.SaveFolderEventChannels);
             string path = EditorUtility.SaveFilePanel(
                 "Create Event Channel ScriptableObject",
                 suggestedSavePath,
@@ -36,7 +34,10 @@ namespace Unity.Behavior
             {
                 return false;
             }
-            GraphPrefsUtility.SetString(k_PrefsKeySaveEventPath, Path.GetDirectoryName(path), true);
+            if (BehaviorProjectSettings.instance.AutoSaveLastSaveLocation)
+            {
+                BehaviorProjectSettings.instance.SaveFolderEventChannels = path;
+            }
 
             GenerateEventChannelFile(data, path);
 
@@ -53,13 +54,20 @@ namespace Unity.Behavior
             string attributeString = GenerateAttributeString(data);
             data.ClassName = eventChannelName;
 
+            Dictionary<string, Type> parametersDictionary = new Dictionary<string, Type>();
+            foreach (var parameter in data.Parameters)
+            {
+                parametersDictionary[parameter.Item1] = parameter.Item2;
+            }
+
             using (StreamWriter outfile = new StreamWriter(path))
             {
                 // Imports
-                outfile.WriteLine("using System;");
-                outfile.WriteLine("using Unity.Behavior.GraphFramework;");
-                outfile.WriteLine("using Unity.Behavior;");
-                outfile.WriteLine("using UnityEngine;");
+                var namespaceStrings = GeneratorUtils.GetNamespaceStrings(parametersDictionary);
+                foreach (var namespaceString in namespaceStrings)
+                {
+                    outfile.WriteLine($"using {namespaceString};");
+                }
                 outfile.WriteLine("using Unity.Properties;");
 
                 // Event channel

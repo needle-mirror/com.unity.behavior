@@ -32,7 +32,7 @@ namespace Unity.Behavior
             viewTemplate.CloneTree(this);
 
             m_NameField = this.Q<TextFieldWithValidation>(k_NameField);
-            this.Q<HelpText>().Text = "Enum types can be used to logically group values, e.g. 'Status => Idle, Fleeing, Attacking, Patrolling'. You can then create variables in the blackboard and control the flow of your behavior, for example by using a 'Switch' node.";
+            this.Q<HelpText>().Text = "Enum types can be used to logically group values, e.g. \"Status => Idle, Fleeing, Attacking, Patrolling\". You can then create variables in the blackboard and control the flow of your behavior, for example by using a \"Switch\" node.";
             
             // Set up a custom region for enum member creation.
             m_EnumMembersRegion = new EditableListRegion(m_EnumMembers);

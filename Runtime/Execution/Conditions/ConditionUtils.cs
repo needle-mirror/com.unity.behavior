@@ -12,6 +12,21 @@ namespace Unity.Behavior
         /// Evaluates the operation from a condition.
         /// </summary>
         /// <returns>The result of the operation.</returns>
+        /// <typeparam name="CompareType">The type of value being compared. This must be unmanaged IComparable.</typeparam>
+        /// <param name="leftOperand">The left side value that is being compared.</param>
+        /// <param name="conditionOperator">The condition operator.</param>
+        /// <param name="rightOperand">The right side value that is being compared.</param>
+        public static bool Evaluate<CompareType>(CompareType leftOperand,
+            BlackboardVariable<ConditionOperator> conditionOperator,
+            CompareType rightOperand) where CompareType : unmanaged, IComparable
+        {
+            return CompareValues(leftOperand, rightOperand, conditionOperator);
+        }
+
+        /// <summary>
+        /// Evaluates the operation from a condition.
+        /// </summary>
+        /// <returns>The result of the operation.</returns>
         /// <param name="leftOperand">The left side value that is being compared.</param>
         /// <param name="conditionOperator">The condition operator.</param>
         /// <param name="rightOperand">The right side value that is being compared.</param>
@@ -93,7 +108,7 @@ namespace Unity.Behavior
             };
         }
 
-        internal static bool CheckConditions(IEnumerable<Condition> conditions, bool allRequired)
+        internal static bool CheckConditions(List<Condition> conditions, bool allRequired)
         {
             if (!allRequired)
             {

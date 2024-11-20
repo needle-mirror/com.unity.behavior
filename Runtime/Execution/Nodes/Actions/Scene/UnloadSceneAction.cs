@@ -34,7 +34,7 @@ namespace Unity.Behavior
             m_AsyncOperation = SceneManager.UnloadSceneAsync(SceneName.Value, UnloadOptions);
             if (m_AsyncOperation == null)
             {
-                LogFailure($"Failed to unload scene '{ SceneName.Value }'.", true);
+                LogFailure($"Failed to unload scene \"{ SceneName.Value }\".", true);
                 return Status.Failure;
             }
 

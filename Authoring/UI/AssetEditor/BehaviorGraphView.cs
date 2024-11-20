@@ -16,23 +16,23 @@ namespace Unity.Behavior
         internal new class UxmlFactory : UxmlFactory<BehaviorGraphView, UxmlTraits> {}
 #endif
         BehaviorAuthoringGraph m_Asset => Asset as BehaviorAuthoringGraph;
-        BehaviorGraphModule m_ActiveGraph;
-        internal BehaviorGraphModule ActiveGraph
+        BehaviorGraphModule m_ActiveDebugGraph;
+        internal BehaviorGraphModule ActiveDebugGraph
         {
-            get => m_ActiveGraph;
+            get => m_ActiveDebugGraph;
             set
             {
                 // if another graph was already assigned, unsubscribe from status updates
-                if (m_ActiveGraph != null)
+                if (m_ActiveDebugGraph != null)
                 {
-                    m_ActiveGraph.OnGraphStatusChange -= OnGraphStatusUpdate;
+                    m_ActiveDebugGraph.OnGraphStatusChange -= OnDebugGraphStatusUpdate;
                 }
 
-                m_ActiveGraph = value;
-                if (m_ActiveGraph != null)
+                m_ActiveDebugGraph = value;
+                if (m_ActiveDebugGraph != null)
                 {
-                    m_ActiveGraph.OnGraphStatusChange += OnGraphStatusUpdate;
-                    OnGraphStatusUpdate(m_ActiveGraph);
+                    m_ActiveDebugGraph.OnGraphStatusChange += OnDebugGraphStatusUpdate;
+                    OnDebugGraphStatusUpdate(m_ActiveDebugGraph);
                 }
             }
         }
@@ -90,7 +90,7 @@ namespace Unity.Behavior
             }
         }
 
-        private void OnGraphStatusUpdate(BehaviorGraphModule graph)
+        private void OnDebugGraphStatusUpdate(BehaviorGraphModule graph)
         {
             foreach (Node node in graph.Nodes())
             {

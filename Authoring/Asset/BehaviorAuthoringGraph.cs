@@ -147,7 +147,7 @@ namespace Unity.Behavior
                 if (info == null)
                 {
                     ReplaceNodeWithPlaceholder(node);
-                    Debug.LogWarning($"Serialized node: '{node.NodeType}' is invalid. " +
+                    Debug.LogWarning($"Serialized node: \"{node.NodeType}\" is invalid. " +
                         $"This generally happen when you rename or delete a node that was used by the graph. " +
                         $"The faulty node has been been replaced with a placeholder node.", this);
                 }

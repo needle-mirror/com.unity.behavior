@@ -32,6 +32,24 @@ namespace Unity.Behavior.GraphFramework
             m_ValueLabel = new AppUI.UI.LocalizedTextElement();
             m_ValueLabel.name = "Runtime-Object-Field_Value-Label";
             inputElement.Add(m_ValueLabel);
+
+            RegisterCallback<PointerDownEvent>(OnPointerDown);
+        }
+
+        private void OnPointerDown(PointerDownEvent evt)
+        {
+            if (evt.button != 0 || value == null) return;
+
+#if UNITY_EDITOR
+            if (evt.clickCount == 1)
+            {
+                UnityEditor.EditorGUIUtility.PingObject(value);
+            }
+            else if (evt.clickCount == 2)
+            {
+                UnityEditor.Selection.activeObject = value;
+            }
+#endif
         }
 
         /// <summary>
@@ -72,51 +90,6 @@ namespace Unity.Behavior.GraphFramework
             m_IconElement.style.backgroundImage = icon;
             m_IconElement.style.display = icon == null ? DisplayStyle.None : DisplayStyle.Flex;
 #endif
-        }
-    }
-
-    internal class RuntimeGameObjectField : BaseField<GameObject>
-    {
-        public RuntimeGameObjectField()
-            : this(null)
-        {
-        }
-
-        /// <summary>
-        /// Constructor.
-        /// </summary>
-        public RuntimeGameObjectField(string label)
-            : base(label, null)
-        {
-            AddToClassList("Runtime-Object-Field");
-            styleSheets.Add(ResourceLoadAPI.Load<StyleSheet>("Packages/com.unity.behavior/Elements/Assets/RuntimeObjectFieldStyles.uss"));
-            labelElement.focusable = false;
-
-            AddToClassList(ussClassName);
-            labelElement.AddToClassList(labelUssClassName);
-        }
-    }
-
-    internal class RuntimeScriptableObjectField : BaseField<ScriptableObject>
-    {
-        public RuntimeScriptableObjectField()
-            : this(null)
-        {
-        }
-
-        /// <summary>
-        /// Constructor.
-        /// </summary>
-        public RuntimeScriptableObjectField(string label)
-            : base(label, null)
-        {
-            AddToClassList("Runtime-Object-Field");
-            styleSheets.Add(ResourceLoadAPI.Load<StyleSheet>("Packages/com.unity.behavior/Elements/Assets/RuntimeObjectFieldStyles.uss"));
-
-            labelElement.focusable = false;
-
-            AddToClassList(ussClassName);
-            labelElement.AddToClassList(labelUssClassName);
         }
     }
 

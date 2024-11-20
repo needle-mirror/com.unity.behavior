@@ -36,7 +36,7 @@ namespace Unity.Behavior
             if (CollidedObject is IBlackboardVariableCast)
             {
                 var caster = CollidedObject as IBlackboardVariableCast;
-                LogFailure($"Invalid CollidedObject variable: Expecting 'GameObject' but is '{caster.SourceTypeName}'. Please provide a valid GameObject variable.");
+                LogFailure($"Invalid CollidedObject variable: Expecting \"GameObject\" but is \"{caster.SourceTypeName}\". Please provide a valid GameObject variable.");
                 return Status.Failure;
             }
 

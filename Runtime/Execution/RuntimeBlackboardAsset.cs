@@ -30,42 +30,62 @@ namespace Unity.Behavior
         private List<SerializableGUID> m_SharedBlackboardVariableGuids = new List<SerializableGUID>();
         
         internal HashSet<SerializableGUID> m_SharedBlackboardVariableGuidHashset = new HashSet<SerializableGUID>();
-        
+
 #if UNITY_EDITOR
         private List<BlackboardVariable> m_ValueOnEnterPlaymode = new List<BlackboardVariable>();
 
-        private void Awake()
+        [RuntimeInitializeOnLoadMethod]
+        private static void Initialize()
         {
-            // If play mode has already started, handle the current state.
-            if (UnityEditor.EditorApplication.isPlaying && UnityEditor.EditorApplication.isPlayingOrWillChangePlaymode)
-            {
-                OnPlaymodeStateChanged(UnityEditor.PlayModeStateChange.EnteredPlayMode);
-            }
-
-            UnityEditor.EditorApplication.playModeStateChanged += OnPlaymodeStateChanged;
+            UnityEditor.EditorApplication.playModeStateChanged += InternalPlaymodeStateChanged;
         }
 
-        private void OnPlaymodeStateChanged(UnityEditor.PlayModeStateChange change)
+        private static bool s_IsInPlayMode;
+        private static void InternalPlaymodeStateChanged(UnityEditor.PlayModeStateChange change)
         {
-            if (change == UnityEditor.PlayModeStateChange.EnteredPlayMode)
+            switch (change)
             {
-                m_ValueOnEnterPlaymode.Clear();
-                foreach (BlackboardVariable variable in m_Blackboard.Variables)
-                {
-                    m_ValueOnEnterPlaymode.Add(variable.Duplicate());
-                }
+                case UnityEditor.PlayModeStateChange.ExitingEditMode:
+                case UnityEditor.PlayModeStateChange.EnteredPlayMode:
+                    s_IsInPlayMode = true;
+                    break;
+
+                default:
+                    s_IsInPlayMode = false;
+                    break;
             }
-            else if (change == UnityEditor.PlayModeStateChange.ExitingPlayMode)
+        }
+
+        private void OnEnable()
+        {
+            if (!s_IsInPlayMode)
             {
-                m_Blackboard.m_Variables.Clear();
-                foreach (BlackboardVariable variable in m_ValueOnEnterPlaymode)
-                {
-                    m_Blackboard.m_Variables.Add(variable.Duplicate());
-                }
+                return;
             }
+            m_ValueOnEnterPlaymode.Clear();
+            Application.quitting += OnApplicationQuit;
+            foreach (BlackboardVariable variable in m_Blackboard.Variables)
+            {
+                m_ValueOnEnterPlaymode.Add(variable.Duplicate());
+            }
+        }
+
+        private void OnApplicationQuit()
+        {
+            if (s_IsInPlayMode)
+            {
+                return;
+            }
+
+            m_Blackboard.m_Variables.Clear();
+            foreach (BlackboardVariable variable in m_ValueOnEnterPlaymode)
+            {
+                m_Blackboard.m_Variables.Add(variable);
+            }
+            m_ValueOnEnterPlaymode.Clear();
         }
 #endif
-                
+
         internal bool IsSharedVariable(SerializableGUID guid)
         {
             return m_SharedBlackboardVariableGuidHashset.Contains(guid);

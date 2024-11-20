@@ -7,12 +7,15 @@ namespace UnityEngine.UIExtras
     internal class SearchViewItem : VisualElement
     {
         Label m_Label;
+        Label m_SecondaryLabel;
         Icon m_Icon;
         Icon m_NextIcon;
 
         string m_Name;
         public string Name => m_Name;
         public string Description { get => tooltip; set { tooltip = value; } }
+        public string SecondaryLabel { get => m_SecondaryLabel.text; set => m_SecondaryLabel.text = value; }
+        public string SecondaryLabelTooltip { get => m_SecondaryLabel.tooltip; set => m_SecondaryLabel.tooltip = value; }
         public SearchViewItem()
         {
             focusable = false;
@@ -22,6 +25,7 @@ namespace UnityEngine.UIExtras
             visualTree.CloneTree(this);
 
             m_Label = this.Q<Label>("Label");
+            m_SecondaryLabel = this.Q<Label>("Secondary-Label");
             m_Icon = this.Q<Icon>("Icon");
             m_NextIcon = this.Q<Icon>("NextIcon");
             m_NextIcon.iconName = "sub-menu-indicator";

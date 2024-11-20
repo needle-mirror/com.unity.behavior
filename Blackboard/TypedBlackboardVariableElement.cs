@@ -372,9 +372,13 @@ namespace Unity.Behavior.GraphFramework
     }
 
     [VariableUI(typeof(TypedVariableModel<List<ScriptableObject>>))]
-    internal class ScriptableObjectListVariableElement : TypedListVariableElement<ScriptableObject, ScriptableObject>
+    internal class ScriptableObjectListVariableElement : TypedListVariableElement<ScriptableObject, UnityEngine.Object>
     {
-        public ScriptableObjectListVariableElement(BlackboardView view, VariableModel variableModel) : base(view, variableModel, typeof(RuntimeScriptableObjectField))
+#if UNITY_EDITOR
+        public ScriptableObjectListVariableElement(BlackboardView view, VariableModel variableModel) : base(view, variableModel, typeof(UnityEditor.UIElements.ObjectField))
+#else
+        public ScriptableObjectListVariableElement(BlackboardView view, VariableModel variableModel) : base(view, variableModel, typeof(RuntimeObjectField))
+#endif
         {
         }
     }
@@ -385,7 +389,7 @@ namespace Unity.Behavior.GraphFramework
 #if UNITY_EDITOR
         public GameObjectListVariableElement(BlackboardView view, VariableModel variableModel) : base(view, variableModel, typeof(UnityEditor.UIElements.ObjectField))
 #else
-        public GameObjectListVariableElement(BlackboardView view, VariableModel variableModel) : base(view, variableModel, typeof(RuntimeGameObjectField))
+        public GameObjectListVariableElement(BlackboardView view, VariableModel variableModel) : base(view, variableModel, typeof(RuntimeObjectField))
 #endif
         {
         }

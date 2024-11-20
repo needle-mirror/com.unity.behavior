@@ -117,7 +117,7 @@ namespace Unity.Behavior
         protected override void SetHelpTexts()
         {
             SetInfoHelpText("Actions describe and contain agent behaviour logic, for example an agent attacking an enemy agent.");
-            SetStoryHelpText("Describe your action. For example: 'Agent attacks Target'.");
+            SetStoryHelpText("Describe your action. For example: \"Agent attacks Target\".");
         }
 
         internal void SetupEditWizard(NodeInfo info)

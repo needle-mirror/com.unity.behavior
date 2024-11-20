@@ -121,5 +121,31 @@ namespace Unity.Behavior
         {
             return $"BlackboardVariable.SetTypedBlackboardVariableValue<{GetStringForType(type)}>(var, {RemoveSpaces(NicifyString(name))});";
         }
+
+        internal static List<string> GetNamespaceStrings(Dictionary<string, Type> variables)
+        {
+            HashSet<string> namespaceList = new HashSet<string>();
+            namespaceList.Add("System");
+            namespaceList.Add("UnityEngine");
+            namespaceList.Add("Unity.Behavior");
+            if (variables != null)
+            {
+                foreach (var variable in variables)
+                {
+                    if (!string.IsNullOrEmpty(variable.Value.Namespace))
+                    {
+                        namespaceList.Add(variable.Value.Namespace);
+                    }
+                    if (typeof(IList).IsAssignableFrom(variable.Value))
+                    {
+                        namespaceList.Add("System.Collections.Generic");
+                    }
+                }
+            }
+
+            var sortedList = namespaceList.ToList();
+            sortedList.Sort();
+            return sortedList;
+        }
     }
 }

@@ -22,7 +22,7 @@ namespace Unity.Behavior.GraphFramework
 
         private void OnKeyDown(KeyDownEvent evt)
         {
-            if (evt.keyCode == KeyCode.Space)
+            if (evt.keyCode == KeyCode.Space && evt.modifiers == EventModifiers.None)
             {
                 OnAddNode(evt);
                 evt.StopImmediatePropagation();
