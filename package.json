@@ -1,7 +1,7 @@
 {
   "name": "com.unity.behavior",
   "displayName": "Behavior",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "unity": "6000.0",
   "unityRelease": "16f1",
   "description": "Unity Behavior is a graph-based tool to create and run behavior trees. Besides including a comprehensive library of pre-built nodes, the interface provides node customization options and real-time debugging. While fully functional on its own, a Unity Muse subscription enhances your experience by using large language models (LLM) to generate behavior trees from text prompts and create code for custom action nodes. This subscription, although optional, provides a powerful addition for those looking to accelerate their development process.\n\nA demo showcasing this package can be found in the Asset Store <a href=https://assetstore.unity.com/packages/templates/tutorials/behavior-demo-for-unity-298313>https://assetstore.unity.com/packages/templates/tutorials/behavior-demo-for-unity-298313</a>.",
@@ -10,7 +10,7 @@
     "behaviour trees"
   ],
   "dependencies": {
-    "com.unity.dt.app-ui": "2.0.0-pre.11",
+    "com.unity.dt.app-ui": "2.0.0-pre.14",
     "com.unity.modules.unitywebrequest": "1.0.0",
     "com.unity.modules.animation": "1.0.0",
     "com.unity.modules.ai": "1.0.0",
@@ -19,6 +19,9 @@
     "com.unity.nuget.newtonsoft-json": "3.2.1",
     "com.unity.burst": "1.7.2",
     "com.unity.collections": "2.1.4"
+  },
+  "relatedPackages": {
+    "com.unity.behavior.tests": "0.0.0"
   },
   "samples": [
     {
@@ -32,19 +35,16 @@
       "path": "Samples~/Serialization"
     }
   ],
-  "relatedPackages": {
-    "com.unity.behavior.tests": "1.0.6"
-  },
   "_upm": {
-    "changelog": "### Added\n- Search popups will show paths for items when a search query was given. A tooltip will be shown when hovered on the path text in case it's truncated.\n- Project settings option to set the save locations for nodes, conditions, enums and event channels.\n- Fields with an asset assigned to them will ping the item on click and select the item on double click.\n- Behavior window will no longer block Shift+Space shortcut to maximize the window when docked.\n\n### Changed\n- Reduce GC allocations related to condition nodes `CheckConditions`.\n- Reduce GC allocations related to condition nodes `Evaluate` where we know the type of the object we're comparing.\n- Changed single quotation marks in dialogues to double quotation marks.\n- Changed single quotation marks in node tooltips to double quotation marks.\n- Changed single quotation marks in logs to double quotation marks.\n- Allow selecting a ScriptableObject from the Assets without having to make a blackboard variable.\n\n### Fixed\n- Fixed the graph asset not being reloaded on window focus if changed externally.\n- Event channel generation will correctly add the relevant namespaces for variables added.\n- Save location wasn't correctly remembering the last location saved.\n- Behavior Graph Agent Inspector should no longer shows unexposed variables during play mode.\n- RuntimeBlackboardAsset will correctly save its variables on entering play mode and reset them on exiting play mode.\n- Fixed choosing an enum value from a blackboard variable dropdown not mapping correctly to assigned enum values.\n- A small hang when debugging if a graph's view was enabled & disabled many times.\n- When debugging the first click when selecting an agent failed.\n- The Abort node now checks its OnStart condition to prevent the child from being interrupted during the next OnUpdate evaluation."
+    "changelog": "### Added\n- Added new Interrupted status and ensure that all incomplete child nodes of Parallel composites are marked as interrupted.\n- Added a checkbox to the behavior project settings to contnrol if nodes and condition scripts should automatically open after creation.\n\n### Changed\n- Selection of a node now brings it to the front.\n- Selection of a node in a sequence brings the sequence to the front.\n- Small tweak to node selected border radius.\n- Nodes replaced with Placeholder Nodes will not be replaced in the asset, only in the UI, reducing risk in recovery.\n- When saving a new Node/Condition from the wizard, a postfix of the node type (Action/Modifier/Flow) or Condition won't be added to the suggested filename if it already ends with it.\n- Updated AppUI dependency to 2.0.0-pre14 and created a settings file to exclude AppUI Shaders and execution from builds. This can be overriden with a custom user App UI Settings file.\n- Exposed `SaveFolderEventChannels` in the Project Settings -> Behavior menu.\n- Improved documentation description for the `GameObject` API inside the `Node` class.\n- Improved asset rebuilding and saving mechanism to avoid frequent regeneration.\n\n### Fixed\n- Editing Subgraph Representation will no longer add duplicate variables.\n- Softened search fields filtering so that, for example, 'int list' and 'list int' will return 'Integer List'.\n- Fixed WaitForAnyComposite not ending correctly yielding multiple runs of child nodes. \n- Editing a node with the node wizard (edit node definition) will no longer remove to Action/Modifer/Sequence postfix.\n- Fixed an issue where automatic save path for enums and event channels saved the file name into the save path settings and caused an infinite loop when saving the next file.\n- Remove erroneous references to Muse in the API docs.\n- Improved Undo support for editing Behavior Agent on a GameObject.\n- Adding a Run In Parallel node and its various types from the branch dialog will set the correct mode.\n- Subassets of Graph and Blackboard will have their names track more correctly with the main asset.\n- BehaviorWindow will now close during autosave if its asset is invalid.\n\n### Known Issues\n- Deleting a behavior graph asset while the window is open can cause the graph editor window to be stuck and the user will need to reset their layout to get rid of it.\n- Runtime serialization of nodes in user assemblies don't serialize some properties correctly.\n- Editing fields in Run Subgraph node with subgraph representation doesn’t update the inspector values."
   },
   "upmCi": {
-    "footprint": "f481fb8fe8acb4c1dfe3de36c2ba66845ed3d02a"
+    "footprint": "339e37c5aa8cddccd01430036f028feaba4242c3"
   },
   "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.behavior@1.0/manual/index.html",
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.ai.designer-monorepo.git",
     "type": "git",
-    "revision": "23ca039d6ff1172abe98a1b0d42b0acdeef867b2"
+    "revision": "d89240d0dc22380308fdeab7d6272b9bd5a86a98"
   }
 }

@@ -9,7 +9,7 @@ using UnityEngine;
 namespace Unity.Behavior
 {
     /// <summary>
-    /// Muse Behavior agent component.
+    /// Behavior agent component.
     /// </summary>
     [AddComponentMenu("AI/Behavior Agent")]
 #if NETCODE_FOR_GAMEOBJECTS
@@ -18,8 +18,7 @@ namespace Unity.Behavior
     public class BehaviorGraphAgent : MonoBehaviour, ISerializationCallbackReceiver
 #endif
     {
-        [SerializeReference]
-        private BehaviorGraph m_Graph;
+        [SerializeReference] private BehaviorGraph m_Graph;
 
         /// <summary>
         /// The graph of behaviours to be executed by the agent.
@@ -30,15 +29,22 @@ namespace Unity.Behavior
             set
             {
                 m_Graph = value;
+                m_IsInitialised = false;
+                m_IsStarted = false;
+
+#if UNITY_TEST_FRAMEWORK
+                m_InitialisedFromAssetProcessor = false;
+#endif
+                
                 OnAssignBehaviorGraph();
             }
         }
-        
+
         /// <summary>
         /// The blackboard associated with the agent's graph.
         /// </summary>
         public BlackboardReference BlackboardReference => m_Graph ? m_Graph.BlackboardReference : null;
-     
+
         /// <summary>
         /// UnityEngine.Object references, serialized separately from other variable types.
         /// </summary>
@@ -53,7 +59,16 @@ namespace Unity.Behavior
         internal System.Action OnRuntimeDeserializationEvent;
 #endif
 
-        private bool m_IsInitialised = false;
+        [SerializeField][HideInInspector] 
+        internal bool m_IsInitialised = false;
+
+        [SerializeField][HideInInspector]
+        internal bool m_IsStarted = false;
+
+#if UNITY_TEST_FRAMEWORK
+        internal bool m_InitialisedFromAssetProcessor = false;
+#endif
+
 #if NETCODE_FOR_GAMEOBJECTS
         public bool NetcodeRunOnlyOnOwner = false;
         public override void OnNetworkSpawn()
@@ -65,6 +80,8 @@ namespace Unity.Behavior
             }
         }
 #endif
+
+
         private void Awake()
         {
             Init();
@@ -76,20 +93,27 @@ namespace Unity.Behavior
             {
                 return;
             }
-            
-            AssignGameObjectToGraphModules();
-            
+
             // If the graph or blackboard are null, we can't sync the overrides, so return.
             if (m_Graph.BlackboardReference?.Blackboard == null)
             {
                 m_BlackboardOverrides.Clear();
                 return;
             }
-            
-            // Update overrides to match blackboard.
+
             SynchronizeOverridesWithBlackboard();
-            
-            // Automatically assign graph owner variable to this game object.
+        }
+
+        internal void SynchronizeOverridesWithBlackboard()
+        {
+            RemoveOverridesWithNoMatchInBlackboard();
+            UpdateOverrideNamesToMatchBlackboard(); 
+            CreateOrUpdateSelfOverride();
+            ApplySelfOverrideToBlackboard();
+        }
+
+        private void CreateOrUpdateSelfOverride()
+        {
             SerializableGUID graphOwnerID = BehaviorGraph.k_GraphSelfOwnerID;
             if (m_BlackboardOverrides.TryGetValue(graphOwnerID, out BlackboardVariable ownerVariableOverride))
             {
@@ -98,7 +122,7 @@ namespace Unity.Behavior
                 // Set the blackboard owner variable value to this GameObject.
                 if (BlackboardReference.GetVariable(graphOwnerID, out BlackboardVariable ownerVariable))
                 {
-                    ownerVariable.ObjectValue = gameObject;   
+                    ownerVariable.ObjectValue = gameObject;
                 }
             }
             else if (BlackboardReference.GetVariable(graphOwnerID, out BlackboardVariable ownerVariable))
@@ -106,13 +130,13 @@ namespace Unity.Behavior
                 // No override exists, but a blackboard variable for the graph owner exists, so add an override.
                 m_BlackboardOverrides.Add(graphOwnerID, new BlackboardVariable<GameObject>(gameObject)
                 {
-                    GUID = graphOwnerID, 
+                    GUID = graphOwnerID,
                     Name = ownerVariable.Name
                 });
             }
         }
-        
-        internal void SynchronizeOverridesWithBlackboard()
+
+        private void RemoveOverridesWithNoMatchInBlackboard()
         {
             // A new instance of a runtime graph has been assigned. Remove any out-of-date variable overrides.
             foreach ((SerializableGUID guid, _) in m_BlackboardOverrides.ToList())
@@ -121,10 +145,13 @@ namespace Unity.Behavior
                 {
                     continue;
                 }
+
                 m_BlackboardOverrides.Remove(guid);
             }
-            
-            // Ensure override names are up to date.
+        }
+
+        private void UpdateOverrideNamesToMatchBlackboard()
+        {
             foreach (BlackboardVariable variable in m_Graph.BlackboardReference.Blackboard.Variables)
             {
 #if UNITY_EDITOR
@@ -140,8 +167,10 @@ namespace Unity.Behavior
                     }
                 }
             }
+        }
 
-            // Ensure Self variable is set.
+        private void ApplySelfOverrideToBlackboard()
+        {
             SerializableGUID graphOwnerID = BehaviorGraph.k_GraphSelfOwnerID;
             if (m_BlackboardOverrides.TryGetValue(graphOwnerID, out BlackboardVariable ownerVariableOverride))
             {
@@ -151,11 +180,6 @@ namespace Unity.Behavior
                 }
 
                 ownerVariableOverride.ObjectValue = gameObject;
-                // Set the blackboard owner variable value to this GameObject.
-                if (BlackboardReference.GetVariable(graphOwnerID, out BlackboardVariable ownerVariable))
-                {
-                    ownerVariable.ObjectValue = gameObject;
-                }
             }
         }
 
@@ -164,7 +188,7 @@ namespace Unity.Behavior
         /// </summary>
         public void Init()
         {
-            if (m_Graph == null )
+            if (m_Graph == null)
             {
                 return;
             }
@@ -174,7 +198,7 @@ namespace Unity.Behavior
                 AssignGameObjectToGraphModules();
                 return;
             }
-            
+
             m_Graph = ScriptableObject.Instantiate(m_Graph);
             AssignGameObjectToGraphModules();
             InitChannelsAndMetadata();
@@ -186,7 +210,7 @@ namespace Unity.Behavior
             m_Graph.RootGraph.GameObject = gameObject;
             foreach (var graphModule in m_Graph.Graphs)
             {
-                graphModule.GameObject = gameObject;   
+                graphModule.GameObject = gameObject;
             }
         }
 
@@ -212,7 +236,7 @@ namespace Unity.Behavior
                     return true;
                 }
             }
-            
+
             return false;
         }
 
@@ -237,7 +261,7 @@ namespace Unity.Behavior
                     return true;
                 }
             }
-            
+
             return false;
         }
 
@@ -261,7 +285,7 @@ namespace Unity.Behavior
                     return true;
                 }
             }
-            
+
             return false;
         }
 
@@ -286,10 +310,10 @@ namespace Unity.Behavior
                     return true;
                 }
             }
-            
+
             return false;
         }
-        
+
         /// <inheritdoc cref="Behavior.BlackboardReference.GetVariableID"/>
         public bool GetVariableID(string variableName, out SerializableGUID id)
         {
@@ -305,7 +329,7 @@ namespace Unity.Behavior
                     return true;
                 }
             }
-            
+
             return false;
         }
 
@@ -327,7 +351,7 @@ namespace Unity.Behavior
                     return true;
                 }
             }
-            
+
             return false;
         }
 
@@ -349,7 +373,7 @@ namespace Unity.Behavior
                     return true;
                 }
             }
-            
+
             return false;
         }
 
@@ -360,7 +384,9 @@ namespace Unity.Behavior
         /// <param name="serializer">Serializer to use.</param>
         /// <param name="resolver">Object resolver to use.</param>
         /// <typeparam name="TSerializedFormat">Type of serialized data.</typeparam>
-        public void Deserialize<TSerializedFormat>(TSerializedFormat serialized, RuntimeSerializationUtility.IBehaviorSerializer<TSerializedFormat> serializer, RuntimeSerializationUtility.IUnityObjectResolver<string> resolver)
+        public void Deserialize<TSerializedFormat>(TSerializedFormat serialized,
+            RuntimeSerializationUtility.IBehaviorSerializer<TSerializedFormat> serializer,
+            RuntimeSerializationUtility.IUnityObjectResolver<string> resolver)
         {
             m_Graph = ScriptableObject.CreateInstance<BehaviorGraph>();
             serializer.Deserialize(serialized, m_Graph, resolver);
@@ -378,7 +404,9 @@ namespace Unity.Behavior
         /// <param name="resolver">Object resolver to use.</param>
         /// <typeparam name="TSerializedFormat">Type of serialized output.</typeparam>
         /// <returns>Serialized data.</returns>
-        public TSerializedFormat Serialize<TSerializedFormat>(RuntimeSerializationUtility.IBehaviorSerializer<TSerializedFormat> serializer, RuntimeSerializationUtility.IUnityObjectResolver<string> resolver)
+        public TSerializedFormat Serialize<TSerializedFormat>(
+            RuntimeSerializationUtility.IBehaviorSerializer<TSerializedFormat> serializer,
+            RuntimeSerializationUtility.IUnityObjectResolver<string> resolver)
         {
             m_Graph.SerializeGraphModules();
             return serializer.Serialize(m_Graph, resolver);
@@ -390,7 +418,7 @@ namespace Unity.Behavior
             {
                 ApplyBlackboardOverrides();
             }
-            
+
             // Initialize default event channels for unassigned channel variables.
             foreach (BehaviorGraphModule graph in Graph.Graphs)
             {
@@ -422,6 +450,7 @@ namespace Unity.Behavior
                     node.Graph = graph;
                 }
             }
+
             BlackboardReference.Blackboard.CreateMetadata();
         }
 
@@ -430,13 +459,6 @@ namespace Unity.Behavior
         /// </summary>
         public void Start()
         {
-#if NETCODE_FOR_GAMEOBJECTS
-            if (!IsOwner && NetcodeRunOnlyOnOwner) return;
-#endif
-            if (m_Graph)
-            {
-                m_Graph.Start();
-            }
         }
 
         /// <summary>
@@ -452,7 +474,7 @@ namespace Unity.Behavior
                 m_Graph.End();
             }
         }
-        
+
         /// <summary>
         /// Restarts the execution of the agent's behavior graph.
         /// </summary>
@@ -467,20 +489,30 @@ namespace Unity.Behavior
             }
         }
 
-        private void Update()
+        /// <summary>
+        /// Ticks the agent's behavior graph and initializes and starts the graph if necessary.
+        /// </summary>
+        public void Update()
         {
-            if (!m_IsInitialised)
-            {
+            if (m_Graph == null)
                 return;
-            }
-            
+
 #if NETCODE_FOR_GAMEOBJECTS
             if (!IsOwner && NetcodeRunOnlyOnOwner) return;
 #endif
-            if (m_Graph)
+            
+            if (!m_IsInitialised)
             {
-                m_Graph.Tick();
+                Init();
             }
+
+            if (!m_IsStarted)
+            {
+                m_Graph.Start();
+                m_IsStarted = true;
+            }
+            
+            m_Graph.Tick();
         }
 
 #if NETCODE_FOR_GAMEOBJECTS
@@ -496,7 +528,7 @@ namespace Unity.Behavior
                 m_Graph.EndAndResetGraphs();
             }
         }
-        
+
         /// <summary>
         /// Applies the agent's variable overrides to the blackboard.
         /// </summary>
@@ -504,24 +536,32 @@ namespace Unity.Behavior
         {
             foreach (var varOverride in m_BlackboardOverrides)
             {
-                if (varOverride.Key == BehaviorGraph.k_GraphSelfOwnerID && varOverride.Value is BlackboardVariable<GameObject> gameObjectBlackboardVariable && gameObjectBlackboardVariable.Value == null)
+                if (varOverride.Key == BehaviorGraph.k_GraphSelfOwnerID &&
+                    varOverride.Value is BlackboardVariable<GameObject> gameObjectBlackboardVariable &&
+                    gameObjectBlackboardVariable.Value == null)
                 {
                     gameObjectBlackboardVariable.Value = gameObject;
                 }
-                if (BlackboardReference != null && BlackboardReference.GetVariable(varOverride.Key, out BlackboardVariable var))
+
+                if (BlackboardReference != null &&
+                    BlackboardReference.GetVariable(varOverride.Key, out BlackboardVariable var))
                 {
                     var.ObjectValue = varOverride.Value.ObjectValue;
                 }
 
                 foreach (var graphModule in Graph.Graphs)
                 {
-                    if (graphModule.Blackboard != null && graphModule.BlackboardReference.GetVariable(varOverride.Key, out BlackboardVariable subGraphVariable))
+                    if (graphModule.Blackboard != null &&
+                        graphModule.BlackboardReference.GetVariable(varOverride.Key,
+                            out BlackboardVariable subGraphVariable))
                     {
                         subGraphVariable.ObjectValue = varOverride.Value.ObjectValue;
                     }
+
                     foreach (var blackboardReference in graphModule.BlackboardGroupReferences)
                     {
-                        if (blackboardReference.GetVariable(varOverride.Key, out BlackboardVariable blackboardReferenceVar))
+                        if (blackboardReference.GetVariable(varOverride.Key,
+                                out BlackboardVariable blackboardReferenceVar))
                         {
                             blackboardReferenceVar.ObjectValue = varOverride.Value.ObjectValue;
                         }
@@ -529,7 +569,7 @@ namespace Unity.Behavior
                 }
             }
         }
-        
+
         /// <inheritdoc cref="OnBeforeSerialize"/>
         public void OnBeforeSerialize()
         {
@@ -552,7 +592,7 @@ namespace Unity.Behavior
             {
                 return;
             }
-            
+
             m_BlackboardOverrides = new Dictionary<SerializableGUID, BlackboardVariable>();
             foreach (BlackboardVariable variable in m_BlackboardVariableOverridesList)
             {

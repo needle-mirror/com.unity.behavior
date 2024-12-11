@@ -19,6 +19,7 @@ namespace Unity.Behavior
         private readonly Dictionary<NodeModel, Node> m_NodeModelToNode = new();
 
         private readonly BehaviorAuthoringGraph m_Asset;
+        internal BehaviorAuthoringGraph Asset => m_Asset;
 
         private BehaviorGraphModule m_GraphModule;
         internal BehaviorGraphModule GraphModule => m_GraphModule;
@@ -27,7 +28,6 @@ namespace Unity.Behavior
         internal List<BlackboardReference> BlackboardReferences => m_GraphModule.BlackboardGroupReferences;
         private readonly BehaviorGraph m_Graph;
         internal BehaviorGraph Graph => m_Graph;
-        private BlackboardVariable<GameObject> m_GraphOwnerVariable;
 
         private static Dictionary<Type, INodeTransformer> s_NodeTypeToNodeTransformerDictionary;
         private static List<IBlackboardVariableConverter> s_BlackboardVariableConverters;
@@ -111,9 +111,10 @@ namespace Unity.Behavior
         internal GraphAssetProcessor(BehaviorAuthoringGraph graphAsset, BehaviorGraph graph)
         {
             m_Asset = graphAsset;
-            m_GraphModule = new BehaviorGraphModule { AuthoringAssetID = graphAsset.AssetID };
             m_Graph = graph;
 
+            // m_GraphModule is going to replace the Graph.RootGraph and be set as the first element of Graph.Graphs.
+            m_GraphModule = new BehaviorGraphModule { AuthoringAssetID = graphAsset.AssetID };
             m_Graph?.Graphs.Add(m_GraphModule);
         }
 
@@ -183,24 +184,25 @@ namespace Unity.Behavior
         internal void Cleanup()
         {
             m_GraphModule.Root = null;
-            BlackboardReference.Blackboard.m_Variables.Clear();
-            BlackboardReferences.Clear();
             m_VariableModelToVariable.Clear();
             m_NodeModelToNode.Clear();
         }
 
         internal void InitializeBlackboard(Dictionary<SerializableGUID, BlackboardVariable> variableOverrides = null)
         {
+            // 1. Regenerate the embedded RuntimeBlackboardAsset if needed
             BehaviorBlackboardAuthoringAsset asset = m_Asset.Blackboard as BehaviorBlackboardAuthoringAsset;
-            if (asset != null)
+            if (asset != null && (BlackboardReference.SourceBlackboardAsset == null
+                || BlackboardReference.SourceBlackboardAsset.AssetID != asset.AssetID
+                || BlackboardReference.SourceBlackboardAsset.VersionTimestamp != asset.VersionTimestamp))
             {
                 BlackboardReference.SourceBlackboardAsset = asset.BuildRuntimeBlackboard();
             }
 
-            // Set m_GraphOwnerVariable 
-            BlackboardReference.Blackboard.GetVariable(BehaviorGraph.k_GraphSelfOwnerID, out m_GraphOwnerVariable);
+            // 2. Apply the BBVs override
             ReplaceBlackboardWithOverrides(BlackboardReference, variableOverrides);
 
+            // 3. Generate GUID to BBV lookup table
             m_VariableModelToVariable.Clear();
             foreach (var blackboardVariable in BlackboardReference.Blackboard.Variables)
             {
@@ -214,6 +216,8 @@ namespace Unity.Behavior
                 }
             }
 
+            // 4. Update the blackboard asset reference
+            BlackboardReferences.Clear();
             foreach (BehaviorBlackboardAuthoringAsset blackboard in m_Asset.m_Blackboards)
             {
                 BlackboardReference reference = new BlackboardReference();
@@ -233,6 +237,7 @@ namespace Unity.Behavior
             {
                 return;
             }
+
             foreach (var variableOverride in variableOverrides)
             {
                 if (blackboardReference.SourceBlackboardAsset.IsSharedVariable(variableOverride.Key))
@@ -262,7 +267,7 @@ namespace Unity.Behavior
             if (IsImplicitSequence(branchRootNode))
             {
                 // todo: this temporary SequenceNodeModel will be added to the cache "m_NodeModelToNode"
-                // I would assume it does not work to be used as key, and keep adding new entries for the same action, potentially 
+                // I would assume it does not work to be used as key, and keep adding new entries for the same action, potentially
                 var sequenceNodeModelTemp = new SequenceNodeModel { ID = branchRootNode.ID }; // why reuse the ID?
                 sequenceNodeModelTemp.Nodes.Add(branchRootNode);
                 sequenceNodeModelTemp.SetPortModels(branchRootNode.AllPortModels);
@@ -329,8 +334,12 @@ namespace Unity.Behavior
             {
                 throw new Exception($"No node transformer found for \"{nodeModel.Asset}\"({nodeModel.GetType()}) in graph {Graph.name}.");
             }
-          
+
             Node node = nodeTransformer.CreateNodeFromModel(this, nodeModel);
+            if (node == null)
+            {
+                return null;
+            }
             node.ID = nodeModel.ID;
             node.Graph = m_GraphModule;
             m_NodeModelToNode.Add(nodeModel, node);
@@ -352,7 +361,7 @@ namespace Unity.Behavior
                 {
                     valueVariable = converter.Convert(fieldModel.LinkedVariable.Type, fieldModel.LocalValue.Type, valueVariable);
                 }
-                
+
                 return valueVariable;
             }
             return fieldModel.LocalValue;
@@ -364,7 +373,7 @@ namespace Unity.Behavior
             {
                 return null;
             }
-            
+
             if (s_BlackboardVariableConverters == null)
             {
                 CreateVariableConverters();

@@ -94,7 +94,7 @@ namespace Unity.Behavior.GraphFramework
         /// </summary>
         /// <param name="other">VariableModel to compare to.</param>
         /// <returns>True if equal, false otherwise</returns>
-        public bool Equals(VariableModel other) => other != null && other.ID == ID && other.Type == Type;
+        public bool Equals(VariableModel other) => other != null && other.ID == ID && other.Type == Type && other.Name == Name;
         /// <summary>
         /// Compares two VariableModels for equality of ID and Type.
         /// </summary>

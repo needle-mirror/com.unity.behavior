@@ -28,6 +28,11 @@
             "name": "Unity",
             "expression": "6000.0",
             "define": "ENABLE_UXML_UI_SERIALIZATION"
+        },
+        {
+            "name": "com.unity.test-framework",
+            "expression": "",
+            "define": "UNITY_TEST_FRAMEWORK"
         }
     ],
     "noEngineReferences": false

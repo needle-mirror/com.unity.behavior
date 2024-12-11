@@ -147,19 +147,25 @@ namespace Unity.Behavior
                     {
                         if (target.panel.contextType == ContextType.Editor && nodeModel is not PlaceholderNodeModel)
                         {
-                            menu.AddSeparator();
+                            // Even though the node is not a PlaceholderNodeModel we still need to check if we have a
+                            // valid ID because Placeholder Node UI can be made for other nodes which are missing,
+                            // this was done to avoid changing the users' assets.
                             NodeInfo info = NodeRegistry.GetInfoFromTypeID(nodeModel.NodeTypeID);
-                            if (!Util.IsNodeInPackageRuntimeAssembly(info))
+                            if (info != null)
                             {
-                                menu.AddItem("Edit Definition", OnEditNode);
-                                menu.AddItem("Edit Script", OnEditScript);    
-                            }
-                            else
-                            {
-                                menu.AddDisabledItem("Edit Definition");
-                                menu.AddItem("Inspect Script", OnEditScript);
-                            }
+                                menu.AddSeparator();
+                                if (!Util.IsNodeInPackageRuntimeAssembly(info))
+                                {
+                                    menu.AddItem("Edit Definition", OnEditNode);
+                                    menu.AddItem("Edit Script", OnEditScript);
+                                }
+                                else
+                                {
+                                    menu.AddDisabledItem("Edit Definition");
+                                    menu.AddItem("Inspect Script", OnEditScript);
+                                }
                         }
+                    }
 
                         menu.AddSeparator();
                         BehaviorAuthoringGraph asset = nodeModel.Asset as BehaviorAuthoringGraph;

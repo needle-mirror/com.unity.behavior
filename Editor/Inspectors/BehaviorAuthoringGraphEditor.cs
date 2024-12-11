@@ -61,6 +61,11 @@ namespace Unity.Behavior
             {
                 debugInfo.name = $"{newName} Debug Info";
             }
+            RuntimeBlackboardAsset blackboardAsset = AssetDatabase.LoadAssetAtPath<RuntimeBlackboardAsset>(assetPath);
+            if (blackboardAsset)
+            {
+                blackboardAsset.name = $"{newName} Blackboard";
+            }
             EditorUtility.SetDirty(authoringGraph);
             AssetDatabase.SaveAssetIfDirty(authoringGraph);
         }

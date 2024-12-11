@@ -3,7 +3,7 @@ using Unity.Behavior.GraphFramework;
 namespace Unity.Behavior
 {
     /// <summary>
-    /// The EventChannelDescriptionAttribute contains metadata for event channels used in Muse Behavior graphs. 
+    /// The EventChannelDescriptionAttribute contains metadata for event channels used in Behavior graphs. 
     /// </summary>
     [System.AttributeUsage(System.AttributeTargets.Class)]
     public class EventChannelDescriptionAttribute : System.Attribute

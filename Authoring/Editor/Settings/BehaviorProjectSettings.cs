@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using UnityEngine;
 using UnityEditor;
+using UnityEngine.Serialization;
 
 namespace Unity.Behavior
 {
@@ -32,6 +33,8 @@ namespace Unity.Behavior
         private string m_SaveFolderEventChannels = "";
         [SerializeField]
         private string m_SaveFolderEnum = "";
+        [SerializeField] [Tooltip("Automatically opens the associated script in your external code editor when creating or editing a node or condition.\nThe editor is set in <b>Preferences > External Tools -> External Script Editor</b>.")]
+        private bool m_AutoOpenNodeScriptsInExternalEditor = true;
 
         [SerializeField]
         private string m_Namespace = "";
@@ -147,6 +150,12 @@ namespace Unity.Behavior
             }
         }
 
+        public bool AutoOpenNodeScriptsInExternalEditor
+        {
+            get => m_AutoOpenNodeScriptsInExternalEditor;
+            set => m_AutoOpenNodeScriptsInExternalEditor = value;
+        }
+
         public string Namespace
         {
             get => m_Namespace;
@@ -157,6 +166,25 @@ namespace Unity.Behavior
         void OnDisable()
         {
             Save();
+        }
+
+        private void OnEnable()
+        {
+            SanitizeSaveFolder(ref m_SaveFolder);
+            SanitizeSaveFolder(ref m_SaveFolderAction);
+            SanitizeSaveFolder(ref m_SaveFolderModifier);
+            SanitizeSaveFolder(ref m_SaveFolderFlow);
+            SanitizeSaveFolder(ref m_SaveFolderCondition);
+            SanitizeSaveFolder(ref m_SaveFolderEventChannels);
+            SanitizeSaveFolder(ref m_SaveFolderEnum);
+        }
+
+        private void SanitizeSaveFolder(ref string saveFolder)
+        {
+            if (saveFolder.EndsWith(".cs"))
+            {
+                saveFolder = Util.MakePathRelativeToProject(System.IO.Path.GetDirectoryName(saveFolder));
+            }
         }
 
         /// <summary>

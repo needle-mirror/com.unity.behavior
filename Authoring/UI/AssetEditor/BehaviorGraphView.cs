@@ -205,7 +205,6 @@ namespace Unity.Behavior
             if (evt.keyCode == KeyCode.R && TryGetFirstRoot(out NodeUI rootUI))
             {
                 Background.FrameElement(rootUI);
-                //this.PanToNode(rootUI, localBound.size * Vector2.up * 0.5f,200);
                 return;
             }
 
@@ -335,6 +334,28 @@ namespace Unity.Behavior
             dialog.ConnectedOutputPorts.AddRange(inputConnections);
         }
 
+        public override void CreateNodeUI(NodeModel nodeModel)
+        {
+            if (nodeModel is not BehaviorGraphNodeModel behaviorNodeModel || nodeModel is PlaceholderNodeModel)
+            {
+                base.CreateNodeUI(nodeModel);
+                return;
+            }
+            NodeInfo info = NodeRegistry.GetInfoFromTypeID(behaviorNodeModel.NodeTypeID);
+            if (info != null)
+            {
+                base.CreateNodeUI(nodeModel);
+                return;
+            }
+
+            Debug.LogWarning($"Serialized node: \"{behaviorNodeModel.NodeType}\" is invalid. " +
+                    $"This generally happen when you rename or delete a node that was used by the graph. " +
+                    $"The faulty node has been been replaced with a placeholder node.", Asset);
+
+            PlaceholderNodeUI nodeUI = new PlaceholderNodeUI(nodeModel);
+            ViewState.InitNodeUI(nodeUI, nodeModel);
+        }
+
         internal void ShowActionNodeWizard(Vector2 mousePosition, PlaceholderNodeModel placeholderNodeModel = null)
         {
 #if UNITY_EDITOR
@@ -395,9 +416,7 @@ namespace Unity.Behavior
         {
             m_Asset.CommandBuffer.SerializeDeferredCommand(new CreateNodeFromSerializedTypeCommand(createdNodeData.ClassName, mousePosition, true));
         }
-#endif
-        
-#if UNITY_EDITOR
+
         private void OnNodeTypeCreatedFromPlaceholderNode(string placeholderNodeName,
             NodeGeneratorUtility.NodeData createdNodeData, Vector2 mousePosition)
         {

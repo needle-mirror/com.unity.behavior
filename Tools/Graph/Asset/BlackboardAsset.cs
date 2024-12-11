@@ -25,6 +25,11 @@ namespace Unity.Behavior.GraphFramework
             }
         }
 
+        /// <summary>
+        /// Does the asset needs to rebuilt its data.
+        /// </summary>
+        internal bool HasOutstandingChanges { get; set; }
+
         private void Awake()
         {
 #if UNITY_EDITOR
@@ -89,6 +94,7 @@ namespace Unity.Behavior.GraphFramework
         public void SetAssetDirty()
         {
             m_VersionTimestamp = DateTime.Now.Ticks;
+            HasOutstandingChanges = true;
 #if UNITY_EDITOR
             UnityEditor.EditorUtility.SetDirty(this);
 #endif
@@ -103,6 +109,7 @@ namespace Unity.Behavior.GraphFramework
             // Instead, use AssetDatabase.SaveAssets().
             UnityEditor.AssetDatabase.SaveAssets();
 #endif
+            HasOutstandingChanges = false;
         }
     }
 }

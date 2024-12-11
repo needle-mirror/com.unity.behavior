@@ -65,9 +65,12 @@ Perform the following steps:
    The **Blackboard** asset displays on the Unity Behavior graph's **Blackboard**. 
 
    > [!NOTE]
-   > If you don't create **Blackboard** assets, the option to select a **Blackboard** variable does not display in the behavior graph's **Blackboard** list.
+   > If you don't create **Blackboard** assets, the option to select a **Blackboard** variable doesn't display in the behavior graph's **Blackboard** list.
    
    To add new variables on the behavior graph **Blackboard**, select the **+** icon. To add new variables or edit any variable added on the behavior graph's **Blackboard** from the **Blackboard** asset, use the **Blackboard** editor.
+
+> [!NOTE]
+> Don't use `RuntimeBlackboardAsset` in the code to edit or access non-shared variables. Behavior graphs that use `RuntimeBlackboardAsset` (assigned as the `BlackboardAsset`) create their own instance of non-shared variables. These instances are unique to each graph and don't reflect updates outside of it.
 
 ### Expose and Shared variables
 

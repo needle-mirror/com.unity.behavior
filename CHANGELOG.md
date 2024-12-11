@@ -4,6 +4,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.7] - 2024-12-11
+
+### Added
+- Added new Interrupted status and ensure that all incomplete child nodes of Parallel composites are marked as interrupted.
+- Added a checkbox to the behavior project settings to contnrol if nodes and condition scripts should automatically open after creation.
+
+### Changed
+- Selection of a node now brings it to the front.
+- Selection of a node in a sequence brings the sequence to the front.
+- Small tweak to node selected border radius.
+- Nodes replaced with Placeholder Nodes will not be replaced in the asset, only in the UI, reducing risk in recovery.
+- When saving a new Node/Condition from the wizard, a postfix of the node type (Action/Modifier/Flow) or Condition won't be added to the suggested filename if it already ends with it.
+- Updated AppUI dependency to 2.0.0-pre14 and created a settings file to exclude AppUI Shaders and execution from builds. This can be overriden with a custom user App UI Settings file.
+- Exposed `SaveFolderEventChannels` in the Project Settings -> Behavior menu.
+- Improved documentation description for the `GameObject` API inside the `Node` class.
+- Improved asset rebuilding and saving mechanism to avoid frequent regeneration.
+
+### Fixed
+- Editing Subgraph Representation will no longer add duplicate variables.
+- Softened search fields filtering so that, for example, 'int list' and 'list int' will return 'Integer List'.
+- Fixed WaitForAnyComposite not ending correctly yielding multiple runs of child nodes. 
+- Editing a node with the node wizard (edit node definition) will no longer remove to Action/Modifer/Sequence postfix.
+- Fixed an issue where automatic save path for enums and event channels saved the file name into the save path settings and caused an infinite loop when saving the next file.
+- Remove erroneous references to Muse in the API docs.
+- Improved Undo support for editing Behavior Agent on a GameObject.
+- Adding a Run In Parallel node and its various types from the branch dialog will set the correct mode.
+- Subassets of Graph and Blackboard will have their names track more correctly with the main asset.
+- BehaviorWindow will now close during autosave if its asset is invalid.
+
+### Known Issues
+- Deleting a behavior graph asset while the window is open can cause the graph editor window to be stuck and the user will need to reset their layout to get rid of it.
+- Runtime serialization of nodes in user assemblies don't serialize some properties correctly.
+- Editing fields in Run Subgraph node with subgraph representation doesn’t update the inspector values.
+
 ## [1.0.6] - 2024-11-20
 
 ### Added

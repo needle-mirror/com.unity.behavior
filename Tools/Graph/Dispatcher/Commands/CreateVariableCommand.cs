@@ -5,6 +5,7 @@ namespace Unity.Behavior.GraphFramework
     internal class CreateVariableCommand : Command
     {
         public string Name { get; }
+        public bool ExactName { get; set; }
         public Type VariableType { get; }
         public object[] Args { get; }
         

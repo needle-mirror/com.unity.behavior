@@ -500,7 +500,7 @@ namespace Unity.Behavior
 
         public override void OnAssetSave()
         {
-            if (!Asset)
+            if (!Asset || IsAssetVersionUpToDate())
             {
                 return;
             }
@@ -509,7 +509,7 @@ namespace Unity.Behavior
 #if UNITY_EDITOR
             if (!Application.isPlaying)
             {
-                Asset.BuildRuntimeGraph();
+                Asset.BuildRuntimeGraph(false);
             }
 #endif
             SaveSubgraphRepresentation();
@@ -537,7 +537,7 @@ namespace Unity.Behavior
                 {
                     string varName = char.ToUpper(storyVariable.Name.First()) + storyVariable.Name.Substring(1);
                     Type varType = BlackboardUtils.GetVariableModelTypeForType(storyVariable.Type);
-                    Dispatcher.DispatchImmediate(new CreateVariableCommand(varName, varType));
+                    Dispatcher.DispatchImmediate(new CreateVariableCommand(varName, varType) { ExactName = true });
                 }
             }
         }

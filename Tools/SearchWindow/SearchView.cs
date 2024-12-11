@@ -12,7 +12,7 @@ namespace UnityEngine.UIExtras
         private const string k_Title = "Root";
         private string m_Title = k_Title;
 
-        public readonly struct Item
+        public struct Item
         {
             public string Path { get; }
             public Texture2D Icon { get; }
@@ -20,7 +20,7 @@ namespace UnityEngine.UIExtras
             public object Data { get; }
             public Action OnSelected { get; }
             public string Description { get; }
-            public string Name => Path.Split('/').Last();
+            public string Name { get; set; }
             public bool Enabled { get; }
             
             public int Priority { get; }
@@ -35,6 +35,7 @@ namespace UnityEngine.UIExtras
                 Enabled = enabled;
                 OnSelected = onSelected;
                 Priority = priority;
+                Name = Path.Split('/').Last();
             }
 
             public Item(string path, string iconName, object data = null, string description = null, bool enabled = true, Action onSelected = null, int priority = 0)
@@ -47,9 +48,10 @@ namespace UnityEngine.UIExtras
                 Enabled = enabled;
                 OnSelected = onSelected;
                 Priority = priority;
+                Name = Path.Split('/').Last();
             }
         }
-        
+
         private readonly SearchBar m_SearchField;
         private readonly VisualElement m_ReturnButton;
         private readonly VisualElement m_ReturnIcon;
@@ -218,12 +220,16 @@ namespace UnityEngine.UIExtras
                 if (IsCurrentNodeSearchNode)
                 {
                     string path = m_CurrentNode[index].Value.Path;
+                    
                     searchViewItem.SecondaryLabelTooltip = path;
 
-                    const string kOtherPathString = "Other/";
-                    const string kMonoBehaviourPathString = "Other/MonoBehaviours/";
-                    string pathWithoutName = path.Remove(path.LastIndexOf(m_CurrentNode[index].Value.Name)).TrimEnd('/').Replace(kMonoBehaviourPathString, "").Replace(kOtherPathString, "");
+                    string unformattedName = path.Split('/').Last();
+                    string pathWithoutName = path.Remove(path.LastIndexOf(unformattedName)).TrimEnd('/');
 
+                    const string kOtherPathString = "Other";
+                    const string kMonoBehaviourPathString = "Other/MonoBehaviours";
+                    pathWithoutName = pathWithoutName.Replace(kMonoBehaviourPathString, "").Replace(kOtherPathString, "");
+                    
                     if (string.IsNullOrEmpty(pathWithoutName))
                     {
                         searchViewItem.SecondaryLabel = "";
@@ -344,6 +350,7 @@ namespace UnityEngine.UIExtras
                 case KeyCode.Return:
                     if (selectedItem != null)
                     {
+                        
                         evt.StopImmediatePropagation();
                         OnItemChosen(selectedItem);
                     }
@@ -356,24 +363,7 @@ namespace UnityEngine.UIExtras
         {
             m_SearchField.Focus();
         }
-
-
-        /// <summary>
-        /// Checks whether the source string contains the search string, while ignoring case and spaces in both strings. 
-        /// </summary>
-        /// <param name="source"></param>
-        /// <param name="search"></param>
-        /// <returns></returns>
-        private static bool DoesSourceContainSearch(string source, string search)
-        {
-            // String interning will not cause GC.
-            string sourceWithoutSpaces = source.Replace(" ", string.Empty);
-            string toCheckWithoutSpaces = search.Replace(" ", string.Empty);
-
-            /// Uses a character-by-character comparison, so it's efficient for longer strings.
-            return sourceWithoutSpaces.IndexOf(toCheckWithoutSpaces, StringComparison.CurrentCultureIgnoreCase) != -1;
-        }
-
+        
         private void OnSearchQueryChanged(ChangingEvent<string> changeEvent)
         {
             string newValue = changeEvent.newValue;
@@ -393,10 +383,18 @@ namespace UnityEngine.UIExtras
 
             if (newValue.Length == 0)
             {
+                m_SearchNode?.Traverse(delegate(TreeNode<Item> itemNode)
+                {
+                    Item item = itemNode.Value;
+                    item.Name = item.Path.Split('/').Last();
+                    itemNode.Value = item;
+                });
+
                 if (IsCurrentNodeSearchNode)
                 {
                     OnNavigationReturn();
                 }
+                
                 return;
             }
 
@@ -404,15 +402,46 @@ namespace UnityEngine.UIExtras
             {
                 m_NavigationStack.Push(m_CurrentNode);
             }
-            List<TreeNode<Item>> searchResults = new List<TreeNode<Item>>();
+            
+            List<(TreeNode<Item>, int)> searchResultsAndMatchCount = new List<(TreeNode<Item>, int)>();
             m_RootNode?.Traverse(delegate(TreeNode<Item> itemNode)
             {
-                if (itemNode.Value.Name != null && DoesSourceContainSearch(itemNode.Value.Name, newValue))
+                Item item = itemNode.Value;
+                item.Name = item.Path.Split('/').Last();
+                itemNode.Value = item;
+
+                if (itemNode.Value.Name == null)
                 {
-                    searchResults.Add(itemNode);
+                    return;
                 }
+
+                if (itemNode == m_RootNode)
+                {
+                    return;
+                }
+                
+                
+                List<(int, int)> matchOffsets = SearchUtil.DoesSourceContainSearch(itemNode.Value.Name, newValue);
+                
+                if (matchOffsets.Count > 0)
+                {
+                    item.Name = SearchUtil.FormatSearchResult(itemNode.Value.Name, matchOffsets);
+
+                    searchResultsAndMatchCount.Add((itemNode, matchOffsets.Count));
+                }
+                
+                itemNode.Value = item;
             });
-            searchResults.Remove(m_RootNode);
+            
+            searchResultsAndMatchCount.Sort((a, b) => b.Item2.CompareTo(a.Item2));
+            
+            List<TreeNode<Item>> searchResults = new List<TreeNode<Item>>();
+
+            foreach (var result in searchResultsAndMatchCount)
+            {
+                searchResults.Add(result.Item1);
+            }
+            
             m_SearchNode = new TreeNode<Item>(new Item("Search"));
             m_SearchNode.m_Children = searchResults;
             m_SearchNode.Parent = m_CurrentNode;
@@ -497,7 +526,6 @@ namespace UnityEngine.UIExtras
                 {
                     currentPath += "/" + pathParts[i];
                 }
-
                 TreeNode<Item> node = (i < pathParts.Length - 1) ? FindNodeByPath(treeNodeParent, currentPath) : null;
                 if (node == null)
                 {

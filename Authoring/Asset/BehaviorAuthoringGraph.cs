@@ -35,6 +35,8 @@ namespace Unity.Behavior
                 return m_DebugInfo;
             }
         }
+
+        [SerializeReference] private BehaviorGraph m_RuntimeGraph;
 #endif
         [SerializeField]
         public SerializableGUID AssetID = SerializableGUID.Generate();
@@ -72,6 +74,8 @@ namespace Unity.Behavior
         
         [SerializeField]
         internal List<BehaviorBlackboardAuthoringAsset> m_Blackboards = new List<BehaviorBlackboardAuthoringAsset>();
+
+        [SerializeReference] private BehaviorBlackboardAuthoringAsset m_MainBlackboardAuthoringAsset;
         
         [Serializable]
         public struct NodeModelInfo
@@ -96,6 +100,12 @@ namespace Unity.Behavior
             BehaviorGraphAssetRegistry.Add(this);
         }
 
+        protected override void OnEnable()
+        {
+            ValidateAssetNames(validateMainAsset: true);
+            base.OnEnable();
+        }
+
         /// <inheritdoc cref="OnValidate" />
         public override void OnValidate()
         {
@@ -105,6 +115,44 @@ namespace Unity.Behavior
             EnsureBlackboardsAreUpToDate();
 
             base.OnValidate();
+        }
+
+        private void ValidateAssetNames(bool validateMainAsset)
+        {
+#if UNITY_EDITOR
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                return;
+            }
+            string assetPath = AssetDatabase.GetAssetPath(this);
+            string assetPathName = System.IO.Path.GetFileNameWithoutExtension(assetPath);
+            if (name != assetPathName)
+            {
+                name = assetPathName;
+                if (!string.IsNullOrEmpty(assetPath))
+                {
+                    AssetDatabase.SetMainObject(this, assetPath);
+                }
+            }
+
+            if (m_DebugInfo != null && m_DebugInfo.name != $"{name} Debug Info")
+            {
+                m_DebugInfo.name = $"{name} Debug Info";
+            }
+            if (m_RuntimeGraph != null && m_RuntimeGraph.name != name)
+            {
+                m_RuntimeGraph.name = name;
+            }
+
+            if (m_MainBlackboardAuthoringAsset != null && m_MainBlackboardAuthoringAsset.name != $"{name} Blackboard")
+            {
+                m_MainBlackboardAuthoringAsset.name = $"{name} Blackboard";
+                if (m_MainBlackboardAuthoringAsset.RuntimeBlackboardAsset != null)
+                {
+                    m_MainBlackboardAuthoringAsset.RuntimeBlackboardAsset.name = $"{name} Blackboard";
+                }
+            }
+#endif
         }
 
         private void EnsureBlackboardsAreUpToDate()
@@ -118,9 +166,25 @@ namespace Unity.Behavior
                 }
                 else
                 {
+                    ValidateBlackboardAssetName(blackboard);
                     blackboard.OnValidate();
                 }
             }
+        }
+
+        private void ValidateBlackboardAssetName(BehaviorBlackboardAuthoringAsset blackboard)
+        {
+            #if UNITY_EDITOR
+            if (AssetDatabase.GetAssetPath(blackboard) != AssetDatabase.GetAssetPath(this))
+            {
+                return;
+            }
+
+            if (blackboard.name != $"{name} + Blackboard")
+            {
+                blackboard.name = $"{name} + Blackboard";
+            }
+            #endif
         }
 
         private void EnsureAtLeastOneRoot()
@@ -146,10 +210,8 @@ namespace Unity.Behavior
                 NodeInfo info = NodeRegistry.GetInfoFromTypeID(node.NodeTypeID);
                 if (info == null)
                 {
-                    ReplaceNodeWithPlaceholder(node);
-                    Debug.LogWarning($"Serialized node: \"{node.NodeType}\" is invalid. " +
-                        $"This generally happen when you rename or delete a node that was used by the graph. " +
-                        $"The faulty node has been been replaced with a placeholder node.", this);
+                    // The node info is missing and it will be replaced with a placeholder node UI when opening the graph.
+                    // We're keeping the serialization the same to avoid issues in case the node is recovered.
                 }
                 else if (node.NodeType.text != info.Type.AssemblyQualifiedName)
                 {
@@ -305,14 +367,16 @@ namespace Unity.Behavior
                 .FirstOrDefault(asset => asset is BehaviorGraph) as BehaviorGraph;
             if (graph != null)
             {
+                assetObject.m_RuntimeGraph = graph;
                 return graph;
             }
 
             graph = CreateInstance<BehaviorGraph>();
             graph.name = assetObject.name;
+            assetObject.m_RuntimeGraph = graph;
             AssetDatabase.AddObjectToAsset(graph, assetObject);
-            AssetDatabase.SaveAssets();
             EditorUtility.SetDirty(assetObject);
+            AssetDatabase.SaveAssetIfDirty(assetObject);
             return graph;
 #endif
         }
@@ -361,10 +425,10 @@ namespace Unity.Behavior
 
         private void CreateNodeModelsInfoCache()
         {
+            var oldNodeModelsInfos = m_NodeModelsInfo;
             m_RuntimeNodeTypeIDToNodeModelInfo ??= new Dictionary<SerializableGUID, NodeModelInfo>();
-            m_NodeModelsInfo ??= new List<NodeModelInfo>();
+            m_NodeModelsInfo = new List<NodeModelInfo>();
             m_RuntimeNodeTypeIDToNodeModelInfo.Clear();
-            m_NodeModelsInfo.Clear();
             foreach (NodeModel node in Nodes)
             {
                 if (node is not BehaviorGraphNodeModel behaviorNode)
@@ -391,6 +455,20 @@ namespace Unity.Behavior
                 m_RuntimeNodeTypeIDToNodeModelInfo[nodeInfo.TypeID] = nodeModelInfo;
                 m_NodeModelsInfo.Add(nodeModelInfo);
             }
+
+            // Add previously saved node model infos if they're missing in the current collection.
+            if (oldNodeModelsInfos != null)
+            {
+                foreach (NodeModelInfo nodeInfo in oldNodeModelsInfos)
+                {
+                    if (m_RuntimeNodeTypeIDToNodeModelInfo.ContainsKey(nodeInfo.RuntimeTypeID))
+                    {
+                        continue;
+                    }
+                    m_RuntimeNodeTypeIDToNodeModelInfo.Add(nodeInfo.RuntimeTypeID, nodeInfo);
+                    m_NodeModelsInfo.Add(nodeInfo);
+                }
+            }
         }
 
         private void CreateNodeModelInfosDictionaryFromList()
@@ -411,12 +489,11 @@ namespace Unity.Behavior
         
         internal override void EnsureAssetHasBlackboard()
         {
-            string blackboardName = name + " Blackboard Editor";
+            string blackboardName = name + " Blackboard";
 #if UNITY_EDITOR
             string path = AssetDatabase.GetAssetPath(this);
             BlackboardAsset existingBlackboard = AssetDatabase.LoadAllAssetsAtPath(path).FirstOrDefault(asset => asset is BlackboardAsset) as BlackboardAsset;
             BehaviorBlackboardAuthoringAsset blackboardAuthoring = existingBlackboard as BehaviorBlackboardAuthoringAsset;
-            
             if (blackboardAuthoring == null)
             {
                 blackboardAuthoring = CreateInstance<BehaviorBlackboardAuthoringAsset>();
@@ -424,6 +501,7 @@ namespace Unity.Behavior
                 Blackboard = blackboardAuthoring;
                 Blackboard.name = blackboardName;
                 Blackboard.hideFlags = HideFlags.HideInHierarchy;
+                m_MainBlackboardAuthoringAsset = blackboardAuthoring;
 
                 if (existingBlackboard != null)
                 {
@@ -434,14 +512,18 @@ namespace Unity.Behavior
             }
             else if (blackboardAuthoring != null)
             {
+                m_MainBlackboardAuthoringAsset = blackboardAuthoring;
                 if (Blackboard != null && blackboardAuthoring == Blackboard)
                 {
                     // Update the graph Blackboard name if needed.
                     if (blackboardAuthoring.name != blackboardName)
                     {
                         blackboardAuthoring.name = blackboardName;
-                    }   
-                    
+                        if (blackboardAuthoring.RuntimeBlackboardAsset != null)
+                        {
+                            blackboardAuthoring.RuntimeBlackboardAsset.name = blackboardName;
+                        }
+                    }
                     Blackboard.hideFlags = HideFlags.HideInHierarchy;
                 }
                 return;
@@ -468,7 +550,13 @@ namespace Unity.Behavior
             BehaviorGraphAssetRegistry.Remove(this);
         }
 
-        public BehaviorGraph BuildRuntimeGraph()
+        /// <summary>
+        /// Build the sub assets (Runtime Graph, Runtime Blackboard Asset, Debug Info).
+        /// </summary>
+        /// <param name="forceRebuild">Set to false allows to skip the full rebuild and just update VersionTimestamp in case there is no outstanding change.
+        /// Default to true to preserve original behavior.</param>
+        /// <returns>The up-to-date BehaviorGraph.</returns>
+        public BehaviorGraph BuildRuntimeGraph(bool forceRebuild = true)
         {
             var runtimeGraph = GetOrCreateGraph(this);
             if (runtimeGraph == null)
@@ -476,13 +564,38 @@ namespace Unity.Behavior
                 return null;
             }
             
-            runtimeGraph.Graphs.Clear();
-            var graphAssetProcessor = new GraphAssetProcessor(this, runtimeGraph);
-            graphAssetProcessor.ProcessGraph();
+            if (runtimeGraph.RootGraph == null || HasOutstandingChanges || forceRebuild)
+            {
+                // Debug.Log($"GraphAsset[<b>{name}</b>].BuildRuntimeGraph");
+                runtimeGraph.Graphs.Clear();
+                var graphAssetProcessor = new GraphAssetProcessor(this, runtimeGraph);
+                graphAssetProcessor.ProcessGraph();
+            }
+            else
+            {
+                // Debug.Log($"<b>Skipping</b> GraphAsset[<b>{name}</b>].BuildRuntimeGraph");
+                // If no outstanding change, we only update the version timestamp.
+                // Any cosmetic data (like node position) are SerializedField, so the asset only needs to be save.
+                runtimeGraph.RootGraph.VersionTimestamp = VersionTimestamp;
+            }
+
 #if UNITY_EDITOR
+            // We don't want to use GraphAsset.SetAssetDirty as it could cause a recursive chain with OnWillSaveAssets. 
             EditorUtility.SetDirty(this);
-#endif                
+#endif
             return runtimeGraph;
         }
+
+#if UNITY_EDITOR
+        /// <summary>
+        /// HasOutstandingChanges is internal to the Behavior.GraphFramework assembly.
+        /// Call this method when you manually rebuild the graph outside of a graph editor.
+        /// This is required in order to prevent the asset being rebuilt everytime until GraphAsset.SaveAsset is called.
+        /// </summary>
+        internal void ResetOutstandingChange()
+        {
+            HasOutstandingChanges = false;
+        }
+#endif
     }
 }

@@ -4,7 +4,7 @@ using Unity.Behavior.GraphFramework;
 namespace Unity.Behavior
 {
     /// <summary>
-    /// The ConditionAttribute contains metadata for conditions used in Muse Behavior graphs. 
+    /// The ConditionAttribute contains metadata for conditions used in Behavior graphs. 
     /// </summary>
     [AttributeUsage(AttributeTargets.Class)]
     public class ConditionAttribute : Attribute

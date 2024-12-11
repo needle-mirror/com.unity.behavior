@@ -132,7 +132,7 @@ namespace Unity.Behavior
                 OldPorts = m_OldPortNames
             };
 
-            if (NodeGeneratorUtility.Edit(data, m_Info))
+            if (NodeGeneratorUtility.Edit(data, m_Info, "Sequence"))
             {
                 Modal.Dismiss();
             }

@@ -23,7 +23,18 @@ namespace Unity.Behavior
         private ParallelMode m_Mode;
         public ParallelMode Mode { get => m_Mode; set => m_Mode = value; }
 
-        public RunInParallelNodeModel(NodeInfo nodeInfo) : base(nodeInfo) { }
+        public RunInParallelNodeModel(NodeInfo nodeInfo) : base(nodeInfo)
+        {
+            if (nodeInfo == null || nodeInfo.Type == null)
+            {
+                return;
+            }
+            
+            if (nodeInfo.Type == typeof(ParallelAllComposite)) Mode = ParallelMode.Default;
+            else if (nodeInfo.Type == typeof(ParallelAnySuccess)) Mode = ParallelMode.UntilAnySucceed;
+            else if (nodeInfo.Type == typeof(ParallelAllSuccess)) Mode = ParallelMode.UntilAnyFail;
+            else if (nodeInfo.Type == typeof(ParallelAnyComposite)) Mode = ParallelMode.UntilAnyComplete;
+        }
 
         protected RunInParallelNodeModel(RunInParallelNodeModel nodeModelOriginal, BehaviorAuthoringGraph asset) : base(nodeModelOriginal, asset)
         {

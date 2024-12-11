@@ -47,6 +47,7 @@ namespace Unity.Behavior
                 return;
             }
 
+            List<BehaviorAuthoringGraph> graphToRebuild = new List<BehaviorAuthoringGraph>();
             foreach (BehaviorAuthoringGraph authoringGraph in BehaviorGraphAssetRegistry.GlobalRegistry.Assets)
             {
                 if (!authoringGraph.ContainsReferenceTo(blackboardAsset))
@@ -54,7 +55,10 @@ namespace Unity.Behavior
                     continue;
                 }
 
-                Debug.LogWarning($"Graph {authoringGraph.name} has a reference to deleted {blackboardAsset.name}. References will be removed and the graph might need updating to function correctly.", authoringGraph);
+                Debug.LogWarning($"Please review and upate the graph '{authoringGraph.name}' to ensure it functions correctly. " 
+                    + $"Blackboard asset '{blackboardAsset.name}' has been deleted and all associated references has be removed.", authoringGraph);
+
+                bool hasAtleastOneReference = false;
                 authoringGraph.m_Blackboards.Remove(blackboardAsset);
                 foreach (var nodeModel in authoringGraph.Nodes)
                 {
@@ -62,30 +66,51 @@ namespace Unity.Behavior
                     {
                         continue;
                     }
-                    RemoveBlackboardVariableLinksFromFields(blackboardAsset, behaviorNodeModel.Fields);
+                    hasAtleastOneReference |= RemoveBlackboardVariableLinksFromFields(blackboardAsset, behaviorNodeModel.Fields);
                             
                     if (behaviorNodeModel is IConditionalNodeModel conditionalNodeModel)
                     {
                         // Delete variable references from conditions.
                         foreach (var condition in conditionalNodeModel.ConditionModels)
                         {
-                            RemoveBlackboardVariableLinksFromFields(blackboardAsset, condition.Fields);
+                            hasAtleastOneReference |= RemoveBlackboardVariableLinksFromFields(blackboardAsset, condition.Fields);
                         }
                     }
                 }
+                
+                // We dirty the asset because we did remove the blackboard reference.
                 EditorUtility.SetDirty(authoringGraph);
+
+                // If outstanding change was made, we put the graph aside for postprocessing.
+                if (hasAtleastOneReference)
+                {
+                    graphToRebuild.Add(authoringGraph);
+                }
             }
+
+            if (graphToRebuild.Count == 0)
+            {
+                return;
+            }
+
+            BehaviorAssetPostProcessor.RequestGraphsRebuild(graphToRebuild);
         }
 
-        private static void RemoveBlackboardVariableLinksFromFields(BehaviorBlackboardAuthoringAsset blackboardAsset, IEnumerable<BehaviorGraphNodeModel.FieldModel> fields)
+        private static bool RemoveBlackboardVariableLinksFromFields(BehaviorBlackboardAuthoringAsset blackboardAsset, IEnumerable<BehaviorGraphNodeModel.FieldModel> fields)
         {
+            bool hasMatchingField = false;
             foreach (var field in fields)
             {
                 if (blackboardAsset.Variables.Contains(field.LinkedVariable) || (field.Type.Type == typeof(BehaviorBlackboardAuthoringAsset) && (BehaviorBlackboardAuthoringAsset)field.LinkedVariable?.ObjectValue == blackboardAsset))
                 {
                     field.LinkedVariable = null;
+                    hasMatchingField = true;
+
+                    // we don't break here, in case a user have a node that reference the same field several times.
                 }
             }
+
+            return hasMatchingField;
         }
     }
 }

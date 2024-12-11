@@ -157,12 +157,11 @@ namespace Unity.Behavior
 
         private void AutoSaveIfEnabledInEditor()
         {
-            if (Editor is { AutoSaveIsEnabled: true })
+            if (Editor is { AutoSaveIsEnabled: true } && !Asset.IsAssetVersionUpToDate())
             {
                 Editor.OnAssetSave();
             }
         }
-
         internal static void Open(BehaviorBlackboardAuthoringAsset asset)
         {
             BlackboardWindow[] windows = Resources.FindObjectsOfTypeAll<BlackboardWindow>();

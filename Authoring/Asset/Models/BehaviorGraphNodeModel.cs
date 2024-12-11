@@ -79,9 +79,23 @@ namespace Unity.Behavior
         {
             base.OnValidate();
 
+            EnsureNodeTypeIDIsCorrect();
             EnsureLinkedVariablesAreUpToDate();
             EnsureFieldValuesAreUpToDate();
             EnsurePortsAreUpToDate();
+        }
+
+        private void EnsureNodeTypeIDIsCorrect()
+        {
+             NodeInfo info = NodeRegistry.GetInfoFromTypeID(NodeTypeID);
+             if (info == null && NodeType.Type != null)
+             {
+                 info = NodeRegistry.GetInfo(NodeType);
+                 if (info != null)
+                 {
+                     NodeTypeID = info.TypeID;
+                 }
+             }
         }
 
         private void EnsureLinkedVariablesAreUpToDate()
@@ -100,7 +114,7 @@ namespace Unity.Behavior
                 }
 
                 VariableModel foundVariable = GetLinkedVariableFromBlackboard(behaviorGraph.Blackboard, field.LinkedVariable);
-                if (foundVariable != null)
+                if (foundVariable != null && !foundVariable.Equals(field.LinkedVariable))
                 {
                     field.LinkedVariable = foundVariable;
                 }
@@ -108,7 +122,7 @@ namespace Unity.Behavior
                 foreach (BehaviorBlackboardAuthoringAsset blackboard in behaviorGraph.m_Blackboards)
                 {
                     VariableModel foundBlackboardVariable = GetLinkedVariableFromBlackboard(blackboard, field.LinkedVariable);
-                    if (foundBlackboardVariable != null)
+                    if (foundBlackboardVariable != null && !foundBlackboardVariable.Equals(field.LinkedVariable))
                     {
                         field.LinkedVariable = foundBlackboardVariable;
                     }

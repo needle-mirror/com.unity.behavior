@@ -52,6 +52,9 @@ To create a custom node, perform the following steps:
 
      ![New node](Images/node-creation.png)
 
+   > [!NOTE]
+   > The generated C# script defines a class that inherits from the Action, Modifier, or Composite nodes, all of which extend the `Node` class. This structure allows access to APIs provided by the [Node class](https://docs.unity3d.com/Packages/com.unity.behavior@1.0/api/Unity.Behavior.Node.html) or its direct parent classes.
+   
 9. Select the new node to use it in the behavior graph.
 
     ![Behavior graph](Images/custom-node-create.png)

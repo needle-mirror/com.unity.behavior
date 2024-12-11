@@ -33,10 +33,6 @@ namespace Unity.Behavior
                 behaviorAuthoringGraph.BuildRuntimeGraph();
             }
             behaviorGraphAgent.Graph = runtimeGraph;
-            if (Application.isPlaying)
-            {
-                behaviorGraphAgent.StartCoroutine(InitializeAndStartGraph(behaviorGraphAgent));
-            }
         }
 
         static DragAndDropVisualMode InspectorDropHandler(Object[] targets, bool perform)
@@ -62,13 +58,6 @@ namespace Unity.Behavior
                 }
             }
             return visualMode;
-        }
-
-        static IEnumerator InitializeAndStartGraph(BehaviorGraphAgent agent)
-        {
-            agent.Init();
-            yield return 0; // Wait one frame before starting so users can set variable values.
-            agent.Start();
         }
 
         static DragAndDropVisualMode HierarchyDropHandler(int dropTargetInstanceID, HierarchyDropFlags dropMode, Transform parentForDraggedObjects, bool perform)

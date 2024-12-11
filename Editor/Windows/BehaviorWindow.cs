@@ -68,9 +68,11 @@ namespace Unity.Behavior
 
         private void OnDisable()
         {
+            // No need to save here as the editor will always call OnLostFocus before OnDisable is called.
+            // This is also true for window that are not currently open as they would had to loose focus 
+            // to not be selected
             EditorApplication.playModeStateChanged -= OnEditorStateChange;
             m_Editor.DebugAgentSelected -= SetDebugAgent;
-            AutoSaveIfEnabledInEditor();
             SetWindowPosition();
             rootVisualElement.UnregisterCallback<GeometryChangedEvent>(OnGeometryChanged);
             EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
@@ -119,6 +121,7 @@ namespace Unity.Behavior
             if (!ReferenceEquals(m_Asset, null) && !EditorUtility.IsPersistent(m_Asset))
             {
                 Close();
+                return;
             }
 
             SetWindowTitleFromAsset();
@@ -207,7 +210,14 @@ namespace Unity.Behavior
 
         private void AutoSaveIfEnabledInEditor()
         {
-            if (m_Editor is { AutoSaveIsEnabled: true })
+            // If the authoring graph have been deleted outside of Unity, close the window.
+            if (!EditorUtility.IsPersistent(m_Asset))
+            {
+                Close();
+                return;
+            }
+
+            if (m_Editor is { AutoSaveIsEnabled: true } && !m_Editor.IsAssetVersionUpToDate())
             {
                 m_Editor.OnAssetSave();
             }

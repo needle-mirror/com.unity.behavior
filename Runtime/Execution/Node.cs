@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Unity.Behavior
 {
     /// <summary>
-    /// A base class for behaviour nodes used in the Muse Behavior graph.
+    /// A base class for behaviour nodes used in the Behavior graph.
     /// </summary>
     [Serializable]
     public abstract class Node
@@ -26,6 +26,8 @@ namespace Unity.Behavior
             Failure,
             /// <summary> The node is currently waiting for child nodes to complete. </summary>
             Waiting,
+            /// <summary> The node has been interrupted. </summary>
+            Interrupted,
         }
 
         /// <summary>
@@ -80,7 +82,7 @@ namespace Unity.Behavior
         internal BehaviorGraphModule Graph;
 
         /// <summary>
-        /// The game object associated with the behavior graph.
+        /// The game object that contains the `BehaviorGraphAgent` that is running the behavior graph.
         /// </summary>
         public GameObject GameObject => Graph.GameObject;
 
@@ -112,6 +114,12 @@ namespace Unity.Behavior
 
         internal void End()
         {
+            if (CurrentStatus == Status.Running ||
+                CurrentStatus == Status.Waiting)
+            {
+                CurrentStatus = Status.Interrupted;
+            }
+            
             IsRunning = false;
 #if DEBUG && UNITY_EDITOR
             // The user set a breakpoint in the graph editor. Call a break on the debugger.

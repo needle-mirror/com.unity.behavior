@@ -105,9 +105,22 @@ To use the **Action** nodes, select **Add** > **Action**.
 
 ## Subgraphs node types
 
+Unity Behavior supports subgraphs through the Run Subgraph node. This node provides two options: static or dynamic, depending on the assigned subgraph variable.
+
+The static option embeds the subgraph directly into the behavior graph, so you can set its **Blackboard** variables directly through the **Inspector**. The dynamic option allows changing the assigned **Blackboard** through the linked Subgraph variable but restricts **Blackboard** variables access to a shared **Blackboard Asset** used as an interface. 
+
+To add a Run Subgraph node, follow these steps:
+
+1. Right-click in the behavior graph editor and select **Add** > **Subgraphs** > **Run Subgraph**. 
+1. In the **Inspector**, select the **Subgraph** link icon. 
+1. To use a static subgraph, select the **Assets** tab and then select a behavior graph from the list to assign it to the node. 
+
+   To use a dynamic subgraph, select the **Variable** tab and assign a **Blackboard** variable to dynamically reference the subgraph.
+
 | Node | Description |
 | ---- | ----------- |
-| Run Subgraph | Runs the assigned subgraph and return the graph's final status. |
+| Run Subgraph | Runs the assigned subgraph and return the graph's final status. This node embeds the subgraph statically into the current graph, so you can override the Blackboard Variables (BBVs) within the subgraph. Use this node when you want to modularize a feature that always uses the same set of data. |
+| Run Subgraph Dynamically | This node dynamically assigns a subgraph using `BlackboardVariable<Subgraph>`. Unlike the static Run Subgraph node, this node doesn't embed the subgraph into the current graph, as the assigned `BlackboardVariable<Subgraph>` can change at runtime. As a result, the subgraph’s Blackboard isn't directly accessible. To work around this limitation, assign a Blackboard asset to act as an interface and enable data exchange between the current graph and the dynamically assigned subgraph at runtime. |
 
 ## Sticky note
 

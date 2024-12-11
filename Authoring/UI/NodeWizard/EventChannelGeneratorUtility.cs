@@ -36,7 +36,7 @@ namespace Unity.Behavior
             }
             if (BehaviorProjectSettings.instance.AutoSaveLastSaveLocation)
             {
-                BehaviorProjectSettings.instance.SaveFolderEventChannels = path;
+                BehaviorProjectSettings.instance.SaveFolderEventChannels = Path.GetDirectoryName(path);
             }
 
             GenerateEventChannelFile(data, path);

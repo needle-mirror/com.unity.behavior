@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Unity.Behavior.GraphFramework;
 #if UNITY_EDITOR
@@ -29,10 +30,45 @@ namespace Unity.Behavior
         
         private void OnEnable()
         {
+#if UNITY_EDITOR
+            bool HasGraphInPath(string path)
+            {
+                var objects = AssetDatabase.LoadAllAssetsAtPath(path);
+                foreach (var embeddedObject in objects)
+                {
+                    if (typeof(GraphAsset).IsAssignableFrom(embeddedObject.GetType()))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+            var assetPath = AssetDatabase.GetAssetPath(this);
+            if (!string.IsNullOrEmpty(assetPath) && !EditorApplication.isPlayingOrWillChangePlaymode && !HasGraphInPath(assetPath))
+            {
+                string assetPathName =
+                    System.IO.Path.GetFileNameWithoutExtension(assetPath);
+                if (name != assetPathName)
+                {
+                    name = assetPathName;
+                    AssetDatabase.SetMainObject(this, assetPath);
+                }
+            }
+            if (m_RuntimeBlackboardAsset != null && m_RuntimeBlackboardAsset.name != name)
+            {
+                m_RuntimeBlackboardAsset.name = name;
+            }
+#endif
             if (m_RuntimeBlackboardAsset == null)
             {
                 BuildRuntimeBlackboard();
             }
+        }
+
+        internal override void OnValidate()
+        {
+            base.OnValidate();
         }
 
 #if UNITY_EDITOR
@@ -79,6 +115,11 @@ namespace Unity.Behavior
             return reference;
         }
 
+        public bool IsAssetVersionUpToDate()
+        {
+            return !HasOutstandingChanges;
+        }
+
         public RuntimeBlackboardAsset BuildRuntimeBlackboard()
         {
             m_RuntimeBlackboardAsset = GetOrCreateBlackboardAsset(this);
@@ -87,8 +128,11 @@ namespace Unity.Behavior
                 return null;
             }
 
-            m_RuntimeBlackboardAsset.name = name;
-            m_RuntimeBlackboardAsset.AssetID = AssetID;
+            // Renaming dirty the asset, so we want to do it only when required.
+            if (m_RuntimeBlackboardAsset.name != name)
+            {
+                m_RuntimeBlackboardAsset.name = name;
+            }
 
             if (m_RuntimeBlackboardAsset.VersionTimestamp == VersionTimestamp)
             { 
@@ -96,11 +140,42 @@ namespace Unity.Behavior
             }
 
             m_RuntimeBlackboardAsset.VersionTimestamp = VersionTimestamp;
-            m_RuntimeBlackboardAsset.Blackboard.m_Variables.Clear();
+            
+            // Refreshing AssetID, just in case.
+            m_RuntimeBlackboardAsset.AssetID = AssetID;
+            HasOutstandingChanges = true;
+
+            // Need to check each value for change... We want to make sure we keep the rid identical
+            // So, do not clear all the variables! (i.e. m_RuntimeBlackboardAsset.Blackboard.m_Variables.Clear())
+            HashSet<BlackboardVariable> remainingDirtyVariables = new HashSet<BlackboardVariable>(m_RuntimeBlackboardAsset.Blackboard.Variables);
             m_RuntimeBlackboardAsset.m_SharedBlackboardVariableGuidHashset.Clear();
             foreach (VariableModel variable in Variables)
             {
-                BlackboardVariable blackboardVariable = BlackboardVariable.CreateForType(variable.Type);
+                var blackboardVariable = m_RuntimeBlackboardAsset.Blackboard.Variables.Find(obj => obj.GUID == variable.ID);
+                if (blackboardVariable != null)
+                {
+                    if (blackboardVariable.Name != variable.Name)
+                    {
+                        blackboardVariable.Name = variable.Name;
+                    }
+                    
+                    // No need to do complex check as this is done when the runtime variable is created.
+                    if (blackboardVariable.ObjectValue != variable.ObjectValue)
+                    {
+                        blackboardVariable.ObjectValue = variable.ObjectValue;
+                    }
+
+                    if (variable.IsShared)
+                    {
+                        m_RuntimeBlackboardAsset.m_SharedBlackboardVariableGuidHashset.Add(variable.ID);
+                    }
+
+                    remainingDirtyVariables.Remove(blackboardVariable);
+                    continue;
+                }
+
+                // If we reached this point, that means a new blackboard variable has been created.
+                blackboardVariable = BlackboardVariable.CreateForType(variable.Type);
                 blackboardVariable.Name = variable.Name;
                 blackboardVariable.GUID = variable.ID;
                 
@@ -125,9 +200,15 @@ namespace Unity.Behavior
                 m_RuntimeBlackboardAsset.Blackboard.m_Variables.Add(blackboardVariable);
             }
 
+            foreach (var dirtyVar in remainingDirtyVariables)
+            {
+                m_RuntimeBlackboardAsset.Blackboard.Variables.Remove(dirtyVar);
+            }
+            remainingDirtyVariables.Clear();
+
 #if UNITY_EDITOR
             EditorUtility.SetDirty(this);
-#endif                
+#endif
             return m_RuntimeBlackboardAsset;
         }
     }

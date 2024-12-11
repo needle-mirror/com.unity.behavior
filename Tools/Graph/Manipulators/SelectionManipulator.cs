@@ -59,6 +59,23 @@ namespace Unity.Behavior.GraphFramework
                 // Handle single click
                 OnSinglePointerDownEvent(evt);
 
+                if (nodeAt != null)
+                {
+                    if (!nodeAt.IsInSequence)
+                    {
+                        nodeAt.BringToFront();
+                    }
+                    else
+                    {
+                        NodeUI parentSequence = Target.ViewState.GetNodeUIFromID(nodeAt.Model.Parents[0].ID);
+
+                        if (parentSequence != null)
+                        {
+                            parentSequence.BringToFront();
+                        }
+                    }    
+                }
+
                 // Set the timer waiting for second click
                 m_LastClickTime = millisecondsNow;
             }
@@ -107,6 +124,7 @@ namespace Unity.Behavior.GraphFramework
                 {
                     Target.ViewState.DeselectAll();
                     Select(element);
+
                     return true;
                 }
 

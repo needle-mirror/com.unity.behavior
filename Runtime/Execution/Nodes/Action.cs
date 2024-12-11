@@ -3,7 +3,7 @@ using UnityEngine;
 namespace Unity.Behavior
 {
     /// <summary>
-    /// The base class for action nodes used in Muse Behavior Graphs.
+    /// The base class for action nodes used in Behavior Graphs.
     /// </summary>
     public abstract class Action : Node
     {

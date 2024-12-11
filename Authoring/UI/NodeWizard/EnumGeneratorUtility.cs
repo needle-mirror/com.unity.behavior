@@ -19,7 +19,7 @@ namespace Unity.Behavior
             }
             if (BehaviorProjectSettings.instance.AutoSaveLastSaveLocation)
             {
-                BehaviorProjectSettings.instance.SaveFolderEnum = path;
+                BehaviorProjectSettings.instance.SaveFolderEnum = Path.GetDirectoryName(path);
             }
 
             using (var outfile = new StreamWriter(path))

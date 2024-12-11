@@ -2,17 +2,12 @@ SequenceGroup > #SelectionBorder > #NodeContentContainer {
   padding: var(--appui-static-spacing-150);
   border-color: #2D2D2D;
   border-width: 1px;
-  border-radius: 12px;
+  border-radius: var(--appui-border-radius-md);
   background-color: var(--appui-color-transparent-black-300);
 }
 
 SequenceGroup > #SelectionBorder {
   border-color: initial;
-  border-radius: 12px;
-}
-
-SequenceGroup > #SelectionBorder :hover {
-  border-radius: 12px;
 }
 
 SequenceGroup > #SelectionBorder > #NodeContentContainer > #Content > #NodeTitle {

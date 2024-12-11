@@ -71,6 +71,7 @@ namespace Unity.Behavior.GraphFramework
                     node.Position = Vector2.Lerp(startPos, endPos, Math.Min(1.0f, fractionOfTimePassed));
                 }
 
+                // We don't want to save the asset here, so we dirty it and manually set HasOutstandingChanges.
                 graphAsset.SetAssetDirty(false);
                 graphAsset.HasOutstandingChanges = true;
             }).Every(msPerIteration).ForDuration(duration);

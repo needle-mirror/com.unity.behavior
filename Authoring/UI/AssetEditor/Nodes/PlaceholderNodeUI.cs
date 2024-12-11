@@ -12,8 +12,52 @@ namespace Unity.Behavior
         public PlaceholderNodeUI(NodeModel nodeModel) : base(nodeModel)
         {
             AddToClassList("Placeholder");
-            PlaceholderNodeModel placeholderNodeModel = nodeModel as PlaceholderNodeModel;
-            switch (placeholderNodeModel.PlaceholderType)
+
+            if (nodeModel is PlaceholderNodeModel placeholderNodeModel)
+            {
+                InitPlaceholderNodeType(placeholderNodeModel.PlaceholderType, placeholderNodeModel.Story);
+
+                Title = placeholderNodeModel.Name;
+                tooltip = placeholderNodeModel.Name;
+
+                NodeValueContainer.Add(CreatePlaceholderNodeContent(this, placeholderNodeModel.Story, placeholderNodeModel.Variables));
+            }
+
+            else if (nodeModel is BehaviorGraphNodeModel behaviorGraphNodeModel)
+            {
+                BehaviorAuthoringGraph asset = nodeModel.Asset as BehaviorAuthoringGraph;
+                if (asset.RuntimeNodeTypeIDToNodeModelInfo.TryGetValue(behaviorGraphNodeModel.NodeTypeID, out BehaviorAuthoringGraph.NodeModelInfo modelInfo) == false)
+                {
+                    modelInfo = new BehaviorAuthoringGraph.NodeModelInfo();
+                    modelInfo.Name = "Missing Node";
+                    modelInfo.Story = "Missing Node";
+                }
+                modelInfo.RuntimeTypeID = behaviorGraphNodeModel.NodeTypeID;
+                PlaceholderNodeModel.PlaceholderNodeType placeholderNodeType;
+                if (typeof(CompositeNodeModel).IsAssignableFrom(nodeModel.GetType()))
+                {
+                    placeholderNodeType = PlaceholderNodeModel.PlaceholderNodeType.Composite;
+                }
+                else if (typeof(ModifierNodeModel).IsAssignableFrom(nodeModel.GetType()))
+                {
+                    placeholderNodeType = PlaceholderNodeModel.PlaceholderNodeType.Modifier;
+                }
+                else
+                {
+                    placeholderNodeType = PlaceholderNodeModel.PlaceholderNodeType.Action;
+                }
+                InitPlaceholderNodeType(placeholderNodeType, modelInfo.Story);
+
+                Title = modelInfo.Name;
+                tooltip = modelInfo.Name;
+
+                NodeValueContainer.Add(CreatePlaceholderNodeContent(this, modelInfo.Story, modelInfo.Variables));
+            }
+        }
+
+        void InitPlaceholderNodeType(PlaceholderNodeModel.PlaceholderNodeType placeholderNodeType, string story)
+        {
+            switch (placeholderNodeType)
             {
                 case PlaceholderNodeModel.PlaceholderNodeType.Action:
                     AddToClassList("Action");
@@ -26,15 +70,10 @@ namespace Unity.Behavior
                     break;
             }
 
-            if (placeholderNodeModel.PlaceholderType != PlaceholderNodeModel.PlaceholderNodeType.Action && !String.IsNullOrEmpty(placeholderNodeModel.Story))
+            if (placeholderNodeType != PlaceholderNodeModel.PlaceholderNodeType.Action && !String.IsNullOrEmpty(story))
             {
                 AddToClassList("TwoLineNode");
             }
-
-            Title = placeholderNodeModel.Name;
-            tooltip = placeholderNodeModel.Name;
-
-            NodeValueContainer.Add(CreatePlaceholderNodeContent(this, placeholderNodeModel.Story, placeholderNodeModel.Variables));
         }
 
         private VisualElement CreatePlaceholderNodeContent(BehaviorNodeUI nodeUI, string story, List<VariableInfo> variables)

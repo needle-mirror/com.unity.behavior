@@ -80,7 +80,7 @@ namespace Unity.Behavior
                 Category = WizardUtils.GetCategoryFieldValue(CategoryField, CategoryDropdown)
             };
 
-            if (NodeGeneratorUtility.Edit(data, m_Info))
+            if (NodeGeneratorUtility.Edit(data, m_Info, "Modifier"))
             {
                 Modal.Dismiss();
             }

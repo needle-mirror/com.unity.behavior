@@ -92,6 +92,7 @@ namespace Unity.Behavior
             EnableInClassList("NodeStatus_Success", status is Node.Status.Success);
             EnableInClassList("NodeStatus_Failure", status is Node.Status.Failure);
             EnableInClassList("NodeStatus_Waiting", status is Node.Status.Waiting);
+            EnableInClassList("NodeStatus_Interrupted", status is Node.Status.Interrupted);
 
             DebugIconElement.tooltip = $"Current State: {status}.";
 

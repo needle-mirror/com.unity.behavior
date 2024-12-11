@@ -146,11 +146,8 @@ namespace Unity.Behavior
         /// <inheritdoc cref="OnEnd" />
         protected override void OnEnd()
         {
-            m_StartCount--;
-            if (m_StartCount == 0)
-            {
-                base.OnEnd();
-            }
+            m_StartCount = 0;
+            base.OnEnd();
         }
 
         /// <inheritdoc cref="ResetStatus" />

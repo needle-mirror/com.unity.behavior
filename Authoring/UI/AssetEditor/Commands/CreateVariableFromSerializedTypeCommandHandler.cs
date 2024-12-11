@@ -21,7 +21,7 @@ namespace Unity.Behavior
                 return false;
             }
             
-            BlackboardView.Dispatcher.DispatchImmediate(new CreateVariableCommand($"New {command.VariableTypeName}", BlackboardUtils.GetVariableModelTypeForType(type)));
+            BlackboardView.Dispatcher.DispatchImmediate(new CreateVariableCommand($"{command.VariableTypeName}", BlackboardUtils.GetVariableModelTypeForType(type)));
             return true;
         }
     }

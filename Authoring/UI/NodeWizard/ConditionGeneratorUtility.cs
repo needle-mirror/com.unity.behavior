@@ -21,7 +21,11 @@ namespace Unity.Behavior
         
         internal static bool CreateConditionAsset(ConditionData data)
         {
-            string fileName = GeneratorUtils.ToPascalCase(data.Name) + "Condition";
+            string fileName = GeneratorUtils.ToPascalCase(data.Name);
+            if (!fileName.EndsWith("Condition"))
+            {
+                fileName += "Condition";
+            }
             string suggestedSavePath = Util.GetAbsolutePathToProjectAssets(BehaviorProjectSettings.instance.SaveFolderCondition);
             string path = EditorUtility.SaveFilePanel(
                 $"Create Condition \"{data.Name}\"",
@@ -70,11 +74,16 @@ namespace Unity.Behavior
                 outfile.WriteLine("}");
             }
             AssetDatabase.Refresh();
-            string relativePath = path.StartsWith(Application.dataPath)
-                ? "Assets" + path.Substring(Application.dataPath.Length)
-                : path;
-            MonoScript script = (MonoScript)AssetDatabase.LoadAssetAtPath(relativePath, typeof(MonoScript));
-            AssetDatabase.OpenAsset(script);
+
+            if (BehaviorProjectSettings.instance.AutoOpenNodeScriptsInExternalEditor)
+            {
+                string relativePath = path.StartsWith(Application.dataPath)
+                    ? "Assets" + path.Substring(Application.dataPath.Length)
+                    : path;
+                MonoScript script = (MonoScript)AssetDatabase.LoadAssetAtPath(relativePath, typeof(MonoScript));
+                AssetDatabase.OpenAsset(script);
+            }
+
             return true;
         }
 

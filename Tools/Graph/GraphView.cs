@@ -55,7 +55,7 @@ namespace Unity.Behavior.GraphFramework
             m_ElementsParent = this.Q("Elements");
             m_EdgesParent = this.Q("Edges");
 
-            ViewState = new GraphViewState(Asset);
+            ViewState = new GraphViewState(Asset, this);
             ViewState.ViewStateUpdated += OnViewStateUpdated;
             ViewState.RefreshFromAsset(false);
 
@@ -205,11 +205,26 @@ namespace Unity.Behavior.GraphFramework
             builder.ShowIcons = true;
             builder.ShowAtPosition(worldPosition.x, worldPosition.y);
         }
+
+        public virtual void CreateNodeUI(NodeModel nodeModel)
+        {
+            Type nodeUIType = NodeRegistry.GetUIType(nodeModel.GetType());
+            if (nodeUIType == null)
+            {
+                Debug.LogError($"Could not find node UI type for {nodeModel.GetType()}.");
+                return;
+            }
+
+            // Create UI
+            NodeUI nodeUI = Activator.CreateInstance(nodeUIType, nodeModel) as NodeUI;
+            ViewState.InitNodeUI(nodeUI, nodeModel);
+        }
     }
 
     // A class to hold data for the state of the view.
     internal class GraphViewState
     {
+        internal GraphView GraphView { get; private set; }
         internal GraphAsset Asset;
         public Action ViewStateUpdated;
         public Action<IEnumerable<GraphElement>> SelectionUpdated;
@@ -234,9 +249,10 @@ namespace Unity.Behavior.GraphFramework
         private readonly HashSet<SerializableGUID> m_UINodeIDs = new();
         private readonly List<Edge> m_EdgesToDelete = new();
 
-        public GraphViewState(GraphAsset asset)
+        public GraphViewState(GraphAsset asset, GraphView graphView)
         {
             Asset = asset;
+            GraphView = graphView;
         }
 
         internal void RefreshFromAsset(bool isDragging)
@@ -367,7 +383,7 @@ namespace Unity.Behavior.GraphFramework
             {
                 if (!m_UINodeIDs.Contains(node.ID))
                 {
-                    CreateNodeUI(node);
+                    GraphView.CreateNodeUI(node);
                 }
             }
 
@@ -426,17 +442,8 @@ namespace Unity.Behavior.GraphFramework
             ViewStateUpdated?.Invoke();
         }
 
-        private void CreateNodeUI(NodeModel nodeModel)
+        internal void InitNodeUI(NodeUI nodeUI, NodeModel nodeModel)
         {
-            Type nodeUIType = NodeRegistry.GetUIType(nodeModel.GetType());
-            if (nodeUIType == null)
-            {
-                Debug.LogError($"Could not find node UI type for {nodeModel.GetType()}.");
-                return;
-            }
-
-            // Create UI
-            NodeUI nodeUI = Activator.CreateInstance(nodeUIType, nodeModel) as NodeUI;
             nodeUI!.Translate = new Translate(nodeModel.Position.x, nodeModel.Position.y);
             nodeUI.usageHints |= UsageHints.DynamicTransform;
 
@@ -698,6 +705,16 @@ namespace Unity.Behavior.GraphFramework
                 }
             }
             SetSelected(elementsToSelect);
+        }
+
+        public NodeUI GetNodeUIFromID(SerializableGUID id)
+        {
+            if (m_NodeModelToNodeUI.TryGetValue(id, out NodeUI nodeUI))
+            {
+                return nodeUI;
+            }
+            
+            return null;
         }
     }
 }

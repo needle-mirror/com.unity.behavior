@@ -7,7 +7,7 @@ using Unity.Properties;
 namespace Unity.Behavior
 {
     /// <summary>
-    /// A data structure holding variables used by the Muse Behavior Graph.
+    /// A data structure holding variables used by the Behavior Graph.
     /// </summary>
     [Serializable, GeneratePropertyBag]
     public partial class Blackboard

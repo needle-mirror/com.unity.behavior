@@ -32,6 +32,8 @@ namespace Unity.Behavior.GraphFramework
         private const string k_DefaultLayoutFile = "Packages/com.unity.behavior/Tools/Graph/Assets/GraphEditorLayout.uxml";
         private const string k_DefaultStylesheetFile = "Packages/com.unity.behavior/Tools/Graph/Assets/GraphEditorStylesheet.uss";
 
+        private long m_LastAssetVersion = -1u;
+
         /// <summary>
         /// Default constructor used by the UXML Serializer.
         /// </summary>
@@ -85,12 +87,14 @@ namespace Unity.Behavior.GraphFramework
             }
 
             Dispatcher.Tick();
-            if (Asset.HasOutstandingChanges)
+
+            if (m_LastAssetVersion != Asset.VersionTimestamp)
             {
                 Blackboard.RefreshFromAsset();
                 GraphView.RefreshFromAsset();
                 Inspector?.Refresh();
-                Asset.HasOutstandingChanges = false;
+
+                m_LastAssetVersion = Asset.VersionTimestamp;
             }
             schedule.Execute(Update);
         }
@@ -104,7 +108,7 @@ namespace Unity.Behavior.GraphFramework
             }
             Blackboard.Load(Asset.Blackboard);
             GraphView.Load(asset);
-
+            m_LastAssetVersion = Asset.VersionTimestamp;
             m_Toolbar.AssetTitle.text = Asset.name;
         }
 

@@ -150,8 +150,8 @@ namespace Unity.Behavior
             {
                 foreach (BehaviorGraphAgent targetAgent in m_TargetAgents)
                 {
+                    Undo.RecordObject(targetAgent, "Toggle NetcodeRunOnlyOnOwner");
                     targetAgent.NetcodeRunOnlyOnOwner = netcodeRunOnlyOnOwner;
-                    EditorUtility.SetDirty(targetAgent);
                 }
             }
 #endif
@@ -182,15 +182,8 @@ namespace Unity.Behavior
                 {
                     continue;
                 }
+                Undo.RecordObject(targetAgent, "Assign Graph");
                 targetAgent.Graph = graph;
-                EditorUtility.SetDirty(targetAgent);
-            }
-
-            // If the application is playing, initialize and start the targets, creating instances of the graph.
-            if (Application.isPlaying)
-            {
-                BehaviorGraphAgent firstTarget = m_TargetAgents[0];
-                firstTarget.StartCoroutine(InitializeAndStartTargets());
             }
         }
 
@@ -669,10 +662,12 @@ namespace Unity.Behavior
             };
             reorderableList.onAddCallback = _ =>
             {
+                Undo.RecordObjects(targets, "Add List Element");
                 value.Add(default);
             };
             reorderableList.onRemoveCallback = _ =>
             {
+                Undo.RecordObjects(targets, "Remove List Element");
                 value.RemoveAt(value.Count-1);
             };
 
@@ -794,19 +789,6 @@ namespace Unity.Behavior
 
             return false;
         }
-        
-        private IEnumerator InitializeAndStartTargets()
-        {
-            foreach (BehaviorGraphAgent targetAgent in m_TargetAgents)
-            {
-                targetAgent.Init();
-            }
-            yield return 0; // Wait one frame before starting so users can set variable values.
-            foreach (BehaviorGraphAgent targetAgent in m_TargetAgents)
-            {
-                targetAgent.Start();
-            }
-        }
 
         private BlackboardVariable GetTargetVariable(BehaviorGraphAgent agent, SerializableGUID variableID)
         {
@@ -833,6 +815,7 @@ namespace Unity.Behavior
                 return;
             }
 
+            Undo.RecordObject(agent, "Set Blackboard Variable Value");
             if (agent.m_BlackboardOverrides.TryGetValue(refVariable.GUID, out BlackboardVariable overrideVariable))
             {
                 overrideVariable.ObjectValue = newValue;
@@ -871,6 +854,7 @@ namespace Unity.Behavior
             {
                 if (targetAgent.m_BlackboardOverrides.ContainsKey(guid))
                 {
+                    Undo.RecordObject(targetAgent, "Reset Blackboard Variable");
                     if (guid == BehaviorGraph.k_GraphSelfOwnerID)
                     {
                         targetAgent.m_BlackboardOverrides[guid].ObjectValue = targetAgent.gameObject;
@@ -879,7 +863,6 @@ namespace Unity.Behavior
                     {
                         targetAgent.m_BlackboardOverrides.Remove(guid);
                     }
-                    EditorUtility.SetDirty(targetAgent);
                 }
             }
         }

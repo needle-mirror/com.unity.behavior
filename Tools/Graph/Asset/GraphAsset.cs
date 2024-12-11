@@ -27,10 +27,9 @@ namespace Unity.Behavior.GraphFramework
             set => m_Nodes = value;
         }
         
-        // TODO: Darren, This needs to be not used in the graph editor.
-        // Used to indicate to graph editor that the UI should be refreshed.
-        // Ideally, all remaining instances where MarkUndo() is used will instead notify the editor directly,
-        // at which point we can remove this property.
+        /// <summary>
+        /// Does the asset needs to rebuilt its data.
+        /// </summary>
         internal bool HasOutstandingChanges { get; set; }
 
         [SerializeField][HideInInspector]
@@ -56,6 +55,7 @@ namespace Unity.Behavior.GraphFramework
             // Instead, use AssetDatabase.SaveAssets().
             UnityEditor.AssetDatabase.SaveAssets();
 #endif
+            HasOutstandingChanges = false;
         }
 
         public void SetAssetDirty(bool setHasOutStandingChange = true)
@@ -94,7 +94,7 @@ namespace Unity.Behavior.GraphFramework
             Blackboard?.OnValidate();
         }
 
-        private void OnEnable()
+        protected virtual void OnEnable()
         {
             EnsureAssetHasBlackboard();
         }

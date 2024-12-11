@@ -105,4 +105,67 @@ namespace Unity.Behavior
             return failCount == Children.Count ? Status.Failure : Status.Waiting;
         }
     }
+    
+    // Note: ParallelAllSuccess is actually ParallelAnyFailed but we can't rename it without doing a major bump or
+    // forcing the user to rebuild their runtime graphs.
+    
+    /// <summary>
+    /// Executes all branches at the same time, stopping if one fails.
+    /// </summary>
+    [Serializable, GeneratePropertyBag]
+    [NodeDescription(
+        name: "Run In Parallel Until Any Fails",
+        category: "Flow/Parallel Execution",
+        description: "Execute all branches at the same time, stopping if one fails.",
+        hideInSearch: true,
+        icon: "Icons/parallel_all",
+        id: "14a266d5d02d4c67a7940885be9078e8")]
+    internal partial class ParallelAllSuccess : Composite
+    {
+        /// <inheritdoc cref="OnStart" />
+        protected override Status OnStart()
+        {
+            bool shouldWait = false;
+            for (int i = 0; i < Children.Count; ++i)
+            {
+                var childStatus = StartNode(Children[i]);
+                if (childStatus is Status.Running or Status.Waiting)
+                {
+                    shouldWait = true;
+                }
+                else if (childStatus is Status.Failure)
+                {
+                    return Status.Failure; // early termination
+                }
+            }
+
+            if (shouldWait)
+                return Status.Waiting;
+            else
+                return Status.Success;
+        }
+
+        /// <inheritdoc cref="OnUpdate" />
+        protected override Status OnUpdate()
+        {
+            bool shouldWait = false;
+            for (int i = 0; i < Children.Count; ++i)
+            {
+                var childStatus = Children[i].CurrentStatus;
+                if (childStatus is Status.Running or Status.Waiting)
+                {
+                    shouldWait = true;
+                }
+                else if (childStatus is Status.Failure)
+                {
+                    return Status.Failure; // early termination
+                }
+            }
+
+            if (shouldWait)
+                return Status.Waiting;
+            else
+                return Status.Success;
+        }
+    }
 }

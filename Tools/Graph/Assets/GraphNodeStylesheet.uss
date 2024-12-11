@@ -4,7 +4,7 @@
     flex-direction: row;
     align-items: stretch;
     align-content: center;
-    border-radius: var(--appui-border-radius-lg);
+    border-radius: var(--appui-border-radius-md);
     border-width: 1px;
     border-color: rgba(0, 0, 0, 0.5);
 }
@@ -19,6 +19,7 @@
 
 .GraphNode:hover > #SelectionBorder {
     border-color: var(--appui-accent-100);
+    border-radius: var(--appui-border-radius-md);
 }
 
 .Sequence_ChildHovered:hover > #SelectionBorder {
@@ -29,18 +30,20 @@
 .Selected > #SelectionBorder {
     border-color: var(--appui-accent-100);
     border-width: 2px;
+    border-radius: 5px;
 }
 
 .Selected:hover > #SelectionBorder {
     border-color: var(--appui-accent-100);
     border-width: 2px;
+    border-radius: 5px;
 }
 
 #NodeColor {
     width: 8px;
     height: auto;
     display: none;
-    border-radius: var(--appui-border-radius-lg) 0 0 var(--appui-border-radius-lg);
+    border-radius: var(--appui-border-radius-md) 0 0 var(--appui-border-radius-md);
 }
 
 #NodeIcon {
@@ -54,7 +57,7 @@
 
 .ShowNodeColor #NodeContentContainer {
     display: flex;
-    border-radius: 0 var(--appui-border-radius-lg)  var(--appui-border-radius-lg)  0;
+    border-radius: 0 var(--appui-border-radius-md)  var(--appui-border-radius-md)  0;
     border-left-width: 0;
 }
 
@@ -65,7 +68,7 @@
 #NodeContentContainer {
     flex-direction: row;
     background-color: var(--appui-backgrounds-300);
-    border-radius: var(--appui-border-radius-lg);
+    border-radius: var(--appui-border-radius-md);
     min-height: 36px;
     align-items: center;
     flex-grow: 1;

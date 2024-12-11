@@ -237,9 +237,16 @@ namespace Unity.Behavior
 
                 OnNodeTypeCreated?.Invoke(data);
                 AssetDatabase.Refresh();
-                string relativePath = path.StartsWith(Application.dataPath) ? ("Assets" + path.Substring(Application.dataPath.Length)) : path;
-                MonoScript script = (MonoScript)AssetDatabase.LoadAssetAtPath(relativePath, typeof(MonoScript));
-                AssetDatabase.OpenAsset(script);
+
+                if (BehaviorProjectSettings.instance.AutoOpenNodeScriptsInExternalEditor)
+                {
+                    string relativePath = path.StartsWith(Application.dataPath)
+                        ? ("Assets" + path.Substring(Application.dataPath.Length))
+                        : path;
+                    MonoScript script = (MonoScript)AssetDatabase.LoadAssetAtPath(relativePath, typeof(MonoScript));
+                    AssetDatabase.OpenAsset(script);
+                }
+
                 MuseBehaviorUtilities.UpdateUsage();
             }, "code-generation");
 #endif
@@ -284,7 +291,7 @@ namespace Unity.Behavior
                 Category = WizardUtils.GetCategoryFieldValue(CategoryField, CategoryDropdown)
             };
 
-            if (NodeGeneratorUtility.Edit(data, m_Info))
+            if (NodeGeneratorUtility.Edit(data, m_Info, "Action"))
             {
                 Modal.Dismiss();
             }

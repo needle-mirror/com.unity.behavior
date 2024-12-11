@@ -31,13 +31,14 @@ namespace Unity.Behavior
             graphDescriptionField.RegisterValueChangingCallback(OnDescriptionChanged);
             if (!string.IsNullOrEmpty(m_InspectedGraph.Description))
             {
-                graphDescriptionField.value = m_InspectedGraph.Description;   
+                graphDescriptionField.value = m_InspectedGraph.Description;
             }
         }
 
         private void OnDescriptionChanged(ChangingEvent<string> evt)
         {
             m_InspectedGraph.Description = evt.newValue;
+            m_InspectedGraph.MarkUndo("Edit subgraph description.");
         }
     }
 }

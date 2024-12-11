@@ -13,6 +13,19 @@ namespace Unity.Behavior
         public Node CreateNodeFromModel(GraphAssetProcessor graphAssetProcessor, NodeModel nodeModel)
         {
             BehaviorGraphNodeModel behaviorGraphNodeModel = nodeModel as BehaviorGraphNodeModel;
+
+            if (behaviorGraphNodeModel.NodeType == null)
+            {
+                string nodeName = "Unknown Node";
+                if (graphAssetProcessor.Asset.RuntimeNodeTypeIDToNodeModelInfo.TryGetValue(
+                        behaviorGraphNodeModel.NodeTypeID, out var nodeModelInfo))
+                {
+                    nodeName = nodeModelInfo.Name;
+                }
+                Debug.LogError($"Node ({nodeName}) is missing its csharp file and will be skipped in the runtime asset conversion. Please check your graph ({graphAssetProcessor.Asset.name}) and replace placeholder nodes.", graphAssetProcessor.Asset);
+                return null;
+            }
+            
             var node = Activator.CreateInstance(behaviorGraphNodeModel.NodeType) as Node;
 
             return node;

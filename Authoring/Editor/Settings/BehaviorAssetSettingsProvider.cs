@@ -1,6 +1,7 @@
 ﻿#if UNITY_EDITOR
 using Unity.Behavior.GraphFramework;
 using UnityEditor;
+using UnityEngine;
 
 namespace Unity.Behavior
 {
@@ -12,7 +13,7 @@ namespace Unity.Behavior
 
         public override void OnGUI(string search)
         {
-            EditorGUIUtility.labelWidth = 200.0f;
+            EditorGUIUtility.labelWidth = 260.0f;
             BehaviorProjectSettings settings = BehaviorProjectSettings.instance;
             var behaviorProjectSettingsSO = settings.GetSerializedObject();
 
@@ -44,8 +45,11 @@ namespace Unity.Behavior
             EditorGUILayout.PropertyField(behaviorProjectSettingsSO.FindProperty("m_SaveFolderFlow"));
             EditorGUILayout.PropertyField(behaviorProjectSettingsSO.FindProperty("m_SaveFolderCondition"));
             EditorGUILayout.PropertyField(behaviorProjectSettingsSO.FindProperty("m_SaveFolderEnum"));
+            EditorGUILayout.PropertyField(behaviorProjectSettingsSO.FindProperty("m_SaveFolderEventChannels"));
             EditorGUI.EndDisabledGroup();
             EditorGUI.EndDisabledGroup();
+            
+            EditorGUILayout.PropertyField(behaviorProjectSettingsSO.FindProperty("m_AutoOpenNodeScriptsInExternalEditor"), new GUIContent("Auto-Open Node Scripts in External Editor"));
 
             behaviorProjectSettingsSO.ApplyModifiedProperties();
         }

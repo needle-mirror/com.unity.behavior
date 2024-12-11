@@ -4,7 +4,7 @@ using Unity.Behavior.GraphFramework;
 namespace Unity.Behavior
 {
     /// <summary>
-    /// The NodeDescriptionAttribute contains metadata for nodes used in Muse Behavior graphs. 
+    /// The NodeDescriptionAttribute contains metadata for nodes used in Behavior graphs. 
     /// </summary>
     [System.AttributeUsage(System.AttributeTargets.Class)]
     public class NodeDescriptionAttribute : System.Attribute

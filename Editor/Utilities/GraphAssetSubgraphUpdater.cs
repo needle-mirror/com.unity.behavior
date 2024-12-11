@@ -39,7 +39,7 @@ namespace Unity.Behavior
             // Rebuild all assets that reference the changed assets.
             foreach ((BehaviorAuthoringGraph referencingGraph, string subgraphName) in s_AssetsToRebuild)
             {
-                Debug.Log($"Behavior: Graph \"{subgraphName}\" updated. Rebuilding referencing graph \"{referencingGraph.name}\".");
+                // Debug.Log($"Behavior: Graph \"{subgraphName}\" updated. Rebuilding referencing graph \"{referencingGraph.name}\".");
                 referencingGraph.BuildRuntimeGraph();
             }
             

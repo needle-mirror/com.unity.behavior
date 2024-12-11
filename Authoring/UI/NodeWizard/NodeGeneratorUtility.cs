@@ -35,7 +35,7 @@ namespace Unity.Behavior
 
         internal static bool Create(NodeData data, string postfix)
         {
-            string fileName = GeneratorUtils.ToPascalCase(data.Name + postfix);
+            string fileName = GeneratorUtils.ToPascalCase(data.Name.EndsWith(postfix) ? data.Name : data.Name + postfix);
             string suggestedSavePath = BehaviorProjectSettings.instance.SaveFolder;
             switch (data.NodeType)
             {
@@ -65,12 +65,15 @@ namespace Unity.Behavior
             }
 
             GenerateNodeFile(data, path);
-
-            string relativePath = path.StartsWith(Application.dataPath)
-                ? "Assets" + path.Substring(Application.dataPath.Length)
-                : path;
-            MonoScript script = (MonoScript)AssetDatabase.LoadAssetAtPath(relativePath, typeof(MonoScript));
-            AssetDatabase.OpenAsset(script);
+            
+            if (BehaviorProjectSettings.instance.AutoOpenNodeScriptsInExternalEditor)
+            {
+                string relativePath = path.StartsWith(Application.dataPath)
+                    ? "Assets" + path.Substring(Application.dataPath.Length)
+                    : path;
+                MonoScript script = (MonoScript)AssetDatabase.LoadAssetAtPath(relativePath, typeof(MonoScript));
+                AssetDatabase.OpenAsset(script);
+            }
             return true;
         }
 
@@ -144,7 +147,7 @@ namespace Unity.Behavior
             return builder.ToString();
         }
          
-        internal static bool Edit(NodeData newData, NodeInfo info)
+        internal static bool Edit(NodeData newData, NodeInfo info, string postfix)
         {
             if (info.FilePath.Length == 0)
             {
@@ -175,20 +178,27 @@ namespace Unity.Behavior
                 return false;
             }
 
-            UpdateNodeFileWithData(newData, info, relativePath);
-            AssetDatabase.OpenAsset(script);
+            UpdateNodeFileWithData(newData, info, relativePath, postfix);
+            if (BehaviorProjectSettings.instance.AutoOpenNodeScriptsInExternalEditor)
+            {
+                AssetDatabase.OpenAsset(script);
+            }
             return true;
         }
 
-        internal static void UpdateNodeFileWithData(NodeData newData, NodeInfo info, string relativePath)
+        internal static void UpdateNodeFileWithData(NodeData newData, NodeInfo info, string relativePath, string postfix)
         {
             MonoScript script = (MonoScript)AssetDatabase.LoadAssetAtPath(relativePath, typeof(MonoScript));
 
-            string newNameNoSpaces = newData.Name.Replace(" ", string.Empty);
-            string oldNameNoSpaces = info.Name.Replace(" ", string.Empty);
+            string newNameNoSpaces = GeneratorUtils.ToPascalCase(newData.Name);
+            string oldTypeName = info.Type.ToString();
+            if (oldTypeName.EndsWith(postfix) && !newNameNoSpaces.EndsWith(postfix))
+            {
+                newNameNoSpaces += postfix;
+            }
 
             // Update the node name in the script file
-            string nameTypePattern = @"\b" + oldNameNoSpaces + @"\b(?!\S)";
+            string nameTypePattern = @"\b" + oldTypeName + @"\b(?!\S)";
             string newScriptText = Regex.Replace(script.text, nameTypePattern, newNameNoSpaces);
 
             // Updates the NodeDescription attribute string with values from the new data
@@ -204,6 +214,7 @@ namespace Unity.Behavior
             newScriptText = UpdateVariables(newScriptText, oldVariables, newData);
 
             File.WriteAllText(relativePath, newScriptText);
+
             AssetDatabase.RenameAsset(relativePath, newNameNoSpaces);
             AssetDatabase.Refresh();
         }

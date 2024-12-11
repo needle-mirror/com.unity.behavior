@@ -21,7 +21,7 @@
 }
 
 #NodeTitle {
-    border-radius: var(--appui-border-radius-lg);
+    border-radius: var(--appui-border-radius-md);
     align-self: stretch;
     align-items: center;
     justify-content: center;
@@ -259,6 +259,10 @@ JoinNodeUI .InputPort:hover #Port-Icon  {
     display: flex;
 }
 
+.NodeStatus_Interrupted #DebugIconContainer {
+    display: flex;
+}
+
 .NodeStatus_Waiting #DebugIcon {
     background-image: url('/Packages/com.unity.behavior/Tools/Graph/Assets/Icons/NodeWaiting.png');
 }
@@ -273,6 +277,10 @@ JoinNodeUI .InputPort:hover #Port-Icon  {
 
 .NodeStatus_Failure #DebugIcon {
     background-image: url('/Packages/com.unity.behavior/Tools/Graph/Assets/Icons/NodeFailed.png');
+}
+
+.NodeStatus_Interrupted #DebugIcon {
+    background-image: url('/Packages/com.unity.behavior/Tools/Graph/Assets/Icons/NodeInterrupted.png');
 }
 
 .Behavior-Reflection {
