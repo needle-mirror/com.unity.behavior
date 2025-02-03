@@ -1,14 +1,21 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using Unity.Properties;
 using UnityEngine;
 
 namespace Unity.Behavior
 {
+    [Serializable, GeneratePropertyBag]
     internal partial class RunSubgraphDynamic : Action
     {
         [SerializeReference] public BlackboardVariable<BehaviorGraph> SubgraphVariable;
-        public BehaviorGraphModule Subgraph => SubgraphVariable.Value.RootGraph;
+        
+        internal BehaviorGraph Subgraph => SubgraphVariable.Value;
         [SerializeReference] public RuntimeBlackboardAsset RequiredBlackboard;
         [SerializeReference] public List<DynamicBlackboardVariableOverride> DynamicOverrides;
+        private BehaviorGraph m_InitializedGraph = null;
+        [SerializeField][CreateProperty]
+        private bool m_IsInitialized = false;
 
         /// <inheritdoc cref="OnStart" />
         protected override Status OnStart()
@@ -20,11 +27,11 @@ namespace Unity.Behavior
                 return Status.Failure;
             }
 
-            if (Subgraph?.Root == null)
+            if (Subgraph == null || Subgraph.RootGraph == null)
             {
                 return Status.Failure;
             }
-
+            
             if (GameObject != null)
             {
                 BehaviorGraphAgent agent = GameObject.GetComponent<BehaviorGraphAgent>();
@@ -33,15 +40,20 @@ namespace Unity.Behavior
                     BehaviorGraph graph = agent.Graph;
                     if (graph != null && SubgraphVariable.Value == graph)
                     {
-                        Debug.LogWarning($"Running {SubgraphVariable.Value.name} will create a cycle and can not be used as subgraph for {graph}. Select a different graph to run dynamically.");
+                        LogFailure($"Running {SubgraphVariable.Value.name} will create a cycle and can not be used as subgraph for {graph}. " +
+                            $"Select a different graph to run dynamically.", true);
                         return Status.Failure;
                     }
                 }
             }
 
-            InitChannelAndBlackboard();
+            if (TryInitialize() == false)
+            {
+                LogFailure($"Failed to initialize subgraph '{Subgraph.name}'.");
+                return Status.Failure;
+            }
 
-            return Subgraph.StartNode(Subgraph.Root) switch
+            return Subgraph.RootGraph.StartNode(Subgraph.RootGraph.Root) switch
             {
                 Status.Success => Status.Success,
                 Status.Failure => Status.Failure,
@@ -52,8 +64,14 @@ namespace Unity.Behavior
         /// <inheritdoc cref="OnUpdate" />
         protected override Status OnUpdate()
         {
+            if (!m_IsInitialized && TryInitialize() == false)
+            {
+                LogFailure($"Failed to initialize subgraph on update. This can happen when setting the subgraph to null while it is running.");
+                return Status.Failure;
+            }
+
             Subgraph.Tick();
-            return Subgraph.Root.CurrentStatus switch
+            return Subgraph.RootGraph.Root.CurrentStatus switch
             {
                 Status.Success => Status.Success,
                 Status.Failure => Status.Failure,
@@ -71,26 +89,51 @@ namespace Unity.Behavior
                 return;
             }
 
-            if (Subgraph?.Root != null)
+            if (Subgraph?.RootGraph?.Root != null)
             {
-                Subgraph.EndNode(Subgraph.Root);
+                Subgraph.RootGraph.EndNode(Subgraph.RootGraph.Root);
             }
         }
 
+        private bool TryInitialize()
+        {
+            if (m_InitializedGraph != SubgraphVariable.Value)
+            {
+                m_IsInitialized = false;
+            }
+            if (m_IsInitialized)
+            {
+                return true;
+            }
+
+            if (Subgraph == null || Subgraph.RootGraph == null)
+            {
+                return false;
+            }
+
+            SubgraphVariable.OnValueChanged -= OnSubgraphChanged;
+            SubgraphVariable.Value = ScriptableObject.Instantiate(Subgraph);
+            SubgraphVariable.OnValueChanged += OnSubgraphChanged;
+                
+            SubgraphVariable.Value.AssignGameObjectToGraphModules(GameObject);
+                
+            InitChannelAndBlackboard();
+
+            m_IsInitialized = true;
+            m_InitializedGraph = SubgraphVariable.Value;
+            return true;
+        }
+        
         private void OnSubgraphChanged()
         {
-            if (Subgraph != null)
-            {
-                SubgraphVariable.OnValueChanged -= OnSubgraphChanged;
-                InitChannelAndBlackboard();
-                StartNode(this);
-            }
+            m_IsInitialized = false;
+            TryInitialize();
         }
 
         private void InitChannelAndBlackboard()
         {
             // Initialize default event channels for unassigned channel variables.
-            foreach (BlackboardVariable variable in Subgraph.Blackboard.Variables)
+            foreach (BlackboardVariable variable in Subgraph.RootGraph.Blackboard.Variables)
             {
                 if (typeof(EventChannelBase).IsAssignableFrom(variable.Type) && variable.ObjectValue == null)
                 {
@@ -117,7 +160,7 @@ namespace Unity.Behavior
 
             if (RequiredBlackboard != null)
             {
-                foreach (BlackboardReference reference in Subgraph.BlackboardGroupReferences)
+                foreach (BlackboardReference reference in Subgraph.RootGraph.BlackboardGroupReferences)
                 {
                     if (reference.SourceBlackboardAsset.AssetID != RequiredBlackboard.AssetID)
                     {
@@ -167,12 +210,35 @@ namespace Unity.Behavior
                         continue;
                     }
 
+                    // There is no risk of recursive set value because we link their value without notification.
                     variable.OnValueChanged += () =>
                     {
                         // Update the original assigned variable if it has been modified in the subgraph.
-                        dynamicOverride.Variable.ObjectValue = variable.ObjectValue;
+                        dynamicOverride.Variable.SetObjectValueWithoutNotify(variable.ObjectValue);
+                    };
+                    dynamicOverride.Variable.OnValueChanged += () =>
+                    {
+                        // Update the subgraph variable if the original variable is modified.
+                        // Can happens when subgraph is decoupled and running in parallel from main graph . 
+                        variable.SetObjectValueWithoutNotify(dynamicOverride.Variable.ObjectValue);
                     };
                 }
+            }
+        }
+        
+        protected override void OnSerialize()
+        {
+            if (Subgraph != m_InitializedGraph)
+            {
+                m_IsInitialized = false;
+            }
+        }
+
+        protected override void OnDeserialize()
+        {
+            if (m_IsInitialized)
+            {
+                m_InitializedGraph = Subgraph;
             }
         }
     }

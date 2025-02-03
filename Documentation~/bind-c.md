@@ -1,5 +1,5 @@
 ---
-uid: bind-c#
+uid: bind-c
 ---
 
 # Interact with behavior graphs via C# scripts

@@ -62,16 +62,27 @@ namespace Unity.Behavior.GraphFramework
                 return;
             }
 
-            if (command.MarkUndo)
+            if (m_DispatcherContext.GraphAsset != null)
             {
-                if (m_DispatcherContext.GraphAsset != null)
+                if (command.MarkUndo)
                 {
-                    m_DispatcherContext.GraphAsset.MarkUndo(command.GetType().Name);
+                    m_DispatcherContext.GraphAsset.MarkUndo(command.GetType().Name, setHasOutstandingChanges);
                 }
+                else
+                {
+                    m_DispatcherContext.GraphAsset.SetAssetDirty(setHasOutstandingChanges);
+                }
+            }
 
-                if (m_DispatcherContext.BlackboardAsset != null)
+            if (m_DispatcherContext.BlackboardAsset != null)
+            {
+                if (command.MarkUndo)
                 {
                     m_DispatcherContext.BlackboardAsset.MarkUndo(command.GetType().Name);
+                }
+                else
+                {
+                    m_DispatcherContext.BlackboardAsset.SetAssetDirty();
                 }
             }
             
@@ -81,14 +92,6 @@ namespace Unity.Behavior.GraphFramework
                 {
                     break;
                 }
-            }
-            if (m_DispatcherContext.GraphAsset)
-            {
-                m_DispatcherContext.GraphAsset.SetAssetDirty(setHasOutstandingChanges);
-            }
-            if (m_DispatcherContext.BlackboardAsset != null)
-            {
-                m_DispatcherContext.BlackboardAsset.SetAssetDirty();
             }
         }
 

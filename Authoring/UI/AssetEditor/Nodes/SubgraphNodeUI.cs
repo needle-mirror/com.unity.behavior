@@ -76,7 +76,7 @@ namespace Unity.Behavior
 
         private void PopulateSubgraphStoryLine()
         {
-            var oldFields = this.m_StoryFields.ToList();
+            var oldFields = m_StoryFields.ToList();
             m_StoryFields.Clear();
             m_StoryLine.Clear();
             if (m_SubgraphNodeModel.SubgraphField.LinkedVariable == null || m_SubgraphNodeModel.SubgraphAuthoringAsset == null) // No graph asset assigned.
@@ -144,6 +144,17 @@ namespace Unity.Behavior
                 }
                 
                 m_StoryLine.Add(linkField);
+                
+                // Ensure that variables are overridden also from the NodeUI story fields.
+                linkField.RegisterCallback<LinkFieldValueChangeEvent>(_ =>
+                {
+                    m_SubgraphNodeModel.SetVariableOverride(variable.ID, true);
+                });
+                
+                linkField.OnLinkChanged += _ =>
+                {
+                    m_SubgraphNodeModel.SetVariableOverride(variable.ID, true);
+                };
             }
             
             m_StoryLine.Add(new Label(currentLabelContents));
@@ -177,7 +188,7 @@ namespace Unity.Behavior
             }
             
             BehaviorAuthoringGraph subgraphAsset = BehaviorGraphAssetRegistry.GlobalRegistry.Assets.FirstOrDefault(asset => asset.AssetID == graphAsset.AssetID);
-            if (subgraphAsset.ContainsReferenceTo(m_SubgraphNodeModel.Asset as BehaviorAuthoringGraph))
+            if (subgraphAsset.ContainsCyclicReferenceTo(m_SubgraphNodeModel.Asset as BehaviorAuthoringGraph))
             {
                 Debug.LogWarning(
                     $"{subgraphAsset.name} contains a cyclic reference to {m_SubgraphNodeModel.Asset.name} and cannot be assigned to the subgraph node.");

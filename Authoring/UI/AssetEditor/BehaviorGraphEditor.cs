@@ -2,12 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Behavior.GraphFramework;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.UIExtras;
 using Unity.AppUI.UI;
+
+#if UNITY_EDITOR
+using UnityEditor;
 using System.IO;
+#endif
 
 namespace Unity.Behavior
 {
@@ -729,7 +732,7 @@ namespace Unity.Behavior
                         foreach (BehaviorAuthoringGraph subgraphAsset in BehaviorGraphAssetRegistry.GlobalRegistry.Assets)
                         {
                             // Only enable options that don't create cycles, but display the cyclic options as well.
-                            bool wouldCreateCycle = subgraphAsset.ContainsReferenceTo(subgraphField.Model.Asset as BehaviorAuthoringGraph);
+                            bool wouldCreateCycle = subgraphAsset.ContainsCyclicReferenceTo(subgraphField.Model.Asset as BehaviorAuthoringGraph);
                             
                             builder.Add(subgraphAsset.name, () => LinkSubgraph(subgraphAsset.BuildRuntimeGraph(), subgraphAsset.name, subgraphNode, field),
                                 icon: Util.GetBehaviorGraphIcon(), tab: "Assets", enabled: !wouldCreateCycle);

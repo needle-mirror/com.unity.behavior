@@ -123,7 +123,7 @@ namespace Unity.Behavior
             if (m_CustomVariableOptions == null)
             {
                 m_CustomVariableOptions = new List<BlackboardOption>();
-                AddCustomTypes<Behaviour>(m_CustomVariableOptions, "MonoBehaviours");
+                AddCustomTypes<Component>(m_CustomVariableOptions, "MonoBehaviours");
                 AddCustomTypes<ScriptableObject>(m_CustomVariableOptions, "ScriptableObjects");
             }
             return m_CustomVariableOptions;

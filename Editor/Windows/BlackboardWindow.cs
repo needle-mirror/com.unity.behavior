@@ -187,6 +187,7 @@ namespace Unity.Behavior
             newWindow.titleContent.text = asset.name;
             newWindow.Asset = asset;
             newWindow.Show();
+            newWindow.Focus();
         }
     }
 }

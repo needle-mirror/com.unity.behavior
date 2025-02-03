@@ -67,6 +67,8 @@ namespace Unity.Behavior
         
         protected SubgraphNodeModel(SubgraphNodeModel nodeModelOriginal, BehaviorAuthoringGraph asset) : base(nodeModelOriginal, asset)
         {
+            ShowStaticSubgraphRepresentation = nodeModelOriginal.ShowStaticSubgraphRepresentation;
+            
             GetOrCreateField(k_SubgraphFieldName, typeof(BehaviorGraph));
             if (nodeModelOriginal.RuntimeSubgraph != null)
             {
@@ -250,7 +252,7 @@ namespace Unity.Behavior
             for (int m = 0; m < storyParameters.Count; m++)
             {
                 VariableInfo info = storyParameters[m];
-                var field = GetOrCreateField(info.Name, info.Type);
+                var field = GetOrCreateField(Util.NicifyVariableName(info.Name), info.Type);
                 m_StoryFields.Add(field);
                 oldStoryFields.Remove(field);
             }
@@ -267,7 +269,7 @@ namespace Unity.Behavior
 
             ValidateCachedRuntimeGraph();
             
-            if (SubgraphAuthoringAsset.ContainsReferenceTo(Asset as BehaviorAuthoringGraph))
+            if (SubgraphAuthoringAsset.ContainsCyclicReferenceTo(Asset as BehaviorAuthoringGraph))
             {
                 Debug.LogWarning($"Subgraph {RuntimeSubgraph.name} contains a cyclic reference to {Asset.name}. The subgraph {RuntimeSubgraph.name} will be removed.");
                 SubgraphField.LinkedVariable.ObjectValue = null;

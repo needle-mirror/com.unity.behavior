@@ -31,6 +31,8 @@ namespace Unity.Behavior
             typeof(Vector2),
             typeof(Vector3),
             typeof(Vector4),
+            typeof(Vector2Int),
+            typeof(Vector3Int),
             typeof(Color),
             typeof(List<int>),
             typeof(List<float>),
@@ -41,6 +43,8 @@ namespace Unity.Behavior
             typeof(List<Vector2>),
             typeof(List<Vector3>),
             typeof(List<Vector4>),
+            typeof(List<Vector2Int>),
+            typeof(List<Vector3Int>),
             typeof(List<Color>)
         };
 

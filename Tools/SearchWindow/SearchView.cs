@@ -20,7 +20,17 @@ namespace UnityEngine.UIExtras
             public object Data { get; }
             public Action OnSelected { get; }
             public string Description { get; }
-            public string Name { get; set; }
+
+            public string Name
+            {
+                get { return Path.Split('/').Last(); }
+            }
+
+            public string FormattedName
+            {
+                get;
+                set;
+            }
             public bool Enabled { get; }
             
             public int Priority { get; }
@@ -35,7 +45,7 @@ namespace UnityEngine.UIExtras
                 Enabled = enabled;
                 OnSelected = onSelected;
                 Priority = priority;
-                Name = Path.Split('/').Last();
+                FormattedName = Path.Split('/').Last();
             }
 
             public Item(string path, string iconName, object data = null, string description = null, bool enabled = true, Action onSelected = null, int priority = 0)
@@ -48,7 +58,7 @@ namespace UnityEngine.UIExtras
                 Enabled = enabled;
                 OnSelected = onSelected;
                 Priority = priority;
-                Name = Path.Split('/').Last();
+                FormattedName = Path.Split('/').Last();
             }
         }
 
@@ -363,7 +373,7 @@ namespace UnityEngine.UIExtras
         {
             m_SearchField.Focus();
         }
-        
+
         private void OnSearchQueryChanged(ChangingEvent<string> changeEvent)
         {
             string newValue = changeEvent.newValue;
@@ -383,13 +393,8 @@ namespace UnityEngine.UIExtras
 
             if (newValue.Length == 0)
             {
-                m_SearchNode?.Traverse(delegate(TreeNode<Item> itemNode)
-                {
-                    Item item = itemNode.Value;
-                    item.Name = item.Path.Split('/').Last();
-                    itemNode.Value = item;
-                });
-
+                ResetFormattedNames();
+                SetCurrentSelectionNode(m_RootNode);
                 if (IsCurrentNodeSearchNode)
                 {
                     OnNavigationReturn();
@@ -403,13 +408,25 @@ namespace UnityEngine.UIExtras
                 m_NavigationStack.Push(m_CurrentNode);
             }
             
-            List<(TreeNode<Item>, int)> searchResultsAndMatchCount = new List<(TreeNode<Item>, int)>();
+            var searchResultNodes = Filter(changeEvent.newValue);
+            
+            m_SearchNode = new TreeNode<Item>(new Item("Search"));
+            m_SearchNode.m_Children = searchResultNodes;
+            m_SearchNode.Parent = m_CurrentNode;
+            SetCurrentSelectionNode(m_SearchNode);
+        }
+        
+        private List<TreeNode<Item>> Filter(string filter)
+        {
+            List<(TreeNode<Item>, List<SearchUtil.Match>)> searchResults = new List<(TreeNode<Item>, List<SearchUtil.Match>)>();
+            
+            List<string> searchWords = filter.Split(' ').ToList();
+            searchWords.RemoveAll(x => string.IsNullOrEmpty(x));
+            
             m_RootNode?.Traverse(delegate(TreeNode<Item> itemNode)
             {
                 Item item = itemNode.Value;
-                item.Name = item.Path.Split('/').Last();
                 itemNode.Value = item;
-
                 if (itemNode.Value.Name == null)
                 {
                     return;
@@ -420,32 +437,65 @@ namespace UnityEngine.UIExtras
                     return;
                 }
                 
-                
-                List<(int, int)> matchOffsets = SearchUtil.DoesSourceContainSearch(itemNode.Value.Name, newValue);
-                
-                if (matchOffsets.Count > 0)
-                {
-                    item.Name = SearchUtil.FormatSearchResult(itemNode.Value.Name, matchOffsets);
+                List<SearchUtil.Match> matchOffsets = SearchUtil.DoesSourceContainSearchWholeWords(filter, itemNode.Value.Name);
 
-                    searchResultsAndMatchCount.Add((itemNode, matchOffsets.Count));
+                if (matchOffsets?.Count == searchWords.Count)
+                {
+                    item.FormattedName = SearchUtil.FormatSearchResult(itemNode.Value.Name, matchOffsets);
+                    searchResults.Add((itemNode, matchOffsets));
                 }
                 
                 itemNode.Value = item;
             });
-            
-            searchResultsAndMatchCount.Sort((a, b) => b.Item2.CompareTo(a.Item2));
-            
-            List<TreeNode<Item>> searchResults = new List<TreeNode<Item>>();
 
-            foreach (var result in searchResultsAndMatchCount)
+            searchResults.Sort((a, b) =>
             {
-                searchResults.Add(result.Item1);
+                // First, check if the items can be sorted by given priority value. 
+                int priorityComparison = b.Item1.Value.Priority.CompareTo(a.Item1.Value.Priority);
+                if (priorityComparison != 0 || !AutoSortItems)
+                {
+                    return priorityComparison;
+                }
+                // Try sorting by match count
+                if (a.Item2.Count != b.Item2.Count)
+                {
+                    return b.Item2.Count < a.Item2.Count ? -1 : 1;
+                }
+
+                int indexCompare = 0;
+                
+                // Sort by match offsets and then parameter index.
+                for (int matchIdx = 0; matchIdx < Math.Min(a.Item2.Count, b.Item2.Count); ++matchIdx)
+                {
+                    int offsetCompare = a.Item2[matchIdx].Offset.CompareTo(b.Item2[matchIdx].Offset);
+
+                    if (offsetCompare != 0)
+                    {
+                        indexCompare = offsetCompare;
+                        break;
+                    }
+                    
+                    indexCompare = a.Item2[matchIdx].Index.CompareTo(b.Item2[matchIdx].Index);
+
+                    if (indexCompare != 0)
+                        break;
+                }
+                
+                if (indexCompare != 0)
+                    return indexCompare;
+                
+                // Try sorting by item name.
+                return a.Item1.Value.Name.CompareTo(b.Item1.Value.Name);
+            });
+            
+            List<TreeNode<Item>> searchResultNodes = new List<TreeNode<Item>>();
+
+            foreach (var result in searchResults)
+            {
+                searchResultNodes.Add(result.Item1);
             }
             
-            m_SearchNode = new TreeNode<Item>(new Item("Search"));
-            m_SearchNode.m_Children = searchResults;
-            m_SearchNode.Parent = m_CurrentNode;
-            SetCurrentSelectionNode(m_SearchNode);
+            return searchResultNodes;
         }
 
         private void OnItemChosen(TreeNode<Item> node)
@@ -463,6 +513,15 @@ namespace UnityEngine.UIExtras
 
         private void SetCurrentSelectionNode(TreeNode<Item> node)
         {
+            if (node == m_SearchNode)
+            {
+                Filter(m_SearchField.value);
+            }
+            else
+            {
+                ResetFormattedNames();
+            }
+            
             m_CurrentNode = node;
             m_ListView.itemsSource = m_CurrentNode.Children;
             m_ListView.Rebuild();
@@ -478,6 +537,7 @@ namespace UnityEngine.UIExtras
                 m_ReturnButton.SetEnabled(true);
                 m_ReturnIcon.style.visibility = Visibility.Visible;
             }
+            
             EnableInClassList("SearchView_ShowSecondaryLabel", IsCurrentNodeSearchNode);
         }
 
@@ -557,6 +617,21 @@ namespace UnityEngine.UIExtras
                 }
             }
             return null;
+        }
+
+        private void ResetFormattedNames()
+        {
+            m_RootNode?.Traverse(delegate(TreeNode<Item> itemNode)
+            {
+                ResetFormattedName(itemNode);
+            });
+        }
+
+        private void ResetFormattedName(TreeNode<Item> nodeToReset)
+        {
+            Item item = nodeToReset.Value;
+            item.FormattedName = item.Path.Split('/').Last();
+            nodeToReset.Value = item;
         }
     }
 }

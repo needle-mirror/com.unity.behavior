@@ -253,7 +253,7 @@ namespace Unity.Behavior
                             $"{m_SubgraphField.LinkedVariable.Name} {BlackboardUtils.GetArrowUnicode()} {variable.Name}";
                     }
                 }
-                else if(m_NodeModel.IsVariableOverridden(variable.ID))
+                else if (m_NodeModel.IsVariableOverridden(variable.ID))
                 {
                     SetOverrideText(field);
                 }
@@ -292,6 +292,7 @@ namespace Unity.Behavior
             }
 
             AssignSubgraphVariable(blackboardVariables, fieldModels, field, true);
+            m_NodeModel.Asset.SetAssetDirty();
             Refresh();
         }
 

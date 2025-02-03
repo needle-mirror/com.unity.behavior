@@ -36,14 +36,14 @@ namespace Unity.Behavior.GraphFramework
         internal long m_VersionTimestamp;
         public long VersionTimestamp => m_VersionTimestamp;
         
-        public void MarkUndo(string description)
+        public void MarkUndo(string description, bool hasOutstandingChange = true)
         {
 #if UNITY_EDITOR
             UnityEditor.Undo.RecordObject(this, description);
 #endif
             // There are still a few lingering non-command changes to asset data preceded by MarkUndo() calls.
             // In order to pick up these changes, set the asset dirty here too.
-            SetAssetDirty();
+            SetAssetDirty(hasOutstandingChange);
         }     
 
         public void SaveAsset()
@@ -61,23 +61,16 @@ namespace Unity.Behavior.GraphFramework
         public void SetAssetDirty(bool setHasOutStandingChange = true)
         {
             m_VersionTimestamp = DateTime.Now.Ticks;
+            HasOutstandingChanges |= setHasOutStandingChange;
 #if UNITY_EDITOR
             UnityEditor.EditorUtility.SetDirty(this);
 #endif
-            if (setHasOutStandingChange)
-            {
-                HasOutstandingChanges = true;
-#if UNITY_EDITOR
-                UnityEditor.AssetDatabase.SaveAssetIfDirty(this);
-#endif
-            }
         }
 
         public virtual void OnValidate()
         {
             Nodes.RemoveAll(node => node == null);
-            var nodesCopyList = new List<NodeModel>(Nodes);
-            foreach (NodeModel node in nodesCopyList)
+            foreach (NodeModel node in Nodes)
             {
                 // holdovers for supporting older graphs - remove for 1.0.0
                 if (node.Asset == null)

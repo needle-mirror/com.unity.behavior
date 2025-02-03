@@ -1,16 +1,21 @@
 {
   "name": "com.unity.behavior",
   "displayName": "Behavior",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "unity": "6000.0",
   "unityRelease": "16f1",
   "description": "Unity Behavior is a graph-based tool to create and run behavior trees. Besides including a comprehensive library of pre-built nodes, the interface provides node customization options and real-time debugging. While fully functional on its own, a Unity Muse subscription enhances your experience by using large language models (LLM) to generate behavior trees from text prompts and create code for custom action nodes. This subscription, although optional, provides a powerful addition for those looking to accelerate their development process.\n\nA demo showcasing this package can be found in the Asset Store <a href=https://assetstore.unity.com/packages/templates/tutorials/behavior-demo-for-unity-298313>https://assetstore.unity.com/packages/templates/tutorials/behavior-demo-for-unity-298313</a>.",
   "keywords": [
+    "behavior",
+    "behavior tree",
+    "behavior graph",
+    "graph",
     "ai",
-    "behaviour trees"
+    "gameplay",
+    "NPCs"
   ],
   "dependencies": {
-    "com.unity.dt.app-ui": "2.0.0-pre.14",
+    "com.unity.dt.app-ui": "2.0.0-pre.16",
     "com.unity.modules.unitywebrequest": "1.0.0",
     "com.unity.modules.animation": "1.0.0",
     "com.unity.modules.ai": "1.0.0",
@@ -36,15 +41,15 @@
     }
   ],
   "_upm": {
-    "changelog": "### Added\n- Added new Interrupted status and ensure that all incomplete child nodes of Parallel composites are marked as interrupted.\n- Added a checkbox to the behavior project settings to contnrol if nodes and condition scripts should automatically open after creation.\n\n### Changed\n- Selection of a node now brings it to the front.\n- Selection of a node in a sequence brings the sequence to the front.\n- Small tweak to node selected border radius.\n- Nodes replaced with Placeholder Nodes will not be replaced in the asset, only in the UI, reducing risk in recovery.\n- When saving a new Node/Condition from the wizard, a postfix of the node type (Action/Modifier/Flow) or Condition won't be added to the suggested filename if it already ends with it.\n- Updated AppUI dependency to 2.0.0-pre14 and created a settings file to exclude AppUI Shaders and execution from builds. This can be overriden with a custom user App UI Settings file.\n- Exposed `SaveFolderEventChannels` in the Project Settings -> Behavior menu.\n- Improved documentation description for the `GameObject` API inside the `Node` class.\n- Improved asset rebuilding and saving mechanism to avoid frequent regeneration.\n\n### Fixed\n- Editing Subgraph Representation will no longer add duplicate variables.\n- Softened search fields filtering so that, for example, 'int list' and 'list int' will return 'Integer List'.\n- Fixed WaitForAnyComposite not ending correctly yielding multiple runs of child nodes. \n- Editing a node with the node wizard (edit node definition) will no longer remove to Action/Modifer/Sequence postfix.\n- Fixed an issue where automatic save path for enums and event channels saved the file name into the save path settings and caused an infinite loop when saving the next file.\n- Remove erroneous references to Muse in the API docs.\n- Improved Undo support for editing Behavior Agent on a GameObject.\n- Adding a Run In Parallel node and its various types from the branch dialog will set the correct mode.\n- Subassets of Graph and Blackboard will have their names track more correctly with the main asset.\n- BehaviorWindow will now close during autosave if its asset is invalid.\n\n### Known Issues\n- Deleting a behavior graph asset while the window is open can cause the graph editor window to be stuck and the user will need to reset their layout to get rid of it.\n- Runtime serialization of nodes in user assemblies don't serialize some properties correctly.\n- Editing fields in Run Subgraph node with subgraph representation doesn’t update the inspector values."
+    "changelog": "### Changed\n- Switch node will no longer log errors for unassigned children.\n- Updated sample materials to URP (the default render pipeline for Unity 6.0).\n- `Start()` will start the graph again if it's not currently running (i.e. it finished, or just been set). It'll defer it to `Update()` if the component is disabled.\n- Components will now appear under the `Other/MonoBehaviours` search menu for variable types (adding new variables, or setting them for node variables).\n- Updated AppUI to 2.0.0-pre.16 to benefit from fixes to AppUI.\n\n### Fixed\n- Fixed an issue where existing subgraph representations would not sometimes be removed when deleting the text input.\n- Static subgraphs now have their parent rebuilt when saved.\n- Fixed regression where renaming a blackboard variable would not be reflected in the graph.\n- Calling `BehaviorGraphAgent.Restart()` before the graph was started resulted in the graph's `Start()` being called twice.\n- Fixed search view string formatting leaking through to the callers such as type dropdowns.\n- Fixed an issue where case differences in the case of variable names on the subgraph representation could cause duplicate fields added on a `SubgraphNodeModel`.\n- Opening a behavior graph window wasn't focusing the window when docked, causing it to be behind other windows.\n- Graph agent init and start states weren't set correctly after runtime deserialization.\n- `Restart()` was running first iteration of the graph even when the agent was paused.\n- Fixed behavior graph not always framing the graph content correctly when opening a Behavior Graph asset.\n- Fixed attempting to assign a GameObject to a newly created GameObject Blackboard Variable in the Blackboard inspector not working.\n- Fixed an issue where Run Subgraph node LinkFields would not keep their override values correctly when the Subgraph Representation mode was toggled on.\n- Fixed an issue where duplicated Run Subgraph nodes did not keep their Subgraph Representation mode selected for the node UI.\n- Right Click -> Edit/Inspect Script will now work correctly with VSCode.\n- Fixed warning when changing a BlackboardVariable type to Vector2Int or Vector3Int.\n- Fixed search filter formatting persisting when using the back button to return to the search root.\n- Improved search query result accuracy.\n- Overriding 'Self' variable works again, allowing you to use a different GameObject to the one running the graph.\n- `NavigateToTargetAction` will correctly return success instead of failure if it's started within range of the target.\n- Fixed an issue where fields on duplicated nodes did not keep the correct local values from the original.\n- Sequencing/Enum Wizards will no longer propose the same enum/port name as one that already exists (example, adding 2 members with default name, deleting the 1st one and adding a new one used to call both Member 2).\n- Fixed BlackboardAsset Shared Variable keeping playmode value.\n- Run Subgraph (Dynamic) wasn't initializing a copy of the graph asset correctly, causing data to be shared amongst agents sharing the graph and corrupting the graph asset.\n- Various `SetBlackboardVariable` APIs were writing to the asset incorrectly before it was initialized.\n- Changing the value of a subgraph blackboard variable to a different subgraph will now correctly update the dynamic subgraph node running it.\n- Subgraph variables will correctly sync with the parent graph and vice versa.\n\n### Known Issues\n- After much user feedback and investigation, we have determined that runtime serialization is not recommended for use at this time due to an existing limitation in its implementation. Our team is working diligently to address these concerns and bring the feature to the expected quality level in an upcoming release. In the meantime, we appreciate your patience and understanding as we strive to enhance this functionality.\n- After using the \"Delete Runtime Assets\" button for the graph, prefabs/objects using the graph may lose their references to it (or contain an old stale one) and need reassignment."
   },
   "upmCi": {
-    "footprint": "339e37c5aa8cddccd01430036f028feaba4242c3"
+    "footprint": "4e8870992ceb67e2b398e7e7a83ffb22a6701a43"
   },
   "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.behavior@1.0/manual/index.html",
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.ai.designer-monorepo.git",
     "type": "git",
-    "revision": "d89240d0dc22380308fdeab7d6272b9bd5a86a98"
+    "revision": "da2380704c2705a70a73cffc0e7adac51abc27b8"
   }
 }

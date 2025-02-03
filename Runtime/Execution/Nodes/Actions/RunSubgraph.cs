@@ -19,7 +19,6 @@ namespace Unity.Behavior
             {
                 return Status.Failure;
             }
-
             return Subgraph.StartNode(Subgraph.Root) switch
             {
                 Status.Success => Status.Success,

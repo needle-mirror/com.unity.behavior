@@ -27,6 +27,7 @@ BaseLinkField {
 
 .Runtime-Object-Field .unity-base-field__label {
     color: #C4C4C4;
+    padding-top: 0;
 }
 
 .Linked {
@@ -207,8 +208,8 @@ BaseLinkField .LinkButton {
 }
 
 #InputField {
-    height: 20px;
-    max-height: 20px;
+    height: 19px;
+    max-height: 19px;
     border-radius: var(--appui-border-radius-md);
     background-color: #2A2A2A;
     border-color: var(--appui-alias-field-border-color-default);

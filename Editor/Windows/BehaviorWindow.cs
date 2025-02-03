@@ -131,7 +131,6 @@ namespace Unity.Behavior
         private void OnLostFocus()
         {
             AutoSaveIfEnabledInEditor();
-            UpdateGraphEditor();
         }
 
         private void UpdateGraphEditor()
@@ -139,6 +138,11 @@ namespace Unity.Behavior
             if (m_Editor == null)
             {
                 return;
+            }
+            
+            if (m_PreviousVersionTimestamp == 0 && m_Asset != null)
+            {
+                m_PreviousVersionTimestamp = m_Asset.VersionTimestamp;
             }
 
             // Reload the editor if any graph or blackboard assets which the graph is depending on has changed.
@@ -206,6 +210,7 @@ namespace Unity.Behavior
             newWindow.Asset = asset;
             newWindow.m_Editor.IsAssetVersionUpToDate();
             newWindow.Show();
+            newWindow.Focus();
         }
 
         private void AutoSaveIfEnabledInEditor()

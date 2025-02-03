@@ -46,10 +46,11 @@ namespace Unity.Behavior
         /// </summary>
         public void Start()
         {
-            if (RootGraph?.Root != null)
+            if (RootGraph?.Root == null)
             {
-                RootGraph.StartNode(RootGraph.Root);
+                return;
             }
+            RootGraph.StartNode(RootGraph.Root);
         }
 
         /// <summary>
@@ -65,9 +66,14 @@ namespace Unity.Behavior
         /// </summary>
         public void End()
         {
-            if (RootGraph?.Root != null)
+            if (RootGraph?.Root == null)
             {
-                RootGraph.EndNode(RootGraph.Root);
+                return;
+            }
+            RootGraph.EndNode(RootGraph.Root);
+            foreach (BehaviorGraphModule graphModule in Graphs)
+            {
+                graphModule.Reset();
             }
         }
 
@@ -76,22 +82,24 @@ namespace Unity.Behavior
         /// </summary>
         public void Restart()
         {
-            EndAndResetGraphs();
+            End();
             Start();
         }
 
-        /// <summary>
-        /// Ends the current execution of the graph and resets the execution state.
-        /// </summary>
-        internal void EndAndResetGraphs()
+        internal void AssignGameObjectToGraphModules(GameObject gameObject)
         {
-            End();
-            foreach (BehaviorGraphModule graphModule in Graphs)
+            if (RootGraph == null)
             {
-                graphModule.Reset();
+                return;
+            }
+
+            RootGraph.GameObject = gameObject;
+            foreach (var graphModule in Graphs)
+            {
+                graphModule.GameObject = gameObject;
             }
         }
-
+        
         /// <summary>
         /// Raise OnRuntimeSerialize in each BehaviorGraphModule to notify nodes.
         /// </summary>

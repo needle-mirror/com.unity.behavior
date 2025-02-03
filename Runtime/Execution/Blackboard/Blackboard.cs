@@ -18,7 +18,8 @@ namespace Unity.Behavior
         public List<BlackboardVariable> Variables => m_Variables;
 
         [SerializeReference]
-        internal List<BlackboardVariable> m_Variables = new ();
+        internal List<BlackboardVariable> m_Variables = new();
+
         private Dictionary<SerializableGUID, BlackboardVariable> m_VariablesMap;
 
         /// <summary>
@@ -52,7 +53,7 @@ namespace Unity.Behavior
                     m_Variables.Add(newVariable);
                 }
             }
-            
+
             CreateMetadata();
         }
 
@@ -70,14 +71,15 @@ namespace Unity.Behavior
 
         internal void ReplaceBlackboardVariable(SerializableGUID guid, BlackboardVariable newVariable)
         {
-            if (m_VariablesMap.TryGetValue(guid, out BlackboardVariable oldVariable)) {
+            if (m_VariablesMap.TryGetValue(guid, out BlackboardVariable oldVariable))
+            {
                 m_Variables.Remove(oldVariable);
                 m_VariablesMap.Remove(guid);
                 m_Variables.Add(newVariable);
                 m_VariablesMap[newVariable.GUID] = newVariable;
             }
         }
-        
+
         internal bool AddVariable<TValue>(string name, TValue value)
         {
             foreach (BlackboardVariable variable in Variables)
@@ -92,16 +94,16 @@ namespace Unity.Behavior
             BlackboardVariable newVariable = BlackboardVariable.CreateForType(typeof(TValue));
             newVariable.Name = name;
             newVariable.GUID = SerializableGUID.Generate();
-            
+
             if (newVariable is BlackboardVariable<TValue> typedVariable)
             {
                 typedVariable.Value = value;
             }
-            
+
             m_Variables.Add(newVariable);
             return true;
         }
-        
+
         internal bool GetVariable<TValue>(string name, out BlackboardVariable<TValue> variable)
         {
             foreach (BlackboardVariable blackboardVariable in Variables)
@@ -116,11 +118,11 @@ namespace Unity.Behavior
                     variable = typedVariable;
                     return true;
                 }
-            }            
+            }
             variable = default;
             return false;
         }
-        
+
         internal bool GetVariable(string name, out BlackboardVariable variable)
         {
             foreach (BlackboardVariable blackboardVariable in Variables)
@@ -131,11 +133,11 @@ namespace Unity.Behavior
                     return true;
                 }
             }
-            
+
             variable = default;
             return false;
         }
-        
+
         internal bool GetVariableValue<TValue>(string name, out TValue value)
         {
             foreach (BlackboardVariable variable in Variables)
@@ -150,7 +152,7 @@ namespace Unity.Behavior
             value = default;
             return false;
         }
-        
+
         internal bool SetVariableValue<TValue>(string name, TValue value)
         {
             foreach (BlackboardVariable variable in Variables)
@@ -159,11 +161,11 @@ namespace Unity.Behavior
                 {
                     continue;
                 }
-                
+
                 if (variable is BlackboardVariable<TValue> typedVariable)
                 {
                     typedVariable.Value = value;
-                    return true; 
+                    return true;
                 }
                 if (value == null)
                 {
@@ -175,7 +177,7 @@ namespace Unity.Behavior
                     {
                         variable.ObjectValue = null;
                     }
-                    return true; 
+                    return true;
                 }
 
                 if (value.GetType().IsAssignableFrom(variable.Type))
@@ -184,14 +186,14 @@ namespace Unity.Behavior
                     if (convertedValue != null)
                     {
                         variable.ObjectValue = convertedValue;
-                        return true; 
+                        return true;
                     }
                 }
             }
-            
+
             return false;
         }
-        
+
         internal bool GetVariableID(string name, out SerializableGUID id)
         {
             foreach (BlackboardVariable blackboardVariable in Variables)
@@ -206,7 +208,7 @@ namespace Unity.Behavior
             id = default;
             return false;
         }
-        
+
         internal bool GetVariable(SerializableGUID guid, out BlackboardVariable variable)
         {
             if (m_VariablesMap == null || m_Variables.Count != m_VariablesMap.Count)
@@ -216,7 +218,7 @@ namespace Unity.Behavior
 
             return m_VariablesMap.TryGetValue(guid, out variable);
         }
-        
+
         internal bool GetVariable<TValue>(SerializableGUID guid, out BlackboardVariable<TValue> variable)
         {
             if (m_VariablesMap == null || m_Variables.Count != m_VariablesMap.Count)
@@ -233,7 +235,7 @@ namespace Unity.Behavior
             variable = default;
             return false;
         }
-        
+
         internal bool SetVariableValue<TValue>(SerializableGUID guid, TValue value)
         {
             if (m_VariablesMap == null || m_Variables.Count != m_VariablesMap.Count)
@@ -241,7 +243,7 @@ namespace Unity.Behavior
                 CreateMetadata();
             }
 
-            if (!m_VariablesMap.TryGetValue(guid, out BlackboardVariable var)) 
+            if (!m_VariablesMap.TryGetValue(guid, out BlackboardVariable var))
             {
                 Debug.LogError($"Variable of type {typeof(TValue)} not found. GUID: {guid}");
                 return false;
@@ -267,7 +269,7 @@ namespace Unity.Behavior
                 {
                     var.ObjectValue = null;
                 }
-                return true; 
+                return true;
             }
             if (value.GetType().IsAssignableFrom(var.Type))
             {
@@ -275,14 +277,65 @@ namespace Unity.Behavior
                 if (convertedValue != null)
                 {
                     var.ObjectValue = convertedValue;
-                    return true; 
+                    return true;
                 }
             }
-            
+
             Debug.LogError($"Incorrect value type ({typeof(TValue)}) specified for variable of type {var.Type}.");
             return false;
         }
-        
+
+        internal bool SetVariableValueWithoutNotify<TValue>(SerializableGUID guid, TValue value)
+        {
+            if (m_VariablesMap == null || m_Variables.Count != m_VariablesMap.Count)
+            {
+                CreateMetadata();
+            }
+
+            if (!m_VariablesMap.TryGetValue(guid, out BlackboardVariable var))
+            {
+                Debug.LogError($"Variable of type {typeof(TValue)} not found. GUID: {guid}");
+                return false;
+            }
+
+            if (var is BlackboardVariable<TValue> typedVar)
+            {
+                typedVar.SetValueWithoutNotify(value);
+
+                return true;
+            }
+            if (var is BlackboardVariable<GameObject> gameObjectVar && gameObjectVar.Type == typeof(TValue))
+            {
+                var.SetObjectValueWithoutNotify(value);
+                return true;
+            }
+            if (value == null)
+            {
+                if (var.Type.IsValueType)
+                {
+                    var.SetObjectValueWithoutNotify(Activator.CreateInstance(var.Type));
+                }
+                else
+                {
+                    var.SetObjectValueWithoutNotify(null);
+                }
+
+                return true;
+            }
+            if (value.GetType().IsAssignableFrom(var.Type))
+            {
+                var convertedValue = Convert.ChangeType(value, var.Type);
+                if (convertedValue != null)
+                {
+                    var.SetObjectValueWithoutNotify(convertedValue);
+                    return true;
+                }
+            }
+
+            Debug.LogError($"Incorrect value type ({typeof(TValue)}) specified for variable of type {var.Type}.");
+            return false;
+        }
+
         internal void CreateMetadata()
         {
             m_VariablesMap = new Dictionary<SerializableGUID, BlackboardVariable>(m_Variables.Count);

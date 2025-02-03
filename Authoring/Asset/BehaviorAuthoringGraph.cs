@@ -533,13 +533,11 @@ namespace Unity.Behavior
             {
                 return;
             }
-                
+             
+            // If we reached this far, that means we are generating a new blackboard.
             AssetDatabase.AddObjectToAsset(Blackboard, this);
-            AssetDatabase.SaveAssets();
-            
             blackboardAuthoring.BuildRuntimeBlackboard();
-
-            EditorUtility.SetDirty(this);
+            AssetDatabase.SaveAssetIfDirty(this);
 #endif
         }
 

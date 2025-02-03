@@ -76,7 +76,17 @@ namespace Unity.Behavior
             if (!globalRegistry.Assets.Contains(asset))
             {
                 globalRegistry.Assets.Add(asset);
-                globalRegistry.m_GuidToAsset.Add(asset.AssetID, asset);
+                try
+                {
+                    globalRegistry.m_GuidToAsset.Add(asset.AssetID, asset);
+                }
+                catch (ArgumentException)
+                {
+                    if (globalRegistry.m_GuidToAsset.TryGetValue(asset.AssetID, out BehaviorAuthoringGraph existingAsset))
+                    {
+                        Debug.Log($"Graph asset '{existingAsset.name}' with the ID {asset.AssetID} already exists.");
+                    }
+                }
             }
         }
 
@@ -134,7 +144,17 @@ namespace Unity.Behavior
             m_GuidToAsset.Clear();
             foreach (BehaviorAuthoringGraph asset in Assets)
             {
-                m_GuidToAsset.Add(asset.AssetID, asset);
+                try
+                {
+                    m_GuidToAsset.Add(asset.AssetID, asset);
+                }
+                catch (ArgumentException)
+                {
+                    if (m_GuidToAsset.TryGetValue(asset.AssetID, out BehaviorAuthoringGraph existingAsset))
+                    {
+                        Debug.Log($"Graph asset '{existingAsset.name}' with the ID {asset.AssetID} already exists.");
+                    }
+                }
             }
         }
 

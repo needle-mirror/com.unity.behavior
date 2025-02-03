@@ -197,7 +197,7 @@ namespace Unity.Behavior
         {
             OperatorFieldModel = GetOrCreateField(fieldName, typeof(ConditionOperator));
             OperatorFieldModel.FieldName = fieldName;
-            OperatorFieldModel.LocalValue = new BlackboardVariable<ConditionOperator> { Value = ConditionOperator.Equal };
+            OperatorFieldModel.LocalValue ??= new BlackboardVariable<ConditionOperator> { Value = ConditionOperator.Equal };
         }
         
         internal void SetOperatorValue(Enum newValue)

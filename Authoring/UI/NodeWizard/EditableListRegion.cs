@@ -10,7 +10,7 @@ namespace Unity.Behavior
 {
     internal class EditableListRegion : VisualElement
     {
-        private readonly List<string> m_EditableList;
+        internal readonly List<string> m_EditableList;
         
         internal event System.Action OnListUpdated;
 
@@ -33,7 +33,17 @@ namespace Unity.Behavior
         
         internal void OnAddNewItemClicked(ClickEvent _)
         {
-            m_EditableList.Add(FieldPlaceholderName != null ? $"{FieldPlaceholderName} {m_EditableList.Count + 1}" : "");
+            int index = m_EditableList.Count + 1;
+            string memberName = FieldPlaceholderName != null ? $"{FieldPlaceholderName} {index}" : "";
+            if (!string.IsNullOrEmpty(FieldPlaceholderName))
+            {
+                var existingNames = new HashSet<string>(m_EditableList.Select(RemoveSpaces).ToList());
+                do
+                {
+                    memberName = $"{FieldPlaceholderName} {index++}";
+                } while (existingNames.Contains(RemoveSpaces(memberName)));
+            }
+            m_EditableList.Add(memberName);
             UpdateList();
             m_LastAddedTextField?.Focus();
         }
@@ -77,7 +87,8 @@ namespace Unity.Behavior
 
         private bool IsFieldDuplicate(TextFieldWithValidation field)
         {
-            int count = m_EditableList.Count(str => str == field.Field.value);
+            string fieldValueWithoutSpaces = RemoveSpaces(field.Field.value);
+            int count = m_EditableList.Count(str => RemoveSpaces(str) == fieldValueWithoutSpaces);
             return count >= 2;
         }
         

@@ -108,7 +108,7 @@ namespace Unity.Behavior
         {
             if (GetDistanceToLocation(out Vector3 agentPosition, out Vector3 locationPosition) <= DistanceThreshold)
             {
-                return Status.Failure;
+                return Status.Success;
             }
 
             // If using animator, set speed parameter.

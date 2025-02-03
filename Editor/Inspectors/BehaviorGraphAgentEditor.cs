@@ -13,12 +13,13 @@ namespace Unity.Behavior
     [CanEditMultipleObjects]
     internal class BehaviorGraphAgentEditor : Editor
     {
-        private readonly List<BehaviorGraphAgent> m_TargetAgents = new ();
+        private readonly List<BehaviorGraphAgent> m_TargetAgents = new();
         private bool m_ShowBlackboard = true;
         private readonly Dictionary<SerializableGUID, bool> m_ListVariableFoldoutStates = new Dictionary<SerializableGUID, bool>();
         private readonly Dictionary<SerializableGUID, VariableModel> m_VariableGUIDToVariableModel = new Dictionary<SerializableGUID, VariableModel>();
         private long m_MappedBlackboardVersion = 0;
         private BehaviorGraph m_SharedGraph;
+
         private BehaviorGraph SharedGraph
         {
             get => m_SharedGraph;
@@ -34,7 +35,7 @@ namespace Unity.Behavior
                 string assetPath = AssetDatabase.GetAssetPath(m_SharedGraph);
                 if (string.IsNullOrEmpty(assetPath))
                 {
-                    if (BehaviorGraphAssetRegistry.TryGetAssetFromId(m_SharedGraph.RootGraph.AuthoringAssetID , out var sharedAuthoringGraph))
+                    if (BehaviorGraphAssetRegistry.TryGetAssetFromId(m_SharedGraph.RootGraph.AuthoringAssetID, out var sharedAuthoringGraph))
                     {
                         SharedAuthoringGraph = sharedAuthoringGraph;
                     }
@@ -45,6 +46,7 @@ namespace Unity.Behavior
         }
 
         private BehaviorAuthoringGraph m_SharedAuthoringGraph;
+
         private BehaviorAuthoringGraph SharedAuthoringGraph
         {
             get => m_SharedAuthoringGraph;
@@ -67,7 +69,7 @@ namespace Unity.Behavior
             {
                 return;
             }
-            
+
             m_VariableGUIDToVariableModel.Clear();
             m_MappedBlackboardVersion = SharedAuthoringGraph.VersionTimestamp;
             foreach (var variableModel in SharedAuthoringGraph.Blackboard.Variables)
@@ -77,7 +79,7 @@ namespace Unity.Behavior
         }
 
         // Note: Target.Graph is set to a non-persistent copy when the agent is has been initialized at runtime.
-        private bool HasRuntimeGraphAssetBeenDeleted(BehaviorGraphAgent agent) => 
+        private bool HasRuntimeGraphAssetBeenDeleted(BehaviorGraphAgent agent) =>
             !ReferenceEquals(agent.Graph, null) && !EditorUtility.IsPersistent(agent.Graph);
 
         private void OnEnable()
@@ -108,7 +110,7 @@ namespace Unity.Behavior
             SharedGraph = targetsShareGraph ? firstTarget.Graph : null;
         }
 
-        DataType GetVariableDataCopy<DataType>(BlackboardVariable<DataType> blackboardVariable)
+        private DataType GetVariableDataCopy<DataType>(BlackboardVariable<DataType> blackboardVariable)
         {
             if (blackboardVariable.ObjectValue is ValueType)
             {
@@ -164,8 +166,8 @@ namespace Unity.Behavior
                     targetAgent.SynchronizeOverridesWithBlackboard();
                 }
             }
-            
-            // Draw a blackboard only if all agents share the same graph and a blackboard for it exists.  
+
+            // Draw a blackboard only if all agents share the same graph and a blackboard for it exists.
             if (SharedGraph != null && SharedGraph.BlackboardReference?.Blackboard != null && SharedGraph.BlackboardReference?.Blackboard != null)
             {
                 UpdateVariableModelMap();
@@ -211,7 +213,7 @@ namespace Unity.Behavior
                         SharedGraph = runtimeGraph;
                         return true;
                     }
-                }       
+                }
             }
             return false;
         }
@@ -263,7 +265,7 @@ namespace Unity.Behavior
 
                     // If any target's variable value differs from the first target's, show a mixed value indicator.
                     EditorGUI.showMixedValue |= !firstTargetVariable.ValueEquals(targetVariable);
-                    
+
                     if (targetAgent.m_BlackboardOverrides.ContainsKey(variable.GUID))
                     {
                         // Is the variable we're checking the graph owner and is it set to the target agent?
@@ -282,7 +284,7 @@ namespace Unity.Behavior
             string varName = isOverride ? $"{variable.Name} (Override)" : variable.Name;
             GUIContent label = isOverride ? new GUIContent(varName, "The value of this variable has been changed from the value set on the graph asset.") : new GUIContent(varName);
             Type type = variable.Type;
-            
+
             if (type == typeof(float) && variable is BlackboardVariable<float> floatVariable)
             {
                 float value = floatVariable.Value;
@@ -308,7 +310,7 @@ namespace Unity.Behavior
                 {
                     reorderableList.DoLayoutList();
                 }
-                
+
                 if (EditorGUI.EndChangeCheck())
                 {
                     UpdateValueIfChanged(value, variable.GUID);
@@ -339,7 +341,7 @@ namespace Unity.Behavior
                 {
                     reorderableList.DoLayoutList();
                 }
-                
+
                 if (EditorGUI.EndChangeCheck())
                 {
                     UpdateValueIfChanged(value, variable.GUID);
@@ -359,7 +361,7 @@ namespace Unity.Behavior
             {
                 List<int> value = GetVariableDataCopy(intListVariable);
                 EditorGUI.BeginChangeCheck();
-                
+
                 ReorderableList reorderableList = CreateVariableListElement(value, variable, varName);
                 reorderableList.drawElementCallback = (rect, index, _, _) =>
                 {
@@ -371,7 +373,7 @@ namespace Unity.Behavior
                 {
                     reorderableList.DoLayoutList();
                 }
-                
+
                 if (EditorGUI.EndChangeCheck())
                 {
                     UpdateValueIfChanged(value, variable.GUID);
@@ -402,7 +404,7 @@ namespace Unity.Behavior
                 {
                     reorderableList.DoLayoutList();
                 }
-                
+
                 if (EditorGUI.EndChangeCheck())
                 {
                     UpdateValueIfChanged(value, variable.GUID);
@@ -428,12 +430,12 @@ namespace Unity.Behavior
                     rect.height = EditorGUIUtility.singleLineHeight;
                     value[index] = EditorGUI.TextField(rect, $"Element {index}", value[index]);
                     ShowContextMenuForVariable(variable.GUID, isOverride);
-                }; 
+                };
                 if (m_ListVariableFoldoutStates[variable.GUID])
                 {
                     reorderableList.DoLayoutList();
                 }
-                
+
                 if (EditorGUI.EndChangeCheck())
                 {
                     UpdateValueIfChanged(value, variable.GUID);
@@ -464,7 +466,7 @@ namespace Unity.Behavior
                 {
                     reorderableList.DoLayoutList();
                 }
-                
+
                 if (EditorGUI.EndChangeCheck())
                 {
                     UpdateValueIfChanged(value, variable.GUID);
@@ -495,7 +497,7 @@ namespace Unity.Behavior
                 {
                     reorderableList.DoLayoutList();
                 }
-                
+
                 if (EditorGUI.EndChangeCheck())
                 {
                     UpdateValueIfChanged(value, variable.GUID);
@@ -526,7 +528,7 @@ namespace Unity.Behavior
                 {
                     reorderableList.DoLayoutList();
                 }
-                
+
                 if (EditorGUI.EndChangeCheck())
                 {
                     UpdateValueIfChanged(value, variable.GUID);
@@ -557,7 +559,7 @@ namespace Unity.Behavior
                 {
                     reorderableList.DoLayoutList();
                 }
-                
+
                 if (EditorGUI.EndChangeCheck())
                 {
                     UpdateValueIfChanged(value, variable.GUID);
@@ -567,7 +569,7 @@ namespace Unity.Behavior
             {
                 GameObject value = gameObjectVar.Value;
                 EditorGUI.BeginChangeCheck();
-                value = EditorGUILayout.ObjectField(label, value, typeof(GameObject),true) as GameObject;
+                value = EditorGUILayout.ObjectField(label, value, typeof(GameObject), true) as GameObject;
                 if (EditorGUI.EndChangeCheck())
                 {
                     UpdateValueIfChanged(value, variable.GUID);
@@ -581,14 +583,14 @@ namespace Unity.Behavior
                 reorderableList.drawElementCallback = (rect, index, _, _) =>
                 {
                     rect.height = EditorGUIUtility.singleLineHeight;
-                    value[index] = EditorGUI.ObjectField(rect, $"Element {index}", value[index], typeof(GameObject),true) as GameObject;
+                    value[index] = EditorGUI.ObjectField(rect, $"Element {index}", value[index], typeof(GameObject), true) as GameObject;
                     ShowContextMenuForVariable(variable.GUID, isOverride);
                 };
                 if (m_ListVariableFoldoutStates[variable.GUID])
                 {
                     reorderableList.DoLayoutList();
                 }
-                
+
                 if (EditorGUI.EndChangeCheck())
                 {
                     UpdateValueIfChanged(value, variable.GUID);
@@ -612,7 +614,7 @@ namespace Unity.Behavior
                 reorderableList.drawElementCallback = (rect, index, _, _) =>
                 {
                     rect.height = EditorGUIUtility.singleLineHeight;
-                    value[index] = EditorGUI.ObjectField(rect,$"Element {index}", value[index], typeof(GameObject),true) as ScriptableObject;
+                    value[index] = EditorGUI.ObjectField(rect, $"Element {index}", value[index], typeof(GameObject), true) as ScriptableObject;
                     ShowContextMenuForVariable(variable.GUID, isOverride);
                 };
                 if (m_ListVariableFoldoutStates[variable.GUID])
@@ -668,7 +670,7 @@ namespace Unity.Behavior
             reorderableList.onRemoveCallback = _ =>
             {
                 Undo.RecordObjects(targets, "Remove List Element");
-                value.RemoveAt(value.Count-1);
+                value.RemoveAt(value.Count - 1);
             };
 
             return reorderableList;
@@ -676,7 +678,7 @@ namespace Unity.Behavior
 
         // This method will update the value stored in the Blackboard if its changed (comparing using value), using the generic type of the value given.
         // This should be used for all value types whose data type matches their variable type.
-        private void UpdateValueIfChanged<DataType>(DataType currentValue, SerializableGUID varID) 
+        private void UpdateValueIfChanged<DataType>(DataType currentValue, SerializableGUID varID)
         {
             foreach (BehaviorGraphAgent targetAgent in m_TargetAgents)
             {
@@ -688,10 +690,10 @@ namespace Unity.Behavior
                 SetBlackboardVariableValue(targetAgent, targetVariable, currentValue);
             }
         }
-        
+
         // This method will update the value stored in the Blackboard if its changed (comparing using value), using the generic type of the value given.
         // This can only be used for list types.
-        private void UpdateValueIfChanged<DataType>(List<DataType> currentValue, SerializableGUID varID) 
+        private void UpdateValueIfChanged<DataType>(List<DataType> currentValue, SerializableGUID varID)
         {
             foreach (BehaviorGraphAgent targetAgent in m_TargetAgents)
             {
@@ -699,7 +701,7 @@ namespace Unity.Behavior
                 // TODO: Check if LINQ usage here is generating allocs.
                 if (currentValue != null && currentValue.SequenceEqual(targetVariable.Value))
                 {
-                    continue; 
+                    continue;
                 }
                 SetBlackboardVariableValue(targetAgent, targetVariable, currentValue);
             }
@@ -710,7 +712,7 @@ namespace Unity.Behavior
         private void UpdateValueIfChanged<DataType>(DataType currentValue, SerializableGUID varID, Type type)
         {
             foreach (BehaviorGraphAgent targetAgent in m_TargetAgents)
-            {            
+            {
                 BlackboardVariable targetVariable = GetTargetVariable(targetAgent, varID);
                 if (EqualityComparer<DataType>.Default.Equals(currentValue, (DataType)targetVariable.ObjectValue) ||
                              !type.IsInstanceOfType(currentValue))
@@ -735,14 +737,14 @@ namespace Unity.Behavior
                 SetBlackboardVariableValue(targetAgent, targetVariable, currentValue);
             }
         }
-        
+
         private void UpdateBehaviorGraphIfNeeded(BehaviorGraphAgent targetAgent)
         {
             if (Application.isPlaying)
             {
                 return; // Don't update the graph if the application is playing, as the graph instance is a copy.
             }
-            
+
             if (!HasRuntimeGraphAssetBeenDeleted(targetAgent))
             {
                 return; // Don't make changes if the agent references a persistent asset.
@@ -763,28 +765,28 @@ namespace Unity.Behavior
                 EditorUtility.SetDirty(targetAgent);
                 return;
             }
-             
+
             // Destroy the temporary runtime graph instance.
             DestroyImmediate(targetAgent.Graph);
-            
+
             // Try to update the reference through the authoring asset.
-            // Note: asset.GetOrCreateGraph() would create a new runtime graph if one does not exist, 
+            // Note: asset.GetOrCreateGraph() would create a new runtime graph if one does not exist,
             // which is not desirable here. If no runtime graph exists, null should be assigned.
             string assetPath = AssetDatabase.GetAssetPath(asset);
             targetAgent.Graph = AssetDatabase.LoadAssetAtPath<BehaviorGraph>(assetPath);
             EditorUtility.SetDirty(targetAgent);
         }
-        
+
         private bool HaveSameGraph(BehaviorGraphAgent agent, BehaviorGraphAgent otherAgent)
         {
             // The two share the same assigned asset.
             if (ReferenceEquals(agent.Graph, otherAgent.Graph))
                 return true;
-                
+
             // The two have assigned instances that are copies of a shared asset.
             if (agent.Graph && otherAgent.Graph
                             && agent.Graph.RootGraph.AuthoringAssetID == otherAgent.Graph.RootGraph.AuthoringAssetID
-                            && agent.Graph.RootGraph.VersionTimestamp == otherAgent.Graph.RootGraph.VersionTimestamp) 
+                            && agent.Graph.RootGraph.VersionTimestamp == otherAgent.Graph.RootGraph.VersionTimestamp)
                 return true;
 
             return false;
@@ -811,20 +813,20 @@ namespace Unity.Behavior
         {
             if (Application.isPlaying)
             {
-                refVariable.ObjectValue = newValue;
+                // Set behavior changes based on the agent state (init or not)
+                agent.SetVariableValue(refVariable.GUID, newValue);
                 return;
             }
 
             Undo.RecordObject(agent, "Set Blackboard Variable Value");
             if (agent.m_BlackboardOverrides.TryGetValue(refVariable.GUID, out BlackboardVariable overrideVariable))
             {
-                overrideVariable.ObjectValue = newValue;
-            } else
+                overrideVariable.SetObjectValueWithoutNotify(newValue);
+            }
+            else
             {
-                overrideVariable = BlackboardVariable.CreateForType(refVariable.Type);
-                overrideVariable.ObjectValue = newValue;
-                overrideVariable.GUID = refVariable.GUID;
-                overrideVariable.Name = refVariable.Name;
+                overrideVariable = refVariable.Duplicate();
+                overrideVariable.SetObjectValueWithoutNotify(newValue);
                 agent.m_BlackboardOverrides.Add(refVariable.GUID, overrideVariable);
             }
             EditorUtility.SetDirty(agent);
@@ -843,7 +845,6 @@ namespace Unity.Behavior
                     GenericMenu menu = new GenericMenu();
                     menu.AddItem(new GUIContent("Revert Variable"), false, () => ResetVariable(guid));
                     menu.ShowAsContext();
-
                 }
             }
         }

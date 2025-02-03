@@ -4,6 +4,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.8] - 2025-02-03
+
+### Changed
+- Switch node will no longer log errors for unassigned children.
+- Updated sample materials to URP (the default render pipeline for Unity 6.0).
+- `Start()` will start the graph again if it's not currently running (i.e. it finished, or just been set). It'll defer it to `Update()` if the component is disabled.
+- Components will now appear under the `Other/MonoBehaviours` search menu for variable types (adding new variables, or setting them for node variables).
+- Updated AppUI to 2.0.0-pre.16 to benefit from fixes to AppUI.
+
+### Fixed
+- Fixed an issue where existing subgraph representations would not sometimes be removed when deleting the text input.
+- Static subgraphs now have their parent rebuilt when saved.
+- Fixed regression where renaming a blackboard variable would not be reflected in the graph.
+- Calling `BehaviorGraphAgent.Restart()` before the graph was started resulted in the graph's `Start()` being called twice.
+- Fixed search view string formatting leaking through to the callers such as type dropdowns.
+- Fixed an issue where case differences in the case of variable names on the subgraph representation could cause duplicate fields added on a `SubgraphNodeModel`.
+- Opening a behavior graph window wasn't focusing the window when docked, causing it to be behind other windows.
+- Graph agent init and start states weren't set correctly after runtime deserialization.
+- `Restart()` was running first iteration of the graph even when the agent was paused.
+- Fixed behavior graph not always framing the graph content correctly when opening a Behavior Graph asset.
+- Fixed attempting to assign a GameObject to a newly created GameObject Blackboard Variable in the Blackboard inspector not working.
+- Fixed an issue where Run Subgraph node LinkFields would not keep their override values correctly when the Subgraph Representation mode was toggled on.
+- Fixed an issue where duplicated Run Subgraph nodes did not keep their Subgraph Representation mode selected for the node UI.
+- Right Click -> Edit/Inspect Script will now work correctly with VSCode.
+- Fixed warning when changing a BlackboardVariable type to Vector2Int or Vector3Int.
+- Fixed search filter formatting persisting when using the back button to return to the search root.
+- Improved search query result accuracy.
+- Overriding 'Self' variable works again, allowing you to use a different GameObject to the one running the graph.
+- `NavigateToTargetAction` will correctly return success instead of failure if it's started within range of the target.
+- Fixed an issue where fields on duplicated nodes did not keep the correct local values from the original.
+- Sequencing/Enum Wizards will no longer propose the same enum/port name as one that already exists (example, adding 2 members with default name, deleting the 1st one and adding a new one used to call both Member 2).
+- Fixed BlackboardAsset Shared Variable keeping playmode value.
+- Run Subgraph (Dynamic) wasn't initializing a copy of the graph asset correctly, causing data to be shared amongst agents sharing the graph and corrupting the graph asset.
+- Various `SetBlackboardVariable` APIs were writing to the asset incorrectly before it was initialized.
+- Changing the value of a subgraph blackboard variable to a different subgraph will now correctly update the dynamic subgraph node running it.
+- Subgraph variables will correctly sync with the parent graph and vice versa.
+
+### Known Issues
+- After much user feedback and investigation, we have determined that runtime serialization is not recommended for use at this time due to an existing limitation in its implementation. Our team is working diligently to address these concerns and bring the feature to the expected quality level in an upcoming release. In the meantime, we appreciate your patience and understanding as we strive to enhance this functionality.
+- After using the "Delete Runtime Assets" button for the graph, prefabs/objects using the graph may lose their references to it (or contain an old stale one) and need reassignment.
+
 ## [1.0.7] - 2024-12-11
 
 ### Added

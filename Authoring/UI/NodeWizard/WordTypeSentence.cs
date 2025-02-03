@@ -74,6 +74,7 @@ namespace Unity.Behavior
             if (string.IsNullOrEmpty(sentence))
             {
                 WordTypePairs.Clear();
+                LastSentence = string.Empty;
                 return;
             }
             var words = ToWordArray(sentence);

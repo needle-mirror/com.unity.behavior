@@ -38,25 +38,22 @@ namespace Unity.Behavior
             {
                 VariableModel linkedVariable = fieldModelOriginal.LinkedVariable;
                 
-                bool foundLinkedVariable = GetLinkedVariableFromBlackboard(asset.Blackboard, linkedVariable) != null;
+                VariableModel foundLinkedVariable = GetLinkedVariableFromBlackboard(asset.Blackboard, linkedVariable);
                 
                 // Check other linked blackboards
-                if(!foundLinkedVariable)
+                if(foundLinkedVariable != null)
                 {
-                    foreach (var blackboard in asset.m_Blackboards)
+                    foreach (BehaviorBlackboardAuthoringAsset blackboard in asset.m_Blackboards)
                     {
-                        foundLinkedVariable = GetLinkedVariableFromBlackboard(blackboard, linkedVariable) != null;
-                        if (foundLinkedVariable)
+                        foundLinkedVariable = GetLinkedVariableFromBlackboard(blackboard, linkedVariable);
+                        if (foundLinkedVariable != null)
                         {
                             break;
                         }
                     }
                 }
                 
-                if (!foundLinkedVariable)
-                {
-                    continue;
-                }
+                fieldModelOriginal.LinkedVariable = foundLinkedVariable != null ? foundLinkedVariable : null;
 
                 m_FieldValues.Add(fieldModelOriginal.Duplicate());
             }
@@ -114,17 +111,21 @@ namespace Unity.Behavior
                 }
 
                 VariableModel foundVariable = GetLinkedVariableFromBlackboard(behaviorGraph.Blackboard, field.LinkedVariable);
-                if (foundVariable != null && !foundVariable.Equals(field.LinkedVariable))
+                if (foundVariable != null && foundVariable != field.LinkedVariable)
                 {
+                    // This action changed the reference id (rid) of the model silently.
                     field.LinkedVariable = foundVariable;
+                    // So, the asset needs to be manually dirty.
+                    Asset.SetAssetDirty();
                 }
 
                 foreach (BehaviorBlackboardAuthoringAsset blackboard in behaviorGraph.m_Blackboards)
                 {
                     VariableModel foundBlackboardVariable = GetLinkedVariableFromBlackboard(blackboard, field.LinkedVariable);
-                    if (foundBlackboardVariable != null && !foundBlackboardVariable.Equals(field.LinkedVariable))
+                    if (foundBlackboardVariable != null && foundBlackboardVariable != field.LinkedVariable)
                     {
                         field.LinkedVariable = foundBlackboardVariable;
+                        Asset.SetAssetDirty(true);
                     }
                 }
             }
@@ -259,7 +260,7 @@ namespace Unity.Behavior
         {
             foreach (FieldModel fieldModel in m_FieldValues)
             {
-                if (!fieldModel.FieldName.Equals(fieldName))
+                if (!string.Equals(fieldModel.FieldName, fieldName, StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }

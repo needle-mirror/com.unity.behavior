@@ -40,13 +40,13 @@ namespace Unity.Behavior
         public BlackboardReference BlackboardReference = new BlackboardReference();
         [SerializeReference]
         public List<BlackboardReference> BlackboardGroupReferences = new List<BlackboardReference>();
-        [CreateProperty]
+        [CreateProperty, SerializeReference]
         public List<Node> ProcessedNodes = new List<Node>(4);
-        [CreateProperty]
+        [CreateProperty, SerializeReference]
         private List<Node> m_RunningNodes = new List<Node>(4);
-        [CreateProperty]
+        [CreateProperty, SerializeReference]
         private Stack<Node> m_NodesToEnd = new Stack<Node>(1);
-        [CreateProperty]
+        [CreateProperty, SerializeReference]
         private HashSet<Node> m_EndedNodes = new HashSet<Node>();
         internal bool IsEndingBranch { get; private set; } = false;
         [CreateProperty]

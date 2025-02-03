@@ -47,7 +47,7 @@ namespace UnityEngine.UIExtras
 
                 m_Icon.EnableInClassList("HiddenIcon", value.Value.Icon == null && string.IsNullOrEmpty(value.Value.IconName));
                 m_Name = value.Value.Name;
-                m_Label.text = Name;
+                m_Label.text = value.Value.FormattedName;
                 Description = value.Value.Description;
 
                 if (!value.Value.Enabled)

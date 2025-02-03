@@ -236,10 +236,7 @@ namespace Unity.Behavior
             if (InspectedNode is BehaviorGraphNodeModel aiModel)
             {
                 string path = NodeRegistry.GetInfo(aiModel.NodeType).FilePath.Replace("\\", "/");
-                string relativePath = path.StartsWith(Application.dataPath)
-                    ? ("Assets" + path.Substring(Application.dataPath.Length))
-                    : path;
-                CodeEditor.CodeEditor.Editor.CurrentCodeEditor.OpenProject(relativePath);
+                CodeEditor.CodeEditor.Editor.CurrentCodeEditor.OpenProject(path);
             }
         }
 

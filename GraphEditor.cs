@@ -90,6 +90,9 @@ namespace Unity.Behavior.GraphFramework
 
             if (m_LastAssetVersion != Asset.VersionTimestamp)
             {
+                // BEHAVB-175: Workaround to force refresh field model after a blackboard variable rename.
+                Asset.OnValidate();
+
                 Blackboard.RefreshFromAsset();
                 GraphView.RefreshFromAsset();
                 Inspector?.Refresh();

@@ -38,10 +38,10 @@ namespace UnityEngine.UIExtras
                     IsClosing = true;
                     popover.dismissed += (p, reason) =>
                     {
-                        onSelection?.Invoke(e);
                         parent?.Focus();
                     };
                     popover.Dismiss();
+                    onSelection?.Invoke(e);
                 }
                 else
                 {
@@ -99,10 +99,10 @@ namespace UnityEngine.UIExtras
                 IsClosing = true;
                 popover.dismissed += (p, reason) =>
                 {
-                    onSelection?.Invoke(e);
                     parent?.Focus();
                 };
                 popover.Dismiss();
+                onSelection?.Invoke(e);
             };
             searchView.style.width = width;
             searchView.style.height = height;

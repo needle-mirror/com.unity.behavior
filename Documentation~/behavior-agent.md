@@ -14,6 +14,10 @@ The Behavior Agent component provides APIs to manage its operation, including:
 
 For more information, refer to the relevant [API documentation](https://docs.unity3d.com/Packages/com.unity.behavior@1.0/api/Unity.Behavior.BehaviorGraphAgent.html).
 
+> [!NOTE]
+
+> When using the Behavior agent component to manage `BehaviorGraph` on a GameObject, it's important to consider how you initialize agents that must start in a disabled state. If you want to create a Behavior agent that's initially disabled, you must explicitly disable the `BehaviorGraphAgent` at the time of creation. Later, when you want the agent to begin processing, you can enable it.
+
 To add and set up the Behavior Agent component, follow these steps:
 
 1. In the Unity Editor, select the GameObject to which you want to add the component.

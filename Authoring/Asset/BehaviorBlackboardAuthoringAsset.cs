@@ -109,8 +109,8 @@ namespace Unity.Behavior
             
 #if UNITY_EDITOR
             AssetDatabase.AddObjectToAsset(reference, assetObject);
-            AssetDatabase.SaveAssets();
             EditorUtility.SetDirty(assetObject);
+            AssetDatabase.SaveAssetIfDirty(assetObject);
 #endif
             return reference;
         }
