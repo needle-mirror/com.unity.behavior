@@ -76,4 +76,5 @@ The **Wait for Event Message** node waits until it receives a specific event mes
 ## Additional resources
 
 * [Event nodes example](event-nodes-example.md)
+* [Use event nodes across behavior graphs](event-nodes-diff-graphs.md)
 * [Create a custom node](create-custom-node.md)

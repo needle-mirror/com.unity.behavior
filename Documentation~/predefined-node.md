@@ -19,7 +19,7 @@ Use this section to apply the pre-defined action, event, and flow nodes to the b
 
 3. Click the relevant node type and select the node you want to use in your behavior graph. 
 
-    ![Node types](Images/nodes.png)
+    ![Different node types in Unity Behavior](Images/nodes.png)
 
 For example:
 
@@ -32,17 +32,17 @@ For example:
 
     To link two nodes in the editor, begin by selecting the first node. Then, position the cursor near the base of the node to reveal the output connector, typically depicted by an arrow. Drag a line from this output connector to the input connector of the second node.
 
-    ![On Start node](Images/add-action-node.png)
+    ![Use the line connector to join the two nodes](Images/add-action-node.png)
 
     Nodes include fields featuring a link icon that enables connection to a variable on the **Blackboard**. These fields, called link fields (shown in the previous image), vary in number from node to node. For example, the **Wait** node has one link field while the **Patrol** node has two link fields.
 
     **Wait** node:
 
-    ![Wait node](Images/wait.png)
+    ![Wait node with the link icon](Images/wait.png)
 
     **Patrol** node:
 
-    ![Patrol node](Images/patrol.png)
+    ![Patrol node with the link icon](Images/patrol.png)
 
 
 5. Create variables required in the behavior graph on the **Blackboard**.
@@ -53,7 +53,7 @@ For example:
     
         Alternatively, to create a new variable, click the link icon in the link field, click on the **New [data type]** option, and then rename it. The new variable appears on the **Blackboard**. You can now use your new variable in the behavior graph.
         
-        ![Link icon](Images/link-var.png)
+        ![Use the link icon in the link field to create a new variable](Images/link-var.png)
 
     4. Repeat the previous two substeps to add more variables for your behavior graph.
 
@@ -63,23 +63,23 @@ For example:
 
     To link the variable to the link field, click the **link** icon and select the relevant variable from the list.
 
-   ![Connect variables](Images/graph-var.png)
+   ![Use the link icon to connect the variable to the link field](Images/graph-var.png)
 
 7. To edit additional parameters for a node, select the node to view the parameters on the node **Inspector** floating window in the Unity Behavior editor (not the Unity Editor **Inspector** window). 
 
      Use these nodes to further customize the behavior graph's logic. 
 
-    ![Inspector](Images/inspector-var.png)
+    ![Use the node Inspector window to edit additional parameters](Images/inspector-var.png)
 
 8. To inspect your behavior graph in real-time or to debug a GameObject, click **Debug** and select the relevant GameObject.
 
 9. Open the Unity Editor's Game view and click the **Play** button to run your game in Play mode.
 
-    ![Play mode](Images/playmode.png)
+    ![A game run in Play mode](Images/playmode.png)
 
     The behavior graph shows the flow of logic in real time while the game is running. This helps in understanding which actions are running and why.
 
-    ![Debug agent](Images/Sample-Scene-Debug-Statuses.png)
+    ![A behavior graph in debug mode](Images/Sample-Scene-Debug-Statuses.png)
 
 10. Repeat the previous steps to add more nodes to your behavior graph.
 

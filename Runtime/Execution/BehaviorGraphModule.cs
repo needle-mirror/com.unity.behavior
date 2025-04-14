@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using Unity.Behavior.GraphFramework;
 using Unity.Properties;
 using UnityEngine;
+using UnityEngine.Serialization;
 using Status = Unity.Behavior.Node.Status;
 
 [assembly: InternalsVisibleTo("Assembly-CSharp-Editor")]
@@ -40,10 +41,10 @@ namespace Unity.Behavior
         public BlackboardReference BlackboardReference = new BlackboardReference();
         [SerializeReference]
         public List<BlackboardReference> BlackboardGroupReferences = new List<BlackboardReference>();
-        [CreateProperty, SerializeReference]
-        public List<Node> ProcessedNodes = new List<Node>(4);
-        [CreateProperty, SerializeReference]
-        private List<Node> m_RunningNodes = new List<Node>(4);
+        [CreateProperty, SerializeReference] [FormerlySerializedAs("ProcessedNodes")] 
+        internal List<Node> m_ActiveNodes = new List<Node>(4);
+        [CreateProperty, SerializeReference] [FormerlySerializedAs("m_RunningNodes")]
+        private List<Node> m_NodesToTick = new List<Node>(4);
         [CreateProperty, SerializeReference]
         private Stack<Node> m_NodesToEnd = new Stack<Node>(1);
         [CreateProperty, SerializeReference]
@@ -69,26 +70,34 @@ namespace Unity.Behavior
         /// </summary>
         public void Tick()
         {
-            if (m_NodesChanged)
-            {
-                RebuildNodeLists();
-            }
+            double timeAtStart = Time.realtimeSinceStartupAsDouble;
+            RebuildNodeLists();
 
-            for (int i = 0; i < m_RunningNodes.Count; i++)
+            while (m_NodesToTick.Count > 0)
             {
-                Node node = m_RunningNodes[i];
-                if (!ProcessedNodes.Contains(node))
+                bool isDebuggerAttached = false;
+#if UNITY_EDITOR
+                isDebuggerAttached = System.Diagnostics.Debugger.IsAttached;
+#endif
+                if (Time.realtimeSinceStartupAsDouble - timeAtStart > 1.0 && !isDebuggerAttached)
                 {
-                    continue; // node has been removed from processing set. Do not update.
+                    Debug.LogException(new Exception("Aborting graph tick because iteration took more than a second! This might be due an infinite loop or an expensive operation that should be moved out of the graph. Infinite loops can be caused by Repeat node (or Start with repeat toggled on) where all the children finish execution on the same frame."), GameObject);
+                    Debug.Break();
+                    return;
                 }
-
+                Node node = m_NodesToTick[0];
+                m_NodesToTick.RemoveAt(0);
+                if (node.CurrentStatus == Status.Waiting)
+                {
+                    // Waking up node.
+                    node.SetCurrentStatus(Status.Running);
+                }
                 Status status = node.Update();
 
                 // check for change in status
+                node.SetCurrentStatus(status);
                 if (status != Status.Running)
                 {
-                    node.SetCurrentStatus(status);
-
                     m_NodesChanged = true;
                     if (status is Status.Success or Status.Failure)
                     {
@@ -112,7 +121,7 @@ namespace Unity.Behavior
         public Status StartNode(Node node)
         {
             node.ResetStatus();
-            ProcessedNodes.Add(node);
+            m_ActiveNodes.Add(node);
 
             Status status = node.Start();
             node.SetCurrentStatus(status);
@@ -121,6 +130,11 @@ namespace Unity.Behavior
             {
                 EndNode(node);
                 node.AwakeParents();
+            }
+
+            if (status is Status.Running && !m_NodesToTick.Contains(node))
+            {
+                m_NodesToTick.Add(node);
             }
 
             m_NodesChanged = true;
@@ -162,14 +176,14 @@ namespace Unity.Behavior
 
                 // If each child has been visited, pop the node and end it.
                 m_NodesToEnd.Pop();
-                ProcessedNodes.Remove(currentNode);
+                m_ActiveNodes.Remove(currentNode);
+                m_NodesToTick.Remove(currentNode);
                 if (currentNode.IsRunning)
                 {
                     currentNode.End();
                 }
                 m_EndedNodes.Add(currentNode);
             }
-
             m_EndedNodes.Clear();
             IsEndingBranch = false;
             return;
@@ -207,8 +221,8 @@ namespace Unity.Behavior
         public void Reset()
         {
             m_NodesChanged = false;
-            ProcessedNodes.Clear();
-            m_RunningNodes.Clear();
+            m_ActiveNodes.Clear();
+            m_NodesToTick.Clear();
         }
 
         /// <summary>
@@ -217,26 +231,29 @@ namespace Unity.Behavior
         /// <param name="node">The node to awaken.</param>
         internal void AwakeNode(Node node)
         {
-            if (ProcessedNodes.Contains(node) && node.CurrentStatus is Status.Waiting or Status.Uninitialized)
+            if (m_NodesToEnd.Contains(node)
+                || m_NodesToTick.Contains(node)
+                || !m_ActiveNodes.Contains(node)
+                || node.CurrentStatus is not (Status.Waiting or Status.Running))
             {
-                node.SetCurrentStatus(Status.Running);
-                m_NodesChanged = true;
+                return;
             }
+            m_NodesToTick.Insert(0, node);
+            node.SetCurrentStatus(Status.Running);
+            m_NodesChanged = true;
         }
 
         private void RebuildNodeLists()
         {
             // Copy running nodes from processed list to running list
-            m_RunningNodes.Clear();
-            for (int i = 0; i < ProcessedNodes.Count; i++)
+            for (int i = 0; i < m_ActiveNodes.Count; i++)
             {
-                Node node = ProcessedNodes[i];
-                if (node.CurrentStatus is Status.Running)
+                Node node = m_ActiveNodes[i];
+                if (node.CurrentStatus is Status.Running && !m_NodesToTick.Contains(node))
                 {
-                    m_RunningNodes.Add(node);
+                    m_NodesToTick.Add(node);
                 }
             }
-
             m_NodesChanged = false;
         }
 
@@ -421,7 +438,7 @@ namespace Unity.Behavior
         public void Serialize()
         {
             HashSet<Node> candidates = new (10);
-            foreach (Node node in ProcessedNodes)
+            foreach (Node node in m_ActiveNodes)
             {
                 GatherActiveNodes(node, ref candidates);
             }
@@ -435,7 +452,7 @@ namespace Unity.Behavior
         public void Deserialize()
         {
             HashSet<Node> candidates = new(10);
-            foreach (Node node in ProcessedNodes)
+            foreach (Node node in m_ActiveNodes)
             {
                 GatherActiveNodes(node, ref candidates);
             }

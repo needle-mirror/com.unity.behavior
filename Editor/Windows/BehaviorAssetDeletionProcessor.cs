@@ -9,7 +9,8 @@ namespace Unity.Behavior
         // If an authoring graph or blackboard asset is deleted within Unity, this will close any editor window associated with the asset.
         private static AssetDeleteResult OnWillDeleteAsset(string path, RemoveAssetOptions opt)
         {
-            if (AssetDatabase.GetMainAssetTypeAtPath(path) != typeof(BehaviorAuthoringGraph) && AssetDatabase.GetMainAssetTypeAtPath(path) != typeof(BehaviorBlackboardAuthoringAsset))
+            if (AssetDatabase.GetMainAssetTypeAtPath(path) != typeof(BehaviorAuthoringGraph) 
+                && AssetDatabase.GetMainAssetTypeAtPath(path) != typeof(BehaviorBlackboardAuthoringAsset))
             {
                 return AssetDeleteResult.DidNotDelete;
             }
@@ -37,6 +38,12 @@ namespace Unity.Behavior
             // Update any Behavior Graph Windows which have a reference to the deleted Blackboard asset.
             blackboardAuthoring?.InvokeBlackboardDeleted();
             
+            // If the asset is a subgraph, we need to update the parent graph.
+            if (GatherParentGraphsToRebuild(graph, out List<BehaviorAuthoringGraph> parentGraphs))
+            {
+                BehaviorAssetPostProcessor.RequestGraphsRebuild(parentGraphs);
+            }
+
             return AssetDeleteResult.DidNotDelete;
         }
 
@@ -111,6 +118,29 @@ namespace Unity.Behavior
             }
 
             return hasMatchingField;
+        }
+    
+        private static bool GatherParentGraphsToRebuild(BehaviorAuthoringGraph graph, out List<BehaviorAuthoringGraph> graphsToRebuild)
+        {
+            graphsToRebuild = null;
+            if (graph == null)
+            {
+                return false;
+            }
+
+            graphsToRebuild = new List<BehaviorAuthoringGraph>();
+            // Get all assets that contain references to the assets being saved.
+            foreach (BehaviorAuthoringGraph asset in BehaviorGraphAssetRegistry.GlobalRegistry.Assets)
+            {
+                // Scenario: Subgraph is deleted -> Parent need rebuild
+                if (asset.ContainsStaticSubgraphReferenceTo(graph))
+                {
+                    asset.RemoveDependency(graph); // Remove the reference to the subgraph and dirty the parent.
+                    graphsToRebuild.Add(asset);
+                }
+            }
+
+            return graphsToRebuild.Count > 0;
         }
     }
 }

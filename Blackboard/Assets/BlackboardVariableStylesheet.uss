@@ -27,6 +27,11 @@
     background-color: var(--appui-backgrounds-300);
 }
 
+#TitleContainer {
+    flex-direction: row;
+    max-width: 50%;
+}
+
 #Info {
     justify-content: space-between;
     align-items: center;
@@ -66,7 +71,6 @@
 
 #NameContainer {
     height: 20px;
-    max-width: 50%;
     align-self: center;
     align-items: center;
     justify-content: center;
@@ -149,6 +153,14 @@ Vector4Field {
 #appui-vector4field__row {
     margin-right: 6px;
     margin-bottom: 0;
+}
+
+.BlackboardVariable #Icon {
+    width: 16px;
+    height: 16px;
+    align-self: center;
+    flex-shrink: 0;
+    margin-right: 4px;
 }
 
 .appui-toggle {

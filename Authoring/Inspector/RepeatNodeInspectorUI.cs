@@ -3,14 +3,16 @@ using Unity.AppUI.UI;
 using System.Collections.Generic;
 using System;
 using UnityEngine.UIElements;
+using Toggle = Unity.AppUI.UI.Toggle;
 
 namespace Unity.Behavior
 {
     [NodeInspectorUI(typeof(RepeatNodeModel))]
     internal class RepeatNodeInspectorUI : BehaviorGraphNodeInspectorUI
     {
-        Dropdown m_RepeatModeDropdown;
-        VisualElement m_ConditionsContainer;
+        private Dropdown m_RepeatModeDropdown;
+        private VisualElement m_ConditionsContainer;
+        private Toggle m_AllowMultipleRepeatsPerTickField;
 
         RepeatNodeModel RepeatNodeModel => InspectedNode as RepeatNodeModel;
         public RepeatNodeInspectorUI(NodeModel nodeModel) : base(nodeModel) { }
@@ -44,6 +46,13 @@ namespace Unity.Behavior
                     m_RepeatModeDropdown.selectedIndex = (int)RepeatNodeModel.Mode;
                 }
             }
+            if (m_AllowMultipleRepeatsPerTickField == null)
+            {
+                m_AllowMultipleRepeatsPerTickField = CreateField<Toggle>("Allow Multiple Repeats Per Tick",
+                    "If enabled, repeated processing will be occur on the same graph update.\n" +
+                    "This can cause potential infinite loops if child nodes complete on the same frame. An error will be thrown if this happens.");
+                m_AllowMultipleRepeatsPerTickField.RegisterValueChangedCallback(OnDelayRepeatValueChanged);
+            }
 
             if (m_ConditionsContainer == null)
             {
@@ -51,6 +60,13 @@ namespace Unity.Behavior
                 NodeProperties.Add(m_ConditionsContainer);
             }
             RefreshConditionalFields();
+            m_AllowMultipleRepeatsPerTickField.SetValueWithoutNotify(RepeatNodeModel.AllowMultipleRepeatsPerTick);
+        }
+        
+        private void OnDelayRepeatValueChanged(ChangeEvent<bool> evt)
+        {
+            RepeatNodeModel.Asset.MarkUndo("Toggle Repeat Node Delay Repeat To Next Tick.");
+            RepeatNodeModel.AllowMultipleRepeatsPerTick = evt.newValue;
         }
 
         void CreateDropdownElement()

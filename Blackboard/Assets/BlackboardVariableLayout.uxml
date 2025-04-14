@@ -1,9 +1,12 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:appui="Unity.AppUI.UI">
     <ui:VisualElement name="VariableContainer">
         <ui:VisualElement name="Info">
-            <ui:VisualElement name="NameContainer">
-                <ui:Label text="New Variable" name="Name" />
-                <appui:TextField name="NameField" />
+            <ui:VisualElement name="TitleContainer">
+                <appui:Icon name="Icon"/>
+                <ui:VisualElement name="NameContainer">
+                    <ui:Label text="New Variable" name="Name" />
+                    <appui:TextField name="NameField" />
+                </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement name="VariableTypeContainer">
                 <ui:Label text="Type" name="VariableType" />

@@ -59,9 +59,10 @@ To save and restore the states of [custom nodes](create-custom-node.md) in Unity
 
    You can find an example implementation in the `SceneController.cs` file in the Serialization sample.
 
-5. Any class that is referenced by a custom node and is intended to be serialized needs to have a parameterless constructor available.
+5. Any class used in a custom node that needs to be serialized must have a parameterless constructor available.
 
 ## Additional resources
 
-* [Create a behavior graph with Unity Behavior's generative AI](about-genai.md)
+* [Create a behavior graph with generative AI](about-genai.md)
 * [Get started with Unity Behavior](get-started.md)
+* [Debug the Agent in real time during Play mode](debug.md)

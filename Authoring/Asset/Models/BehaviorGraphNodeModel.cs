@@ -1,7 +1,7 @@
-using Unity.Behavior.GraphFramework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Behavior.GraphFramework;
 using UnityEngine;
 
 namespace Unity.Behavior
@@ -26,8 +26,9 @@ namespace Unity.Behavior
             NodeType = nodeInfo.SerializableType;
             NodeTypeID = nodeInfo.TypeID;
         }
-        
-        public BehaviorGraphNodeModel() { }
+
+        public BehaviorGraphNodeModel()
+        { }
 
         protected BehaviorGraphNodeModel(BehaviorGraphNodeModel nodeModelOriginal, BehaviorAuthoringGraph asset) : base(nodeModelOriginal, asset)
         {
@@ -37,11 +38,11 @@ namespace Unity.Behavior
             foreach (FieldModel fieldModelOriginal in nodeModelOriginal.Fields)
             {
                 VariableModel linkedVariable = fieldModelOriginal.LinkedVariable;
-                
+
                 VariableModel foundLinkedVariable = GetLinkedVariableFromBlackboard(asset.Blackboard, linkedVariable);
-                
+
                 // Check other linked blackboards
-                if(foundLinkedVariable != null)
+                if (foundLinkedVariable == null)
                 {
                     foreach (BehaviorBlackboardAuthoringAsset blackboard in asset.m_Blackboards)
                     {
@@ -52,7 +53,7 @@ namespace Unity.Behavior
                         }
                     }
                 }
-                
+
                 fieldModelOriginal.LinkedVariable = foundLinkedVariable != null ? foundLinkedVariable : null;
 
                 m_FieldValues.Add(fieldModelOriginal.Duplicate());
@@ -84,15 +85,15 @@ namespace Unity.Behavior
 
         private void EnsureNodeTypeIDIsCorrect()
         {
-             NodeInfo info = NodeRegistry.GetInfoFromTypeID(NodeTypeID);
-             if (info == null && NodeType.Type != null)
-             {
-                 info = NodeRegistry.GetInfo(NodeType);
-                 if (info != null)
-                 {
-                     NodeTypeID = info.TypeID;
-                 }
-             }
+            NodeInfo info = NodeRegistry.GetInfoFromTypeID(NodeTypeID);
+            if (info == null && NodeType.Type != null)
+            {
+                info = NodeRegistry.GetInfo(NodeType);
+                if (info != null)
+                {
+                    NodeTypeID = info.TypeID;
+                }
+            }
         }
 
         private void EnsureLinkedVariablesAreUpToDate()
@@ -101,8 +102,8 @@ namespace Unity.Behavior
             {
                 return;
             }
-            
-            // Update all fields with linked variables the correct VariableModels from the authoring graph Blackboards. 
+
+            // Update all fields with linked variables the correct VariableModels from the authoring graph Blackboards.
             foreach (FieldModel field in m_FieldValues)
             {
                 if (field.LinkedVariable == null)
@@ -130,7 +131,7 @@ namespace Unity.Behavior
                 }
             }
         }
-        
+
         public override void OnDefineNode()
         {
             base.OnDefineNode();
@@ -156,7 +157,7 @@ namespace Unity.Behavior
                 foreach (VariableInfo variable in nodeInfo.Variables)
                 {
                     Type variableType = variable.Type;
-                    Type fieldType = fieldModel.LocalValue?.GetType() ?? fieldModel.LinkedVariable?.GetType();  
+                    Type fieldType = fieldModel.LocalValue?.GetType() ?? fieldModel.LinkedVariable?.GetType();
                     if (fieldModel.FieldName == variable.Name && fieldType != null && variableType.IsAssignableFrom(fieldType))
                     {
                         foundMatch = true;
@@ -174,7 +175,8 @@ namespace Unity.Behavior
             }
         }
 
-        protected internal virtual void EnsurePortsAreUpToDate() { }
+        protected internal virtual void EnsurePortsAreUpToDate()
+        { }
 
         public override IVariableLink GetVariableLink(string variableName, Type type) => GetOrCreateField(variableName, type);
 
@@ -194,13 +196,15 @@ namespace Unity.Behavior
             [SerializeReference]
             public VariableModel LinkedVariable;
 
-            public FieldModel() { }
+            public FieldModel()
+            { }
 
             private FieldModel(FieldModel fieldModelOriginal)
             {
                 FieldName = fieldModelOriginal.FieldName;
                 LocalValue = fieldModelOriginal.LocalValue?.Duplicate();
                 LinkedVariable = fieldModelOriginal.LinkedVariable;
+                Type = fieldModelOriginal.Type;
             }
 
             object IVariableLink.Value
@@ -221,7 +225,7 @@ namespace Unity.Behavior
                 set => LinkedVariable = value;
             }
 
-            internal FieldModel Duplicate() => new (this);
+            internal FieldModel Duplicate() => new(this);
         }
 
         [SerializeReference]
@@ -240,8 +244,20 @@ namespace Unity.Behavior
         internal void SetField<TValue>(string fieldName, TValue value)
         {
             // using the runtime type (value.GetType()) here is necessary for Enums, cause these types are only known at runtime
-            FieldModel field = GetOrCreateField(fieldName, value == null ? typeof(TValue) : value.GetType());
-            field.LocalValue.ObjectValue = value;
+            var valueType = value == null ? typeof(TValue) : value.GetType();
+            FieldModel field = GetOrCreateField(fieldName, valueType);
+
+            if (valueType.IsEnum)
+            {
+                // if it's an enum, we are now working with the index and need to retrieve the actual value.
+                Array enumValues = Enum.GetValues(valueType);
+                var valueToAssign = enumValues.GetValue(Convert.ToInt32(value));
+                field.LocalValue.ObjectValue = valueToAssign;
+            }
+            else
+            {
+                field.LocalValue.ObjectValue = value;
+            }
         }
 
         internal bool HasField(string fieldName, Type variableType)
@@ -288,7 +304,7 @@ namespace Unity.Behavior
                     field.LocalValue = localCopy;
                 }
             }
-            
+
             // If no default value was specified, create an empty variable (with the C# default value).
             field.LocalValue ??= BlackboardVariable.CreateForType(variableType);
             return field;
@@ -312,7 +328,6 @@ namespace Unity.Behavior
             m_FieldValues.RemoveAt(index);
             return true;
         }
-        #endregion
-
+        #endregion Blackboard Values
     }
 }

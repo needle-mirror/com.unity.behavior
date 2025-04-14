@@ -43,14 +43,14 @@ To create this behavior graph, perform the following steps:
 
     To create the remaining variables, perform the following steps on the **Blackboard**.
 
-    1. Click the plus (![](Images/plus-icon.png)) icon.
+    1. Click the plus (**+**) icon.
     2. Select **Object**.
     3. Type a name for the new variable, for example `Target`.
     4. Click the plus icon again and select **Float**.
     5. Name the new float variable as `Speed` and specify a value. For example, `2`.
 9.  Select the link icon in the **Agent** field of the action node to link it with a variable on the **Blackboard** and select **Self**.
 
-    ![Link field](Images/link.png)
+    ![An action node with Link field](Images/link.png)
 
 10. Enter the relevant text in the field besides **Self says**.
 
@@ -82,8 +82,6 @@ Now create two branches that the agent can execute at random. In the first branc
 7. Group both of these actions so they run sequentially. To do this, drag the **Talk** node to the top half of the **Wait** node until a blue line appears. Then, drop the node to create a group.
 8. Join this group to the **Random** node created in step 12 of the first procedure.
 
-    ![First branch](Images/first-branch.png)
-
 ## Second branch
 
 1. Create a **Talk** node using the same steps from the first procedure. 
@@ -97,11 +95,11 @@ Now create two branches that the agent can execute at random. In the first branc
     Unity Behavior adds the **Set Random Target** node to the graph.
 6. Type `Targets` in the field beside **Tag**. The Unity Behavior sample includes a scene where its GameObjects are already tagged with the `Targets` value.
 
-    ![TagValue](Images/targets.png)
+    ![A field to specify the Tag value](Images/targets.png)
 
     This corresponds to the **Tag** field values shown in the Unity Editor's **Inspector** window.
 
-     ![TagValue](Images/tags.png)
+     ![Tag value in the Inspector window](Images/tags.png)
 
    > [!NOTE]
    > If you're creating your own scene (rather than using the `SampleScene` included with the Unity Behavior sample), be sure to tag some of your GameObjects with the `Targets` value. To do this, use the **Tag** drop-down menu in the Unity Editor's **Inspector** window (not Unity Behavior editor's **Inspector** window). For more information on creating and assigning tags, refer to [Tags](https://docs.unity3d.com/Manual/Tags.html).
@@ -116,8 +114,6 @@ Now create two branches that the agent can execute at random. In the first branc
 12. Select the four nodes in your group by using your cursor to drag a bounding box around the nodes. A blue line surrounds the group.
 13. Move the group so it's near the bottom right of the **Random** node.
 14. Join this group to the **Random** node created in step 12 of the first procedure.
-
-    ![alt text](Images/join-random.png)
 
 You have successfully created the sample behavior graph. 
 
@@ -157,14 +153,15 @@ To update the variables available on the **Blackboard** in real time, perform th
 
     If you change the value of a variable, Unity will append **Override** next to the variable name as shown in the following image.
 
-   ![Override variables](Images/override.png)
+   ![Override variable on the Inspector window](Images/override.png)
 
 5. To change the value of the variable to the original one, right-click the variable and select **Revert Variable**. 
 
-   ![Revert Variable](Images/revert.png)
+   ![The Revert Variable option allows you to change the value of the variable](Images/revert.png)
 
 ## Additional resources
 
 * [Create a behavior graph](create-behavior-graph.md)
 * [Use a pre-defined node](predefined-node.md)
 * [Create a custom node](create-custom-node.md)
+* [Debug the Agent in real time during Play mode](debug.md)

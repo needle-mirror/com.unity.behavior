@@ -12,6 +12,8 @@ namespace Unity.Behavior
     [NodeModelInfo(typeof(RepeatWhileConditionModifier))]
     internal class RepeatNodeModel : ModifierNodeModel, IConditionalNodeModel
     {
+        public bool AllowMultipleRepeatsPerTick = false;
+
         [field: SerializeReference]
         public List<ConditionModel> ConditionModels { get; set; } = new List<ConditionModel>();
 

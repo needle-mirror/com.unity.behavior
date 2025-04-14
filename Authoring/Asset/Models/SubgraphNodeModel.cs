@@ -17,7 +17,7 @@ namespace Unity.Behavior
         public override bool IsSequenceable => true;
 
         [SerializeField] private SerializableGUID m_SubgraphAssetId;
-        
+
         public bool IsDynamic
         {
             get
@@ -268,33 +268,57 @@ namespace Unity.Behavior
             base.OnValidate();
 
             ValidateCachedRuntimeGraph();
-            
+
             if (SubgraphAuthoringAsset.ContainsCyclicReferenceTo(Asset as BehaviorAuthoringGraph))
             {
                 Debug.LogWarning($"Subgraph {RuntimeSubgraph.name} contains a cyclic reference to {Asset.name}. The subgraph {RuntimeSubgraph.name} will be removed.");
                 SubgraphField.LinkedVariable.ObjectValue = null;
                 ClearFields();
             }
-            
+
             UpdateIsDynamic();
         }
 
+#if UNITY_EDITOR
+        private void RefreshSubgraphVersion()
+        {
+            BehaviorAuthoringGraph cachedGraph = SubgraphAuthoringAsset;
+            if (cachedGraph == null)
+            {
+                // Reference was lost, wait for the rebuild to cleanup.
+                return;
+            }
+
+            var behaviorAuthGraph = Asset as BehaviorAuthoringGraph;
+            if (IsDynamic)
+            {
+                behaviorAuthGraph.RemoveDependency(cachedGraph);
+            }
+            else
+            {
+                behaviorAuthGraph.AddOrUpdateDependency(cachedGraph);
+            }
+        }
+#endif
+
         public void ValidateCachedRuntimeGraph()
         {
-            if (SubgraphAuthoringAsset == null && m_SubgraphAssetId != new SerializableGUID())
+            if (SubgraphAuthoringAsset == null && m_SubgraphAssetId != new SerializableGUID() 
+                && SubgraphField.LinkedVariable != null)
             {
 #if UNITY_EDITOR
+                // At this stage, the target subgraph was deleted or moved. We try to resolve the missing dependency.
                 string path = UnityEditor.AssetDatabase.GUIDToAssetPath(m_SubgraphAssetId.ToString());
 
                 if (!string.IsNullOrEmpty(path))
                 {
                     BehaviorAuthoringGraph result = UnityEditor.AssetDatabase.LoadAssetAtPath<BehaviorAuthoringGraph>(path);
-                    BehaviorGraph runtimeGraph = BehaviorAuthoringGraph.GetOrCreateGraph(result);
+                    // Retrieve the runtime graph, but in case it was deleted, rebuild it.
+                    var runtimeGraph = result.BuildRuntimeGraph(forceRebuild: false); 
+                    SubgraphField.LinkedVariable.ObjectValue = runtimeGraph;
 
-                    if (SubgraphField.LinkedVariable != null)
-                    {
-                        SubgraphField.LinkedVariable.ObjectValue = runtimeGraph;
-                    }
+                    // In case we the target subgraph was rebuild, save now to force rebuild the parent graph.
+                    UnityEditor.AssetDatabase.SaveAssetIfDirty(result); 
                 }
 #endif
             }
@@ -313,6 +337,13 @@ namespace Unity.Behavior
                 m_SubgraphAssetId = new SerializableGUID(UnityEditor.AssetDatabase.AssetPathToGUID(UnityEditor.AssetDatabase.GetAssetPath(cachedGraph)));
 #endif
             }
+
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                RefreshSubgraphVersion();
+            }
+#endif
         }
 
         private void UpdateIsDynamic()

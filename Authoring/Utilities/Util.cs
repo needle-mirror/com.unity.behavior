@@ -282,39 +282,56 @@ namespace Unity.Behavior
             {
                 dispatcher.DispatchImmediate(new CreateVariableCommand(variableTypeName, BlackboardUtils.GetVariableModelTypeForType(type)));
             }
+            
+            // Assign top menu option icons separately
+            builder.Add("Basic Types", iconName: "float");
+            builder.Add("List", iconName: "list-object");
+            builder.Add("Resources", iconName: "source");
+            builder.Add("Vector Types", iconName: "vector3");
 
             List<BlackboardOption> blackboardTypes = BlackboardRegistry.GetDefaultBlackboardOptions();
 
             foreach (BlackboardOption blackboardType in blackboardTypes)
             {
-                builder.Add(blackboardType.Path, () => CreateVariableFromMenuAction(blackboardType.Name, blackboardType.Type), blackboardType.Icon, priority: blackboardType.Priority);
+                if (blackboardType.IconImage != null)
+                {
+                    builder.Add(blackboardType.Path, () => CreateVariableFromMenuAction(blackboardType.Name, blackboardType.Type), blackboardType.IconImage, priority: blackboardType.Priority);
+                }
+                else
+                {
+                    builder.Add(blackboardType.Path, () => CreateVariableFromMenuAction(blackboardType.Name, blackboardType.Type), iconName: blackboardType.Icon, priority: blackboardType.Priority);
+                }
             }
 
             // Enums menu
+            builder.Add("Enumeration", iconName: "enum" );
 #if UNITY_EDITOR
             builder.Add($"Enumeration/Create new enum type...", onSelected: () => OnCreateNewEnum(referenceView, buffer), priority: 1);
 #endif
             foreach (Type enumType in GetEnumVariableTypes())
             {
-                builder.Add($"Enumeration/{enumType.Name}", onSelected: () => dispatcher.DispatchImmediate(new CreateVariableCommand(enumType.Name, BlackboardUtils.GetVariableModelTypeForType(enumType))));
+                builder.Add($"Enumeration/{enumType.Name}", iconName: "enum", onSelected: () => dispatcher.DispatchImmediate(new CreateVariableCommand(enumType.Name, BlackboardUtils.GetVariableModelTypeForType(enumType))));
             }
 
             // Event channels menu
+            builder.Add("Events", iconName: "event");
 #if UNITY_EDITOR
             builder.Add($"Events/Create new event channel type...", onSelected: () => OnCreateNewEventChannel(referenceView, buffer), priority: 1);
 #endif
             foreach (EventChannelUtility.EventChannelInfo channelInfo in EventChannelUtility.GetEventChannelTypes())
             {
-                builder.Add($"Events/{channelInfo.Name}", iconName: "enum", onSelected: () => dispatcher.DispatchImmediate(new CreateVariableCommand(channelInfo.Name, channelInfo.VariableModelType)));
+                builder.Add($"Events/{channelInfo.Name}", iconName: "event", onSelected: () => dispatcher.DispatchImmediate(new CreateVariableCommand(channelInfo.Name, channelInfo.VariableModelType)));
             }
 
             builder.DefaultTabName = "Common";
 
             List<BlackboardOption> customTypes = BlackboardRegistry.GetCustomTypes();
-            builder.Add($"Other", priority: -1);
+            builder.Add($"Other", priority: -1, iconName: "others");
+            builder.Add($"Other/MonoBehaviours", iconName: "others");
+            builder.Add($"Other/ScriptableObjects", iconName: "others");
             foreach (var customType in customTypes)
             {
-                builder.Add($"Other/{customType.Path}", () => CreateVariableFromMenuAction(customType.Name, customType.Type), customType.Icon, priority: 0);
+                builder.Add($"Other/{customType.Path}", () => CreateVariableFromMenuAction(customType.Name, customType.Type), customType.IconImage, priority: 0);
             }
 
             return builder;

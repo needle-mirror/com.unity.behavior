@@ -119,7 +119,7 @@ namespace Unity.Behavior
                     return true;
                 }
             }
-            variable = default;
+            variable = null;
             return false;
         }
 
@@ -134,7 +134,7 @@ namespace Unity.Behavior
                 }
             }
 
-            variable = default;
+            variable = null;
             return false;
         }
 
@@ -180,14 +180,26 @@ namespace Unity.Behavior
                     return true;
                 }
 
-                if (value.GetType().IsAssignableFrom(variable.Type))
+                if (variable.Type.IsAssignableFrom(value.GetType()))
                 {
-                    var convertedValue = Convert.ChangeType(value, variable.Type);
-                    if (convertedValue != null)
+                    if (variable.Type.IsValueType)
                     {
-                        variable.ObjectValue = convertedValue;
+                        var convertedValue = Convert.ChangeType(value, variable.Type);
+                        if (convertedValue != null)
+                        {
+                            variable.ObjectValue = convertedValue;
+                            return true;
+                        }
+                    }
+                    else
+                    {
+                        variable.ObjectValue = value;
                         return true;
                     }
+                }
+                else
+                {
+                    Debug.LogError($"Incorrect value type ({typeof(TValue)}) specified for variable of type {variable.Type}.");
                 }
             }
 
@@ -232,7 +244,7 @@ namespace Unity.Behavior
                 return true;
             }
 
-            variable = default;
+            variable = null;
             return false;
         }
 
@@ -271,12 +283,20 @@ namespace Unity.Behavior
                 }
                 return true;
             }
-            if (value.GetType().IsAssignableFrom(var.Type))
+            if (var.Type.IsAssignableFrom(value.GetType()))
             {
-                var convertedValue = Convert.ChangeType(value, var.Type);
-                if (convertedValue != null)
+                if (var.Type.IsValueType)
                 {
-                    var.ObjectValue = convertedValue;
+                    var convertedValue = Convert.ChangeType(value, var.Type);
+                    if (convertedValue != null)
+                    {
+                        var.ObjectValue = convertedValue;
+                        return true;
+                    }
+                }
+                else
+                {
+                    var.ObjectValue = value;
                     return true;
                 }
             }
@@ -322,12 +342,20 @@ namespace Unity.Behavior
 
                 return true;
             }
-            if (value.GetType().IsAssignableFrom(var.Type))
+            if (var.Type.IsAssignableFrom(value.GetType()))
             {
-                var convertedValue = Convert.ChangeType(value, var.Type);
-                if (convertedValue != null)
+                if (var.Type.IsValueType)
                 {
-                    var.SetObjectValueWithoutNotify(convertedValue);
+                    var convertedValue = Convert.ChangeType(value, var.Type);
+                    if (convertedValue != null)
+                    {
+                        var.SetObjectValueWithoutNotify(convertedValue);
+                        return true;
+                    }
+                }
+                else
+                {
+                    var.SetObjectValueWithoutNotify(value);
                     return true;
                 }
             }

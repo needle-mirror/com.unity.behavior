@@ -48,6 +48,8 @@ namespace Unity.Behavior.GraphFramework
 
         public void SaveAsset()
         {
+            HasOutstandingChanges = false;
+
 #if UNITY_EDITOR
             UnityEditor.EditorUtility.SetDirty(this);
             // Note: Using AssetDatabase.SaveAssetIfDirty(this) saves the asset but doesn't pass the path to
@@ -55,7 +57,6 @@ namespace Unity.Behavior.GraphFramework
             // Instead, use AssetDatabase.SaveAssets().
             UnityEditor.AssetDatabase.SaveAssets();
 #endif
-            HasOutstandingChanges = false;
         }
 
         public void SetAssetDirty(bool setHasOutStandingChange = true)

@@ -29,6 +29,7 @@ namespace Unity.Behavior
                 return m_PreviousStatus;
             }
             m_LastFrameTimestamp = currentFrame;
+            m_PreviousStatus = Status.Waiting;
             if (Child == null)
             {
                 return Status.Success;
@@ -56,19 +57,17 @@ namespace Unity.Behavior
         /// <inheritdoc cref="OnEnd" />
         protected override void OnEnd()
         {
-            m_PreviousStatus = CurrentStatus;
-            m_StartCount--;
-            if (m_StartCount == 0 && !HasCompletedParent())
-            {
-                base.OnEnd();
-            }
+            m_PreviousStatus = Child?.CurrentStatus ?? Status.Success;
+            m_StartCount = 0;
+            base.OnEnd();
         }
 
         /// <inheritdoc cref="ResetStatus" />
         protected internal override void ResetStatus()
         {
             var currentFrame = UnityEngine.Time.unscaledTimeAsDouble;
-            if (CurrentStatus != Status.Uninitialized && m_StartCount == 0 && !HasCompletedParent()  && currentFrame != m_LastFrameTimestamp)
+            bool isChildRunning = Child != null && Child.IsRunning; 
+            if (!isChildRunning && CurrentStatus != Status.Uninitialized && m_StartCount == 0 && !HasCompletedParent()  && currentFrame != m_LastFrameTimestamp)
             {
                 m_PreviousStatus = Status.Uninitialized;
                 base.ResetStatus();

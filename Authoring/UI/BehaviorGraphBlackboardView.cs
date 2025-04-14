@@ -76,7 +76,20 @@ namespace Unity.Behavior
             m_BlackboardAssetsContainer.Add(divider);
             ViewContent.Add(m_BlackboardAssetsContainer);
         }
-        
+
+        protected override BlackboardVariableElement CreateVariableUI(VariableModel variable, ListView listView, bool isEditable)
+        {
+            BlackboardVariableElement variableUI = base.CreateVariableUI(variable, listView, isEditable);
+
+            if (variable.Type.BaseType == typeof(EventChannelBase))
+            {
+                variableUI.IconImage = null;
+                variableUI.IconName = "event";
+            }
+
+            return variableUI;
+        }
+
         protected override string GetBlackboardVariableTypeName(Type variableType)
         {
             if (variableType == typeof(BehaviorGraph))

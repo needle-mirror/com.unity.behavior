@@ -21,16 +21,7 @@ namespace Unity.Behavior
         protected override Status OnStart()
         {
             m_CurrentChild = 0;
-            if (Children.Count == 0)
-                return Status.Success;
-
-            var status = StartNode(Children[0]);
-            if (status == Status.Failure)
-                return Status.Failure;
-            if (status == Status.Success)
-                return Status.Running;
-
-            return Status.Waiting;
+            return StartChild(m_CurrentChild);
         }
 
         /// <inheritdoc cref="OnUpdate" />
@@ -40,22 +31,24 @@ namespace Unity.Behavior
             Status childStatus = currentChild.CurrentStatus;
             if (childStatus == Status.Success)
             {
-                if (m_CurrentChild == Children.Count-1)
-                    return Status.Success;
-
-                m_CurrentChild++;
-
-                var status = StartNode(Children[m_CurrentChild]);
-                if (status == Status.Failure)
-                    return Status.Failure;
-                if (status == Status.Success)
-                    return Status.Running;
+                return StartChild(++m_CurrentChild);
             }
-            else if (childStatus == Status.Failure)
+            return childStatus == Status.Running ? Status.Waiting : childStatus;
+        }
+
+        protected Status StartChild(int childIndex)
+        {
+            if (m_CurrentChild >= Children.Count)
             {
-                return Status.Failure;
+                return Status.Success;
             }
-            return Status.Waiting;
+            var childStatus = StartNode(Children[childIndex]);
+            return childStatus switch
+            {
+                Status.Success => childIndex + 1 >= Children.Count ? Status.Success : Status.Running,
+                Status.Running => Status.Waiting,
+                _ => childStatus
+            };
         }
     }
 }

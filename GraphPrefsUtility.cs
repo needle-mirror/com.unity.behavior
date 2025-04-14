@@ -37,7 +37,7 @@ namespace Unity.Behavior.GraphFramework
 #if UNITY_EDITOR
             if (inEditorContext)
             {
-                return UnityEditor.EditorPrefs.GetString(GetPrefsKey(key));
+                return UnityEditor.EditorPrefs.GetString(GetPrefsKey(key), defaultValue);
             }
 #endif
             return PlayerPrefs.GetString(GetPrefsKey(key), defaultValue);
@@ -48,7 +48,7 @@ namespace Unity.Behavior.GraphFramework
 #if UNITY_EDITOR
             if (inEditorContext)
             {
-                return UnityEditor.EditorPrefs.GetFloat(GetPrefsKey(key));
+                return UnityEditor.EditorPrefs.GetFloat(GetPrefsKey(key), defaultValue);
             }
 #endif
             return PlayerPrefs.GetFloat(GetPrefsKey(key), defaultValue);
@@ -59,7 +59,7 @@ namespace Unity.Behavior.GraphFramework
 #if UNITY_EDITOR
             if (inEditorContext)
             {
-                return UnityEditor.EditorPrefs.GetInt(GetPrefsKey(key));
+                return UnityEditor.EditorPrefs.GetInt(GetPrefsKey(key), defaultValue);
             }
 #endif
             return PlayerPrefs.GetInt(GetPrefsKey(key), defaultValue);

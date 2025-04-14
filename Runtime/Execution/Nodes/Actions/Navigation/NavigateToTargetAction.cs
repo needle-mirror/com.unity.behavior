@@ -15,6 +15,13 @@ namespace Unity.Behavior
         id: "3bc19d3122374cc9a985d90351633310")]
     internal partial class NavigateToTargetAction : Action
     {
+        public enum TargetPositionMode
+        {
+            ClosestPointOnAnyCollider,      // Use the closest point on any collider, including child objects
+            ClosestPointOnTargetCollider,   // Use the closest point on the target's own collider only
+            ExactTargetPosition             // Use the exact position of the target, ignoring colliders
+        }
+
         [SerializeReference] public BlackboardVariable<GameObject> Agent;
         [SerializeReference] public BlackboardVariable<GameObject> Target;
         [SerializeReference] public BlackboardVariable<float> Speed = new BlackboardVariable<float>(1.0f);
@@ -23,6 +30,11 @@ namespace Unity.Behavior
 
         // This will only be used in movement without a navigation agent.
         [SerializeReference] public BlackboardVariable<float> SlowDownDistance = new BlackboardVariable<float>(1.0f);
+        [Tooltip("Defines how the target position is determined for navigation:" +
+            "\n- ClosestPointOnAnyCollider: Use the closest point on any collider, including child objects" +
+            "\n- ClosestPointOnTargetCollider: Use the closest point on the target's own collider only" +
+            "\n- ExactTargetPosition: Use the exact position of the target, ignoring colliders. Default if no collider is found.")]
+        [SerializeReference] public BlackboardVariable<TargetPositionMode> m_TargetPositionMode = new(TargetPositionMode.ClosestPointOnAnyCollider);
 
         private NavMeshAgent m_NavMeshAgent;
         private Animator m_Animator;
@@ -49,7 +61,10 @@ namespace Unity.Behavior
             }
 
             // Check if the target position has changed.
-            bool boolUpdateTargetPosition = !Mathf.Approximately(m_LastTargetPosition.x, Target.Value.transform.position.x) || !Mathf.Approximately(m_LastTargetPosition.y, Target.Value.transform.position.y) || !Mathf.Approximately(m_LastTargetPosition.z, Target.Value.transform.position.z);
+            bool boolUpdateTargetPosition = !Mathf.Approximately(m_LastTargetPosition.x, Target.Value.transform.position.x) 
+                || !Mathf.Approximately(m_LastTargetPosition.y, Target.Value.transform.position.y) 
+                || !Mathf.Approximately(m_LastTargetPosition.z, Target.Value.transform.position.z);
+
             if (boolUpdateTargetPosition)
             {
                 m_LastTargetPosition = Target.Value.transform.position;
@@ -167,14 +182,23 @@ namespace Unity.Behavior
             return Status.Running;
         }
 
-
         private Vector3 GetPositionColliderAdjusted()
         {
-            Collider targetCollider = Target.Value.GetComponentInChildren<Collider>();
-            if (targetCollider != null)
+            switch (m_TargetPositionMode.Value)
             {
-                return targetCollider.ClosestPoint(Agent.Value.transform.position);
+                case TargetPositionMode.ClosestPointOnAnyCollider:
+                    Collider anyCollider = Target.Value.GetComponentInChildren<Collider>(includeInactive: false);
+                    if (anyCollider == null || anyCollider.enabled == false) 
+                        break;
+                    return anyCollider.ClosestPoint(Agent.Value.transform.position);
+                case TargetPositionMode.ClosestPointOnTargetCollider:
+                    Collider targetCollider = Target.Value.GetComponent<Collider>();
+                    if (targetCollider == null || targetCollider.enabled == false) 
+                        break;
+                    return targetCollider.ClosestPoint(Agent.Value.transform.position);
             }
+
+            // Default to target position.
             return Target.Value.transform.position;
         }
 

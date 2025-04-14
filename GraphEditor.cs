@@ -109,6 +109,13 @@ namespace Unity.Behavior.GraphFramework
             {
                 asset.OnValidate();
             }
+
+            // Check if there is a need to reload.
+            if (m_LastAssetVersion == Asset.VersionTimestamp)
+            {
+                return;
+            }
+
             Blackboard.Load(Asset.Blackboard);
             GraphView.Load(asset);
             m_LastAssetVersion = Asset.VersionTimestamp;
@@ -164,10 +171,14 @@ namespace Unity.Behavior.GraphFramework
         protected virtual void OnUndoRedoPerformed()
         {
             GraphView.IsPerformingUndo = true;
-            Load(Asset);
+            if (!IsAssetVersionUpToDate())
+            {
+                // Any modification to the asset will dirty the asset.
+                // So we can check for it's state and reload it only when required.
+                // This is also working if the undo/redo happens when the graph editor is not focused.
+                Load(Asset);
+            }
             GraphView.IsPerformingUndo = false;
-            Asset.SetAssetDirty();
-            IsAssetVersionUpToDate();
         }
 
         protected virtual void RegisterCommandHandlers()
@@ -204,27 +215,27 @@ namespace Unity.Behavior.GraphFramework
                 Dispatcher.DispatchImmediate(new CreateVariableCommand($"New {variableTypeName}", BlackboardUtils.GetVariableModelTypeForType(type)));
             }
 
-            builder.Add("Object", iconName: "object", onSelected: delegate { CreateVariableFromMenuAction("Object", typeof(GameObject)); });
-            builder.Add("String", iconName: "string", onSelected: delegate { CreateVariableFromMenuAction("String", typeof(string)); });
-            builder.Add("Float", iconName: "float", onSelected: delegate { CreateVariableFromMenuAction("Float", typeof(float)); });
-            builder.Add("Integer", iconName: "integer", onSelected: delegate { CreateVariableFromMenuAction("Integer", typeof(int)); });
-            builder.Add("Double", iconName: "double", onSelected: delegate { CreateVariableFromMenuAction("Double", typeof(double)); });
-            builder.Add("Boolean", iconName: "boolean", onSelected: delegate { CreateVariableFromMenuAction("Boolean", typeof(bool)); });
-            builder.Add("Vector2", iconName: "vector2", onSelected: delegate { CreateVariableFromMenuAction("Vector2", typeof(Vector2)); });
-            builder.Add("Vector3", iconName: "vector3", onSelected: delegate { CreateVariableFromMenuAction("Vector3", typeof(Vector3)); });
-            builder.Add("Vector4", iconName: "vector4", onSelected: delegate { CreateVariableFromMenuAction("Vector4", typeof(Vector4)); });
-            builder.Add("Color", iconName: "color", onSelected: delegate { CreateVariableFromMenuAction("Color", typeof(Color)); });
+            builder.Add("Object", onSelected: delegate { CreateVariableFromMenuAction("Object", typeof(GameObject)); }, iconName: "object");
+            builder.Add("String", onSelected: delegate { CreateVariableFromMenuAction("String", typeof(string)); }, iconName: "string");
+            builder.Add("Float", onSelected: delegate { CreateVariableFromMenuAction("Float", typeof(float)); }, iconName: "float");
+            builder.Add("Integer", onSelected: delegate { CreateVariableFromMenuAction("Integer", typeof(int)); }, iconName: "integer");
+            builder.Add("Double", onSelected: delegate { CreateVariableFromMenuAction("Double", typeof(double)); }, iconName: "double");
+            builder.Add("Boolean", onSelected: delegate { CreateVariableFromMenuAction("Boolean", typeof(bool)); }, iconName: "boolean");
+            builder.Add("Vector2", onSelected: delegate { CreateVariableFromMenuAction("Vector2", typeof(Vector2)); }, iconName: "vector2");
+            builder.Add("Vector3", onSelected: delegate { CreateVariableFromMenuAction("Vector3", typeof(Vector3)); }, iconName: "vector3");
+            builder.Add("Vector4", onSelected: delegate { CreateVariableFromMenuAction("Vector4", typeof(Vector4)); }, iconName: "vector4");
+            builder.Add("Color", onSelected: delegate { CreateVariableFromMenuAction("Color", typeof(Color)); }, iconName: "color");
 
-            builder.Add("List/Object", iconName: "object", onSelected: delegate { CreateVariableFromMenuAction("Object List", typeof(List<GameObject>)); });
-            builder.Add("List/String", iconName: "string", onSelected: delegate { CreateVariableFromMenuAction("String List", typeof(List<string>)); });
-            builder.Add("List/Float", iconName: "float", onSelected: delegate { CreateVariableFromMenuAction("Float List", typeof(List<float>)); });
-            builder.Add("List/Integer", iconName: "integer", onSelected: delegate { CreateVariableFromMenuAction("Integer List", typeof(List<int>)); });
-            builder.Add("List/Double", iconName: "double", onSelected: delegate { CreateVariableFromMenuAction("Double List", typeof(List<double>)); });
-            builder.Add("List/Boolean", iconName: "boolean", onSelected: delegate { CreateVariableFromMenuAction("Boolean List", typeof(List<bool>)); });
-            builder.Add("List/Vector2", iconName: "vector2", onSelected: delegate { CreateVariableFromMenuAction("Vector2 List", typeof(List<Vector2>)); });
-            builder.Add("List/Vector3", iconName: "vector3", onSelected: delegate { CreateVariableFromMenuAction("Vector3 List", typeof(List<Vector3>)); });
-            builder.Add("List/Vector4", iconName: "vector4", onSelected: delegate { CreateVariableFromMenuAction("Vector4 List", typeof(List<Vector4>)); });
-            builder.Add("List/Color", iconName: "color", onSelected: delegate { CreateVariableFromMenuAction("Color List", typeof(List<Color>)); });
+            builder.Add("List/Object", onSelected: delegate { CreateVariableFromMenuAction("Object List", typeof(List<GameObject>)); }, iconName: "object");
+            builder.Add("List/String", onSelected: delegate { CreateVariableFromMenuAction("String List", typeof(List<string>)); }, iconName: "string");
+            builder.Add("List/Float", onSelected: delegate { CreateVariableFromMenuAction("Float List", typeof(List<float>)); }, iconName: "float");
+            builder.Add("List/Integer", onSelected: delegate { CreateVariableFromMenuAction("Integer List", typeof(List<int>)); }, iconName: "integer");
+            builder.Add("List/Double", onSelected: delegate { CreateVariableFromMenuAction("Double List", typeof(List<double>)); }, iconName: "double");
+            builder.Add("List/Boolean", onSelected: delegate { CreateVariableFromMenuAction("Boolean List", typeof(List<bool>)); }, iconName: "boolean");
+            builder.Add("List/Vector2", onSelected: delegate { CreateVariableFromMenuAction("Vector2 List", typeof(List<Vector2>)); }, iconName: "vector2");
+            builder.Add("List/Vector3", onSelected: delegate { CreateVariableFromMenuAction("Vector3 List", typeof(List<Vector3>)); }, iconName: "vector3");
+            builder.Add("List/Vector4", onSelected: delegate { CreateVariableFromMenuAction("Vector4 List", typeof(List<Vector4>)); }, iconName: "vector4");
+            builder.Add("List/Color", onSelected: delegate { CreateVariableFromMenuAction("Color List", typeof(List<Color>)); }, iconName: "color");
 
             return builder;
         }

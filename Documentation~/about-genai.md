@@ -14,11 +14,14 @@ Benefits of using Unity Behavior's generative AI:
 > [!NOTE]
 > It's free to use Unity Behavior, but you need a Muse subscription to access the generative AI features of the tool.
 
+> Before using the generative AI features, you must [install Muse Common](install-muse-common.md). This package is required to create behavior graphs and its nodes using generative AI.
+
 Explore the generative AI capabilities of Unity Behavior and start creating your behavior graphs with this innovative functionality.
 
 | Topic | Description |
 | ----- | ----------- |
 | [Register for generative AI](register-gen-ai.md) | Register for Unity Behavior generative AI feature. |
+| [Install Muse Common with the Package Manager](install-muse-common.md) | Use the Package Manager to install Muse Common. |
 | [Create a branch using generative AI](gen-ai-behavior-graph.md) | Get started with your first behavior graph using generative AI. |
 | [Create an action node using generative AI](gen-ai-node.md) | Work with generative AI to create an action node for behavior graphs. |
 | [Placeholder node in a behavior graph](placeholder-nodes.md) | Manage placeholder nodes in behavior graphs. |

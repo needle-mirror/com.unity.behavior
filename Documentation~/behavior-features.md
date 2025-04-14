@@ -15,3 +15,4 @@ The following features make Unity Behavior an exceptional tool for developing so
 
 * [Behavior graphs](behavior-graph.md)
 * [Behavior graph node types](node-types.md)
+* [Unity Behavior user interface](user-interface.md)

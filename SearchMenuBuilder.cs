@@ -28,9 +28,17 @@ namespace Unity.Behavior.GraphFramework
         public Dictionary<string, List<SearchView.Item>> Tabs => m_Tabs;
         public bool HasTabs => m_Tabs?.Count > 0;
 
-        public void Add(string path, OnOptionSelected onOptionSelected, Texture2D icon = null, string description = null, bool enabled = true, int priority = 0, string tab = "")
+        public void AddOption(string path, OnOptionSelected onOptionSelected, Texture2D icon = null, string description = null, bool enabled = true, int priority = 0, string tab = "", string iconName = null)
         {
-            SearchView.Item searchItem = new SearchView.Item(path, icon, onOptionSelected, description, enabled, onSelected: null, priority);
+            SearchView.Item searchItem;
+            if (iconName != null)
+            {
+                searchItem = new SearchView.Item(path, iconName, onOptionSelected, description, enabled, onSelected: null, priority);
+            }
+            else
+            {
+                searchItem = new SearchView.Item(path, icon, onOptionSelected, description, enabled, onSelected: null, priority);   
+            }
             if (string.IsNullOrEmpty(tab))
             {
                 m_Options.Add(searchItem);
@@ -44,9 +52,18 @@ namespace Unity.Behavior.GraphFramework
             tabItems.Add(searchItem);
         }
 
-        public void Add(string path, Action onSelected = null, string iconName = null, string description = null, bool enabled = true, int priority = 0, string tab = "")
+        public void Add(string path, Action onSelected = null, Texture2D icon = null, string iconName = null, string description = null, bool enabled = true, int priority = 0, string tab = "")
         {
-            SearchView.Item searchItem = new SearchView.Item(path, iconName, onSelected: onSelected, description: description, enabled: enabled, priority: priority);
+            SearchView.Item searchItem;
+            if (iconName != null)
+            {
+                searchItem = new SearchView.Item(path, iconName, onSelected: onSelected, description: description, enabled: enabled, priority: priority);
+            }
+            else
+            {
+                searchItem = new SearchView.Item(path, icon: icon, onSelected: onSelected, description: description, enabled: enabled, priority: priority);
+            }
+            
             if (string.IsNullOrEmpty(tab))
             {
                 m_Options.Add(searchItem);

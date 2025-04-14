@@ -50,7 +50,7 @@ namespace Unity.Behavior
         /// UnityEngine.Object references, serialized separately from other variable types.
         /// </summary>
         [SerializeReference, HideInInspector]
-        private List<BlackboardVariable> m_BlackboardVariableOverridesList = new ();
+        internal List<BlackboardVariable> m_BlackboardVariableOverridesList = new ();
         internal Dictionary<SerializableGUID, BlackboardVariable> m_BlackboardOverrides = new ();
 
 #if UNITY_EDITOR
@@ -211,6 +211,14 @@ namespace Unity.Behavior
                 return;
             }
 
+            if (m_Graph.RootGraph == null)
+            {
+                Debug.LogError($"Root of the graph \"{m_Graph.name}\" is null. Validate the graph once before assigning it from code. " +
+                    $"Open the graph once or assign it from the inspector.", this);
+                m_Graph = null;
+                return;
+            }
+
             if (m_IsInitialised)
             {
                 m_Graph.AssignGameObjectToGraphModules(gameObject);
@@ -221,6 +229,7 @@ namespace Unity.Behavior
             m_Graph.AssignGameObjectToGraphModules(gameObject);
             InitChannelsAndMetadata();
             m_IsInitialised = true;
+            m_IsStarted = false;
         }
 
         /// <summary>
@@ -397,17 +406,15 @@ namespace Unity.Behavior
                 return TrySetBlackboardVariableOverride(variableName, value);
             }
 
-            m_Graph.RootGraph?.SetVariableValue(variableName, value);
-
+            bool result = false;
             foreach (var behaviorGraphModule in m_Graph.Graphs)
             {
                 if (behaviorGraphModule.SetVariableValue(variableName, value))
                 {
-                    return true;
+                    result = true;
                 }
             }
-
-            return false;
+            return result;
         }
 
         /// <summary>
@@ -424,8 +431,6 @@ namespace Unity.Behavior
                 return TrySetBlackboardVariableOverride(guid, value);
             }
 
-            m_Graph.RootGraph?.SetVariableValue(guid, value);
-
             foreach (var behaviorGraphModule in m_Graph.Graphs)
             {
                 if (behaviorGraphModule.SetVariableValue(guid, value))
@@ -433,7 +438,6 @@ namespace Unity.Behavior
                     return true;
                 }
             }
-
             return false;
         }
 
@@ -545,6 +549,11 @@ namespace Unity.Behavior
             if (!m_IsInitialised)
             {
                 Init();
+                // If the graph was invalid, it would be cleared by now.
+                if (m_Graph == null)
+                {
+                    return;
+                }
             }
             if (m_Graph.IsRunning)
             {
@@ -559,7 +568,7 @@ namespace Unity.Behavior
         /// </summary>
         public void End()
         {
-            if (m_Graph == null) return;
+            if (m_Graph == null || m_Graph.RootGraph == null) return;
 #if NETCODE_FOR_GAMEOBJECTS
             if (!IsOwner && NetcodeRunOnlyOnOwner) return;
 #endif
@@ -595,6 +604,11 @@ namespace Unity.Behavior
                 // The graph needs initialising and then starting. The user asked to do it this frame so we do it here
                 // instead of waiting for Update().
                 Init();
+                // If the graph was invalid, it would be cleared by now.
+                if (m_Graph == null)
+                {
+                    return;
+                }
                 m_Graph.Start();
                 m_IsStarted = true;
                 return;
@@ -608,7 +622,7 @@ namespace Unity.Behavior
         /// </summary>
         public void Update()
         {
-            if (m_Graph == null)
+            if (m_Graph == null || m_Graph.RootGraph == null)
                 return;
 
 #if NETCODE_FOR_GAMEOBJECTS
@@ -734,8 +748,7 @@ namespace Unity.Behavior
             // At this point, the variable either don't exist or is not overriden yet. 
             // We check for the source blackboard and override it if needed.
             // TODO: If we want to support override of linked blackboard asset in the future, we will need to also add support for it here.
-            var candidate = m_Graph.BlackboardReference.Blackboard.Variables.Where(bbVariable => bbVariable.Name == variableName).First();
-            if (candidate is null)
+            if (!m_Graph.BlackboardReference.GetVariable<TValue>(variableName, out var candidate))
             {
                 return false;
             }
@@ -763,8 +776,7 @@ namespace Unity.Behavior
             // At this point, the variable either don't exist or is not overriden yet. 
             // We check for the source blackboard and override it if needed.
             // TODO: If we want to support override of linked blackboard asset in the future, we will need to also add support for it here.
-            var candidate = m_Graph.BlackboardReference.Blackboard.Variables.Where(bbVariable => bbVariable.GUID == guid).First();
-            if (candidate is null)
+            if (!m_Graph.BlackboardReference.GetVariable<TValue>(guid, out var candidate))
             {
                 return false;
             }

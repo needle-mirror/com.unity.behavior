@@ -29,7 +29,8 @@ namespace Unity.Behavior
 
         internal BlackboardEditor Editor;
         private Panel m_AppUIPanel;
-        
+        private long m_PreviousVersionTimestamp = 0;
+
         private const string k_WindowDockedKey = "BlackboardWindowDocked";
         private const string k_WindowXKey = "BlackboardWindowX";
         private const string k_WindowYKey = "BlackboardWindowY";
@@ -50,6 +51,7 @@ namespace Unity.Behavior
             if (m_Asset != null)
             {
                 Editor.Load(m_Asset);
+                m_PreviousVersionTimestamp = m_Asset.VersionTimestamp;
             }
 
             SetWindowTitleFromAsset();
@@ -140,12 +142,11 @@ namespace Unity.Behavior
             }
 
             // Reload the editor if any graph or blackboard assets which the graph is depending on has changed.
-            if (Editor.GraphDependency.Item1 != null)
+            if ((Editor.GraphDependency.Item1 != null && Editor.HasGraphDependencyChanged()) 
+                || (m_Asset != null && m_Asset.VersionTimestamp != m_PreviousVersionTimestamp))
             {
-                if (Editor.HasGraphDependencyChanged())
-                {
-                    Editor.Load(Asset);
-                }   
+                Editor.Load(Asset);
+                m_PreviousVersionTimestamp = m_Asset.VersionTimestamp;
             }
         }
         

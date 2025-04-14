@@ -170,7 +170,7 @@ namespace Unity.Behavior
         /// </summary>
         /// <typeparam name="TValue">Unity.AppUI.UI.BaseVisualElement type</typeparam>
         /// <returns></returns>
-        protected TValue CreateField<TValue>(string fieldName)
+        protected TValue CreateField<TValue>(string fieldName, string tooltip = null)
             where TValue : Unity.AppUI.UI.BaseVisualElement, new()
         {
             VisualElement fieldContainer = new VisualElement();
@@ -180,6 +180,12 @@ namespace Unity.Behavior
             TValue field = new TValue();
             fieldContainer.Add(field);
             NodeProperties.Add(fieldContainer);
+
+            if (tooltip != null)
+            {
+                fieldContainer.tooltip = tooltip;
+                field.tooltip = tooltip;
+            }
             return field;
         }
 

@@ -32,5 +32,6 @@ To add and set up the Behavior Agent component, follow these steps:
 
 ## Additional resources
 
+* [Create and manage variables and Blackboards](blackboard-variables.md)
 * [Create a behavior graph](create-behavior-graph.md)
 * [Save and load running graph state](serialization.md)

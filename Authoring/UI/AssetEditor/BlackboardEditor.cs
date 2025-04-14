@@ -72,6 +72,12 @@ namespace Unity.Behavior
 #if UNITY_EDITOR
             Undo.undoRedoPerformed += OnUndoRedoPerformed;
 #endif
+            
+            // Add graph icon stylesheet for the App UI panel.
+            if (GetFirstAncestorOfType<Panel>() != null)
+            {
+                GetFirstAncestorOfType<Panel>().styleSheets.Add(ResourceLoadAPI.Load<StyleSheet>("Packages/com.unity.behavior/Elements/Assets/GraphIconStylesheet.uss"));
+            }
         }
 
         private void OnUndoRedoPerformed()
@@ -143,7 +149,7 @@ namespace Unity.Behavior
             List<SearchView.Item> searchItems = new List<SearchView.Item>();
             foreach (BlackboardAsset asset in assets)
             {
-                searchItems.Add(new SearchView.Item(asset.name, data: asset));
+                searchItems.Add(new SearchView.Item(asset.name, data: asset, icon: BlackboardUtils.GetScriptableObjectIcon(asset)));
             }
             SearchWindow.Show("Open Blackboard", searchItems,
                 item => BlackboardWindowDelegate.Open(item.Data as BehaviorBlackboardAuthoringAsset),

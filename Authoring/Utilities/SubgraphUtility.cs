@@ -19,6 +19,14 @@ namespace Unity.Behavior
                 return true;
             }
 
+#if UNITY_EDITOR
+            // If the parent asset don't have a runtime asset, we have nothing to compare against.
+            if (!parentAsset.HasRuntimeGraph)
+            {
+                return false;
+            }
+#endif
+
             // Detect if the subgraph has any references to this node's graph asset.
             bool cycleDetected = false;
             HashSet<BehaviorAuthoringGraph> visitedSubgraphs = new() { subgraphAsset };
@@ -49,35 +57,46 @@ namespace Unity.Behavior
             return cycleDetected;
         }
 
-        internal static bool ContainsReferenceTo(this BehaviorAuthoringGraph parentAsset, BehaviorAuthoringGraph subgraphAsset)
+        internal static bool ContainsStaticSubgraphReferenceTo(this BehaviorAuthoringGraph parentAsset, BehaviorAuthoringGraph subgraphAsset)
         {
-            if (!subgraphAsset || subgraphAsset == parentAsset 
-                || subgraphAsset.VersionTimestamp == 0) // If asset has just been created, it can't be reference anywhere.
+            if (!subgraphAsset || subgraphAsset == parentAsset)
             {
                 return false;
             }
 
-            // Detect if the subgraph has any references to this node's graph asset.
-            HashSet<BehaviorAuthoringGraph> visitedSubgraphs = new() { subgraphAsset };
-            List<BehaviorAuthoringGraph> subgraphsToCheck = new() { subgraphAsset };
-            while (subgraphsToCheck.Count != 0)
+            // If the parent already have a dependency, early out.
+            if (parentAsset.HasSubgraphDependency(subgraphAsset))
             {
-                var subgraph = subgraphsToCheck[0];
-                subgraphsToCheck.Remove(subgraph);
+                return true;
+            }
 
-                BehaviorGraph runtimeSubgraph = BehaviorAuthoringGraph.GetOrCreateGraph(subgraph);
-                if (parentAsset.Nodes.OfType<SubgraphNodeModel>().Any(node => node.RuntimeSubgraph == runtimeSubgraph))
+#if UNITY_EDITOR
+            // If the target asset don't have a runtime asset, we won't find a reference.
+            if (!subgraphAsset.HasRuntimeGraph)
+            {
+                return false;
+            }
+#endif
+            // Detect if the subgraph has any references to this node's graph asset.
+            BehaviorGraph runtimeSubgraphToCheck = BehaviorAuthoringGraph.GetOrCreateGraph(subgraphAsset);
+            HashSet<BehaviorAuthoringGraph> visitedSubgraphs = new() { parentAsset };
+            Queue<BehaviorAuthoringGraph> graphsToCheck = new();
+            graphsToCheck.Enqueue(parentAsset);
+
+            while (graphsToCheck.TryDequeue(out var workingGraph))
+            {
+                if (workingGraph.Nodes.OfType<SubgraphNodeModel>().Any(node => !node.IsDynamic && node.RuntimeSubgraph == runtimeSubgraphToCheck))
                 {
                     return true;
                 }
 
                 // Queue subgraphs for checking
-                foreach (var subgraphNode in subgraph.Nodes.OfType<SubgraphNodeModel>())
+                foreach (var subgraphNode in workingGraph.Nodes.OfType<SubgraphNodeModel>())
                 {
-                    if (subgraph != parentAsset && subgraphNode.RuntimeSubgraph && subgraphNode.SubgraphAuthoringAsset 
+                    if (workingGraph != parentAsset && subgraphNode.RuntimeSubgraph && subgraphNode.SubgraphAuthoringAsset 
                         && visitedSubgraphs.Add(subgraphNode.SubgraphAuthoringAsset))
                     {
-                        subgraphsToCheck.Add(subgraphNode.SubgraphAuthoringAsset);
+                        graphsToCheck.Enqueue(subgraphNode.SubgraphAuthoringAsset);
                     }
                 }
             }

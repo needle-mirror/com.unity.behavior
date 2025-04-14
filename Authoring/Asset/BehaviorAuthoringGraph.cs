@@ -13,7 +13,7 @@ namespace Unity.Behavior
 {
     /// <summary>
     /// The primary asset type used by Unity Behavior. The asset contains the authoring representation of the behavior
-    /// graph. 
+    /// graph.
     /// </summary>
     [Serializable]
 #if UNITY_EDITOR
@@ -37,17 +37,17 @@ namespace Unity.Behavior
         }
 
         [SerializeReference] private BehaviorGraph m_RuntimeGraph;
+        public bool HasRuntimeGraph => m_RuntimeGraph != null;
 #endif
+
         [SerializeField]
         public SerializableGUID AssetID = SerializableGUID.Generate();
-        private long m_LastSerializedTimestamp;
 
         [SerializeField]
         public StoryInfo Story = new StoryInfo();
 
         [NonSerialized]
         private List<NodeModel> m_RootNodes = new List<NodeModel>();
-
         public List<NodeModel> Roots
         {
             get
@@ -71,12 +71,12 @@ namespace Unity.Behavior
 
         private Dictionary<SerializableGUID, NodeModelInfo> m_RuntimeNodeTypeIDToNodeModelInfo;
         public IReadOnlyDictionary<SerializableGUID, NodeModelInfo> RuntimeNodeTypeIDToNodeModelInfo => m_RuntimeNodeTypeIDToNodeModelInfo;
-        
+
         [SerializeField]
         internal List<BehaviorBlackboardAuthoringAsset> m_Blackboards = new List<BehaviorBlackboardAuthoringAsset>();
 
         [SerializeReference] private BehaviorBlackboardAuthoringAsset m_MainBlackboardAuthoringAsset;
-        
+
         [Serializable]
         public struct NodeModelInfo
         {
@@ -86,16 +86,29 @@ namespace Unity.Behavior
             public List<VariableInfo> Variables;
             public List<string> NamedChildren;
         }
-               
+
         [SerializeField]
-        private SerializableCommandBuffer m_CommandBuffer = new SerializableCommandBuffer();        
+        private SerializableCommandBuffer m_CommandBuffer = new SerializableCommandBuffer();
         public SerializableCommandBuffer CommandBuffer => m_CommandBuffer;
+
+        [System.Serializable]
+        public struct SubgraphGraphInfo
+        {
+            public SerializableGUID AssetID;
+            public long Timestamp;
+        }
+
+        [SerializeField]
+        private List<SubgraphGraphInfo> m_SubgraphsInfo = new();
+
+        private long m_LastSerializedTimestamp;
 
         private void Awake()
         {
 #if UNITY_EDITOR
             string guid = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(GetInstanceID()));
             AssetID = new SerializableGUID(guid);
+            EnsureAuthoringRuntimeGraphIsUpToDate();
 #endif
             BehaviorGraphAssetRegistry.Add(this);
         }
@@ -109,12 +122,96 @@ namespace Unity.Behavior
         /// <inheritdoc cref="OnValidate" />
         public override void OnValidate()
         {
+#if UNITY_EDITOR
+            EnsureAuthoringRuntimeGraphIsUpToDate();
+#endif
             EnsureAtLeastOneRoot();
             EnsureStoryVariablesExist();
             EnsureAssetReferenceOnConditions();
             EnsureBlackboardsAreUpToDate();
+            EnsureSubgraphsDependencyAreUpToDate();
 
             base.OnValidate();
+        }
+
+        public void AddOrUpdateDependency(BehaviorAuthoringGraph graph)
+        {
+            int index = m_SubgraphsInfo.FindIndex((info) => info.AssetID == graph.AssetID);
+            var newData = new SubgraphGraphInfo()
+            {
+                AssetID = graph.AssetID,
+                Timestamp = graph.m_VersionTimestamp,
+            };
+
+            if (index == -1)
+            {
+                m_SubgraphsInfo.Add(newData);
+            }
+            else if (m_SubgraphsInfo[index].Timestamp != newData.Timestamp)
+            {
+                m_SubgraphsInfo[index] = newData;
+            }
+            else
+            {
+                return;
+            }
+
+            SetAssetDirty(false);
+        }
+
+        public void RemoveDependency(BehaviorAuthoringGraph graph)
+        {
+            int index = m_SubgraphsInfo.FindIndex((info) => info.AssetID == graph.AssetID);
+            if (index != -1)
+            {
+                m_SubgraphsInfo.RemoveAt(index);
+                SetAssetDirty(true);
+            }
+        }
+
+        public bool IsDependencyUpToDate(BehaviorAuthoringGraph graph)
+        {
+            int index = m_SubgraphsInfo.FindIndex((info) => info.AssetID == graph.AssetID);
+            if (index == -1 || HasOutstandingChanges) // if the graph don't have dependency, or if it has pending outstanding changes.
+            {
+                return false;
+            }
+
+            return m_SubgraphsInfo[index].Timestamp == graph.m_VersionTimestamp;
+        }
+
+        public bool HasSubgraphDependency(BehaviorAuthoringGraph graph)
+        {
+            return m_SubgraphsInfo.Any((info) => info.AssetID == graph.AssetID);
+        }
+
+        private void EnsureSubgraphsDependencyAreUpToDate()
+        {
+            bool hasChanged = false;
+            for (int i = m_SubgraphsInfo.Count - 1; i >= 0; i--)
+            {
+                SubgraphGraphInfo subgraphInfo = m_SubgraphsInfo[i];
+                if (!BehaviorGraphAssetRegistry.TryGetAssetFromId(subgraphInfo.AssetID, out var asset)
+                    || !this.ContainsStaticSubgraphReferenceTo(asset))
+                {
+#if BEHAVIOR_DEBUG_ASSET_IMPORT
+                    Debug.Log("Removing an invalid subgraph dependency", this);
+#endif
+                    // If the asset was deleted or this graph no longer contains reference the subgraph, then it is no longer dependent.
+                    m_SubgraphsInfo.RemoveAt(i);
+                    hasChanged = true;
+                    continue;
+                }
+
+                // If the asset dependency is no longer up to date, we also need to rebuild the graph.
+                hasChanged |= !IsDependencyUpToDate(asset);
+            }
+
+            if (hasChanged)
+            {
+                // Lost of static subgraph dependency means the graph module needs to be rebuilt.
+                SetAssetDirty(setHasOutStandingChange: true);
+            }
         }
 
         private void ValidateAssetNames(bool validateMainAsset)
@@ -174,7 +271,7 @@ namespace Unity.Behavior
 
         private void ValidateBlackboardAssetName(BehaviorBlackboardAuthoringAsset blackboard)
         {
-            #if UNITY_EDITOR
+#if UNITY_EDITOR
             if (AssetDatabase.GetAssetPath(blackboard) != AssetDatabase.GetAssetPath(this))
             {
                 return;
@@ -184,7 +281,7 @@ namespace Unity.Behavior
             {
                 blackboard.name = $"{name} + Blackboard";
             }
-            #endif
+#endif
         }
 
         private void EnsureAtLeastOneRoot()
@@ -283,7 +380,8 @@ namespace Unity.Behavior
                     {
                         if (connection.NodeModel is FloatingPortNodeModel floatingPortNodeModel)
                         {
-                            
+                            // Added years ago. Need to investigate if there is something to finish here.
+                            // Otherwise it is deadcode that needs to be removed.
                         }
                     }
                 }
@@ -292,6 +390,11 @@ namespace Unity.Behavior
 
         private void EnsureStoryVariablesExist()
         {
+            if (Blackboard == null)
+            {
+                return;
+            }
+
             Story ??= new StoryInfo();
 
             List<VariableInfo> storyVariables = Story.Variables;
@@ -367,7 +470,13 @@ namespace Unity.Behavior
                 .FirstOrDefault(asset => asset is BehaviorGraph) as BehaviorGraph;
             if (graph != null)
             {
-                assetObject.m_RuntimeGraph = graph;
+                if (graph != assetObject.m_RuntimeGraph)
+                {
+                    assetObject.m_RuntimeGraph = graph;
+                    assetObject.OnValidate();
+                    AssetDatabase.SaveAssetIfDirty(assetObject);
+                }
+
                 return graph;
             }
 
@@ -375,7 +484,7 @@ namespace Unity.Behavior
             graph.name = assetObject.name;
             assetObject.m_RuntimeGraph = graph;
             AssetDatabase.AddObjectToAsset(graph, assetObject);
-            EditorUtility.SetDirty(assetObject);
+            assetObject.OnValidate();
             AssetDatabase.SaveAssetIfDirty(assetObject);
             return graph;
 #endif
@@ -405,6 +514,7 @@ namespace Unity.Behavior
             return debugInfo;
         }
 #endif
+
         /// <inheritdoc cref="OnBeforeSerialize"/>
         public void OnBeforeSerialize()
         {
@@ -486,7 +596,7 @@ namespace Unity.Behavior
                 m_RuntimeNodeTypeIDToNodeModelInfo[nodeModelInfo.RuntimeTypeID] = nodeModelInfo;
             }
         }
-        
+
         internal override void EnsureAssetHasBlackboard()
         {
             string blackboardName = name + " Blackboard";
@@ -497,7 +607,7 @@ namespace Unity.Behavior
             if (blackboardAuthoring == null)
             {
                 blackboardAuthoring = CreateInstance<BehaviorBlackboardAuthoringAsset>();
-                
+
                 Blackboard = blackboardAuthoring;
                 Blackboard.name = blackboardName;
                 Blackboard.hideFlags = HideFlags.HideInHierarchy;
@@ -533,7 +643,7 @@ namespace Unity.Behavior
             {
                 return;
             }
-             
+
             // If we reached this far, that means we are generating a new blackboard.
             AssetDatabase.AddObjectToAsset(Blackboard, this);
             blackboardAuthoring.BuildRuntimeBlackboard();
@@ -561,27 +671,41 @@ namespace Unity.Behavior
             {
                 return null;
             }
-            
+
+            // Some situations might require a full rebuild (new root, outdated subgraph dependency)
+            OnValidate();
+
             if (runtimeGraph.RootGraph == null || HasOutstandingChanges || forceRebuild)
             {
-                // Debug.Log($"GraphAsset[<b>{name}</b>].BuildRuntimeGraph");
+#if BEHAVIOR_DEBUG_ASSET_IMPORT
+                Debug.Log($"GraphAsset[<b>{name}</b>].BuildRuntimeGraph", this);
+#endif
                 runtimeGraph.Graphs.Clear();
                 var graphAssetProcessor = new GraphAssetProcessor(this, runtimeGraph);
                 graphAssetProcessor.ProcessGraph();
+                SetDirtyAndSyncRuntimeGraphTimestamp(outstandingChange: true);
             }
-            else
-            {
-                // Debug.Log($"<b>Skipping</b> GraphAsset[<b>{name}</b>].BuildRuntimeGraph");
-                // If no outstanding change, we only update the version timestamp.
-                // Any cosmetic data (like node position) are SerializedField, so the asset only needs to be save.
-                runtimeGraph.RootGraph.VersionTimestamp = VersionTimestamp;
-            }
-
 #if UNITY_EDITOR
-            // We don't want to use GraphAsset.SetAssetDirty as it could cause a recursive chain with OnWillSaveAssets. 
-            EditorUtility.SetDirty(this);
+            else if (EditorUtility.IsDirty(this))
+            {
+#if BEHAVIOR_DEBUG_ASSET_IMPORT
+                Debug.Log($"GraphAsset[<b>{name}</b>].SetAssetDirty - Asset don't have outstanding change but serialized data are dirty.", this);
 #endif
+                // If no outstanding change but serialized data are dirty, only update the timestamp.
+                // This happens when only serialized field of cosmetic data are changed (like node position).
+                SetDirtyAndSyncRuntimeGraphTimestamp(outstandingChange: false);
+            }
+#endif
+
             return runtimeGraph;
+        }
+
+        private void SetDirtyAndSyncRuntimeGraphTimestamp(bool outstandingChange)
+        {
+            SetAssetDirty(outstandingChange); // Set dirty update the timestamp of the main asset.
+#if UNITY_EDITOR // We really need to make Authoring assembly editor only to be able to break free it.
+            m_RuntimeGraph.RootGraph.VersionTimestamp = VersionTimestamp; // So we need to sync it again here.
+#endif
         }
 
 #if UNITY_EDITOR
@@ -593,6 +717,58 @@ namespace Unity.Behavior
         internal void ResetOutstandingChange()
         {
             HasOutstandingChanges = false;
+        }
+
+        /// <summary>
+        /// This method is used to validate the serialized runtime graph that has been generated during authoring time.
+        /// This is needed to check to ensure backward compatibility with older graph that didn't serialized a
+        /// direct link to the runtime asset.
+        /// </summary>
+        /// <param name="assetObject"></param>
+        /// <returns></returns>
+        public void EnsureAuthoringRuntimeGraphIsUpToDate()
+        {
+            if (!EditorUtility.IsPersistent(this))
+            {
+                return;
+            }
+
+            string assetPath = AssetDatabase.GetAssetPath(this);
+            if (string.IsNullOrEmpty(assetPath))
+            {
+                return;
+            }
+
+            BehaviorGraph graph = AssetDatabase.LoadAllAssetsAtPath(assetPath)
+                .FirstOrDefault(asset => asset is BehaviorGraph) as BehaviorGraph;
+            if (graph != null)
+            {
+                // This usually happen when the asset is duplicated.
+                if (graph != this.m_RuntimeGraph)
+                {
+                    m_RuntimeGraph = graph;
+                }
+
+                if (m_RuntimeGraph.RootGraph == null)
+                {
+                    return;
+                }
+
+                if (m_RuntimeGraph.RootGraph.AuthoringAssetID != AssetID)
+                {
+                    m_RuntimeGraph.RootGraph.AuthoringAssetID = AssetID;
+                }
+                if (m_RuntimeGraph.RootGraph.VersionTimestamp != VersionTimestamp)
+                {
+                    SetDirtyAndSyncRuntimeGraphTimestamp(outstandingChange: false);
+                }
+            }
+            else if (m_RuntimeGraph != null)
+            {
+                // In this case, the asset lost reference to it's runtime graph (deleted).
+                m_RuntimeGraph = null;
+                SetAssetDirty(false);
+            }
         }
 #endif
     }

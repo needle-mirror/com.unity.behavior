@@ -81,10 +81,9 @@ namespace Unity.Behavior
 
             BehaviorGraphView.ViewState.ViewStateUpdated += OnGraphViewUpdated;
             RegisterCallback<LinkFieldLinkButtonEvent>(OnVariableLinkButton);
-            BlackboardUtils.AddCustomIcon(typeof(EventChannelBase),
-                ResourceLoadAPI.Load<Texture2D>($"Packages/com.unity.behavior/Authoring/UI/AssetEditor/Assets/Images/Icons/send-message.png"));
-
             RegisterCallback<FocusInEvent>(_ => IsAssetVersionUpToDate());
+            
+            BlackboardUtils.AddCustomIconName(typeof(EventChannelBase), "event");
         }
 
         public void OnSubgraphRepresentationButtonClicked()
@@ -237,35 +236,34 @@ namespace Unity.Behavior
             return blackboardView;
         }
 
+        /// <summary>
+        /// Ensures the provided GraphAsset has a 'Self' variable in its Blackboard.
+        /// This variable is essential for proper graph functionality, allowing nodes to access the GameObject that owns the graph.
+        /// </summary>
         private void EnsureNewAssetHasSelfReferenceVariable(GraphAsset asset)
         {
-            // If no preferred name has been set, add the default name.
+            // If this is the first time setting up graphs in the project, store the default 
+            // name for the Self variable in editor preferences.
             if (panel != null && !GraphPrefsUtility.HasKey(k_PrefsKeyDefaultGraphOwnerName, IsInEditorContext))
             {
                 SetDefaultGraphOwnerName(k_SelfDefaultGraphOwnerName);
             }
 
-            // Check if asset already has a graph owner variable.
-            if (asset.Blackboard.Variables.Any(variable => variable.ID == BehaviorGraph.k_GraphSelfOwnerID && variable.Type == typeof(GameObject)))
+            if (GraphAssetProcessor.HasGraphOwnerVariable(asset.Blackboard))
             {
                 return;
             }
 
-            // If the asset is not new, that means the original self has been deleted.
-            // Log a warning explaining it is required and that is not expected.
-            // Once we introduce more restriction on name/type duplication, this might cause undefined behavior.
+            // For existing assets (non-zero timestamp), this indicates the 'Self' variable was 
+            // accidentally deleted, which shouldn't happen anymore (pre 1.0.5).
             if (asset.VersionTimestamp != default)
             {
                 Debug.LogWarning($"\"{asset.name}\" embedded blackboard lost its original Self variable. " +
                     $"This should not happen and is required to ensure that each node in the graph can access a valid GameObject property. " +
                     $"Generating a new valid Self variable now.", asset);
             }
-            
-            asset.Blackboard.Variables.Add(new TypedVariableModel<GameObject>()
-            {
-                ID = BehaviorGraph.k_GraphSelfOwnerID,
-                Name = GraphPrefsUtility.GetString(k_PrefsKeyDefaultGraphOwnerName, k_SelfDefaultGraphOwnerName, IsInEditorContext)
-            });
+
+            GraphAssetProcessor.EnsureBlackboardGraphOwnerVariable(asset.Blackboard);
         }
 
         /// <summary>
@@ -324,25 +322,29 @@ namespace Unity.Behavior
 #if UNITY_EDITOR
             BehaviorBlackboardAuthoringAsset[] blackboardAssets = Util.GetNonGraphBlackboardAssets();
             List<SearchView.Item> options = new List<SearchView.Item>();
-            foreach (BehaviorBlackboardAuthoringAsset blackboardAsset in blackboardAssets)
+            if (blackboardAssets.Length > 0)
             {
-                bool isAlreadyAdded = false;
-                foreach (BehaviorBlackboardAuthoringAsset blackboard in Asset.m_Blackboards)
+                options.Add(new SearchView.Item($"Blackboards", icon: BlackboardUtils.GetScriptableObjectIcon(blackboardAssets[0]))); 
+                foreach (BehaviorBlackboardAuthoringAsset blackboardAsset in blackboardAssets)
                 {
-                    if (blackboard.AssetID != blackboardAsset.AssetID)
+                    bool isAlreadyAdded = false;
+                    foreach (BehaviorBlackboardAuthoringAsset blackboard in Asset.m_Blackboards)
                     {
-                        continue;
-                    }
+                        if (blackboard.AssetID != blackboardAsset.AssetID)
+                        {
+                            continue;
+                        }
                     
-                    options.Add(new SearchView.Item($"Blackboards/{blackboardAsset.name}", enabled: false));
-                    isAlreadyAdded = true;
-                    break;
-                }
+                        options.Add(new SearchView.Item($"Blackboards/{blackboardAsset.name}", enabled: false, icon: BlackboardUtils.GetScriptableObjectIcon(blackboardAsset)));
+                        isAlreadyAdded = true;
+                        break;
+                    }
 
-                if (!isAlreadyAdded)
-                {
-                    options.Add(new SearchView.Item($"Blackboards/{blackboardAsset.name}", onSelected: () => OnAddBlackboardGroup(blackboardAsset)));   
-                }
+                    if (!isAlreadyAdded)
+                    {
+                        options.Add(new SearchView.Item($"Blackboards/{blackboardAsset.name}",  icon: BlackboardUtils.GetScriptableObjectIcon(blackboardAsset), onSelected: () => OnAddBlackboardGroup(blackboardAsset)));   
+                    }
+                }   
             }
             
             foreach (SearchView.Item option in options)
@@ -494,7 +496,7 @@ namespace Unity.Behavior
         {
 #if UNITY_EDITOR
             BehaviorAuthoringGraph[] assets = Util.GetBehaviorGraphAssets();
-            List<SearchView.Item> searchItems = assets.Select(asset => new SearchView.Item(asset.name, data: asset)).ToList();
+            List<SearchView.Item> searchItems = assets.Select(asset => new SearchView.Item(asset.name, data: asset, icon: BlackboardUtils.GetScriptableObjectIcon(asset))).ToList();
             SearchWindow.Show("Open Graph", searchItems,
                 item => BehaviorWindowDelegate.Open(item.Data as BehaviorAuthoringGraph),
                 this.Q<ActionButton>("OpenAssetButton"), 200, 300);
@@ -565,8 +567,10 @@ namespace Unity.Behavior
             {
                 assetIsOutOfDate = true;
             }
-            // If any graph module in the set of graphs is out of date, the asset is out of date.
-            else if (graph.Graphs.Any(graphModule => BehaviorGraphAssetRegistry.TryGetAssetFromId(graphModule.AuthoringAssetID, out BehaviorAuthoringGraph authoringGraph) && graphModule.VersionTimestamp != authoringGraph.VersionTimestamp))
+            // If the root graph is out of date, the asset is out of date.
+            // This should probably be move to the BehaviorAuthoringGraph validation layer.
+            // We don't check other graphs as they are usually subgraphs that are validated independently.
+            else if (graph.RootGraph.VersionTimestamp != Asset.VersionTimestamp)
             {
                 assetIsOutOfDate = true;
             }
@@ -609,7 +613,7 @@ namespace Unity.Behavior
                 return;
             }
 
-            Texture2D icon = null; // variableType.GetIcon();
+            Texture2D icon = variableIconType.GetIcon();
             SearchMenuBuilder builder = new SearchMenuBuilder();
             if (evt.target is BehaviorLinkField<UnityEngine.Object, RuntimeObjectField> { Model: EventNodeModel })
             {
@@ -617,7 +621,7 @@ namespace Unity.Behavior
 #if UNITY_EDITOR
                 foreach (EventChannelUtility.EventChannelInfo channelInfo in EventChannelUtility.GetEventChannelTypes())
                 {
-                    builder.Add($"Create Event Channel.../New {channelInfo.Name}", () =>
+                    builder.AddOption($"Create Event Channel.../New {channelInfo.Name}", () =>
                     {
                         OnCreateFromLinkSearch(field, $"{channelInfo.Name}", channelInfo.VariableModelType);
                     }, icon: null, null, true, 1);
@@ -625,8 +629,8 @@ namespace Unity.Behavior
 #endif
                 foreach (VariableModel variable in Asset.Blackboard.Variables.Where(v => variableType.IsAssignableFrom(v.Type)))
                 {
-                    builder.Add($"{variable.Name}",
-                        () => { OnLinkFromSearcher(variable, field); }, icon);
+                    builder.AddOption($"{variable.Name}",
+                        () => { OnLinkFromSearcher(variable, field); }, variable.Type.GetIcon());
                 }
             }
             else if (evt.target is BaseLinkField { Model: SubgraphNodeModel subgraphNode } subgraphField &&
@@ -634,7 +638,7 @@ namespace Unity.Behavior
             {
                 if (subgraphField.LinkVariableType == typeof(BehaviorGraph))
                 {
-                    builder.Add("New Subgraph...",
+                    builder.AddOption("New Subgraph...",
                         () =>
                         {
                             OnCreateFromLinkSearch(field, $"Subgraph",
@@ -643,12 +647,12 @@ namespace Unity.Behavior
                     // Populate subgraph link field options from subgraph type Blackboard variables.
                     foreach (VariableModel variable in Asset.Blackboard.Variables.Where(v => typeof(BehaviorGraph).IsAssignableFrom(v.Type)))
                     {
-                        builder.Add($"{variable.Name}",
+                        builder.AddOption($"{variable.Name}",
                             () =>
                             {
                                 OnLinkFromSearcher(variable, field);
                                 LinkSubgraph((BehaviorGraph)variable.ObjectValue, variable.Name, subgraphNode, field, variable); 
-                            }, icon: null);
+                            }, icon: variable.Type.GetIcon());
                     }    
                 }
                 else if (subgraphField.LinkVariableType == typeof(BehaviorBlackboardAuthoringAsset))
@@ -656,7 +660,7 @@ namespace Unity.Behavior
 #if UNITY_EDITOR
                     foreach (BehaviorBlackboardAuthoringAsset blackboardAsset in Util.GetNonGraphBlackboardAssets())
                     {
-                        builder.Add(blackboardAsset.name, () => OnBlackboardAssetSelected(blackboardAsset, field),
+                        builder.AddOption(blackboardAsset.name, () => OnBlackboardAssetSelected(blackboardAsset, field),
                             icon: BlackboardUtils.GetScriptableObjectIcon(blackboardAsset), tab: "Assets");
                     }
 #endif
@@ -670,7 +674,7 @@ namespace Unity.Behavior
                 {
                     foreach (var enumVariableType in Util.GetEnumVariableTypes())
                     {
-                        builder.Add($"Create Enum Variable.../New {enumVariableType.Name}",
+                        builder.AddOption($"Create Enum Variable.../New {enumVariableType.Name}",
                             () =>
                             {
                                 OnCreateFromLinkSearch(field, $"{enumVariableType.Name}",
@@ -681,7 +685,7 @@ namespace Unity.Behavior
                 // this case is for creating a new variable of the given enum type
                 else if (variableType.IsEnum)
                 {
-                    builder.Add($"New {BlackboardUtils.GetNameForType(variableType)}...",
+                    builder.AddOption($"New {BlackboardUtils.GetNameForType(variableType)}...",
                         () =>
                         {
                             OnCreateFromLinkSearch(field, $"{BlackboardUtils.GetNameForType(variableType)}",
@@ -690,7 +694,7 @@ namespace Unity.Behavior
                 }
                 else if (variableType != typeof(object))
                 {
-                    builder.Add($"New {BlackboardUtils.GetNameForType(variableType)}...",
+                    builder.AddOption($"New {BlackboardUtils.GetNameForType(variableType)}...",
                         () =>
                         {
                             OnCreateFromLinkSearch(field, $"{BlackboardUtils.GetNameForType(variableType)}",
@@ -702,8 +706,17 @@ namespace Unity.Behavior
                 {
                     if (field.IsAssignable(variableDecl.Type))
                     {
-                        builder.Add($"{variableDecl.Name}",
-                            () => { OnLinkFromSearcher(variableDecl, field); }, icon);
+                        var targetIcon = variableDecl.Type.GetIcon();
+                        if (targetIcon != null)
+                        {
+                            builder.AddOption($"{variableDecl.Name}",
+                                () => { OnLinkFromSearcher(variableDecl, field); }, targetIcon);
+                        }
+                        else
+                        {
+                            builder.AddOption($"{variableDecl.Name}", onOptionSelected:
+                                () => { OnLinkFromSearcher(variableDecl, field); }, iconName: BlackboardUtils.GetIconNameForType(variableDecl.Type));
+                        }
                     }
                 }
                 // Check for variables in added Blackboard groups, and display them with the Blackboard asset name first.
@@ -711,8 +724,17 @@ namespace Unity.Behavior
                 {
                     foreach (VariableModel assetVariable in blackboard.Variables.Where(variableModel => field.IsAssignable(variableModel.Type) && variableModel.Type.BaseType != typeof(EventChannelBase)))
                     {
-                        builder.Add($"{blackboard.name} " + BlackboardUtils.GetArrowUnicode() + $" {assetVariable.Name}",
-                            () => { OnLinkFromSearcher(assetVariable, field); }, icon);
+                        var targetIcon = assetVariable.Type.GetIcon();
+                        if (targetIcon != null)
+                        {
+                            builder.AddOption($"{blackboard.name} " + BlackboardUtils.GetArrowUnicode() + $" {assetVariable.Name}",
+                                () => { OnLinkFromSearcher(assetVariable, field); }, targetIcon);   
+                        }
+                        else
+                        {
+                            builder.AddOption($"{blackboard.name} " + BlackboardUtils.GetArrowUnicode() + $" {assetVariable.Name}",
+                                () => { OnLinkFromSearcher(assetVariable, field); }, iconName: BlackboardUtils.GetIconNameForType(assetVariable.Type));
+                        }
                     }
                 }
             }
@@ -734,13 +756,13 @@ namespace Unity.Behavior
                             // Only enable options that don't create cycles, but display the cyclic options as well.
                             bool wouldCreateCycle = subgraphAsset.ContainsCyclicReferenceTo(subgraphField.Model.Asset as BehaviorAuthoringGraph);
                             
-                            builder.Add(subgraphAsset.name, () => LinkSubgraph(subgraphAsset.BuildRuntimeGraph(), subgraphAsset.name, subgraphNode, field),
+                            builder.AddOption(subgraphAsset.name, () => LinkSubgraph(BehaviorAuthoringGraph.GetOrCreateGraph(subgraphAsset), subgraphAsset.name, subgraphNode, field),
                                 icon: Util.GetBehaviorGraphIcon(), tab: "Assets", enabled: !wouldCreateCycle);
                         }   
                     }
                 }
 
-                builder.Add("None", () => { field.SetValue(null); }, icon: null, tab: "Assets", priority: 1);
+                builder.AddOption("None", () => { field.SetValue(null); }, icon: null, tab: "Assets", priority: 1);
                 
                 if (evt.FieldType != typeof(BehaviorBlackboardAuthoringAsset) && evt.FieldType != typeof(BehaviorGraph))
                 {
@@ -769,7 +791,7 @@ namespace Unity.Behavior
                             }
                         }
                         string filename = Path.GetFileNameWithoutExtension(assetPath);
-                        builder.Add(filename, OnSelectAsset, tab: "Assets", icon: thumbnail);
+                        builder.AddOption(filename, OnSelectAsset, tab: "Assets", icon: thumbnail);
                     }   
                 }
 #endif
@@ -785,7 +807,6 @@ namespace Unity.Behavior
             builder.Parent = field;
             builder.ShowIcons = true;
             builder.Width = 220;
-            builder.ShowIcons = false;
             builder.Show();
         }
 

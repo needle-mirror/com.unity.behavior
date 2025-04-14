@@ -6,7 +6,7 @@ namespace Unity.Behavior
 {
     [Serializable, GeneratePropertyBag]
     [NodeDescription(
-        name: "Wait (Range)",
+        name: "Wait (Range) (Seconds)",
         description: "Waits for the duration specified between Min and Max value. Both Min and Max are inclusive.",
         story: "Wait between [Min] and [Max] seconds",
         category: "Action/Delay",

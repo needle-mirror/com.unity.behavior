@@ -13,6 +13,9 @@ namespace Unity.Behavior
 {
     internal class GraphAssetProcessor
     {
+        private const string k_PrefsKeyDefaultGraphOwnerName = "DefaultGraphOwnerName";
+        private const string k_SelfDefaultGraphOwnerName = "Self";
+
         internal const BindingFlags k_bindingFlags = BindingFlags.Instance | BindingFlags.Public;
 
         private readonly Dictionary<SerializableGUID, BlackboardVariable> m_VariableModelToVariable = new();
@@ -32,6 +35,39 @@ namespace Unity.Behavior
         private static Dictionary<Type, INodeTransformer> s_NodeTypeToNodeTransformerDictionary;
         private static List<IBlackboardVariableConverter> s_BlackboardVariableConverters;
         private static List<GraphAssetProcessor> s_ProcessorsPendingRebuild = new List<GraphAssetProcessor>();
+
+        /// <summary>
+        /// Checks if the provided blackboard asset contains the special graph owner variable.
+        /// This variable is identified by a specific ID and must be of GameObject type.
+        /// It's required for the behavior graph to reference its owning GameObject.
+        /// </summary>
+        public static bool HasGraphOwnerVariable(BlackboardAsset blackboard)
+        {
+            return blackboard.Variables.Any(variable =>
+                variable.ID == BehaviorGraph.k_GraphSelfOwnerID && variable.Type == typeof(GameObject));
+        }
+
+        /// <summary>
+        /// Ensures that the specified blackboard has the required graph owner variable.
+        /// If the variable doesn't exist, creates a new GameObject-typed variable with the
+        /// standard ID and name from preferences. This variable allows the graph to reference
+        /// the GameObject it is attached to.
+        /// </summary>
+        public static void EnsureBlackboardGraphOwnerVariable(BlackboardAsset blackboard)
+        {
+            if (HasGraphOwnerVariable(blackboard))
+            {
+                return;
+            }
+
+            blackboard.Variables.Add(new TypedVariableModel<GameObject>()
+            {
+                ID = BehaviorGraph.k_GraphSelfOwnerID,
+                Name = GraphPrefsUtility.GetString(k_PrefsKeyDefaultGraphOwnerName, k_SelfDefaultGraphOwnerName, true)
+            });
+
+            blackboard.SetAssetDirty();
+        }
 
 #if UNITY_EDITOR
         [DidReloadScripts]
@@ -192,6 +228,7 @@ namespace Unity.Behavior
         {
             // 1. Regenerate the embedded RuntimeBlackboardAsset if needed
             BehaviorBlackboardAuthoringAsset asset = m_Asset.Blackboard as BehaviorBlackboardAuthoringAsset;
+            EnsureBlackboardGraphOwnerVariable(asset);
             if (asset != null && (BlackboardReference.SourceBlackboardAsset == null
                 || BlackboardReference.SourceBlackboardAsset.AssetID != asset.AssetID
                 || BlackboardReference.SourceBlackboardAsset.VersionTimestamp != asset.VersionTimestamp))

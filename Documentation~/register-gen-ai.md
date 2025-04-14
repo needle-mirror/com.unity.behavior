@@ -14,6 +14,6 @@ You can now use the generative AI feature of Unity Behavior to generate an [enti
 
 ## Additional resources
 
+* [Install Muse Common with the Package Manager](install-muse-common.md)
 * [Create a branch using generative AI](gen-ai-behavior-graph.md)
 * [Create an action node using generative AI](gen-ai-node.md)
-* [Best practices for using generative AI](gen-ai-best-practices.md)

@@ -28,8 +28,9 @@ To use the **Action** nodes, select **Add** > **Action**.
 | Log Variable | Logs the value of a variable to the console. |
 | Log Variable Change | Logs the value of a variable to the console when it changes. |
 | **Delay** | To use the **Delay** options, select **Add** > **Action** > **Delay**. |
-| Wait | Waits for a specified number of seconds. |
-| Wait (Range) | Waits for the duration specified between the **Min** and **Max** values. |
+| Wait (Seconds) | Waits for a specified number of seconds. |
+| Wait (Range) (Seconds) | Waits for the duration specified between the **Min** and **Max** values. |
+| Wait (Frames) | Waits for a specified number of frames. |
 | **Find** | To use the **Find** options, select **Add** > **Action** > **Find**. |
 | Find Closest With Tag | Finds the closest GameObject with the given tag. |
 | Find With Tag | Finds a GameObject with the given tag. |

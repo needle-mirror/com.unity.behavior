@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using Unity.AppUI.UI;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Unity.AppUI.UI;
 using ColorField = Unity.AppUI.UI.ColorField;
 using DoubleField = Unity.AppUI.UI.DoubleField;
 using FloatField = Unity.AppUI.UI.FloatField;
@@ -9,12 +11,10 @@ using IntegerField = Unity.AppUI.UI.IntField;
 using TextField = Unity.AppUI.UI.TextField;
 using Toggle = Unity.AppUI.UI.Toggle;
 using Vector2Field = Unity.AppUI.UI.Vector2Field;
-using Vector3Field = Unity.AppUI.UI.Vector3Field;
-using Vector4Field = Unity.AppUI.UI.Vector4Field;
-using System.Collections.Generic;
-using System.Linq;
 using Vector2IntField = Unity.AppUI.UI.Vector2IntField;
+using Vector3Field = Unity.AppUI.UI.Vector3Field;
 using Vector3IntField = Unity.AppUI.UI.Vector3IntField;
+using Vector4Field = Unity.AppUI.UI.Vector4Field;
 
 namespace Unity.Behavior.GraphFramework
 {
@@ -405,7 +405,20 @@ namespace Unity.Behavior.GraphFramework
             Array enumValues = Enum.GetValues(variableEnumType);
             m_Field.bindItem = (item, i) => item.label = Enum.GetName(variableEnumType, enumValues.GetValue(i));
             m_Field.sourceItems = enumValues;
-            m_Field.SetValueWithoutNotify(new []{ (int)variableModel.ObjectValue });
+            m_Field.SetValueWithoutNotify(GetEnumValueIndex((int)variableModel.ObjectValue, enumValues));
+        }
+
+        // Returns the index of the enum value in the enumValues array.
+        public static IEnumerable<int> GetEnumValueIndex(int variableValue, Array enumValues)
+        {
+            var i = 0;
+            foreach (var value in enumValues)
+            {
+                if ((int)value == variableValue) return new[] { i };
+                ++i;
+            }
+
+            return null;
         }
     }
 }

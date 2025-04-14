@@ -4,6 +4,50 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.9] - 2025-04-14
+
+### Added
+- Add TargetPositionMode to `NavigateToTargetAction` node to define how the target position is determined.
+
+### Changed
+- Added a small offset to duplicated nodes to avoid nodes getting placed on top of each other, when the cursor has not been moved and duplicating by hotkey.
+- Adds SubgraphInfo metadata to graph assets to track version of the dependencies.
+- Icons are back from the dead and they brought friends!
+- Icons will once again show in the Blackboard and Search menus.
+- Changed "Delete Runtime Asset" on BehaviorAuthoringGraph asset to "Regenerate Runtime Asset".
+
+### Fixed
+- Node execution will no longer be deferred to the next frame. This means an entire graph can fully execute in a single frame if none of its nodes take time to execute. Because this can potentially allow users create an infinite loop using a Repeat node or Start with repeat on, we will now abort a graph and throw an exception if it takes longer than a second to run in a single frame. Note: This abort will not happen if the debugger is currently attached to the process.
+- Added the "Allow Multiple Repeats Per Tick" field to Repeat and Start nodes, allowing to toggle between running multiple repeats on the same frame or deferring to the next frame.
+- Nodes that returned `Status.Waiting` can now be woken up on the same frame and may `Update()` multiple times per frame
+- Fixes BlackboardWindow refresh when the target asset is changed and reimported.
+- Fixes infinite import when several graphs are referencing the same graph.
+- Fixes BehaviorGraph AuthoringAssetID not being sync with main asset when main asset is duplicated.
+- Assigning a `BehaviorGraph` to a `BehaviorGraphAgent` prefab will now work correctly and reflect the changes to the prefab.
+- Assigning Blackboard Overrides to a `BehaviorGraphAgent` prefab will now work correctly and reflect the changes to the prefab / prefab instance, allowing to apply them or revert them.
+- Fixed setting `null` / `None` values to Blackboard Variables deriving from `ScriptableObject` onto the `BehaviorGraphAgent`.
+- Setting a Blackboard variable with an object that inherits from the BlackboardVariable stored type.
+- Fixes Self blackboard variable not appearing exposed on `BehaviorGraphAgent` until another variable is added.
+- Fixes BehaviorGraphAgent exception on awake when using a newly created graph or empty graph.
+- Fixes BehaviorGraph (runtime graph asset) references not cleaned up after being deleted.
+- `BehaviorGraphAgent` now handles and throws error when trying to assign an invalid BehaviorGraph from code.
+- Fixes the the behavior graph editor view resetting when certain actions such as undo/redo are performed and entering playmode. (BEHAVB-227)
+- Fixes enum fields and variables not working properly with explicitly ordered enums.
+- Fixes event nodes duplication not preserving the values.
+- Fixes nodes duplication loosing reference to fields assigned to blackboard asset variables.
+
+### Known Issues
+- After much user feedback and investigation, we have determined that runtime serialization is not recommended for use at this time due to an existing limitation in its implementation. Our team is working diligently to address these concerns and bring the feature to the expected quality level in an upcoming release. In the meantime, we appreciate your patience and understanding as we strive to enhance this functionality.
+- An instantiated Prefab with `BehaviorGraphAgent` doesn't show Blackboard Variables overrides as bold and doesn't let you right click to apply/revert from prefab.
+- After editing an instantiated prefab with `BehaviorGraphAgent`, right clicking on the component and applying prefab overrides may cause an error. A workaround: Click the Overrides dropdown below the Prefab field on the GameObject and select Apply All.
+- During playmode, assigning the same graph to an agent twice from the inspector causes the blackboard values to disappear, and prevents the graph from executing correctly. The solution is to unassign the graph from the component, then reassign it.
+- Creating a new blackboard variable of an enumeration sets its default value to 0, even if no valid enumeration value exists for this value.
+- It is possible to assign assets and prefab to `StartOnEvent` and `WaitForEvent` nodes fields. This will do nothing as they are field used to transfer the event values to blackboard variables.
+- `RunSubgraph (Static)` nodes referencing a renamed graph before renaming displays its old name.
+- Blackboard asset variables cannot be changed from the graph window. Graphs are always going to use default value from the source linked blackboard asset. A workaround to change the default value for these variables is to use the `SetVariableValue` node in the graph or the `BehaviorGraphAgent.SetVariableValue` API at runtime.
+- Order of the Blackboard variable list in the Inspector window becomes unsynchronized when the list order is changed in the Behaviour Graph window's Blackboard. Note that any outstanding change to the graph will refresh the order. (BEHAVB-288) 
+- Abort and Restart modifiers now only check their conditions once at the beginning of each graph update. With the removal of deferred node execution, if a child node changes a value that would trigger these modifiers' conditions, the effect won't be detected until the next frame. For conditional behaviors that depend on changes made by child nodes, you need to add a WaitForFrame node to ensure proper evaluation. Example pattern: `Abort -> Trigger condition -> WaitForFrame -> following nodes...`.
+
 ## [1.0.8] - 2025-02-03
 
 ### Changed

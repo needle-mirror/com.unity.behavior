@@ -121,18 +121,7 @@ namespace Unity.Behavior
             EditorGUILayout.Space();
 
             // Add a button to delete runtime assets.
-            if (GUILayout.Button("Delete Runtime Assets"))
-            {
-                foreach (Object asset in assets)
-                {
-                    if (asset is BehaviorGraph or BehaviorGraphDebugInfo)
-                    {
-                        AssetDatabase.RemoveObjectFromAsset(asset);
-                    }
-                }
-                EditorUtility.SetDirty(targetAsset);
-                AssetDatabase.SaveAssetIfDirty(targetAsset);
-            }
+            DrawRegenerateButton(targetAsset, assets);
 
             if (targetAsset.m_Blackboards.Count > 0)
             {
@@ -142,6 +131,44 @@ namespace Unity.Behavior
                     EditorGUILayout.ObjectField(asset.name, asset, typeof(BehaviorBlackboardAuthoringAsset), false);
                 }
             }
+        }
+
+        private void DrawRegenerateButton(BehaviorAuthoringGraph targetAsset, Object[] assets)
+        {
+            if (!GUILayout.Button("Regenerate Runtime Assets"))
+            {
+                return;
+            }
+
+            // Show a confirmation dialog before proceeding
+            bool shouldProceed = EditorUtility.DisplayDialog(
+                "Warning: Regenerate Runtime Assets",
+                "CAUTION: This is a debug feature intended only for regenerated corrupted or malfunctioning graphs." +
+                "\nThis action will delete and regenerate runtime assets. All hard dependencies " +
+                "(prefabs, scene objects, and BlackboardVariable<Subgraph>) will be lost and need to be manually re-assigned." +
+                "\n\nGraphs that depend on this asset as static subgraph will be automatically rebuilt and have their dependencies updated.",
+                "Proceed",
+                "Cancel"
+            );
+
+            if (shouldProceed == false)
+            {
+                return;
+            }
+
+            foreach (Object asset in assets)
+            {
+                if (asset is BehaviorGraph or BehaviorGraphDebugInfo)
+                {
+                    AssetDatabase.RemoveObjectFromAsset(asset);
+                    // Cleanup the existing hard references (prefab, scene object and assets).
+                    // Only soft reference like subgraph dependency will be regenerated.
+                    DestroyImmediate(asset, true);
+                }
+            }
+
+            targetAsset.BuildRuntimeGraph();
+            targetAsset.SaveAsset();
         }
     }
 }

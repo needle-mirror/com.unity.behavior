@@ -157,30 +157,41 @@ namespace Unity.Behavior.GraphFramework
                     return;
                 }
                 VariableModel variable = asset.Variables[i];
-                Type variableUIType = NodeRegistry.GetVariableUIType(variable.GetType());
-                BlackboardVariableElement variableUI = variableUIType == null ? new BlackboardVariableElement(this, variable) :
-                    Activator.CreateInstance(variableUIType, this, variable) as BlackboardVariableElement;
-                variableUI!.IsEditable = isEditable;
-                variableUI!.OnNameChanged += (nameString, renamedVariable) =>
-                {
-                    string newName = nameString.Trim();
-                    RenameVariable(renamedVariable, newName);
-                    // Selection is set here as a placeholder, should later be replaced by a better solution
-                    int index = Asset.Variables.IndexOf(renamedVariable);
-                    listView.SetSelection(index);
-                };
-                // variableUI.IconImage = variable.Type.GetIcon();
-                variableUI.VariableType = GetBlackboardVariableTypeName(variable.Type);
-                if (variable.ID != BlackboardVariableElement.k_ReservedID)
-                {
-                    variableUI.InfoTitle.tooltip = GetBlackboardVariableTypeName(variable.Type) + " variable";
-                }
-                variableUI.RegisterCallback<PointerDownEvent>(OnPointerDown);
-
-                element.Add(variableUI);
+                element.Add(CreateVariableUI(variable, listView, isEditable));
             };
             listView.itemsSource = asset.Variables;
             listView.Rebuild();
+        }
+
+        protected virtual BlackboardVariableElement CreateVariableUI(VariableModel variable, ListView listView, bool isEditable)
+        {
+            Type variableUIType = NodeRegistry.GetVariableUIType(variable.GetType());
+            
+            BlackboardVariableElement variableUI = variableUIType == null ? new BlackboardVariableElement(this, variable) :
+                Activator.CreateInstance(variableUIType, this, variable) as BlackboardVariableElement;
+            variableUI!.IsEditable = isEditable;
+            variableUI!.OnNameChanged += (nameString, renamedVariable) =>
+            {
+                string newName = nameString.Trim();
+                RenameVariable(renamedVariable, newName);
+                // Selection is set here as a placeholder, should later be replaced by a better solution
+                int index = Asset.Variables.IndexOf(renamedVariable);
+                listView.SetSelection(index);
+            };
+            variableUI.IconName = BlackboardUtils.GetIconNameForType(variable.Type);
+            if (string.IsNullOrEmpty(variableUI.IconName))
+            {
+                // Variable type doesn't have a defined icon name, try getting the icon texture from type.
+                variableUI.IconImage = variable.Type.GetIcon();
+            }
+            variableUI.VariableType = GetBlackboardVariableTypeName(variable.Type);
+            if (variable.ID != BlackboardVariableElement.k_ReservedID)
+            {
+                variableUI.InfoTitle.tooltip = GetBlackboardVariableTypeName(variable.Type) + " variable";
+            }
+            variableUI.RegisterCallback<PointerDownEvent>(OnPointerDown);
+
+            return variableUI;
         }
 
         protected virtual string GetBlackboardVariableTypeName(Type variableType)
@@ -300,7 +311,7 @@ namespace Unity.Behavior.GraphFramework
             builder.Width = 260;
             builder.Height = 400;
             builder.Parent = m_AddButton;
-            builder.ShowIcons = false;
+            builder.ShowIcons = true;
             builder.SortSearchItems = true;
             return builder;
         }

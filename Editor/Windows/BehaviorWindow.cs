@@ -52,6 +52,7 @@ namespace Unity.Behavior
             if (m_Asset != null)
             {
                 m_Editor.Load(m_Asset);
+                m_PreviousVersionTimestamp = m_Asset.VersionTimestamp;
             }
 
             SetWindowTitleFromAsset();
@@ -222,10 +223,12 @@ namespace Unity.Behavior
                 return;
             }
 
-            if (m_Editor is { AutoSaveIsEnabled: true } && !m_Editor.IsAssetVersionUpToDate())
+            if (m_Editor is { AutoSaveIsEnabled: true })
             {
                 m_Editor.OnAssetSave();
             }
+            
+            m_PreviousVersionTimestamp = m_Asset.VersionTimestamp;
         }
 
         [InitializeOnLoadMethod]

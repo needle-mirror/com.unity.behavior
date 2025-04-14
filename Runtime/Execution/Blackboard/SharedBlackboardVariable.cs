@@ -23,10 +23,7 @@ namespace Unity.Behavior
 
                 return variable;
             }
-            set
-            {
-                SetValue(value, notifyChange: true);
-            }
+            set => SetValue(value, notifyChange: true);
         }
 
         public SharedBlackboardVariable()

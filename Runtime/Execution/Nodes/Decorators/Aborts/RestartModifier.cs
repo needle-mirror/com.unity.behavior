@@ -48,22 +48,17 @@ namespace Unity.Behavior
 
         protected override Status OnUpdate()
         {
+            if (ConditionUtils.CheckConditions(Conditions, RequiresAllConditions))
+            {
+                EndNodesAndRestart();
+                return Status.Running;
+            }
             // Check the child status 
             Status status = Child.CurrentStatus;
             if (status == Status.Success)
                 return Status.Success;
             if (status == Status.Failure)
                 return Status.Failure;
-            
-            // Otherwise, check the conditions and if the branch should be restarted
-            if (Conditions.Count == 0)
-            {
-                return Status.Running;
-            }
-            if (ConditionUtils.CheckConditions(Conditions, RequiresAllConditions))
-            {
-                EndNodesAndRestart();
-            }
 
             return Status.Running;
         }

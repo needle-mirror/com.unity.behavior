@@ -1,5 +1,6 @@
 using System;
 using Unity.Properties;
+using UnityEngine;
 
 namespace Unity.Behavior
 {
@@ -14,8 +15,18 @@ namespace Unity.Behavior
         hideInSearch: true,
         icon: "Icons/repeat_until_change",
         id: "7483f88afa3148a1a565f17863ebd38d")]
-    internal partial class RepeatUntilFailModifier : Modifier
+    internal partial class RepeatUntilFailModifier : Modifier, IRepeater
     {
+        [SerializeField, CreateProperty]
+        private bool m_AllowMultipleRepeatsPerTick = false;
+        public bool AllowMultipleRepeatsPerTick
+        {
+            get => m_AllowMultipleRepeatsPerTick;
+            set => m_AllowMultipleRepeatsPerTick = value;
+        }
+        private int m_CurrentFrame;
+        [CreateProperty] private int m_FrameDelta;
+
         /// <inheritdoc cref="OnStart" />
         protected override Status OnStart()
         {
@@ -23,6 +34,7 @@ namespace Unity.Behavior
             {
                 return Status.Failure;
             }
+            m_CurrentFrame = Time.frameCount;
             
             Status childStatus = StartNode(Child);
             return GetReturnStatusForStartingChild(childStatus);
@@ -34,6 +46,11 @@ namespace Unity.Behavior
             Status childStatus = Child.CurrentStatus;
             if (childStatus is Status.Success)
             {
+                if (!AllowMultipleRepeatsPerTick && m_CurrentFrame == Time.frameCount)
+                {
+                    return Status.Running;
+                }
+                m_CurrentFrame = Time.frameCount;
                 childStatus = StartNode(Child);
                 return GetReturnStatusForStartingChild(childStatus);
             }
@@ -54,6 +71,16 @@ namespace Unity.Behavior
                 default: return Status.Waiting;
             }
         }
+        
+        protected override void OnDeserialize()
+        {
+            m_CurrentFrame = Time.frameCount + m_FrameDelta;
+        }
+
+        protected override void OnSerialize()
+        {
+            m_FrameDelta = Time.frameCount - m_CurrentFrame; 
+        }
     }
     
     /// <summary>
@@ -67,8 +94,18 @@ namespace Unity.Behavior
         icon: "Icons/repeat_until_change",
         hideInSearch: true,
         id: "ab0357ae774a43b380ba36fad08dcec4")]
-    public partial class RepeatUntilSuccessModifier : Modifier
+    internal partial class RepeatUntilSuccessModifier : Modifier
     {
+        [SerializeField, CreateProperty]
+        private bool m_AllowMultipleRepeatsPerTick = false;
+        public bool AllowMultipleRepeatsPerTick
+        {
+            get => m_AllowMultipleRepeatsPerTick;
+            set => m_AllowMultipleRepeatsPerTick = value;
+        }
+        private int m_CurrentFrame;
+        [CreateProperty] private int m_FrameDelta;
+
         /// <inheritdoc cref="OnStart" />
         protected override Status OnStart()
         {
@@ -76,6 +113,7 @@ namespace Unity.Behavior
             {
                 return Status.Failure;
             }
+            m_CurrentFrame = Time.frameCount;
             
             Status childStatus = StartNode(Child);
             return GetReturnStatusForStartingChild(childStatus);
@@ -87,6 +125,11 @@ namespace Unity.Behavior
             Status childStatus = Child.CurrentStatus;
             if (childStatus is Status.Failure)
             {
+                if (!AllowMultipleRepeatsPerTick && m_CurrentFrame == Time.frameCount)
+                {
+                    return Status.Running;
+                }
+                m_CurrentFrame = Time.frameCount;
                 childStatus = StartNode(Child);
                 return GetReturnStatusForStartingChild(childStatus);
             }
@@ -105,6 +148,16 @@ namespace Unity.Behavior
                 case Status.Failure: return Status.Running;
                 default: return Status.Waiting;
             }
+        }
+        
+        protected override void OnDeserialize()
+        {
+            m_CurrentFrame = Time.frameCount + m_FrameDelta;
+        }
+
+        protected override void OnSerialize()
+        {
+            m_FrameDelta = Time.frameCount - m_CurrentFrame; 
         }
     }
 }

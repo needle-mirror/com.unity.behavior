@@ -81,7 +81,7 @@ namespace Unity.Behavior
         {
             switch (change)
             {
-                case PlayModeStateChange.EnteredEditMode:
+                case PlayModeStateChange.ExitingPlayMode:
                     s_AssetToBackup.RemoveWhere(asset => asset == null);
                     foreach (var asset in s_AssetToBackup)
                     {

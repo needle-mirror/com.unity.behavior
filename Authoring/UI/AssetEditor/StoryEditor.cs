@@ -102,7 +102,7 @@ namespace Unity.Behavior
                         OnPropertyDropdownValueChanged(actionButton, item);
                         actionButton.tooltip = item.Name;
                     }
-                    SearchWindow.ShowInPopover("Variable Type", m_SupportedTypesSearchItems, OnSearchItemSelected, 260, 400, actionButton, false, sortSearchItems: false);
+                    SearchWindow.ShowInPopover("Variable Type", m_SupportedTypesSearchItems, OnSearchItemSelected, 260, 400, actionButton, true, sortSearchItems: false);
                 };
 
                 if (wordTypePair.Type != typeof(RegularText))
@@ -130,7 +130,14 @@ namespace Unity.Behavior
             m_SupportedTypesSearchItems = new();
             foreach (var item in SupportedTypes)
             {
-                m_SupportedTypesSearchItems.Add(new SearchView.Item(item.Path, item.Icon, data: item.Type.Type));
+                if (item.IconImage != null)
+                {
+                    m_SupportedTypesSearchItems.Add(new SearchView.Item(item.Path, item.IconImage, data: item.Type.Type));
+                }
+                else
+                {
+                    m_SupportedTypesSearchItems.Add(new SearchView.Item(item.Path, item.Icon, data: item.Type.Type));
+                }
             }
         }
     }

@@ -1,5 +1,4 @@
 using Unity.Behavior.GraphFramework;
-using UnityEngine;
 
 namespace Unity.Behavior
 {

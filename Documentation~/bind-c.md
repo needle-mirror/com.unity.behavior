@@ -109,5 +109,6 @@ private void OnStateEvent(StateExample value)
 ```
 ## Additional resources
 
+* [Work with behavior graph assets](behavior-graph-assets.md)
 * [Create a behavior graph](create-behavior-graph.md)
 * [Create and manage variables and Blackboards](blackboard-variables.md)

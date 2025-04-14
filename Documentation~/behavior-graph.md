@@ -140,4 +140,3 @@ The following table shows the node statuses along with their description.
 
 * [Behavior graph node types](node-types.md)
 * [Unity Behavior user interface](user-interface.md)
-

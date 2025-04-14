@@ -110,6 +110,7 @@ namespace Unity.Behavior
 
         internal static bool CheckConditions(List<Condition> conditions, bool allRequired)
         {
+            if (conditions.Count == 0) return false;
             if (!allRequired)
             {
                 foreach (Condition condition in conditions)

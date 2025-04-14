@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.Behavior.GraphFramework;
 using Unity.AppUI.UI;
+using Unity.Behavior.GraphFramework;
 using UnityEngine.UIElements;
 
 namespace Unity.Behavior
@@ -20,7 +20,8 @@ namespace Unity.Behavior
         /// <inheritdoc cref="SetValueWithoutNotify"/>
         public void SetValueWithoutNotify(TValueType newValue)
         {
-            m_Field.SetValueWithoutNotify(new[] { Convert.ToInt32(newValue) });
+            // Convert enum value to index for the dropdown.
+            m_Field.SetValueWithoutNotify(EnumVariableElement.GetEnumValueIndex(Convert.ToInt32(newValue), Enum.GetValues(typeof(TValueType))));
         }
 
         internal Dropdown Field => m_Field;
@@ -31,7 +32,7 @@ namespace Unity.Behavior
             get => (TValueType)Enum.ToObject(typeof(TValueType), m_Field.value.FirstOrDefault());
             set
             {
-                m_Field.SetValueWithoutNotify(new[] { (int)Convert.ChangeType(value, typeof(int)) });
+                m_Field.SetValueWithoutNotify(EnumVariableElement.GetEnumValueIndex(Convert.ToInt32(value), Enum.GetValues(typeof(TValueType))));
                 using LinkFieldValueChangeEvent changeEvent = LinkFieldValueChangeEvent.GetPooled(this, value);
                 SendEvent(changeEvent);
             }
@@ -86,9 +87,9 @@ namespace Unity.Behavior
             }
             else
             {
+                // Need to make sure we convert the enum value into index value for the dropdown.
                 SetValueWithoutNotify((TValueType)field.Value);
             }
-
             base.UpdateValue(field);
         }
     }

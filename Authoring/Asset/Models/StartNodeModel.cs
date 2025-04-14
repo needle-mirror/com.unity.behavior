@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using Unity.Properties;
+using UnityEngine.Serialization;
 
 namespace Unity.Behavior
 {
@@ -15,6 +16,7 @@ namespace Unity.Behavior
         public override int MaxInputsAccepted => 0;
 
         public bool Repeat = true;
+        public bool AllowMultipleRepeatsPerTick = false;
         public StartNodeModel(NodeInfo nodeInfo) : base(nodeInfo) { }
         
         protected StartNodeModel(StartNodeModel originalModel, BehaviorAuthoringGraph asset) : base(originalModel, asset)

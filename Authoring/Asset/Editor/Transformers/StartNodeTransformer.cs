@@ -17,6 +17,7 @@ namespace Unity.Behavior
             StartNodeModel startNodeModel = nodeModel as StartNodeModel;
             Start startNode = node as Start;
             startNode.Repeat = startNodeModel.Repeat;
+            startNode.AllowMultipleRepeatsPerTick = startNodeModel.AllowMultipleRepeatsPerTick;
         }
     }
 }

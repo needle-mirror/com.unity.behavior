@@ -16,7 +16,7 @@ namespace Unity.Behavior
         hideInSearch: true,
         icon: "Icons/repeat_until_change",
         id: "bcd62844ac1b14f074e31df34956441a")]
-    internal partial class RepeatWhileConditionModifier : Modifier, IConditional
+    internal partial class RepeatWhileConditionModifier : Modifier, IConditional, IRepeater
     {
         [SerializeReference]
         protected List<Condition> m_Conditions = new List<Condition>();
@@ -24,6 +24,16 @@ namespace Unity.Behavior
 
         [SerializeField]
         protected bool m_RequiresAllConditions;
+
+        [SerializeField, CreateProperty]
+        private bool m_AllowMultipleRepeatsPerTick = false;
+        public bool AllowMultipleRepeatsPerTick
+        {
+            get => m_AllowMultipleRepeatsPerTick;
+            set => m_AllowMultipleRepeatsPerTick = value;
+        }
+        private int m_CurrentFrame;
+        [CreateProperty] private int m_FrameDelta;
         public bool RequiresAllConditions { get => m_RequiresAllConditions; set => m_RequiresAllConditions = value; }
 
         /// <inheritdoc cref="OnStart" />
@@ -33,6 +43,7 @@ namespace Unity.Behavior
             {
                 return Status.Failure;
             }
+            m_CurrentFrame = Time.frameCount;
 
             // Early out in case the condition is already filled and prevent DoWhile condition. 
             foreach (Condition condition in Conditions)
@@ -53,6 +64,11 @@ namespace Unity.Behavior
         /// <inheritdoc cref="OnUpdate" />
         protected override Status OnUpdate()
         {
+            if (!AllowMultipleRepeatsPerTick && m_CurrentFrame == Time.frameCount)
+            {
+                return Status.Running;
+            }
+            m_CurrentFrame = Time.frameCount;
             bool conditionIsTrue = ConditionUtils.CheckConditions(Conditions, RequiresAllConditions);
             // If condition is true, we need to restart the child
             if (conditionIsTrue)
@@ -78,6 +94,16 @@ namespace Unity.Behavior
             {
                 condition.OnEnd();
             }
+        }
+        
+        protected override void OnDeserialize()
+        {
+            m_CurrentFrame = Time.frameCount + m_FrameDelta;
+        }
+
+        protected override void OnSerialize()
+        {
+            m_FrameDelta = Time.frameCount - m_CurrentFrame; 
         }
     }
 }

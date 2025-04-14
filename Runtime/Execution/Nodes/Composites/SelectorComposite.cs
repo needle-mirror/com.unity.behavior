@@ -20,41 +20,33 @@ namespace Unity.Behavior
         protected override Status OnStart()
         {
             m_CurrentChild = 0;
-            if (Children.Count == 0)
-                return Status.Success;
-
-            var status = StartNode(Children[m_CurrentChild]);
-            if (status == Status.Success)
-                return Status.Success;
-            if (status == Status.Failure)
-                return Status.Running;
-
-            return Status.Waiting;
+            return StartChild(m_CurrentChild);
         }
 
         protected override Status OnUpdate()
         {
+            var currentChild = Children[m_CurrentChild];
+            Status childStatus = currentChild.CurrentStatus;
+            if (childStatus == Status.Failure)
+            {
+                return ++m_CurrentChild >= Children.Count ? Status.Failure : StartChild(m_CurrentChild);
+            }
+            return childStatus == Status.Running ? Status.Waiting : childStatus;
+        }
+
+        protected Status StartChild(int childIndex)
+        {
             if (m_CurrentChild >= Children.Count)
-                return Status.Success;
-
-            Status childStatus = Children[m_CurrentChild].CurrentStatus;
-            if (childStatus == Status.Success)
             {
-                ++m_CurrentChild;
                 return Status.Success;
             }
-            else if (childStatus == Status.Failure)
+            var childStatus = StartNode(Children[childIndex]);
+            return childStatus switch
             {
-                if (++m_CurrentChild >= Children.Count)
-                    return Status.Failure;
-
-                var status = StartNode(Children[m_CurrentChild]);
-                if (status == Status.Success)
-                    return Status.Success;
-                if (status == Status.Failure)
-                    return Status.Running;
-            }
-            return Status.Waiting;
+                Status.Failure => childIndex + 1 >= Children.Count ? Status.Failure : Status.Running,
+                Status.Running => Status.Waiting,
+                _ => childStatus
+            };
         }
     }
 }

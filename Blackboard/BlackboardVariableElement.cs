@@ -29,6 +29,17 @@ internal class BlackboardVariableElement : VisualElement
             m_NameField.SetValueWithoutNotify(value);
         }
     }
+    
+    public Texture2D IconImage
+    {
+        set => m_Icon.image = value;
+    }
+    
+    public string IconName
+    {
+        get => m_Icon.iconName;
+        set => m_Icon.iconName = value;
+    }
 
     public string VariableType
     {
@@ -44,7 +55,7 @@ internal class BlackboardVariableElement : VisualElement
     protected BlackboardView m_View;
     private VisualElement m_Content;
     private VisualElement m_InfoTitle;
-    // private VisualElement m_Icon;
+    private Icon m_Icon;
     private Label m_NameLabel;
     private Label m_VariableTypeLabel;
     private TextField m_NameField;
@@ -66,7 +77,7 @@ internal class BlackboardVariableElement : VisualElement
         m_VariableTypeLabel = this.Q<Label>("VariableType");
         m_Content = this.Q("Content");
         m_InfoTitle = this.Q("Info");
-        // m_Icon = this.Q("Icon");
+        m_Icon = this.Q<Icon>("Icon");
         m_NameField.size = Size.S;
         m_ExposedToggle = this.Q<Toggle>("ExposedToggle");
         m_SharedToggle = this.Q<Toggle>("SharedToggle");

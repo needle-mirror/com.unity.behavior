@@ -1,10 +1,14 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using Unity.Behavior.GraphFramework;
 using UnityEngine;
 using UnityEngine.Audio;
+
+#if UNITY_EDITOR
+using System.Linq;
+#else
+using System.Reflection;
+#endif
 
 namespace Unity.Behavior
 {
@@ -14,11 +18,13 @@ namespace Unity.Behavior
         {
             return new List<BlackboardOption>
             {
-                new BlackboardOption(typeof(GameObject), "GameObject", "object", priority: 2),
-                new BlackboardOption(typeof(Transform), "Transform", "transform", priority: 1),
+                new BlackboardOption(typeof(GameObject), "GameObject", "object", priority: 3),
+                new BlackboardOption(typeof(Transform), "Transform", "transform", priority: 2),
+                new BlackboardOption(typeof(BehaviorGraph), "Subgraph", "object", priority: 1),
+
                 new BlackboardOption(typeof(string), "Basic Types/String"),
-                new BlackboardOption(typeof(float), "Basic Types/Float", "float"),
-                new BlackboardOption(typeof(int), "Basic Types/Integer", "integer"),
+                new BlackboardOption(typeof(float), "Basic Types/Float"),
+                new BlackboardOption(typeof(int), "Basic Types/Integer"),
                 new BlackboardOption(typeof(double), "Basic Types/Double"),
                 new BlackboardOption(typeof(bool), "Basic Types/Boolean"),
                 new BlackboardOption(typeof(Vector2), "Vector Types/Vector2"),
@@ -41,21 +47,18 @@ namespace Unity.Behavior
                 new BlackboardOption(typeof(ParticleSystem), "Resources/Particle System"),
               
                 // List Types
-                new BlackboardOption(typeof(List<GameObject>), "List/Game Object List", "object"),
-                new BlackboardOption(typeof(List<string>), "List/String List", "string"),
-                new BlackboardOption(typeof(List<float>), "List/Float List", "float"),
-                new BlackboardOption(typeof(List<int>), "List/Integer List", "integer"),
-                new BlackboardOption(typeof(List<double>), "List/Double List", "double"),
-                new BlackboardOption(typeof(List<bool>), "List/Boolean List", "boolean"),
-                new BlackboardOption(typeof(List<Vector2>), "List/Vector2 List", "vector2"),
-                new BlackboardOption(typeof(List<Vector3>), "List/Vector3 List", "vector3"),
-                new BlackboardOption(typeof(List<Vector4>), "List/Vector4 List", "vector4"),
-                new BlackboardOption(typeof(List<Vector2Int>), "List/Vector2 Int List", "vector2"),
-                new BlackboardOption(typeof(List<Vector3Int>), "List/Vector3 Int List", "vector3"),
-                new BlackboardOption(typeof(List<Color>), "List/Color List", "color"),
-                
-                // Behavior Types
-                new BlackboardOption(typeof(BehaviorGraph), "Behavior/Subgraph", "object"),
+                new BlackboardOption(typeof(List<GameObject>), "List/Game Object List"),
+                new BlackboardOption(typeof(List<string>), "List/String List"),
+                new BlackboardOption(typeof(List<float>), "List/Float List"),
+                new BlackboardOption(typeof(List<int>), "List/Integer List"),
+                new BlackboardOption(typeof(List<double>), "List/Double List"),
+                new BlackboardOption(typeof(List<bool>), "List/Boolean List"),
+                new BlackboardOption(typeof(List<Vector2>), "List/Vector2 List"),
+                new BlackboardOption(typeof(List<Vector3>), "List/Vector3 List"),
+                new BlackboardOption(typeof(List<Vector4>), "List/Vector4 List"),
+                new BlackboardOption(typeof(List<Vector2Int>), "List/Vector2 Int List"),
+                new BlackboardOption(typeof(List<Vector3Int>), "List/Vector3 Int List"),
+                new BlackboardOption(typeof(List<Color>), "List/Color List"),
             };
         }
 
@@ -75,7 +78,7 @@ namespace Unity.Behavior
                 .Where(type => type.IsEnum && Enum.GetValues(type).Length > 0);
             foreach (var type in enumTypes)
             {
-                enumOptions.Add(new BlackboardOption(type, "Enumeration/" + Util.NicifyVariableName(type.Name)));
+                enumOptions.Add(new BlackboardOption(type, "Enumeration/" + Util.NicifyVariableName(type.Name), icon: "enum"));
             }
 #else
             foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
@@ -159,7 +162,9 @@ namespace Unity.Behavior
                 {
                     namespacePath += "/";
                 }
-                options.Add(new BlackboardOption(type, $"{ path }{namespacePath}{ Util.NicifyVariableName(type.Name, detectAbbreviation: true) }"));
+
+                var icon = type.GetIcon();
+                options.Add(new BlackboardOption(type, $"{ path }{namespacePath}{ Util.NicifyVariableName(type.Name, detectAbbreviation: true) }", iconImage: icon));
             }
 #if !UNITY_EDITOR
             }
@@ -216,22 +221,31 @@ namespace Unity.Behavior
         public string Path;
         public SerializableType Type;
         public string Icon;
+        public Texture2D IconImage;
         public int Priority;
 
-        public BlackboardOption(SerializableType type, string path = null, string icon = null, int priority = 0)
+        public BlackboardOption(SerializableType type, string path = null, string icon = null, Texture2D iconImage = null, int priority = 0)
         {
             Path = path;
             Type = type;
             Icon = icon;
             Priority = priority;
+            IconImage = iconImage;
 
             if (string.IsNullOrEmpty(path))
             {
                 Path = Util.NicifyVariableName(type.Type.Name);
             }
+            
             if (string.IsNullOrEmpty(icon))
             {
-                Icon = type.Type.Name.ToLower();
+                // If no icon name is given, try to get one defined for the type from the utility.
+                Icon = BlackboardUtils.GetIconNameForType(type.Type);
+            }
+
+            if (iconImage == null)
+            {
+                IconImage = type.Type.GetIcon();
             }
         }
     }

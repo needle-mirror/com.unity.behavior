@@ -15,46 +15,75 @@ namespace Unity.Behavior.GraphFramework
 {
     internal static class BlackboardUtils
     {
-        private static Dictionary<Type, Texture2D> m_VariableTypeIcons = new ()
+        private static Dictionary<Type, string> m_VariableTypeIconNames = new Dictionary<Type, string>
         {
-            { typeof(bool), ResourceLoadAPI.Load<Texture2D>("Packages/com.unity.behavior/Blackboard/Assets/Icons/boolean_icon.png") },
-            { typeof(double), ResourceLoadAPI.Load<Texture2D>("Packages/com.unity.behavior/Blackboard/Assets/Icons/float_icon.png") },
-            { typeof(string), ResourceLoadAPI.Load<Texture2D>("Packages/com.unity.behavior/Blackboard/Assets/Icons/string_icon.png") },
-            { typeof(Color), ResourceLoadAPI.Load<Texture2D>("Packages/com.unity.behavior/Blackboard/Assets/Icons/color_icon.png") },
-            { typeof(float), ResourceLoadAPI.Load<Texture2D>("Packages/com.unity.behavior/Blackboard/Assets/Icons/float_icon.png") },
-            { typeof(int), ResourceLoadAPI.Load<Texture2D>("Packages/com.unity.behavior/Blackboard/Assets/Icons/integer_icon.png") },
-            { typeof(Transform), ResourceLoadAPI.Load<Texture2D>("Packages/com.unity.behavior/Blackboard/Assets/Icons/position_icon.png") },
-            { typeof(Vector2), ResourceLoadAPI.Load<Texture2D>("Packages/com.unity.behavior/Blackboard/Assets/Icons/vector2_icon.png") },
-            { typeof(Vector3), ResourceLoadAPI.Load<Texture2D>("Packages/com.unity.behavior/Blackboard/Assets/Icons/vector3_icon.png") },
-            { typeof(Vector4), ResourceLoadAPI.Load<Texture2D>("Packages/com.unity.behavior/Blackboard/Assets/Icons/vector4_icon.png") },
-            { typeof(GameObject), ResourceLoadAPI.Load<Texture2D>("Packages/com.unity.behavior/Blackboard/Assets/Icons/object_icon.png") },
-            { typeof(UnityEngine.Object), ResourceLoadAPI.Load<Texture2D>("Packages/com.unity.behavior/Blackboard/Assets/Icons/object_icon.png") },
-            { typeof(Enum), ResourceLoadAPI.Load<Texture2D>("Packages/com.unity.behavior/Blackboard/Assets/Icons/enum_icon.png") }
+            { typeof(bool), "boolean" },
+            { typeof(double), "double" },
+            { typeof(string), "string" },
+            { typeof(Color), "color" },
+            { typeof(float), "float" },
+            { typeof(int), "integer" },
+            { typeof(Vector2), "vector2" },
+            { typeof(Vector2Int), "vector2" },
+            { typeof(Vector3), "vector3" },
+            { typeof(Vector3Int), "vector3" },
+            { typeof(Vector4), "vector4"},
+            { typeof(GameObject), "object" },
+            { typeof(UnityEngine.Object), "object" },
+            { typeof(Enum), "enum" },
+            { typeof(List<GameObject>), "list-object" },
+            { typeof(List<string>),"list-string" },
+            { typeof(List<float>), "list-float" },
+            { typeof(List<int>),"list-integer" },
+            { typeof(List<double>), "list-double" },
+            { typeof(List<bool>),"list-boolean" },
+            { typeof(List<Vector2>),"list-vector2" },
+            { typeof(List<Vector3>), "list-vector3" },
+            { typeof(List<Vector4>),"list-vector4" },
+            { typeof(List<Vector2Int>), "list-vector2" },
+            { typeof(List<Vector3Int>), "list-vector3" },
+            { typeof(List<Color>), "list-color" }
         };
+
+        public static string GetIconNameForType(Type type)
+        {
+            if (type.IsEnum)
+            {
+                return m_VariableTypeIconNames[typeof(Enum)];
+            } 
+            if (m_VariableTypeIconNames.TryGetValue(type, out string iconName))
+            {
+                return iconName;
+            }
+
+            return string.Empty;
+        }
         
         public static Texture2D GetIcon(this Type type)
         {
             if (type == null)
             {
-                return ResourceLoadAPI.Load<Texture2D>("Packages/com.unity.behavior/Blackboard/Assets/Icons/variable_icon.png");
+                return default;
+                // Todo: Should we get rid of this old default icon? Using the App UI default for now if an icon can't be found.
+                // return ResourceLoadAPI.Load<Texture2D>("Packages/com.unity.behavior/Blackboard/Assets/Icons/variable_icon.png");
             }
 
-            if (type.IsEnum)
-                return m_VariableTypeIcons[typeof(Enum)];
-
-            if (m_VariableTypeIcons.TryGetValue(type, out var texture2D))
+#if UNITY_EDITOR
+            var icon = EditorGUIUtility.ObjectContent(null, type).image as Texture2D;
+            if (icon != null)
             {
-                return texture2D;
+                return icon;
             }
+#endif
 
             return GetIcon(type.BaseType);
         }
 
-        public static void AddCustomIcon(Type typeKey, Texture2D texture)
+        public static void AddCustomIconName(Type variableType, string iconName)
         {
-            if (!m_VariableTypeIcons.ContainsKey(typeKey))
+            if (!m_VariableTypeIconNames.ContainsKey(variableType))
             {
-                m_VariableTypeIcons.Add(typeKey, texture);
+                m_VariableTypeIconNames.Add(variableType, iconName);
             }
         }
         

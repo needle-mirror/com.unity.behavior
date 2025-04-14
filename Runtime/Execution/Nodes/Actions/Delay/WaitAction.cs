@@ -6,7 +6,7 @@ namespace Unity.Behavior
 {
     [Serializable, GeneratePropertyBag]
     [NodeDescription(
-        name: "Wait",
+        name: "Wait (Seconds)",
         description: "Waits for a specified number of seconds.",
         story: "Wait for [SecondsToWait] seconds",
         category: "Action/Delay",
