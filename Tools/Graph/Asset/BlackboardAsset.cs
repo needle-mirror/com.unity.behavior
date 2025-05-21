@@ -1,8 +1,5 @@
 using System;
 using System.Collections.Generic;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 using UnityEngine;
 
 namespace Unity.Behavior.GraphFramework
@@ -21,7 +18,7 @@ namespace Unity.Behavior.GraphFramework
             internal set
             {
                 m_Variables = value;
-                OnBlackboardChanged.Invoke();
+                OnBlackboardChanged.Invoke(BlackboardChangedType.ModelChanged);
             }
         }
 
@@ -33,9 +30,20 @@ namespace Unity.Behavior.GraphFramework
         private void Awake()
         {
 #if UNITY_EDITOR
-            string guid = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(GetInstanceID()));
+            string guid = UnityEditor.AssetDatabase.AssetPathToGUID(UnityEditor.AssetDatabase.GetAssetPath(GetInstanceID()));
             AssetID = new SerializableGUID(guid);
 #endif
+        }
+
+        public enum BlackboardChangedType
+        {
+            ModelChanged,
+            VariableAdded,
+            VariableDeleted,
+            VariableRenamed,
+            VariableValueChanged,
+            UndoRedo,
+            VariableSetGlobal
         }
 
         [SerializeField][HideInInspector]
@@ -45,7 +53,7 @@ namespace Unity.Behavior.GraphFramework
         /// <summary>
         /// Delegate for blackboard changes.
         /// </summary>
-        public delegate void BlackboardChangedCallback();
+        public delegate void BlackboardChangedCallback(BlackboardChangedType changeType);
         
         /// <summary>
         /// Callback used for changes in the blackboard asset.
@@ -55,7 +63,7 @@ namespace Unity.Behavior.GraphFramework
         /// <summary>
         /// Invokes the OnBlackboardChanged callback.
         /// </summary>
-        public void InvokeBlackboardChanged() => OnBlackboardChanged.Invoke();
+        public void InvokeBlackboardChanged(BlackboardChangedType changeType) => OnBlackboardChanged.Invoke(changeType);
         
         /// <summary>
         /// Delegate for deleted blackboard assets.
@@ -84,7 +92,13 @@ namespace Unity.Behavior.GraphFramework
         public void MarkUndo(string description)
         {
 #if UNITY_EDITOR
-            UnityEditor.Undo.RecordObject(this, description);
+            var assetPath = UnityEditor.AssetDatabase.GetAssetPath(this);
+            if (description.Contains(assetPath) == false)
+            {
+                description += $" ({assetPath})";
+            }
+
+            UnityEditor.Undo.RegisterCompleteObjectUndo(this, description);
 #endif
             // There are still a few lingering non-command changes to asset data preceded by MarkUndo() calls.
             // In order to pick up these changes, set the asset dirty here too.
@@ -100,16 +114,13 @@ namespace Unity.Behavior.GraphFramework
 #endif
         }
 
-        public void SaveAsset()
+        public virtual void SaveAsset()
         {
+            HasOutstandingChanges = false;
 #if UNITY_EDITOR
             UnityEditor.EditorUtility.SetDirty(this);
-            // Note: Using AssetDatabase.SaveAssetIfDirty(this) saves the asset but doesn't pass the path to
-            // AssetModificationProcessor.OnWillSaveAssets(), which we use to rebuild graphs which reference this one.
-            // Instead, use AssetDatabase.SaveAssets().
-            UnityEditor.AssetDatabase.SaveAssets();
+            UnityEditor.AssetDatabase.SaveAssetIfDirty(this);
 #endif
-            HasOutstandingChanges = false;
         }
     }
 }

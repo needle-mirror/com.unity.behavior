@@ -34,9 +34,9 @@
             "define": "ENABLE_UXML_UI_SERIALIZATION"
         },
         {
-            "name": "com.unity.muse.common",
-            "expression": "2.0.5",
-            "define": "ENABLE_MUSE_BEHAVIOR"
+            "name": "com.unity.test-framework",
+            "expression": "",
+            "define": "UNITY_TEST_FRAMEWORK"
         }
     ],
     "noEngineReferences": false

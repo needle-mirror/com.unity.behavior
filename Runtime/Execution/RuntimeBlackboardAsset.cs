@@ -148,7 +148,7 @@ namespace Unity.Behavior
         /// <inheritdoc cref="OnAfterDeserialize"/>
         public void OnAfterDeserialize()
         {
-            Blackboard.ValidateVariables();
+            Blackboard?.ValidateVariables();
 
             if (m_SharedBlackboardVariableGuids == null)
             {

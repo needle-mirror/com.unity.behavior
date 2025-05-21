@@ -38,7 +38,7 @@ namespace Unity.Behavior
 
             m_BehaviorDropdown.RegisterValueChangedCallback(evt =>
             {
-                m_StartOnEventModel.Asset.MarkUndo("Undo Trigger Mode Change");
+                m_StartOnEventModel.Asset.MarkUndo("Change Trigger Mode");
                 using (var newVal = evt.newValue.GetEnumerator())
                 {
                     if (newVal.MoveNext())

@@ -1,6 +1,6 @@
 namespace Unity.Behavior.GraphFramework
 {
-    internal class SetVariableIsSharedCommand : Command
+    internal class SetVariableIsSharedCommand : Command, IBlackboardAssetCommand
     {
         public VariableModel Variable { get; }
         public bool NewValue { get; set; }

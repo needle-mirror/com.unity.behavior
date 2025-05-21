@@ -179,9 +179,7 @@ namespace Unity.Behavior
                     return;
                 }
 
-
-                var label = new Label(startNodeModel.TriggerBehavior == StartOnEvent.TriggerBehavior.Once ?
-                    StartOnEventModel.k_TriggerOnceNodeUITitleName : StartOnEventModel.k_RestartOnNewMessageNodeUITitleName);
+                var label = new Label($"({startNodeModel.TriggerBehavior.ToString()})");
                 label.AddToClassList("RootNode");
                 m_ChannelLine.Add(label);
             }

@@ -21,8 +21,5 @@ Explore the generative AI capabilities of Unity Behavior and start creating your
 | Topic | Description |
 | ----- | ----------- |
 | [Register for generative AI](register-gen-ai.md) | Register for Unity Behavior generative AI feature. |
-| [Install Muse Common with the Package Manager](install-muse-common.md) | Use the Package Manager to install Muse Common. |
-| [Create a branch using generative AI](gen-ai-behavior-graph.md) | Get started with your first behavior graph using generative AI. |
-| [Create an action node using generative AI](gen-ai-node.md) | Work with generative AI to create an action node for behavior graphs. |
 | [Placeholder node in a behavior graph](placeholder-nodes.md) | Manage placeholder nodes in behavior graphs. |
 | [Best practices for using generative AI](gen-ai-best-practices.md) | Get most out of generative AI using the best practice tips. |

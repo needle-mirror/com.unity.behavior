@@ -1,6 +1,6 @@
 ﻿namespace Unity.Behavior.GraphFramework
 {
-    internal class SetBlackboardVariableValueCommand : Command
+    internal class SetBlackboardVariableValueCommand : Command, IBlackboardAssetCommand
     {
         public VariableModel Variable;
         public object Value;

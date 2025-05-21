@@ -26,6 +26,11 @@ namespace Unity.Behavior
         public BehaviorGraphDebugInfo DebugInfo { get => m_DebugInfo; set => m_DebugInfo = value; }
 #endif
 
+        [SerializeReference]
+        public BlackboardReference BlackboardReference = new BlackboardReference();
+        [SerializeReference]
+        public List<BlackboardReference> BlackboardGroupReferences = new List<BlackboardReference>();
+
         /// <summary>
         /// The root node of the graph
         /// </summary>
@@ -37,11 +42,7 @@ namespace Unity.Behavior
         /// </summary>
         internal Blackboard Blackboard => BlackboardReference.Blackboard;
 
-        [SerializeReference]
-        public BlackboardReference BlackboardReference = new BlackboardReference();
-        [SerializeReference]
-        public List<BlackboardReference> BlackboardGroupReferences = new List<BlackboardReference>();
-        [CreateProperty, SerializeReference] [FormerlySerializedAs("ProcessedNodes")] 
+        [CreateProperty, SerializeReference] [FormerlySerializedAs("ProcessedNodes")]
         internal List<Node> m_ActiveNodes = new List<Node>(4);
         [CreateProperty, SerializeReference] [FormerlySerializedAs("m_RunningNodes")]
         private List<Node> m_NodesToTick = new List<Node>(4);
@@ -165,7 +166,7 @@ namespace Unity.Behavior
             {
                 // Post-order graph traversal
                 Node currentNode = m_NodesToEnd.Peek();
-                
+
                 // At each node, push the first unprocessed child to the stack.
                 Node unprocessedChild = GetFirstUnprocessedChild(currentNode);
                 if (unprocessedChild != null)
@@ -192,7 +193,7 @@ namespace Unity.Behavior
             {
                 return node is { CurrentStatus: Status.Running or Status.Waiting } && !m_EndedNodes.Contains(node);
             }
-            
+
             // Returns the first unprocessed child of the node. It does not search nodes beyond the immediate children.
             Node GetFirstUnprocessedChild(Node node)
             {
@@ -396,7 +397,7 @@ namespace Unity.Behavior
 
             return false;
         }
-        
+
         /// <see cref="Behavior.BlackboardReference.SetVariableValue{TValue}(SerializableGUID, TValue)"/>
         public bool SetVariableValue<TValue>(SerializableGUID guid, TValue value)
         {
@@ -445,7 +446,14 @@ namespace Unity.Behavior
 
             foreach (Node node in candidates)
             {
-                node.Serialize();
+                try
+                {
+                    node.Serialize();
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"Failed to serialize {node.GetType()} (ID: {node.ID}): {e.Message}");
+                }
             }
         }
 
@@ -459,12 +467,20 @@ namespace Unity.Behavior
 
             foreach (Node node in candidates)
             {
-                node.Deserialize();
+                // We want to prevent user errors from preventing the rest of the deserialization.
+                try
+                {
+                    node.Deserialize();
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"Failed to deserialize {node.GetType()} (ID: {node.ID}): {e.Message}");
+                }
             }
         }
 
         private void GatherActiveNodes(Node origin, ref HashSet<Node> outCollection)
-        {   
+        {
             // If the node is not running or already explored, we don't need to got further.
             if (origin == null || !origin.IsRunning || outCollection.Contains(origin))
             {

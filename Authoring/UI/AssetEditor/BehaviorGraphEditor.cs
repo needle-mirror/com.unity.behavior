@@ -392,14 +392,19 @@ namespace Unity.Behavior
     
                 List<BehaviorGraphModule> matchingModules = agent.Graph.Graphs.Where(module => module.AuthoringAssetID == Asset.AssetID).ToList();
                 int id = 1;
-                bool isEnabled = agent.enabled;
+                bool isEnabled = agent.isActiveAndEnabled;
                 string enabledSuffix = !isEnabled ? "(Disabled)" : string.Empty;
                 int priority = agent == m_SelectedAgent ? 10 : (isEnabled ? 0 : -10);
                 foreach (BehaviorGraphModule module in matchingModules)
                 {
                     string idString = matchingModules.Count == 1 ? string.Empty : $" (Instance {id++})";
+                    string outdatedGraph = module.VersionTimestamp == BehaviorGraphView.Asset.VersionTimestamp ? string.Empty : " (Outdated)";
+#if UNITY_EDITOR
+                    // Some user wrap around the BehaviorGraphAgent component and they also need to debug functionality.
+                    isEnabled |= BehaviorProjectSettings.instance.AllowDisabledAgentDebugging;
+#endif
                     searchItems.Add(new SearchView.Item(
-                        path: $"{agent.name}{idString} {enabledSuffix}", 
+                        path: $"{agent.name}{idString}{outdatedGraph} {enabledSuffix}", 
                         data: (agent, module),
                         priority: priority, 
                         enabled: isEnabled)
@@ -459,7 +464,6 @@ namespace Unity.Behavior
             SetupDebugTarget(m_SelectedAgent);
         }
 #endif
-
         private void SetupDebugTarget(BehaviorGraphAgent agent)
         {
             if (agent == null || !agent.Graph || agent.Graph.RootGraph == null)
@@ -472,6 +476,7 @@ namespace Unity.Behavior
 #if UNITY_EDITOR
             m_SelectedAgent.OnRuntimeDeserializationEvent += PostRuntimeDeserializationTargetRefresh;
 #endif
+            BehaviorGraphView.ResetNodesUI();
             BehaviorGraphView.ActiveDebugGraph = agent.Graph.Graphs.FirstOrDefault(module => module.AuthoringAssetID == Asset.AssetID);
 
             DebugAgentSelected?.Invoke(m_SelectedAgent.GetInstanceID());
@@ -505,18 +510,18 @@ namespace Unity.Behavior
 
         public override void OnAssetSave()
         {
-            if (!Asset || IsAssetVersionUpToDate())
+            if (Asset == null) 
+            {
+                return;
+            }
+
+            var behaviorBB = Asset.Blackboard as BehaviorBlackboardAuthoringAsset;
+            if (IsAssetVersionUpToDate() && behaviorBB.IsAssetVersionUpToDate())
             {
                 return;
             }
             
             OnSave?.Invoke();
-#if UNITY_EDITOR
-            if (!Application.isPlaying)
-            {
-                Asset.BuildRuntimeGraph(false);
-            }
-#endif
             SaveSubgraphRepresentation();
             base.OnAssetSave();
         }
@@ -542,7 +547,7 @@ namespace Unity.Behavior
                 {
                     string varName = char.ToUpper(storyVariable.Name.First()) + storyVariable.Name.Substring(1);
                     Type varType = BlackboardUtils.GetVariableModelTypeForType(storyVariable.Type);
-                    Dispatcher.DispatchImmediate(new CreateVariableCommand(varName, varType) { ExactName = true });
+                    Dispatcher.DispatchImmediate(new CreateVariableCommand(varName, varType) { ExactName = true }, setHasOutstandingChanges: false);
                 }
             }
         }
@@ -587,11 +592,13 @@ namespace Unity.Behavior
             return true;
         }
 
+#if UNITY_EDITOR
         protected override void OnUndoRedoPerformed()
         {
             base.OnUndoRedoPerformed();
             GraphView.Query<BehaviorNodeUI>().ForEach(nodeUI => nodeUI.UpdateLinkFields());
         }
+#endif
 
         private void OnVariableLinkButton(LinkFieldLinkButtonEvent evt)
         {
@@ -722,7 +729,8 @@ namespace Unity.Behavior
                 // Check for variables in added Blackboard groups, and display them with the Blackboard asset name first.
                 foreach (BehaviorBlackboardAuthoringAsset blackboard in Asset.m_Blackboards)
                 {
-                    foreach (VariableModel assetVariable in blackboard.Variables.Where(variableModel => field.IsAssignable(variableModel.Type) && variableModel.Type.BaseType != typeof(EventChannelBase)))
+                    foreach (VariableModel assetVariable in blackboard.Variables.Where(variableModel => field.IsAssignable(variableModel.Type) 
+                        && typeof(EventChannelBase).IsAssignableFrom(variableModel.Type) == false))
                     {
                         var targetIcon = assetVariable.Type.GetIcon();
                         if (targetIcon != null)

@@ -11,7 +11,8 @@ namespace Unity.Behavior
 
         private const string k_GraphSubtitle = "Behavior Graph";
         private readonly BehaviorAuthoringGraph m_InspectedGraph;
-        
+        private TextField m_GraphDescription;
+
         public BehaviorGraphInspectorUI(BehaviorAuthoringGraph graph) : base(null)
         {
             m_InspectedGraph = graph;
@@ -23,22 +24,32 @@ namespace Unity.Behavior
             Label infoDescriptionLabel = this.Q<Label>("Info-Description");
             Label subtitleLabel = this.Q<Label>("Subtitle");
             EditSubgraphStoryButton = this.Q<ActionButton>("EditSubgraphStoryButton");
-            TextField graphDescriptionField = this.Q<TextField>("GraphDescription-Field");
+            m_GraphDescription = this.Q<TextField>("GraphDescription-Field");
 
             titleLabel.text = m_InspectedGraph.name;
             subtitleLabel.text = k_GraphSubtitle.ToUpper();
             infoDescriptionLabel.text = "This graph can be used in other graphs. Edit how it represents itself in other graphs below.";
-            graphDescriptionField.RegisterValueChangingCallback(OnDescriptionChanged);
+            m_GraphDescription.RegisterValueChangingCallback(OnDescriptionChanged);
             if (!string.IsNullOrEmpty(m_InspectedGraph.Description))
             {
-                graphDescriptionField.value = m_InspectedGraph.Description;
+                m_GraphDescription.value = m_InspectedGraph.Description;
             }
         }
 
         private void OnDescriptionChanged(ChangingEvent<string> evt)
         {
+            m_InspectedGraph.MarkUndo("Edit Subgraph Description", hasOutstandingChange: false);
             m_InspectedGraph.Description = evt.newValue;
-            m_InspectedGraph.MarkUndo("Edit subgraph description.");
+        }
+
+        public override void Refresh()
+        {
+            base.Refresh();
+            
+            if (m_GraphDescription != null && m_InspectedGraph.Description != m_GraphDescription.value)
+            {
+                m_GraphDescription.SetValueWithoutNotify(m_InspectedGraph.Description);
+            }
         }
     }
 }

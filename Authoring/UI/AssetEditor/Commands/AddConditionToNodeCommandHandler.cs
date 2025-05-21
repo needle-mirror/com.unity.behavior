@@ -8,7 +8,6 @@ namespace Unity.Behavior
         public override bool Process(AddConditionToNodeCommand command)
         {
             ConditionInfo info = ConditionUtility.GetInfoForConditionType(command.Condition.GetType());
-            Asset.MarkUndo($"Add a condition {info.Name} to a node");
             BehaviorGraphNodeModel behaviorNodeModel = command.NodeModel as BehaviorGraphNodeModel;
 
             // Create a new condition model.

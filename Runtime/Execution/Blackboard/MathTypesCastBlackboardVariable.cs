@@ -8,6 +8,7 @@ namespace Unity.Behavior
     {
         [SerializeReference]
         protected BlackboardVariable<OriginalType> m_SourceVariable;
+        
         protected CastType m_CachedValue;
         private bool m_CallbackRegistered = false;
 
@@ -29,6 +30,7 @@ namespace Unity.Behavior
                     m_CallbackRegistered = true;
                     OnSourceValueChanged();
                 }
+                
                 return m_CachedValue;
             }
             set
@@ -118,7 +120,6 @@ namespace Unity.Behavior
             m_SourceVariable.Value = value;
         }
     }
-
     internal class Vector4ToVector2BlackboardVariable : BaseCastBlackboardVariable<Vector4, Vector2>
     {
         public Vector4ToVector2BlackboardVariable() { }

@@ -5,7 +5,7 @@ using Unity.Properties;
 
 namespace Unity.Behavior.Serialization.Json
 {
-    class DictionaryElementProperty<TDictionary, TKey, TValue> : Property<TDictionary, TValue>
+    internal class DictionaryElementProperty<TDictionary, TKey, TValue> : Property<TDictionary, TValue>
         where TDictionary : IDictionary<TKey, TValue>
     {
         public override string Name => Key.ToString();
@@ -23,11 +23,11 @@ namespace Unity.Behavior.Serialization.Json
 
         public TKey Key { get; internal set; }
     }
-    
+
     /// <summary>
     /// A visitor that traverses a property container and outputs a JSON string.
     /// </summary>
-    class JsonPropertyWriter : JsonPropertyVisitor,
+    internal class JsonPropertyWriter : JsonPropertyVisitor,
         IPropertyBagVisitor,
         ICollectionPropertyBagVisitor,
         IListPropertyBagVisitor,
@@ -38,22 +38,24 @@ namespace Unity.Behavior.Serialization.Json
         {
             public int Id;
         }
-        
+
         struct SerializedType
         {
             public Type Type;
         }
-        
+
         struct SerializedVersion
         {
             public int Version;
         }
-        
+
         class SerializedIdProperty : Property<SerializedId, int>
         {
             public override string Name => k_SerializedId;
             public override bool IsReadOnly => true;
+
             public override int GetValue(ref SerializedId container) => container.Id;
+
             public override void SetValue(ref SerializedId container, int value) => throw new InvalidOperationException("Property is ReadOnly.");
         }
 
@@ -61,7 +63,9 @@ namespace Unity.Behavior.Serialization.Json
         {
             public override string Name => k_SerializedTypeKey;
             public override bool IsReadOnly => true;
+
             public override string GetValue(ref SerializedType container) => FormatFullTypeName(container.Type);
+
             public override void SetValue(ref SerializedType container, string value) => throw new InvalidOperationException("Property is ReadOnly.");
 
             /// <summary>
@@ -76,10 +80,10 @@ namespace Unity.Behavior.Serialization.Json
             /// </summary>
             /// <param name="t">The type to format</param>
             /// <returns>An equivalent to FullName where generic argument types also use the full name representation</returns>
-            private string FormatFullTypeName(Type t)
+            string FormatFullTypeName(Type t)
             {
                 StringBuilder sb = new();
-                
+
                 FormatFullTypeNameRecursive(t, sb, false);
 
                 return sb.ToString();
@@ -110,21 +114,20 @@ namespace Unity.Behavior.Serialization.Json
                     if (t.IsGenericType)
                     {
                         // `1 is already in t.Name
-                        sb.Append( "[");
+                        sb.Append("[");
                         for (var index = 0; index < t.GenericTypeArguments.Length; index++)
                         {
                             if (index > 0)
                             {
-                                sb.Append( ", ");
+                                sb.Append(", ");
                             }
-                            
-                            sb.Append( "[");
-                            var typeArgument = t.GenericTypeArguments[index];
-                            FormatFullTypeNameRecursive(typeArgument,sb, false);
-                            sb.Append( "]");
 
+                            sb.Append("[");
+                            var typeArgument = t.GenericTypeArguments[index];
+                            FormatFullTypeNameRecursive(typeArgument, sb, false);
+                            sb.Append("]");
                         }
-                        sb.Append( "]");
+                        sb.Append("]");
                     }
 
                     if (!omitAssembly && !t.IsPrimitive && t.Assembly != typeof(int).Assembly)
@@ -140,26 +143,28 @@ namespace Unity.Behavior.Serialization.Json
         {
             public override string Name => k_SerializedVersionKey;
             public override bool IsReadOnly => true;
+
             public override int GetValue(ref SerializedVersion container) => container.Version;
+
             public override void SetValue(ref SerializedVersion container, int value) => throw new InvalidOperationException("Property is ReadOnly.");
         }
 
-        struct SerializedContainerMetadata
+        internal struct SerializedContainerMetadata
         {
             public bool IsSerializedReference;
-            
+
             public bool HasSerializedId;
             public bool HasSerializedType;
             public bool HasSerializedVersion;
-            
+
             /// <summary>
             /// Returns true if there is any metadata to write out.
             /// </summary>
             public bool Exists => HasSerializedId || HasSerializedType || HasSerializedVersion;
-            
+
             // ReSharper disable once MemberHidesStaticFromOuterClass
             public int SerializedId;
-            
+
             // ReSharper disable once MemberHidesStaticFromOuterClass
             public int SerializedVersion;
         }
@@ -173,7 +178,7 @@ namespace Unity.Behavior.Serialization.Json
         /// Shared property used to write the serialized type metadata.
         /// </summary>
         static readonly SerializedTypeProperty s_SerializedTypeProperty = new SerializedTypeProperty();
-        
+
         /// <summary>
         /// Shared property used to write the serialized version metadata.
         /// </summary>
@@ -188,16 +193,17 @@ namespace Unity.Behavior.Serialization.Json
 
         bool m_HasPrimitiveOrStringGlobalAdapters;
         bool m_HasPrimitiveOrStringUserDefinedAdapters;
+        internal bool SkipBeginEndObject;
 
         public JsonWriter Writer => m_Writer;
-        
+
         public void SetWriter(JsonWriter writer)
             => m_Writer = writer;
 
-        public void SetSerializedType(Type type) 
+        public void SetSerializedType(Type type)
             => m_SerializedType = type;
-        
-        public void SetDisableRootAdapters(bool disableRootAdapters) 
+
+        public void SetDisableRootAdapters(bool disableRootAdapters)
             => m_DisableRootAdapters = disableRootAdapters;
 
         public void SetGlobalAdapters(List<IJsonAdapter> adapters)
@@ -205,40 +211,44 @@ namespace Unity.Behavior.Serialization.Json
             m_Adapters.Global = adapters;
             m_HasPrimitiveOrStringGlobalAdapters = JsonAdapterCollection.ContainsPrimitiveOrStringAdapter(adapters);
         }
-        
-        public void SetUserDefinedAdapters(List<IJsonAdapter> adapters) 
+
+        public void SetUserDefinedAdapters(List<IJsonAdapter> adapters)
         {
             m_Adapters.UserDefined = adapters;
             m_HasPrimitiveOrStringUserDefinedAdapters = JsonAdapterCollection.ContainsPrimitiveOrStringAdapter(adapters);
         }
-        
-        public void SetGlobalMigrations(List<IJsonMigration> migrations) 
+
+        public void SetGlobalMigrations(List<IJsonMigration> migrations)
             => m_Migrations.Global = migrations;
-        
-        public void SetUserDefinedMigration(List<IJsonMigration> migrations) 
+
+        public void SetUserDefinedMigration(List<IJsonMigration> migrations)
             => m_Migrations.UserDefined = migrations;
 
         public void SetSerializedReferences(SerializedReferences serializedReferences)
             => m_SerializedReferences = serializedReferences;
-        
+
         public JsonPropertyWriter()
         {
             m_Adapters.InternalAdapter = new JsonAdapter();
         }
 
-        SerializedContainerMetadata GetSerializedContainerMetadata<TContainer>(ref TContainer container)
+        /// <summary>
+        /// We use a custom exposed method here so that keep the allocation free path for the common case.
+        /// This also allows the packages tests to run successfully as normal.
+        /// </summary>
+        internal SerializedContainerMetadata GetSerializedContainerMetadataCustomWithAllocation<TContainer>(ref TContainer container)
         {
-            var type = typeof(TContainer);
-            
+            var type = container?.GetType() ?? typeof(TContainer);
+
             // Never write metadata for special json types.
             if (type == typeof(JsonObject) || type == typeof(JsonArray)) return default;
-            
+
             var metadata = default(SerializedContainerMetadata);
 
             if (!(TypeTraits<TContainer>.IsValueType || container.GetType().IsValueType))
             {
                 var reference = container as object;
-                
+
                 if (m_SerializedReferences != null && m_SerializedReferences.TryGetSerializedReference(reference, out var id))
                 {
                     if (!m_SerializedReferences.SetSerialized(reference))
@@ -249,7 +259,7 @@ namespace Unity.Behavior.Serialization.Json
                             SerializedId = id
                         };
                     }
-                
+
                     metadata.HasSerializedId = true;
                     metadata.SerializedId = id;
                 }
@@ -258,10 +268,57 @@ namespace Unity.Behavior.Serialization.Json
             {
                 metadata.SerializedId = -1;
             }
-            
+
             var isRootAndTypeWasGiven = Property is IPropertyWrapper && null != m_SerializedType;
             var declaredValueType = Property.DeclaredValueType();
-            
+
+            // We need to write out the serialize type name when any of the following cases are FALSE:
+            // 1) The type is the same as the declared property type. This means deserialization can infer the property type.
+            // 2) The root type was explicitly provided. This means the user is expected to provide a type upon deserialization.
+            // 3) This is a nullable type. This means deserialization can infer the underlying property type.
+            metadata.HasSerializedType = type != declaredValueType && !isRootAndTypeWasGiven && Nullable.GetUnderlyingType(declaredValueType) != type;
+            metadata.HasSerializedVersion = m_Migrations.TryGetSerializedVersion<TContainer>(out var serializedVersion);
+            metadata.SerializedVersion = serializedVersion;
+
+            return metadata;
+        }
+
+        SerializedContainerMetadata GetSerializedContainerMetadata<TContainer>(ref TContainer container)
+        {
+            var type = typeof(TContainer);
+
+            // Never write metadata for special json types.
+            if (type == typeof(JsonObject) || type == typeof(JsonArray)) return default;
+
+            var metadata = default(SerializedContainerMetadata);
+
+            if (!(TypeTraits<TContainer>.IsValueType || container.GetType().IsValueType))
+            {
+                var reference = container as object;
+
+                if (m_SerializedReferences != null && m_SerializedReferences.TryGetSerializedReference(reference, out var id))
+                {
+                    if (!m_SerializedReferences.SetSerialized(reference))
+                    {
+                        return new SerializedContainerMetadata
+                        {
+                            IsSerializedReference = true,
+                            SerializedId = id
+                        };
+                    }
+
+                    metadata.HasSerializedId = true;
+                    metadata.SerializedId = id;
+                }
+            }
+            else
+            {
+                metadata.SerializedId = -1;
+            }
+
+            var isRootAndTypeWasGiven = Property is IPropertyWrapper && null != m_SerializedType;
+            var declaredValueType = Property.DeclaredValueType();
+
             // We need to write out the serialize type name in any of the following cases are FALSE:
             // 1) The type is the same as the declared property type. This means deserialization can infer the property type.
             // 2) The root type was explicitly provided. This means the user is expected to provide a type upon deserialization.
@@ -273,23 +330,23 @@ namespace Unity.Behavior.Serialization.Json
             return metadata;
         }
 
-        void WriteSerializedContainerMetadata<TContainer>(ref TContainer container, SerializedContainerMetadata metadata, ref int count)
+        internal void WriteSerializedContainerMetadata<TContainer>(ref TContainer container, SerializedContainerMetadata metadata, ref int count)
         {
             if (metadata.HasSerializedId)
             {
                 using (CreatePropertyScope(s_SerializedIdProperty))
                 {
-                    var serializedId = new SerializedId {Id = metadata.SerializedId};
-                    ((IPropertyAccept<SerializedId>) s_SerializedIdProperty).Accept(this, ref serializedId);
+                    var serializedId = new SerializedId { Id = metadata.SerializedId };
+                    ((IPropertyAccept<SerializedId>)s_SerializedIdProperty).Accept(this, ref serializedId);
                 }
             }
-            
+
             if (metadata.HasSerializedType)
             {
                 using (CreatePropertyScope(s_SerializedTypeProperty))
                 {
-                    var typeInfo = new SerializedType {Type = container.GetType()};
-                    ((IPropertyAccept<SerializedType>) s_SerializedTypeProperty).Accept(this, ref typeInfo);
+                    var typeInfo = new SerializedType { Type = container.GetType() };
+                    ((IPropertyAccept<SerializedType>)s_SerializedTypeProperty).Accept(this, ref typeInfo);
                 }
             }
 
@@ -297,56 +354,69 @@ namespace Unity.Behavior.Serialization.Json
             {
                 using (CreatePropertyScope(s_SerializedVersionProperty))
                 {
-                    var serializedVersion = new SerializedVersion {Version = metadata.SerializedVersion};
-                    ((IPropertyAccept<SerializedVersion>) s_SerializedVersionProperty).Accept(this, ref serializedVersion);
+                    var serializedVersion = new SerializedVersion { Version = metadata.SerializedVersion };
+                    ((IPropertyAccept<SerializedVersion>)s_SerializedVersionProperty).Accept(this, ref serializedVersion);
                 }
             }
         }
-        
+
         void WriteSerializedReference(int id)
         {
             using (m_Writer.WriteObjectScope())
             {
-                m_Writer.WriteKey(k_SerializedReferenceKey);
-                m_Writer.WriteValue(id);
+                WriteSerializedReferenceKeyValue(id);
             }
         }
-        
+
+        internal void WriteSerializedReferenceKeyValue(int id)
+        {
+            m_Writer.WriteKey(k_SerializedReferenceKey);
+            m_Writer.WriteValue(id);
+        }
+
         void IPropertyBagVisitor.Visit<TContainer>(IPropertyBag<TContainer> properties, ref TContainer container)
         {
             var isRootContainer = properties is IPropertyWrapper;
-            
+
             var count = 0;
+            bool skipBeginEndObject = SkipBeginEndObject;
+            SkipBeginEndObject = false;
 
             if (!isRootContainer)
             {
                 var metadata = GetSerializedContainerMetadata(ref container);
 
-                if (metadata.IsSerializedReference)
+                if (metadata.IsSerializedReference && !skipBeginEndObject)
                 {
                     WriteSerializedReference(metadata.SerializedId);
                     return;
                 }
 
-                m_Writer.WriteBeginObject();
-                WriteSerializedContainerMetadata(ref container, metadata, ref count);
-            }
+                if (!skipBeginEndObject)
+                {
+                    m_Writer.WriteBeginObject();
+                }
 
+                if (!skipBeginEndObject)
+                {
+                    WriteSerializedContainerMetadata(ref container, metadata, ref count);
+                }
+            }
             foreach (var property in properties.GetProperties(ref container))
             {
                 if (PropertyChecks.IsPropertyExcludedFromSerialization(property))
                     continue;
-                
-                using (CreatePropertyScope(property)) 
+
+                using (CreatePropertyScope(property))
                     property.Accept(this, ref container);
             }
 
-            if (!isRootContainer)
+            if (!isRootContainer && !skipBeginEndObject)
             {
                 m_Writer.WriteEndObject();
             }
         }
-        
+
         void ICollectionPropertyBagVisitor.Visit<TCollection, TElement>(ICollectionPropertyBag<TCollection, TElement> properties, ref TCollection container)
         {
             var metadata = GetSerializedContainerMetadata(ref container);
@@ -356,7 +426,7 @@ namespace Unity.Behavior.Serialization.Json
                 WriteSerializedReference(metadata.SerializedId);
                 return;
             }
-            
+
             var metadataCount = 0;
 
             if (metadata.Exists)
@@ -390,25 +460,26 @@ namespace Unity.Behavior.Serialization.Json
                 WriteSerializedReference(metadata.SerializedId);
                 return;
             }
-            
+
             var metadataCount = 0;
-            
+
             if (metadata.Exists)
             {
                 m_Writer.WriteBeginObject();
                 WriteSerializedContainerMetadata(ref container, metadata, ref metadataCount);
                 m_Writer.WriteKey(k_SerializedElementsKey);
             }
-            
+
             using (m_Writer.WriteArrayScope())
             {
-                foreach (var property in properties.GetProperties(ref container))
+                var propertyCollection = properties.GetProperties(ref container);
+                foreach (var property in propertyCollection)
                 {
                     using (CreatePropertyScope(property))
                         property.Accept(this, ref container);
                 }
             }
-            
+
             if (metadata.Exists)
             {
                 m_Writer.WriteEndObject();
@@ -419,7 +490,7 @@ namespace Unity.Behavior.Serialization.Json
         {
             if (typeof(TKey) != typeof(string))
             {
-                ((ICollectionPropertyBagVisitor) this).Visit(properties, ref container);
+                ((ICollectionPropertyBagVisitor)this).Visit(properties, ref container);
             }
             else
             {
@@ -432,7 +503,7 @@ namespace Unity.Behavior.Serialization.Json
                 }
 
                 var metadataCount = 0;
-            
+
                 if (metadata.Exists)
                 {
                     m_Writer.WriteBeginObject();
@@ -448,7 +519,7 @@ namespace Unity.Behavior.Serialization.Json
                     foreach (var kvp in container)
                     {
                         property.Key = kvp.Key;
-                        ((IPropertyAccept<TDictionary>) property).Accept(this, ref container);
+                        ((IPropertyAccept<TDictionary>)property).Accept(this, ref container);
                     }
                 }
 
@@ -471,7 +542,7 @@ namespace Unity.Behavior.Serialization.Json
             var value = property.GetValue(ref container);
             WriteValue(ref value, isRootProperty);
         }
-        
+
         internal void WriteValue<TValue>(ref TValue value, bool isRoot = false)
         {
             var filter = JsonAdapterFilter.All;
@@ -488,7 +559,7 @@ namespace Unity.Behavior.Serialization.Json
                 if (!m_HasPrimitiveOrStringUserDefinedAdapters)
                     filter &= ~JsonAdapterFilter.UserDefined;
             }
-            
+
             WriteValueWithAdapters(value, m_Adapters.GetEnumerator(filter), isRoot);
         }
 
@@ -501,13 +572,14 @@ namespace Unity.Behavior.Serialization.Json
                     case IJsonAdapter<TValue> typed:
                         typed.Serialize(new JsonSerializationContext<TValue>(this, adapters, value, isRoot), value);
                         return;
+
                     case IContravariantJsonAdapter<TValue> typedContravariant:
                         // NOTE: Boxing
-                        typedContravariant.Serialize((IJsonSerializationContext) new JsonSerializationContext<TValue>(this, adapters, value, isRoot), value);
+                        typedContravariant.Serialize((IJsonSerializationContext)new JsonSerializationContext<TValue>(this, adapters, value, isRoot), value);
                         return;
                 }
             }
-            
+
             // Do the default thing.
             WriteValueWithoutAdapters(value, isRoot);
         }
@@ -515,7 +587,7 @@ namespace Unity.Behavior.Serialization.Json
         internal void WriteValueWithoutAdapters<TValue>(TValue value, bool isRoot)
         {
             if (!TypeTraits<TValue>.IsValueType)
-            {            
+            {
                 if (!(isRoot && m_DisableRootAdapters))
                 {
                     if (value is UnityEngine.Object)
@@ -524,7 +596,7 @@ namespace Unity.Behavior.Serialization.Json
                     }
                 }
             }
-            
+
 #if UNITY_EDITOR
             if (TypeTraits<TValue>.IsLazyLoadReference)
             {
@@ -533,13 +605,13 @@ namespace Unity.Behavior.Serialization.Json
                 return;
             }
 #endif
-            
+
             if (TypeTraits<TValue>.IsEnum)
             {
                 WritePrimitiveBoxed(m_Writer, value, Enum.GetUnderlyingType(typeof(TValue)));
                 return;
             }
-            
+
             if (TypeTraits<TValue>.CanBeNull && EqualityComparer<TValue>.Default.Equals(value, default))
             {
                 m_Writer.WriteNull();
@@ -552,7 +624,7 @@ namespace Unity.Behavior.Serialization.Json
                 m_Writer.WriteNull();
                 return;
             }
-            
+
             if (TypeTraits<TValue>.IsNullable)
             {
                 var underlyingType = Nullable.GetUnderlyingType(typeof(TValue));
@@ -561,7 +633,7 @@ namespace Unity.Behavior.Serialization.Json
                 {
                     // Unpack Nullable<T> as T
                     var underlyingValue = System.Convert.ChangeType(value, underlyingType);
-                    
+
                     if (!PropertyContainer.TryAccept(this, ref underlyingValue, out var errorCode))
                     {
                         switch (errorCode)
@@ -581,16 +653,16 @@ namespace Unity.Behavior.Serialization.Json
                 {
                     WritePrimitiveBoxed(m_Writer, value, underlyingType);
                 }
-                
+
                 return;
             }
-            
+
             if (TypeTraits<TValue>.IsObject && !TypeTraits.IsContainer(value.GetType()))
             {
                 WritePrimitiveBoxed(m_Writer, value, value.GetType());
                 return;
             }
-            
+
             if (TypeTraits<TValue>.IsContainer)
             {
                 if (!PropertyContainer.TryAccept(this, ref value, out var errorCode))
@@ -609,53 +681,66 @@ namespace Unity.Behavior.Serialization.Json
                 }
                 return;
             }
-            
+
             throw new Exception($"Unsupported Type {value.GetType()}.");
         }
-        
+
         internal static void WritePrimitiveBoxed(JsonWriter writer, object value, Type type)
         {
             switch (Type.GetTypeCode(type))
             {
                 case TypeCode.SByte:
-                    writer.WriteValue((sbyte) value);
+                    writer.WriteValue((sbyte)value);
                     return;
+
                 case TypeCode.Int16:
-                    writer.WriteValue((short) value);
+                    writer.WriteValue((short)value);
                     return;
+
                 case TypeCode.Int32:
-                    writer.WriteValue((int) value);
+                    writer.WriteValue((int)value);
                     return;
+
                 case TypeCode.Int64:
-                    writer.WriteValue((long) value);
+                    writer.WriteValue((long)value);
                     return;
+
                 case TypeCode.Byte:
-                    writer.WriteValue((byte) value);
+                    writer.WriteValue((byte)value);
                     return;
+
                 case TypeCode.UInt16:
-                    writer.WriteValue((ushort) value);
+                    writer.WriteValue((ushort)value);
                     return;
+
                 case TypeCode.UInt32:
-                    writer.WriteValue((uint) value);
+                    writer.WriteValue((uint)value);
                     return;
+
                 case TypeCode.UInt64:
-                    writer.WriteValue((ulong) value);
+                    writer.WriteValue((ulong)value);
                     return;
+
                 case TypeCode.Single:
-                    writer.WriteValue((float) value);
+                    writer.WriteValue((float)value);
                     return;
+
                 case TypeCode.Double:
-                    writer.WriteValue((double) value);
+                    writer.WriteValue((double)value);
                     return;
+
                 case TypeCode.Boolean:
-                    writer.WriteValueLiteral(((bool) value) ? "true" : "false");
+                    writer.WriteValueLiteral(((bool)value) ? "true" : "false");
                     return;
+
                 case TypeCode.Char:
-                    writer.WriteValue((char) value);
+                    writer.WriteValue((char)value);
                     return;
+
                 case TypeCode.String:
                     writer.WriteValue(value as string);
                     return;
+
                 default:
                     throw new ArgumentOutOfRangeException();
             }

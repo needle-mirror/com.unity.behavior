@@ -40,52 +40,81 @@ namespace Unity.Behavior.GraphFramework
 
         public static void AlignSelectedNodesImmediateChildren(GraphView graphView)
         {
-            graphView.Asset.MarkUndo("Align Child Nodes");
+            graphView.Asset.MarkUndo($"Align Child Nodes ({graphView.Asset.name})", hasOutstandingChange: false);
             var nodePositions = ComputeChildNodePositions(graphView.ViewState.Selected);
             ScheduleNodeMovement(graphView, graphView.Asset, nodePositions);
         }
 
         public static void AlignSelectedNodesAndAllChildren(GraphView graphView)
         {
-            graphView.Asset.MarkUndo("Align Subgraph");
+            graphView.Asset.MarkUndo($"Align Subgraph ({graphView.Asset.name})", hasOutstandingChange: false);
             var nodePositions = ComputeSubgraphNodePositions(graphView.ViewState.Selected);
             ScheduleNodeMovement(graphView, graphView.Asset, nodePositions);
         }
 
-        public static void ScheduleNodeMovement(VisualElement element, GraphAsset graphAsset, IEnumerable<KeyValuePair<NodeUI, Vector2>> nodesWithEndPositions)
+        public static void ScheduleNodeMovement(VisualElement element, GraphAsset graphAsset, 
+            IEnumerable<KeyValuePair<NodeUI, Vector2>> nodesWithEndPositions)
         {
-            // Schedule move
-            float accumulated = 0f;
-            long msPerIteration = 10;
-            long duration = 200; //ms
-            var nodeData = nodesWithEndPositions.Select(nodeAndEndPos => new Tuple<NodeModel, Vector2, Vector2>(
-                nodeAndEndPos.Key.Model, nodeAndEndPos.Key.transform.position, nodeAndEndPos.Value)).ToList();
+            // Early exit if no nodes to move
+            if (nodesWithEndPositions == null || !nodesWithEndPositions.Any())
+                return;
 
-            // Animate moving of nodes into position.
-            element.schedule.Execute((t) =>
+            long durationMs = 250;
+            long updateIntervalMs = 10;
+
+            var graphView = element as GraphView;
+            if (graphView == null && element.parent != null)
             {
-                accumulated += t.deltaTime;
-                float fractionOfTimePassed = accumulated / duration;
-                foreach ((NodeModel node, Vector2 startPos, Vector2 endPos) in nodeData)
+                var currentElement = element.parent;
+                do
                 {
-                    node.Position = Vector2.Lerp(startPos, endPos, Math.Min(1.0f, fractionOfTimePassed));
+                    graphView = currentElement.Q<GraphView>(className: "GraphView");
+                    currentElement = currentElement.parent;
+                } while (graphView == null && currentElement != null);
+            }
+
+            // Prepare animation data once before starting
+            var nodeData = nodesWithEndPositions.Select(pair => new NodeAnimationData(
+                pair.Key.Model,
+                pair.Key.transform.position,
+                pair.Value
+            )).ToList();
+
+            IReadOnlyList<NodeUI> nodesUIToRefresh = nodesWithEndPositions.Select(pair => pair.Key).ToList();
+
+            float elapsedTime = 0f;
+
+            element.schedule.Execute(timer =>
+            {
+                elapsedTime += timer.deltaTime;
+                float normalizedTime = Math.Min(1.0f, elapsedTime / durationMs);
+                bool isLastFrame = normalizedTime >= 1.0f;
+
+                float t = EaseOutQuad(normalizedTime);
+
+                foreach (var data in nodeData)
+                {
+                    data.Node.Position = isLastFrame ?
+                        data.EndPosition :
+                        Vector2.Lerp(data.StartPosition, data.EndPosition, t);
                 }
 
-                // We don't want to save the asset here, so we dirty it and manually set HasOutstandingChanges.
-                graphAsset.SetAssetDirty(false);
-                graphAsset.HasOutstandingChanges = true;
-            }).Every(msPerIteration).ForDuration(duration);
-
-            // Ensure final position.
-            element.schedule.Execute((t) =>
-            {
-                foreach ((NodeModel node, _, Vector2 endPos) in nodeData)
+                if (isLastFrame)
                 {
-                    node.Position = endPos;
+                    // Only set dirty once at the end.
+                    graphAsset.SetAssetDirty(setHasOutStandingChange: false);
+                    graphView?.ViewState.RefreshNodeUI(false, nodesUIToRefresh);
+                    return;
                 }
 
-                graphAsset.SetAssetDirty();
-            }).ExecuteLater(duration);
+                // Refresh view each frame of the animation.
+                graphView?.ViewState.RefreshNodeUI(false, nodesUIToRefresh);
+
+            }).Every(updateIntervalMs).Until(() => elapsedTime >= durationMs);
+
+
+            // Ease Out Quad - Starts fast and decelerates towards the end.
+            static float EaseOutQuad(float t) => 1 - (1 - t) * (1 - t);
         }
 
         public static IEnumerable<KeyValuePair<NodeUI, Vector2>> ComputeChildNodePositions(GraphElement rootNode)
@@ -459,5 +488,19 @@ namespace Unity.Behavior.GraphFramework
             return centerPosition;
         }
 
+        // Helper class.
+        private class NodeAnimationData
+        {
+            public NodeModel Node { get; }
+            public Vector2 StartPosition { get; }
+            public Vector2 EndPosition { get; }
+
+            public NodeAnimationData(NodeModel node, Vector2 start, Vector2 end)
+            {
+                Node = node;
+                StartPosition = start;
+                EndPosition = end;
+            }
+        }
     }
 }

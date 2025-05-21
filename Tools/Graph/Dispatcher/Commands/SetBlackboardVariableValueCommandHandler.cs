@@ -7,8 +7,6 @@ namespace Unity.Behavior.GraphFramework
     {
         public override bool Process(SetBlackboardVariableValueCommand command)
         {
-            Asset?.MarkUndo("Set blackboard variable value");
-            BlackboardAsset?.MarkUndo("Set blackboard asset variable value");
             command.Variable.ObjectValue = command.Value;
             
             Type variableType = command.Variable.GetType();
@@ -23,7 +21,8 @@ namespace Unity.Behavior.GraphFramework
                     command.Variable.ObjectValue = fields[(int)command.Value].GetValue(null);
                 }
             }
-            
+
+            BlackboardAsset?.InvokeBlackboardChanged(BlackboardAsset.BlackboardChangedType.VariableValueChanged);
             // Have we processed the command and wish to block further processing?
             return true;
         }

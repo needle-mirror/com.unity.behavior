@@ -4,6 +4,55 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.10] - 2025-05-21
+
+### Added
+- Blackboard variable UI elements expanded/collapsed state is now preserved across domain reloads for the duration of an Editor session.
+- Added Queue mode for StartOnEvent node that preserves and processes messages sequentially. It can be used to preserve messages when multiple events are received in a single frame. (BEHAVB-290)
+- Added `Allow Disabled Agent Debugging` to project settings > Behavior > Asset Settings.
+- Graph debug now displays an "(Outdated)" tag on agents whose instance graph differs from the current version of the source graph.
+
+### Changed
+- As part of the Muse product sunset, the generative AI features have been disabled.
+- Updated the serialization sample so that now we save to a file and load from it between sessions.
+- Blackboard asset variable are now readonly when viewed from the graph editor blackboard view. This change was made to clarify that default values should be changed from the source blackboard asset.
+- `Patrol`, `NavigateToTarget` and `NavigateToLocation` action nodes now set animator speed based on agent velocity, even when not using NavMeshAgent component.
+- Sticky notes now support rich text.
+
+### Fixed
+- Fixed a runtime serialization issues with monobehaviors in the sample.
+- Fixed a variety of runtime serialization issues where inheritance between assemblies was causing issues. Lots of additional tests were added to ensure the fixes.
+- Fixed graph asset with static subgraph reference loosing their SubgraphsInfo metadata when opening editor.
+- Fixed performance issues when moving nodes around in the graph.
+- Improved undo-redo handling of BlackboardVariable for Create, Detele, Rename and SetValue commands when blackboard editor is open.
+- Improved blackboard view refresh mechanism.
+- Fixed undo-redo not rebuilding the asset runtime data when needed.
+- Fixed undo-redo inconsistent behaviors in both GraphEditor and BlackboardEditor.
+- Fixed inconsistent undo-redo of BlackboardVariable SetValue command when a blackboard editor is open.
+- Fixed undoing a delete operation on a `Conditional Branch` node failing to restore the True and False node.
+- Fixes `BehaviorGraphAgent.SetVariableValue` not working when trying to assign value to a variable from a linked blackboard asset when the agent is not initialized.
+- Fixed Behavior Graph not rebuilding runtime graph when edited during Play Mode. (BEHAVB-310)
+- Fixed graph debugging nodes status not showing the correct status after editing a graph during Play Mode.
+- Fixed graph debugging not tagging disabled agent as "(Disabled)" in the agent picker window.
+- Fixed an issue in PatrolAction where the agent would incorrectly mark waypoints as reached during path calculation, causing it to skip waypoints when wait times were used. (Credit to @viento20340)
+- Fixed navigation nodes not reverting NavMeshAgent speed to its original value when node's `OnEnd` was called.
+- Fixed navigation nodes overriding default NavMeshAgent stopping distance post runtime deserialization.
+- Fixed order of the Blackboard variable list in the Inspector window becomes unsynchronized when the list order is changed in the Behaviour Graph window's Blackboard. (BEHAVB-288) 
+
+### Known Issues
+- `RunSubgraph (Static)` node doesn't refresh properly when the referenced subgraph asset is deleted.
+- In regard to runtime serialization, `RunSubgraph (Dynamic)` is not yet fully supported and should not be use with runtime serialization. `RunSubgraph (Static)` is supported and can be use with runtime serialization.
+- In regards to runtime serialization, shared variables will not restore their previously saved state after deserializing.
+- Blackboard items re-ordering is now undo-able but some inconsistencies remains when redo-ing.
+- When editing graphs in Play Mode, changes to shared blackboard variables will be reflected at runtime. However, agent-specific values will revert when exiting Play Mode. This can cause agent shared blackboard variables to become out of sync with source shared blackboard variables. Workarounds: To re-sync all shared variable instances, edit the source variable again in Edit Mode.Additionally, setting a shared blackboard variable during Play Mode will properly update all variable instances.
+- An instantiated Prefab with `BehaviorGraphAgent` doesn't show Blackboard Variables overrides as bold and doesn't let you right click to apply/revert from prefab.
+- After editing an instantiated prefab with `BehaviorGraphAgent`, right clicking on the component and applying prefab overrides may cause an error. A workaround: Click the Overrides dropdown below the Prefab field on the GameObject and select Apply All.
+- During playmode, assigning the same graph to an agent twice from the inspector causes the blackboard values to disappear, and prevents the graph from executing correctly. The solution is to unassign the graph from the component, then reassign it.
+- Creating a new blackboard variable of an enumeration sets its default value to 0, even if no valid enumeration value exists for this value.
+- It is possible to assign assets and prefab to `StartOnEvent` and `WaitForEvent` nodes fields. This will do nothing as they are field used to transfer the event values to blackboard variables.
+- Abort and Restart modifiers only check their conditions once at the beginning of each graph update. With the removal of deferred node execution, if a child node changes a value that would trigger these modifiers' conditions, the effect won't be detected until the next frame. For conditional behaviors that depend on changes made by child nodes, you need to add a WaitForFrame node to ensure proper evaluation. Example pattern: `Abort -> Trigger condition -> WaitForFrame -> following nodes...`.
+
+
 ## [1.0.9] - 2025-04-14
 
 ### Added
@@ -15,6 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Icons are back from the dead and they brought friends!
 - Icons will once again show in the Blackboard and Search menus.
 - Changed "Delete Runtime Asset" on BehaviorAuthoringGraph asset to "Regenerate Runtime Asset".
+- Improved the stability and quality of runtime serialization overall.
 
 ### Fixed
 - Node execution will no longer be deferred to the next frame. This means an entire graph can fully execute in a single frame if none of its nodes take time to execute. Because this can potentially allow users create an infinite loop using a Repeat node or Start with repeat on, we will now abort a graph and throw an exception if it takes longer than a second to run in a single frame. Note: This abort will not happen if the debugger is currently attached to the process.
@@ -47,6 +97,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Blackboard asset variables cannot be changed from the graph window. Graphs are always going to use default value from the source linked blackboard asset. A workaround to change the default value for these variables is to use the `SetVariableValue` node in the graph or the `BehaviorGraphAgent.SetVariableValue` API at runtime.
 - Order of the Blackboard variable list in the Inspector window becomes unsynchronized when the list order is changed in the Behaviour Graph window's Blackboard. Note that any outstanding change to the graph will refresh the order. (BEHAVB-288) 
 - Abort and Restart modifiers now only check their conditions once at the beginning of each graph update. With the removal of deferred node execution, if a child node changes a value that would trigger these modifiers' conditions, the effect won't be detected until the next frame. For conditional behaviors that depend on changes made by child nodes, you need to add a WaitForFrame node to ensure proper evaluation. Example pattern: `Abort -> Trigger condition -> WaitForFrame -> following nodes...`.
+
 
 ## [1.0.8] - 2025-02-03
 

@@ -7,6 +7,8 @@ uid: serial
 Serialization saves the state of a behavior graph and loads it back from the same state the next time you start the game. This helps to preserve game states, user progress, and configurations across game sessions.
 
 Unity Behavior utilizes the `com.unity.serialization` and `com.unity.properties` packages to create property bags for each node you want to serialize. A property bag is a serializable definition of another class, generated automatically either from the source code or through reflection. These property bags are updated whenever the nodes are modified. For more information, refer to [Introduction to Unity Serialization](https://docs.unity3d.com/Packages/com.unity.serialization@3.1/manual/index.html).
+
+For more information on how to access and use the Runtime Serialization sample, refer to [Runtime Serialization sample](xref:serialize-sample).
  
 ## Pre-defined nodes
 
@@ -63,6 +65,6 @@ To save and restore the states of [custom nodes](create-custom-node.md) in Unity
 
 ## Additional resources
 
-* [Create a behavior graph with generative AI](about-genai.md)
+* [Runtime Serialization sample](xref:serialize-sample)
 * [Get started with Unity Behavior](get-started.md)
 * [Debug the Agent in real time during Play mode](debug.md)

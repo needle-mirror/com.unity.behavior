@@ -238,7 +238,7 @@ namespace Unity.Behavior
                 // Align from the clicked node only. Check if the nodeUI is in a sequence. If so, align from the sequence.
                 NodeUI rootUI = ClickedElement as NodeUI;
                 Group sequenceUI = rootUI!.GetFirstAncestorOfType<Group>();
-                Target.Asset.MarkUndo("Align Child Nodes");
+                Target.Asset.MarkUndo($"Align Child Nodes", hasOutstandingChange: false);
                 var nodePositions = GraphUILayoutUtility.ComputeChildNodePositions(sequenceUI ?? rootUI);
                 GraphUILayoutUtility.ScheduleNodeMovement(Target, Target.Asset, nodePositions);
             }
@@ -256,7 +256,7 @@ namespace Unity.Behavior
                 // Align from the clicked node only. Check if the nodeUI is in a sequence. If so, align from the sequence.
                 NodeUI rootUI = ClickedElement as NodeUI;
                 Group sequenceUI = rootUI!.GetFirstAncestorOfType<Group>();
-                Target.Asset.MarkUndo("Align Subgraph");
+                Target.Asset.MarkUndo($"Align Subgraph", hasOutstandingChange: false);
                 var nodePositions = GraphUILayoutUtility.ComputeSubgraphNodePositions(sequenceUI ?? rootUI);
                 GraphUILayoutUtility.ScheduleNodeMovement(Target, Target.Asset, nodePositions);
             }

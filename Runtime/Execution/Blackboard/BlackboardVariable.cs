@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Unity.Behavior.GraphFramework;
-using Unity.Properties;
 using UnityEngine;
 
 namespace Unity.Behavior
@@ -9,7 +8,7 @@ namespace Unity.Behavior
     /// <summary>
     /// A variable used within a blackboard.
     /// </summary>
-    [Serializable, GeneratePropertyBag]
+    [Serializable]
     public abstract class BlackboardVariable
     {
         /// <summary>
@@ -163,7 +162,7 @@ namespace Unity.Behavior
         public override sealed object ObjectValue
         {
             get => Value;
-            set => Value = (DataType)value;
+            set => Value = value is IConvertible ? (DataType)Convert.ChangeType(value, typeof(DataType)) : (DataType)value;
         }
 
         /// <summary>
@@ -189,7 +188,7 @@ namespace Unity.Behavior
         /// <inheritdoc cref="SetObjectValueWithoutNotify"/>
         public override void SetObjectValueWithoutNotify(object newValue)
         {
-            SetValueWithoutNotify((DataType)newValue);
+            SetValueWithoutNotify(newValue is IConvertible ? (DataType)Convert.ChangeType(newValue, typeof(DataType)) : (DataType)newValue);
         }
 
         /// <summary>

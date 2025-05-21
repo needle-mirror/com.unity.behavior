@@ -23,7 +23,7 @@ namespace Unity.Behavior
             if (enumerator.MoveNext())
             {
                 RepeatNodeModel.RepeatMode newValue = (RepeatNodeModel.RepeatMode)enumerator.Current;
-                RepeatNodeModel.Asset.MarkUndo("Change Repeat Mode.");
+                RepeatNodeModel.Asset.MarkUndo("Change Repeat Mode");
                 RepeatNodeModel.Mode = newValue;
                 RepeatNodeModel.OnValidate();
                 RepeatNodeModel.Asset.SetAssetDirty();
@@ -43,7 +43,7 @@ namespace Unity.Behavior
                 RepeatNodeModel.RepeatMode repeatMode = (RepeatNodeModel.RepeatMode)m_RepeatModeDropdown.selectedIndex;
                 if (RepeatNodeModel.Mode != repeatMode)
                 {
-                    m_RepeatModeDropdown.selectedIndex = (int)RepeatNodeModel.Mode;
+                    m_RepeatModeDropdown.SetValueWithoutNotify(new[] { (int)RepeatNodeModel.Mode });
                 }
             }
             if (m_AllowMultipleRepeatsPerTickField == null)
@@ -65,7 +65,7 @@ namespace Unity.Behavior
         
         private void OnDelayRepeatValueChanged(ChangeEvent<bool> evt)
         {
-            RepeatNodeModel.Asset.MarkUndo("Toggle Repeat Node Delay Repeat To Next Tick.");
+            RepeatNodeModel.Asset.MarkUndo("Toggle Repeat Node Delay Repeat To Next Tick");
             RepeatNodeModel.AllowMultipleRepeatsPerTick = evt.newValue;
         }
 

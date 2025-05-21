@@ -62,37 +62,44 @@ namespace Unity.Behavior.GraphFramework
                 return;
             }
 
-            if (m_DispatcherContext.GraphAsset != null)
+#if UNITY_EDITOR
+            if (command.MarkUndo)
             {
-                if (command.MarkUndo)
-                {
-                    m_DispatcherContext.GraphAsset.MarkUndo(command.GetType().Name, setHasOutstandingChanges);
-                }
-                else
-                {
-                    m_DispatcherContext.GraphAsset.SetAssetDirty(setHasOutstandingChanges);
-                }
+                DispatchAndProcessUndoableCommand(command, setHasOutstandingChanges, commandHandlers);
             }
+            else
+            {
+                if (command.SetAssetDirty)
+                {
+                    // We always dirty graph asset when available as nested blackboard asset is depending on it to be saved.
+                    if (m_DispatcherContext.GraphAsset != null)
+                    {
+                        m_DispatcherContext.GraphAsset.SetAssetDirty(setHasOutstandingChanges);
+                    }
+                    if (command is IBlackboardAssetCommand && m_DispatcherContext.BlackboardAsset != null)
+                    {
+                        m_DispatcherContext.BlackboardAsset.SetAssetDirty();
+                    }
+                }
 
-            if (m_DispatcherContext.BlackboardAsset != null)
-            {
-                if (command.MarkUndo)
+                foreach (BaseCommandHandler commandHandler in commandHandlers)
                 {
-                    m_DispatcherContext.BlackboardAsset.MarkUndo(command.GetType().Name);
-                }
-                else
-                {
-                    m_DispatcherContext.BlackboardAsset.SetAssetDirty();
+                    if (commandHandler.Process(command))
+                    {
+                        break;
+                    }
                 }
             }
-            
+#else
             foreach (BaseCommandHandler commandHandler in commandHandlers)
             {
+                // Command is process and asset might be dirty here
                 if (commandHandler.Process(command))
                 {
                     break;
                 }
             }
+#endif
         }
 
         public void Tick()
@@ -107,5 +114,81 @@ namespace Unity.Behavior.GraphFramework
         {
             m_DispatchQueue.Clear();
         }
+
+#if UNITY_EDITOR
+        private bool m_IsProcessingCommandChain = false;
+        private int m_CurrentCommandChainGroup = -1;
+        private List<Command> m_ActiveCommandChain = new();
+
+        /// <summary>
+        /// Dispatches a command with proper undo/redo support, handling both standalone commands and command chains.
+        /// </summary>
+        /// <remarks>
+        /// Commands can trigger other commands during processing (like DeleteVariable triggering SetNodeLinkedVariable).
+        /// This implementation handles these nested command chains by grouping them into a single undo operation.
+        /// Modifying this approach risks breaking undo/redo consistency and creating inconsistency in the different editor view.
+        /// </remarks>
+        private void DispatchAndProcessUndoableCommand(Command command, bool setHasOutstandingChanges, List<BaseCommandHandler> commandHandlers)
+        {
+            string assetName = command is IBlackboardAssetCommand ?
+                                (m_DispatcherContext.BlackboardAsset ? $" ({UnityEditor.AssetDatabase.GetAssetPath(m_DispatcherContext.BlackboardAsset)})" : string.Empty) :
+                                (m_DispatcherContext.GraphAsset ? $" ({UnityEditor.AssetDatabase.GetAssetPath(m_DispatcherContext.GraphAsset)})" : string.Empty);
+            string outstandingString = setHasOutstandingChanges ? "(outstanding) " : string.Empty;
+            string commandName = command.GetType().Name.Replace("Command", "") + $"{outstandingString}" + assetName;
+            
+            // Start a new undo group only if this is the first command in a chain
+            if (m_IsProcessingCommandChain == false)
+            {
+                UnityEditor.Undo.IncrementCurrentGroup();
+                UnityEditor.Undo.SetCurrentGroupName(commandName);
+                m_CurrentCommandChainGroup = UnityEditor.Undo.GetCurrentGroup();
+                m_IsProcessingCommandChain = true;
+            }
+
+            m_ActiveCommandChain.Add(command);
+
+            // Note that we always dirty graph asset even when the command affect blackboard.
+            // This is because in order to properly undo embedded blackboard asset (which is nested in the graph asset)
+            // we need to also register the super-graph asset state with the Undo API.
+            // This is not going to do anything when working on standalone Blackboard Asset,
+            // as the dispatcher won't have a GraphAsset assigned.
+            if (m_DispatcherContext.GraphAsset != null)
+            {
+                m_DispatcherContext.GraphAsset.MarkUndo(commandName, setHasOutstandingChanges);
+            }
+            if (command is IBlackboardAssetCommand && m_DispatcherContext.BlackboardAsset != null)
+            {
+                m_DispatcherContext.BlackboardAsset.MarkUndo(commandName);
+            }
+
+            foreach (BaseCommandHandler commandHandler in commandHandlers)
+            {
+                if (commandHandler.Process(command))
+                {
+                    break;
+                }
+            }
+
+            // If we're back at the root command of the chain (the command that started it all),
+            // finalize the undo group and reset the command chain state
+            if (m_IsProcessingCommandChain && m_ActiveCommandChain[0] == command)
+            {
+                if (m_CurrentCommandChainGroup != -1)
+                {
+                    if (m_ActiveCommandChain.Count > 1)
+                    {
+                        string mainCommand = commandName + $"(+ {m_ActiveCommandChain.Count - 1} action(s))";
+                        UnityEditor.Undo.SetCurrentGroupName(mainCommand);
+                    }
+
+                    UnityEditor.Undo.CollapseUndoOperations(m_CurrentCommandChainGroup);
+                    m_CurrentCommandChainGroup = -1;
+                }
+
+                m_IsProcessingCommandChain = false;
+                m_ActiveCommandChain.Clear();
+            }
+        }
+#endif
     }
 }

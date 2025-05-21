@@ -13,7 +13,7 @@ internal class RenameVariableCommandHandler : CommandHandler<RenameVariableComma
 
         command.Variable.Name = command.NewName;
         DispatcherContext.Root.SendEvent(VariableRenamedEvent.GetPooled(DispatcherContext.Root, command.Variable));
-        BlackboardAsset.InvokeBlackboardChanged();
+        BlackboardAsset.InvokeBlackboardChanged(BlackboardAsset.BlackboardChangedType.VariableRenamed);
 
         return true;
     }

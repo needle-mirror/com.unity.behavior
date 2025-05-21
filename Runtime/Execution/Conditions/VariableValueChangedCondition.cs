@@ -1,39 +1,34 @@
 using System;
+using Unity.Properties;
 using UnityEngine;
 
 namespace Unity.Behavior
 {
-    [Serializable]
+    [Serializable, GeneratePropertyBag]
     [Condition(
         name: "Variable Value Changed",
         category: "Variable Conditions",
         story: "[Variable] has changed",
         id: "81244bae408bf0ba83e9723fe4be4299")]
-    internal class VariableValueChangedCondition : Condition
+    internal partial class VariableValueChangedCondition : Condition, IConditionSerializationCallbackReceiver
     {
         [SerializeReference] public BlackboardVariable Variable;
-        private bool HasVariableChanged;
+        [CreateProperty] private bool m_HasVariableChanged;
 
         public override bool IsTrue()
         {
-            if (!HasVariableChanged)
+            if (!m_HasVariableChanged)
             {
                 return false;
             }
 
-            HasVariableChanged = false;
+            m_HasVariableChanged = false;
             return true;
         }
 
         public override void OnStart()
         {
-            if (Variable == null)
-            {
-                return;
-            }
-
-            Variable.OnValueChanged -= OnVariableValueChange;
-            Variable.OnValueChanged += OnVariableValueChange;
+            RegisterListener();
         }
 
         public override void OnEnd()
@@ -41,9 +36,28 @@ namespace Unity.Behavior
             Variable.OnValueChanged -= OnVariableValueChange;
         }
 
+        public void OnSerialize() 
+        { }
+
+        public void OnDeserialize()
+        {
+            RegisterListener();
+        }
+
         private void OnVariableValueChange()
         {
-            HasVariableChanged = true;
+            m_HasVariableChanged = true;
+        }
+
+        private void RegisterListener()
+        {
+            if (Variable == null)
+            {
+                return;
+            }
+            
+            Variable.OnValueChanged -= OnVariableValueChange;
+            Variable.OnValueChanged += OnVariableValueChange;
         }
     }
 }

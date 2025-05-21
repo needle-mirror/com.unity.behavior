@@ -280,7 +280,7 @@ namespace Unity.Behavior
 
             void CreateVariableFromMenuAction(string variableTypeName, Type type)
             {
-                dispatcher.DispatchImmediate(new CreateVariableCommand(variableTypeName, BlackboardUtils.GetVariableModelTypeForType(type)));
+                dispatcher.DispatchImmediate(new CreateVariableCommand(variableTypeName, BlackboardUtils.GetVariableModelTypeForType(type)), setHasOutstandingChanges: false);
             }
             
             // Assign top menu option icons separately
@@ -310,7 +310,8 @@ namespace Unity.Behavior
 #endif
             foreach (Type enumType in GetEnumVariableTypes())
             {
-                builder.Add($"Enumeration/{enumType.Name}", iconName: "enum", onSelected: () => dispatcher.DispatchImmediate(new CreateVariableCommand(enumType.Name, BlackboardUtils.GetVariableModelTypeForType(enumType))));
+                builder.Add($"Enumeration/{enumType.Name}", iconName: "enum", onSelected: () => 
+                    dispatcher.DispatchImmediate(new CreateVariableCommand(enumType.Name, BlackboardUtils.GetVariableModelTypeForType(enumType)), setHasOutstandingChanges: false));
             }
 
             // Event channels menu
@@ -320,7 +321,8 @@ namespace Unity.Behavior
 #endif
             foreach (EventChannelUtility.EventChannelInfo channelInfo in EventChannelUtility.GetEventChannelTypes())
             {
-                builder.Add($"Events/{channelInfo.Name}", iconName: "event", onSelected: () => dispatcher.DispatchImmediate(new CreateVariableCommand(channelInfo.Name, channelInfo.VariableModelType)));
+                builder.Add($"Events/{channelInfo.Name}", iconName: "event", onSelected: () => 
+                    dispatcher.DispatchImmediate(new CreateVariableCommand(channelInfo.Name, channelInfo.VariableModelType), setHasOutstandingChanges: false));
             }
 
             builder.DefaultTabName = "Common";

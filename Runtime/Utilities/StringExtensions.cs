@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using System.Text.RegularExpressions;
+using UnityEngine;
 
 namespace Unity.Behavior
 {
@@ -29,6 +30,18 @@ namespace Unity.Behavior
             var firstChar = char.ToUpper(input[0]);
             var remainingChars = input.Substring(1);
             return firstChar + remainingChars;
+        }
+        
+        internal static void CopyToClipboard(this string text)
+        {
+            // Uses IMGUI control.
+            TextEditor textEditor = new TextEditor
+            {
+                text = text
+            };
+            
+            textEditor.SelectAll();
+            textEditor.Copy();
         }
     }
 }

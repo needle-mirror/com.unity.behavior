@@ -46,10 +46,6 @@ namespace Unity.Behavior
 
         internal static void GenerateEventChannelFile(EventChannelData data, string path)
         {
-            string typedParams = string.Join(", ",
-                data.Parameters.Select(p => $"{GeneratorUtils.GetStringForType(p.Item2)} {p.Item1}"));
-            string untypedParams = string.Join(", ", data.Parameters.Select(p => $"{p.Item1}"));
-
             string eventChannelName = Path.GetFileNameWithoutExtension(path);
             string attributeString = GenerateAttributeString(data);
             data.ClassName = eventChannelName;
@@ -59,6 +55,10 @@ namespace Unity.Behavior
             {
                 parametersDictionary[parameter.Item1] = parameter.Item2;
             }
+
+            // Determine parent class based on number of parameters
+            string genericTypes = GetGenericTypesString(data.Parameters);
+            string baseClassName = GetEventChannelBaseClassName(genericTypes);
 
             using (StreamWriter outfile = new StreamWriter(path))
             {
@@ -77,71 +77,24 @@ namespace Unity.Behavior
                 outfile.WriteLine("#endif");
                 outfile.WriteLine("[Serializable, GeneratePropertyBag]");
                 outfile.WriteLine(attributeString);
-                outfile.WriteLine($"public partial class {eventChannelName} : EventChannelBase");
-                outfile.WriteLine("{");
-                outfile.WriteLine($"    public delegate void {eventChannelName}EventHandler({typedParams});");
-                outfile.WriteLine($"    public event {eventChannelName}EventHandler Event; ");
-                outfile.WriteLine();
-                outfile.WriteLine($"    public void SendEventMessage({typedParams})");
-                outfile.WriteLine("    {");
-                outfile.WriteLine($"        Event?.Invoke({untypedParams});");
-                outfile.WriteLine("    }");
-                outfile.WriteLine();
-
-                outfile.WriteLine("    public override void SendEventMessage(BlackboardVariable[] messageData)");
-                outfile.WriteLine("    {");
-                for (int i = 0; i < data.Parameters.Length; i++)
-                {
-                    string varName = data.Parameters[i].Item1;
-                    string type = GeneratorUtils.GetStringForType(data.Parameters[i].Item2);
-                    outfile.WriteLine(
-                        $"        BlackboardVariable<{type}> {varName}BlackboardVariable = messageData[{i}] as BlackboardVariable<{type}>;");
-                    outfile.WriteLine(
-                        $"        var {varName} = {varName}BlackboardVariable != null ? {varName}BlackboardVariable.Value : default({type});");
-                    outfile.WriteLine();
-                }
-
-                outfile.WriteLine($"        Event?.Invoke({untypedParams});");
-                outfile.WriteLine("    }");
-                outfile.WriteLine();
-
-                outfile.WriteLine(
-                    "    public override Delegate CreateEventHandler(BlackboardVariable[] vars, System.Action callback)");
-                outfile.WriteLine("    {");
-                outfile.WriteLine($"        {eventChannelName}EventHandler del = ({untypedParams}) =>");
-                outfile.WriteLine("        {");
-                for (int i = 0; i < data.Parameters.Length; i++)
-                {
-                    string varName = data.Parameters[i].Item1;
-                    string type = GeneratorUtils.GetStringForType(data.Parameters[i].Item2);
-                    outfile.WriteLine(
-                        $"            BlackboardVariable<{type}> var{i} = vars[{i}] as BlackboardVariable<{type}>;");
-                    outfile.WriteLine($"            if(var{i} != null)");
-                    outfile.WriteLine($"                var{i}.Value = {varName};");
-                    outfile.WriteLine();
-                }
-
-                outfile.WriteLine("            callback();");
-                outfile.WriteLine("        };");
-                outfile.WriteLine("        return del;");
-                outfile.WriteLine("    }");
-                outfile.WriteLine();
-
-                outfile.WriteLine("    public override void RegisterListener(Delegate del)");
-                outfile.WriteLine("    {");
-                outfile.WriteLine($"        Event += del as {eventChannelName}EventHandler;");
-                outfile.WriteLine("    }");
-                outfile.WriteLine();
-
-                outfile.WriteLine("    public override void UnregisterListener(Delegate del)");
-                outfile.WriteLine("    {");
-                outfile.WriteLine($"        Event -= del as {eventChannelName}EventHandler;");
-                outfile.WriteLine("    }");
-                outfile.WriteLine("}");
+                outfile.WriteLine($"public sealed partial class {eventChannelName} : {baseClassName} {{ }}");
                 outfile.WriteLine();
             }
 
             AssetDatabase.Refresh();
+        }
+
+        private static string GetEventChannelBaseClassName(string genericTypes)
+        {
+            return string.IsNullOrEmpty(genericTypes) ? "EventChannel" : $"EventChannel<{genericTypes}>";
+        }
+
+        private static string GetGenericTypesString(IReadOnlyCollection<(string, Type)> parameters)
+        {
+            if (parameters.Count == 0)
+                return string.Empty;
+
+            return string.Join(", ", parameters.Select(p => GeneratorUtils.GetStringForType(p.Item2)));
         }
 
         internal static string GenerateAttributeString(EventChannelData data)

@@ -20,6 +20,12 @@ namespace Unity.Behavior
         private const string k_GlobalRegistryPath = "Assets/GlobalAssetRegistry";
 
         /// <summary>
+        /// Returns wether the global registry is in a valid state. When false, the registry is still being updated 
+        /// and trying to retrieve value from it might result in unexpected behavior.
+        /// </summary>
+        public static bool IsRegistryStateValid { get; private set; } = false;
+
+        /// <summary>
         /// All <see cref="BehaviorAuthoringGraph"/> assets referenced by the registry instance.
         /// </summary>
         [SerializeReference]
@@ -59,11 +65,14 @@ namespace Unity.Behavior
                 m_GuidToAsset = new Dictionary<SerializableGUID, BehaviorAuthoringGraph>();
             }
             m_GlobalRegistry = this;
+            
+            IsRegistryStateValid = false;
 #if UNITY_EDITOR
             UpdateGlobalRegistry();
 #endif
+            IsRegistryStateValid = true;
         }
-        
+
         /// <inheritdoc cref="OnDisable"/>
         public void OnDisable()
         {
@@ -174,7 +183,7 @@ namespace Unity.Behavior
             {
                 return;
             }
-            
+
             BehaviorGraphAssetRegistry globalRegistry = GlobalRegistry;
             foreach (string guid in guids)
             {

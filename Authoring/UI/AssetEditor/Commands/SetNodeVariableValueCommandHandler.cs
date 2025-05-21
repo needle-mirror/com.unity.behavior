@@ -6,7 +6,6 @@ namespace Unity.Behavior
     {
         public override bool Process(SetNodeVariableValueCommand command)
         {
-            Asset.MarkUndo("Set node variable value");
             BehaviorGraphNodeModel behaviorNodeModel = command.NodeModel as BehaviorGraphNodeModel;
             behaviorNodeModel?.SetField(command.VariableName, command.Value);
 

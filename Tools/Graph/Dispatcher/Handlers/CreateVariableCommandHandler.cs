@@ -14,7 +14,7 @@ internal class CreateVariableCommandHandler : CommandHandler<CreateVariableComma
         VariableModel variable = Activator.CreateInstance(type, args) as VariableModel;
         variable.Name = exactName ? name : BlackboardUtils.GetNewVariableName(name, BlackboardAsset);
         DispatcherContext.BlackboardAsset.Variables.Add(variable);
-        BlackboardAsset.InvokeBlackboardChanged();
+        BlackboardAsset.InvokeBlackboardChanged(BlackboardAsset.BlackboardChangedType.VariableAdded);
         BlackboardView.FocusOnVariableNameField(variable);
     }
 }

@@ -187,6 +187,12 @@ namespace Unity.Behavior
 
         private void EnsureSubgraphsDependencyAreUpToDate()
         {
+            if (BehaviorGraphAssetRegistry.IsRegistryStateValid == false)
+            {
+                // If the registry is still collecting the asset, we might get false positive case of subgraph dependency lose.
+                return;
+            }
+
             bool hasChanged = false;
             for (int i = m_SubgraphsInfo.Count - 1; i >= 0; i--)
             {
@@ -708,15 +714,50 @@ namespace Unity.Behavior
 #endif
         }
 
+        public override void SaveAsset()
+        {
+            var authoringBB = Blackboard as BehaviorBlackboardAuthoringAsset;
+            if (authoringBB != null)
+            {
+                bool isBlackboardDirty = !authoringBB.IsAssetVersionUpToDate();
+                if (isBlackboardDirty)
+                {
+                    authoringBB.BuildRuntimeBlackboard();
+                }
+                
+                // Always rebuild runtime data if needed.
+                BuildRuntimeGraph(forceRebuild: isBlackboardDirty);
+                authoringBB.SaveAsset();
+            }
+
+            base.SaveAsset();
+        }
+
 #if UNITY_EDITOR
         /// <summary>
-        /// HasOutstandingChanges is internal to the Behavior.GraphFramework assembly.
-        /// Call this method when you manually rebuild the graph outside of a graph editor.
+        /// Custom version of SaveAsset made for BehaviorAssetPostProcessor.
+        /// This method manually rebuilds without saving the asset. Also rebuild the embedded asset if needed.
         /// This is required in order to prevent the asset being rebuilt everytime until GraphAsset.SaveAsset is called.
+        /// After the rebuild, reset HasOutstandingChanges, readying the asset to be manually saved using AssetDatabase.SaveAsset.
         /// </summary>
-        internal void ResetOutstandingChange()
+        /// <remark>
+        /// HasOutstandingChanges is internal to the Behavior.GraphFramework assembly.
+        /// </remark>
+        internal void RebuildGraphAndBlackboardRuntimeData()
         {
+            var authoringBB = Blackboard as BehaviorBlackboardAuthoringAsset;
+            if (authoringBB != null)
+            {
+                if (!authoringBB.IsAssetVersionUpToDate())
+                {
+                    authoringBB.BuildRuntimeBlackboard();
+                }
+
+                BuildRuntimeGraph();
+            }
+
             HasOutstandingChanges = false;
+            authoringBB.HasOutstandingChanges = false;
         }
 
         /// <summary>

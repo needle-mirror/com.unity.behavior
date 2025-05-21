@@ -64,9 +64,28 @@ namespace Unity.Behavior
         {
             base.Refresh(isDragging);
             
-            // Keep the linked label prefix updated on Blackboard asset group variables.
+            var model = Model as BehaviorGraphNodeModel;
             foreach (BaseLinkField field in GetLinkFields())
             {
+                if (field.LinkedVariable == null)
+                {
+                    continue;
+                }
+
+                // Ensures that node ui linked variable are up to date.
+                foreach (var sourceField in model.Fields)
+                {
+                    if (sourceField.FieldName != field.FieldName)
+                        continue;
+
+                    if (sourceField.LinkedVariable == null || sourceField.LinkedVariable.Name != field.LinkedVariable.Name)
+                    {
+                        UpdateLinkFields();
+                        break;
+                    }
+                }
+                
+                // Keep the linked label prefix updated on Blackboard asset group variables.
                 Util.UpdateLinkFieldBlackboardPrefixes(field);
             }
         }

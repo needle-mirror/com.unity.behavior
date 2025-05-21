@@ -42,7 +42,8 @@ RenderSettings:
 --- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
-  serializedVersion: 12
+  serializedVersion: 13
+  m_BakeOnSceneLoad: 0
   m_GISettings:
     serializedVersion: 2
     m_BounceScale: 1
@@ -147,8 +148,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 41542c29e8eb146a0a534afdef7a03be, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_agentPrefab: {fileID: 736131581839544613, guid: e07c13f043cd54a6f8247ccdc3e70d68, type: 3}
-  m_count: 100
+  m_AgentPrefab: {fileID: 5063543336015927666, guid: e07c13f043cd54a6f8247ccdc3e70d68, type: 3}
+  m_Count: 15
 --- !u!4 &821123826
 Transform:
   m_ObjectHideFlags: 0

@@ -68,8 +68,12 @@ namespace Unity.Behavior.GraphFramework
                         if (connection.NodeModel is FloatingPortNodeModel floatingPortNodeModel && floatingPortNodeModel.HasOutgoingConnections)
                         {
                             originalConnection = floatingPortNodeModel.OutgoingConnections.First();
-                            outputPortModel = outputPortModel.Connections.First().NodeModel.OutputPortModels.First();
+                            if (outputPortModel.Connections.Count > 0)
+                            {
+                                outputPortModel = outputPortModel.Connections.First().NodeModel.OutputPortModels.First();
+                            }
                         }
+
                         if (!originalModels.Contains(originalConnection.NodeModel) || originalConnection.IsOutputPort) 
                         {
                             continue;

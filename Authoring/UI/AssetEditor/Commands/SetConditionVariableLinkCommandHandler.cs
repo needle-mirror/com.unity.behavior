@@ -11,7 +11,6 @@ namespace Unity.Behavior
         public override bool Process(SetConditionVariableLinkCommand command)
         {
             ConditionInfo info = ConditionUtility.GetInfoForConditionType(command.Condition.ConditionType);
-            Asset.MarkUndo($"Link variable {command.VariableName} to condition {info.Name}");
             IVariableLink field = command.Condition.GetVariableLink(command.VariableName, command.LinkVariableType);
             if (field != null)
             {

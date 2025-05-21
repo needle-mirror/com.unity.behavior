@@ -115,9 +115,23 @@ namespace Unity.Behavior
             return reference;
         }
 
+        public override void SaveAsset()
+        {
+            if (HasOutstandingChanges)
+            {
+                BuildRuntimeBlackboard();
+            }
+
+            base.SaveAsset();
+        }
+
         public bool IsAssetVersionUpToDate()
         {
-            return !HasOutstandingChanges;
+            return !HasOutstandingChanges
+#if UNITY_EDITOR
+                && !EditorUtility.IsDirty(this); // Only efficient way to notice an undo action on Blackboard.
+#endif
+                ;
         }
 
         public RuntimeBlackboardAsset BuildRuntimeBlackboard()
@@ -139,8 +153,11 @@ namespace Unity.Behavior
                 return m_RuntimeBlackboardAsset;
             }
 
+#if BEHAVIOR_DEBUG_ASSET_IMPORT
+            Debug.Log($"BlackboardAsset[<b>{name}</b>].BuildRuntimeBlackboard", this);
+#endif
             m_RuntimeBlackboardAsset.VersionTimestamp = VersionTimestamp;
-            
+
             // Refreshing AssetID, just in case.
             m_RuntimeBlackboardAsset.AssetID = AssetID;
             HasOutstandingChanges = true;
@@ -205,6 +222,19 @@ namespace Unity.Behavior
                 m_RuntimeBlackboardAsset.Blackboard.Variables.Remove(dirtyVar);
             }
             remainingDirtyVariables.Clear();
+
+            // Sort m_RuntimeBlackboardAsset.Blackboard.m_Variables in-place based on the Variables (models) positions.
+            Dictionary<SerializableGUID, int> desiredPositions = new(Variables.Count);
+            for (int i = 0; i < Variables.Count; i++)
+            {
+                desiredPositions[Variables[i].ID] = i;
+            }
+
+            m_RuntimeBlackboardAsset.Blackboard.m_Variables.Sort((a, b) => {
+                int posA = desiredPositions[a.GUID];
+                int posB = desiredPositions[b.GUID];
+                return posA.CompareTo(posB);
+            });
 
 #if UNITY_EDITOR
             EditorUtility.SetDirty(this);

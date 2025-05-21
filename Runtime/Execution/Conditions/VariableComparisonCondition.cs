@@ -1,15 +1,16 @@
 using System;
+using Unity.Properties;
 using UnityEngine;
 
 namespace Unity.Behavior
 {
-    [Serializable]
+    [Serializable, GeneratePropertyBag]
     [Condition(
         name: "Variable Comparison",
         category: "Variable Conditions",
         story: "[Variable] is [Operator] [ComparisonValue]",
         id: "a57e6f54cc9d4f41a49bc935222e0710")]
-    internal class VariableComparisonCondition : Condition
+    internal partial class VariableComparisonCondition : Condition
     {
         /// <summary>
         /// The blackboard variable that is being compared.

@@ -19,20 +19,20 @@ namespace Unity.Behavior.Serialization.Json
         /// <summary>
         /// Continues serialization for the current value. This will run the next adapter in the sequence, or the default behaviour.
         /// </summary>
-        void ContinueVisitation();
+        void ContinueVisitation(bool skipBeginEndObject = false);
 
         /// <summary>
         /// Continues serialization for the current type without running any more adapters. This will perform the default behaviour.
         /// </summary>
-        void ContinueVisitationWithoutAdapters();
-        
+        void ContinueVisitationWithoutAdapters(bool skipBeginEndObject = false);
+
         /// <summary>
         /// Writes the given <paramref name="value"/> to the output using all adapters.
         /// </summary>
         /// <param name="value">The value to write.</param>
         /// <typeparam name="T">The value type to write.</typeparam>
         void SerializeValue<T>(T value);
-        
+
         /// <summary>
         /// Writes the given <paramref name="key"/>-<paramref name="value"/> pair to the output. This will run all adapters.
         /// </summary>
@@ -43,17 +43,17 @@ namespace Unity.Behavior.Serialization.Json
     }
 
     /// <summary>
-    /// The <see cref="JsonSerializationContext{T}"/> is available from adapters. It provides access to the current adapter enumerator and allows for control of serialization for a given type. 
+    /// The <see cref="JsonSerializationContext{T}"/> is available from adapters. It provides access to the current adapter enumerator and allows for control of serialization for a given type.
     /// </summary>
     /// <typeparam name="TValue">The value type being serialized.</typeparam>
     internal readonly struct JsonSerializationContext<TValue> : IJsonSerializationContext
     {
         static readonly AdapterProperty k_AdapterProperty = new AdapterProperty();
-        
+
         class AdapterProperty : IProperty
         {
             public Type DeclaredType { get; set; }
-            
+
             public string Name => string.Empty;
             public bool IsReadOnly => true;
             public Type DeclaredValueType() => DeclaredType;
@@ -81,18 +81,41 @@ namespace Unity.Behavior.Serialization.Json
             m_IsRoot = isRoot;
         }
 
+        public bool SerializeCurrentAsReference()
+        {
+            var val = m_Value;
+            JsonPropertyWriter.SerializedContainerMetadata md = m_Visitor.GetSerializedContainerMetadataCustomWithAllocation(ref val);
+            //if it's a known reference, serialize $ref: id
+            if (md.IsSerializedReference)
+            {
+                m_Visitor.WriteSerializedReferenceKeyValue(md.SerializedId);
+                return true;
+            }
+
+            var count = 0;
+            // serialize $id, $type etc
+            m_Visitor.WriteSerializedContainerMetadata(ref val, md, ref count);
+            return false;
+        }
+
         /// <summary>
         /// Continues visitation for the current type. This will run the next adapter in the sequence, or the default behaviour.
         /// </summary>
-        public void ContinueVisitation()
-            => m_Visitor.WriteValueWithAdapters(m_Value, m_Adapters, m_IsRoot);
+        public void ContinueVisitation(bool skipBeginEndObject = false)
+        {
+            m_Visitor.SkipBeginEndObject = skipBeginEndObject;
+            m_Visitor.WriteValueWithAdapters(m_Value, m_Adapters, m_IsRoot);
+        }
 
         /// <summary>
         /// Continues visitation for the current type without running any more adapters. This will perform the default behaviour.
         /// </summary>
-        public void ContinueVisitationWithoutAdapters()
-            => m_Visitor.WriteValueWithoutAdapters(m_Value, m_IsRoot);
-        
+        public void ContinueVisitationWithoutAdapters(bool skipBeginEndObject = false)
+        {
+            m_Visitor.SkipBeginEndObject = skipBeginEndObject;
+            m_Visitor.WriteValueWithoutAdapters(m_Value, m_IsRoot);
+        }
+
         /// <summary>
         /// Writes the given <paramref name="value"/> to the output. This will run all adapters.
         /// </summary>
@@ -101,7 +124,7 @@ namespace Unity.Behavior.Serialization.Json
         public void SerializeValue<T>(T value)
         {
             k_AdapterProperty.DeclaredType = typeof(T);
-            
+
             using (m_Visitor.CreatePropertyScope(k_AdapterProperty))
                 m_Visitor.WriteValue(ref value);
         }
@@ -115,7 +138,7 @@ namespace Unity.Behavior.Serialization.Json
         public void SerializeValue<T>(string key, T value)
         {
             k_AdapterProperty.DeclaredType = typeof(T);
-            
+
             using (m_Visitor.CreatePropertyScope(k_AdapterProperty))
             {
                 m_Visitor.Writer.WriteKey(key);
@@ -130,7 +153,7 @@ namespace Unity.Behavior.Serialization.Json
     internal interface IJsonDeserializationContext
     {
         /// <summary>
-        /// Gets the serialized view for value being deserialized. 
+        /// Gets the serialized view for value being deserialized.
         /// </summary>
         SerializedValueView SerializedValue { get; }
 
@@ -145,7 +168,7 @@ namespace Unity.Behavior.Serialization.Json
         /// </summary>
         /// <returns>The deserialized value.</returns>
         object ContinueVisitation();
-        
+
         /// <summary>
         /// Continues de-serialization for the current type without running any more adapters. This will perform the default behaviour.
         /// </summary>
@@ -162,7 +185,7 @@ namespace Unity.Behavior.Serialization.Json
     }
 
     /// <summary>
-    /// The <see cref="JsonDeserializationContext{T}"/> is available from adapters. It provides access to the current adapter enumerator and allows for control of deserialization for a given type. 
+    /// The <see cref="JsonDeserializationContext{T}"/> is available from adapters. It provides access to the current adapter enumerator and allows for control of deserialization for a given type.
     /// </summary>
     /// <typeparam name="TValue">The value type being deserialized.</typeparam>
     internal readonly struct JsonDeserializationContext<TValue> : IJsonDeserializationContext
@@ -172,7 +195,7 @@ namespace Unity.Behavior.Serialization.Json
         readonly TValue m_Value;
         readonly UnsafeValueView m_View;
         readonly bool m_IsRoot;
-        
+
         /// <summary>
         /// The in-memory representation of the value being deserialized.
         /// </summary>
@@ -186,16 +209,16 @@ namespace Unity.Behavior.Serialization.Json
             m_View = view;
             m_IsRoot = isRoot;
         }
-        
+
         /// <inheritdoc/>
         object IJsonDeserializationContext.GetInstance() => GetInstance();
-        
+
         /// <summary>
         /// Gets the existing instance if overwriting; otherwise default.
         /// </summary>
         /// <returns>The existing instance of <see cref="TValue"/> or default.</returns>
         public TValue GetInstance() => m_Value;
-        
+
         /// <summary>
         /// Continues visitation for the current type. This will run the next adapter in the sequence, or the default behaviour and return the deserialized value.
         /// </summary>
@@ -206,7 +229,7 @@ namespace Unity.Behavior.Serialization.Json
             m_Visitor.ReadValueWithAdapters(ref value, m_View, m_Adapters, m_IsRoot);
             return value;
         }
-        
+
         /// <summary>
         /// Continues visitation for the current type using the specified <see cref="SerializedValueView"/>. This will run the next adapter in the sequence, or the default behaviour and return the deserialized value.
         /// </summary>
@@ -227,7 +250,7 @@ namespace Unity.Behavior.Serialization.Json
         {
             m_Visitor.ReadValueWithAdapters(ref value, m_View, m_Adapters, m_IsRoot);
         }
-        
+
         /// <summary>
         /// Continues visitation for the current type using the specified <see cref="SerializedValueView"/>. This will run the next adapter in the sequence, or the default behaviour and return the deserialized value.
         /// </summary>
@@ -237,7 +260,7 @@ namespace Unity.Behavior.Serialization.Json
         {
             m_Visitor.ReadValueWithAdapters(ref value, view.AsUnsafe(), m_Adapters, m_IsRoot);
         }
-        
+
         /// <summary>
         /// Continues visitation for the current type. This will run the next adapter in the sequence, or the default behaviour and return the deserialized value.
         /// </summary>
@@ -248,7 +271,7 @@ namespace Unity.Behavior.Serialization.Json
             m_Visitor.ReadValueWithoutAdapters(ref value, m_View, m_IsRoot);
             return value;
         }
-        
+
         /// <summary>
         /// Continues visitation for the current type using the specified <see cref="SerializedValueView"/>. This will run the next adapter in the sequence, or the default behaviour and return the deserialized value.
         /// </summary>
@@ -269,7 +292,7 @@ namespace Unity.Behavior.Serialization.Json
         {
             m_Visitor.ReadValueWithoutAdapters(ref value, m_View, m_IsRoot);
         }
-        
+
         /// <summary>
         /// Continues visitation for the current type using the specified <see cref="SerializedValueView"/>. This will invoke the default behaviour and return the deserialized value..
         /// </summary>
@@ -282,10 +305,10 @@ namespace Unity.Behavior.Serialization.Json
 
         /// <inheritdoc cref="IJsonDeserializationContext.ContinueVisitation"/>
         object IJsonDeserializationContext.ContinueVisitation() => ContinueVisitation();
-        
+
         /// <inheritdoc cref="IJsonDeserializationContext.ContinueVisitationWithoutAdapters"/>
         object IJsonDeserializationContext.ContinueVisitationWithoutAdapters() => ContinueVisitationWithoutAdapters();
-        
+
         /// <summary>
         /// Reads the given <see cref="SerializedValue"/> as <typeparamref name="T"/> and returns it. This will run all adapters.
         /// </summary>
@@ -295,7 +318,7 @@ namespace Unity.Behavior.Serialization.Json
         public T DeserializeValue<T>(SerializedValueView view)
         {
             var value = default(T);
-            m_Visitor.ReadValue(ref value, view.AsUnsafe() );
+            m_Visitor.ReadValue(ref value, view.AsUnsafe());
             return value;
         }
     }

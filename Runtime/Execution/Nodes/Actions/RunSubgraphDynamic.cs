@@ -8,13 +8,25 @@ namespace Unity.Behavior
     [Serializable, GeneratePropertyBag]
     internal partial class RunSubgraphDynamic : Action
     {
-        [SerializeReference] public BlackboardVariable<BehaviorGraph> SubgraphVariable;
-        
-        internal BehaviorGraph Subgraph => SubgraphVariable.Value;
-        [SerializeReference] public RuntimeBlackboardAsset RequiredBlackboard;
+        // Serialize the list of additional BehaviorGraphModule for runtime serialization -> Override module method in BehaviorGraph
+        // We may still need a reference or id to grab the runtime asset to duplicate from -> BehaviorGraph has no asset id, it needs one -> Get it from the behaviorGraphModule.
+        // Copy this asset & override the BehaviorGraphModule's at runtime.
+
+        [SerializeReference, DontCreateProperty] public BlackboardVariable<BehaviorGraph> SubgraphVariable;
+
+        internal BehaviorGraph Subgraph
+        {
+            get => SubgraphVariable.Value;
+            set => SubgraphVariable.Value = value;
+        }
+
+        // Just save the assetId for runtime -> Investigate the removal of the RequiredBlackboard field, but don't take risks. Use AssetId Below.
+        [SerializeReference, DontCreateProperty] public RuntimeBlackboardAsset RequiredBlackboard;
+
         [SerializeReference] public List<DynamicBlackboardVariableOverride> DynamicOverrides;
         private BehaviorGraph m_InitializedGraph = null;
-        [SerializeField][CreateProperty]
+
+        [SerializeField, CreateProperty]
         private bool m_IsInitialized = false;
 
         /// <inheritdoc cref="OnStart" />
@@ -31,7 +43,7 @@ namespace Unity.Behavior
             {
                 return Status.Failure;
             }
-            
+
             if (GameObject != null)
             {
                 BehaviorGraphAgent agent = GameObject.GetComponent<BehaviorGraphAgent>();
@@ -67,6 +79,12 @@ namespace Unity.Behavior
             if (!m_IsInitialized && TryInitialize() == false)
             {
                 LogFailure($"Failed to initialize subgraph on update. This can happen when setting the subgraph to null while it is running.");
+                return Status.Failure;
+            }
+
+            if (Subgraph == null)
+            {
+                LogFailure("The dynamic subgraph you are trying to run is null.");
                 return Status.Failure;
             }
 
@@ -114,16 +132,16 @@ namespace Unity.Behavior
             SubgraphVariable.OnValueChanged -= OnSubgraphChanged;
             SubgraphVariable.Value = ScriptableObject.Instantiate(Subgraph);
             SubgraphVariable.OnValueChanged += OnSubgraphChanged;
-                
+
             SubgraphVariable.Value.AssignGameObjectToGraphModules(GameObject);
-                
+
             InitChannelAndBlackboard();
 
             m_IsInitialized = true;
             m_InitializedGraph = SubgraphVariable.Value;
             return true;
         }
-        
+
         private void OnSubgraphChanged()
         {
             m_IsInitialized = false;
@@ -219,15 +237,16 @@ namespace Unity.Behavior
                     dynamicOverride.Variable.OnValueChanged += () =>
                     {
                         // Update the subgraph variable if the original variable is modified.
-                        // Can happens when subgraph is decoupled and running in parallel from main graph . 
+                        // Can happens when subgraph is decoupled and running in parallel from main graph .
                         variable.SetObjectValueWithoutNotify(dynamicOverride.Variable.ObjectValue);
                     };
                 }
             }
         }
-        
+
         protected override void OnSerialize()
         {
+            Subgraph.SerializeGraphModules();
             if (Subgraph != m_InitializedGraph)
             {
                 m_IsInitialized = false;

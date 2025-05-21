@@ -1,6 +1,6 @@
 namespace Unity.Behavior.GraphFramework
 {
-    internal class DeleteVariableCommand : Command
+    internal class DeleteVariableCommand : Command, IBlackboardAssetCommand
     {
         public VariableModel Variable { get; }
         

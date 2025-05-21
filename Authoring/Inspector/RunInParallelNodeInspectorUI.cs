@@ -20,7 +20,7 @@ namespace Unity.Behavior
             if (enumerator.MoveNext())
             {
                 RunInParallelNodeModel.ParallelMode newValue = (RunInParallelNodeModel.ParallelMode)enumerator.Current;
-                ParallelNodeModel.Asset.MarkUndo("Change Parallel Mode.");
+                ParallelNodeModel.Asset.MarkUndo("Change Parallel Mode");
                 ParallelNodeModel.Mode = newValue;
                 ParallelNodeModel.OnValidate();
                 ParallelNodeModel.Asset.SetAssetDirty();
@@ -40,7 +40,7 @@ namespace Unity.Behavior
                 RunInParallelNodeModel.ParallelMode parallelMode = (RunInParallelNodeModel.ParallelMode)m_ModeDropdown.selectedIndex;
                 if (ParallelNodeModel.Mode != parallelMode)
                 {
-                    m_ModeDropdown.selectedIndex = (int)ParallelNodeModel.Mode;
+                    m_ModeDropdown.SetValueWithoutNotify(new[] { (int)ParallelNodeModel.Mode });
                 }
             }
         }

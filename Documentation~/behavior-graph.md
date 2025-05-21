@@ -6,7 +6,7 @@ uid: behavior-tree
 
 A behavior graph is a hierarchical structure. It helps you create artificial intelligence (AI) in video games by enabling agents to dynamically transition between modular sets of tasks. This structure enables the composition of collections of simple tasks into complex, adaptive behaviors, facilitating the creation of sophisticated AI systems.
 
-Unity Behavior provides a graph-based tool for designing behavior graphs through a graphical user interface. The visual representation of the agent's logic facilitates the understanding of the AI agent's behavior. This enables easier debugging and quicker authoring iterations. 
+Unity Behavior provides a graph-based tool for designing behavior graphs through a graphical user interface. The visual representation of the agent's logic facilitates the understanding of the AI agent's behavior. This enables easier debugging and quicker authoring iterations.
 
 Each node in the graph contains logic for a single step of the entire behavior. The structure of the graph determines the following items:
 
@@ -26,12 +26,12 @@ Nodes can be of two types:
     * Move the AI agent towards a position.
     * Check for the distance to another target.
     * Store some value for further computation.
-  
+
   For more information, refer to [Action node](behavior-graph.md#action-node).
 
 Note that in the previous diagram, the highlighted box groups two action nodes, but each one is a separate action node.
 
-For AI to execute an action, the logic flow starts at the top with the start node. It then flows down through the control flow nodes to the action nodes. 
+For AI to execute an action, the logic flow starts at the top with the start node. It then flows down through the control flow nodes to the action nodes.
 
 Unity Behavior defines node types as `C#` classes in the project. Unity Behavior also includes some wizards and utilities to make it easier to create or edit node types.
 
@@ -39,13 +39,13 @@ In a behavior graph, nodes depict brief, human-readable stories where you can in
 
 ## Nodes
 
-Nodes are part of the behavior graph that define the flow of the graph. They control the sequence of events determining different paths down the graph, ensuring the agent behaves the way you specify. You can create and connect nodes using the Unity Behavior visual editor. Each node has a particular functionality attached to it. 
+Nodes are part of the behavior graph that define the flow of the graph. They control the sequence of events determining different paths down the graph, ensuring the agent behaves the way you specify. You can create and connect nodes using the Unity Behavior visual editor. Each node has a particular functionality attached to it.
 
 The behavior graph nodes are of four types: action node, modifier node, sequencing node, and join node.
 
 ### Action node
 
-Action nodes typically don't have any children and serve as primary means of interaction with the scene and other objects within the behavior graph. They're the most important of node types available. 
+Action nodes typically don't have any children and serve as primary means of interaction with the scene and other objects within the behavior graph. They're the most important of node types available.
 
 An action can succeed or fail. An action can run immediately (in one frame) or require time to finish (for example, walking to a destination).
 
@@ -59,7 +59,7 @@ For example, you can use the **Talk** node to display the text spoken by the cha
 
 ### Modifier node
 
-Modifier nodes control the execution flow of the behavior graph. They can have only a single child node. 
+Modifier nodes control the execution flow of the behavior graph. They can have only a single child node.
 
 The modifier nodes perform the following functions:
 
@@ -69,18 +69,18 @@ The modifier nodes perform the following functions:
 
 You can find the modifiers in the **Flow** category of the node menu. For example,  **Repeat**, **Repeat Until Failure**, **Repeat Until Success**, **Repeat While Condition**, **Succeeder**, **Inverter**, **OnStart**, **Abort**, and **Restart**.
 
-For example, you can use a **Repeat** node to loop indefinite behavior or use the **Inverter** node to invert the result of the child. 
-  
+For example, you can use a **Repeat** node to loop indefinite behavior or use the **Inverter** node to invert the result of the child.
+
   * If a child fails, it returns `success` to its parent.
   * If a child succeeds, it returns `failure` to the parent.
 
 #### Abort and Restart nodes
 
-**Abort** and **Restart** are types of Conditional nodes that work with conditions. Conditions evaluate and control the flow of actions, and determine which path the game's logic might take. 
+**Abort** and **Restart** are types of Conditional nodes that work with conditions. Conditions evaluate and control the flow of actions, and determine which path the game's logic might take.
 
 The **Abort** node stops the current branch when one or all the conditions are true and returns failure to the parent node. For example, use the **Abort** node if an enemy needs to stop its current action and change to a defensive posture upon detecting a threat. Conversely, the **Restart** node resets and runs a branch from the beginning when one or all the conditions are true. For example, if an agent has a patrolling behavior where it's patrolling between way points, use a **Restart** node to check if the agent needs to restart the patrolling route from scratch.
 
-1. Right-click an empty area of the Unity Behavior graph editor and click **Add**. Alternatively, press the **Spacebar** to open the same menu.  
+1. Right-click an empty area of the Unity Behavior graph editor and click **Add**. Alternatively, press the **Spacebar** to open the same menu.
 
     The **Add Node** window appears.
 2. Select **Flow** > **Abort**.
@@ -97,7 +97,7 @@ The **Abort** node stops the current branch when one or all the conditions are t
 
 ### Sequencing node
 
-Sequencing nodes define the root of a branch and base rules for how to run the branch. They can have one or more children. 
+Sequencing nodes define the root of a branch and base rules for how to run the branch. They can have one or more children.
 
 The most common sequencing node, **Sequence**, processes its child nodes sequentially, running them from left to right in a step-by-step manner. Each child node runs one at a time, continuing as long as each step succeeds.
 
@@ -109,22 +109,22 @@ You can find all sequencing nodes in the **Flow** category of the node menu. Oth
 
   ![Run In Parallel](Images/Glossary-Composite.png)
 
-  Another example of a sequencing node is **Sequence**, which runs each child in sequence. It returns failure when any of the children fails and returns success when every child returns a successful status. 
+  Another example of a sequencing node is **Sequence**, which runs each child in sequence. It returns failure when any of the children fails and returns success when every child returns a successful status.
 
 ### Join node
 
-Join nodes merge the branches so they're run together. Join nodes can have multiple parent branches but only one child branch. 
+Join nodes merge the branches so they're run together. Join nodes can have multiple parent branches but only one child branch.
 
 There are two types of join nodes:
 
   * **Wait For All**: Runs its branch after all incoming branches have finished.
   * **Wait For Any**: Runs its branch after at least one incoming branch has finished.
 
-  ![Alt text](Images/Glossary-Join.png) 
+  ![Alt text](Images/Glossary-Join.png)
 
 ## Node statuses
 
-All nodes in the behavior graph exist in one of five possible states, each with a corresponding status label and icon. 
+All nodes in the behavior graph exist in one of five possible states, each with a corresponding status label and icon.
 
 The following table shows the node statuses along with their description.
 
@@ -138,5 +138,6 @@ The following table shows the node statuses along with their description.
 
 ## Additional resources
 
+* [How Unity Behavior compares to other Unity solutions](behavior-differ.md)
 * [Behavior graph node types](node-types.md)
 * [Unity Behavior user interface](user-interface.md)

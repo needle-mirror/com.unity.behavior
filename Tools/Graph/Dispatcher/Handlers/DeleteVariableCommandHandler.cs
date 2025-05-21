@@ -6,8 +6,7 @@ internal class DeleteVariableCommandHandler : CommandHandler<DeleteVariableComma
     {
         DispatcherContext.Root.SendEvent(VariableDeletedEvent.GetPooled(DispatcherContext.Root, command.Variable));
         DispatcherContext.BlackboardAsset.Variables.Remove(command.Variable);
-        BlackboardAsset.InvokeBlackboardChanged();
-        BlackboardView.InitializeListView();
+        BlackboardAsset.InvokeBlackboardChanged(BlackboardAsset.BlackboardChangedType.VariableDeleted);
         return true;
     }
 }

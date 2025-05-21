@@ -37,6 +37,7 @@ namespace Unity.Behavior
                 DispatcherContext.Root.SendEvent(VariableDeletedEvent.GetPooled(DispatcherContext.Root, variable));    
             }
             
+            graphBlackboardView.RequestBlackboardReferenceAssetsViewRefresh();
             graphBlackboardView.InitializeListView();
 
             // Have we processed the command and wish to block further processing?

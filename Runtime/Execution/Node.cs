@@ -16,17 +16,17 @@ namespace Unity.Behavior
         /// </summary>
         public enum Status
         {
-            /// <summary> The node has not started.</summary>
+            /// <summary>The node has not started or been initialized.</summary>
             Uninitialized,
-            /// <summary> The node is currently running. </summary>
+            /// <summary>The node is active and has not yet finished its operation.</summary>
             Running,
-            /// <summary> The node has succeeded. </summary>
+            /// <summary>The node has completed its operation successfully.</summary>
             Success,
-            /// <summary> The node has failed. </summary>
+            /// <summary>The node has finished but did not achieve its intended outcome.</summary>
             Failure,
-            /// <summary> The node is currently waiting for child nodes to complete. </summary>
+            /// <summary>The node is paused while waiting for its child nodes to finish.</summary>
             Waiting,
-            /// <summary> The node has been interrupted. </summary>
+            /// <summary>The node was stopped before finishing by an external control node, such as Restart or Abort.</summary>
             Interrupted,
         }
 
@@ -63,10 +63,10 @@ namespace Unity.Behavior
             CurrentStatus = status;
         }
 
+        /// <summary>
         /// The current active state of the node. Unlike the Status, **IsRunning** is specifically used in graph operations
         /// to determine the node's lifecycle.
         /// </summary>
-        [CreateProperty]
         internal bool IsRunning { get; set; } = false;
 
         /// <summary>
@@ -119,7 +119,7 @@ namespace Unity.Behavior
             {
                 CurrentStatus = Status.Interrupted;
             }
-            
+
             IsRunning = false;
 #if DEBUG && UNITY_EDITOR
             // The user set a breakpoint in the graph editor. Call a break on the debugger.
@@ -169,7 +169,7 @@ namespace Unity.Behavior
         {
             CurrentStatus = Status.Uninitialized;
         }
-        
+
         /// <inheritdoc cref="BehaviorGraphModule.StartNode"/>
         protected Status StartNode(Node node)
         {
@@ -208,7 +208,7 @@ namespace Unity.Behavior
         { }
 
         /// <summary>
-        /// Message raised after a graph is deserialized. 
+        /// Message raised after a graph is deserialized.
         /// Can be use to restart waiting nodes or reconstruct complex data that cannot be serialized.
         /// </summary>
         protected virtual void OnDeserialize()

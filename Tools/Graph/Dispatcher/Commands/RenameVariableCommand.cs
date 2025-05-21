@@ -1,6 +1,6 @@
 namespace Unity.Behavior.GraphFramework
 {
-    internal class RenameVariableCommand : Command
+    internal class RenameVariableCommand : Command, IBlackboardAssetCommand
     {
         public VariableModel Variable { get; }
         public string NewName { get; }

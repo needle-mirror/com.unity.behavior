@@ -1,4 +1,5 @@
 using System;
+using Unity.Behavior.Serialization;
 using Unity.Properties;
 using UnityEngine;
 
@@ -13,6 +14,7 @@ namespace Unity.Behavior
         /// <summary>
         /// the parent of the node.
         /// </summary>
+        [CreateProperty, DontSerialize]
         public Node Parent { get => m_Parent; internal set { m_Parent = value; } }
         [SerializeReference]
         internal Node m_Parent;
@@ -20,12 +22,10 @@ namespace Unity.Behavior
         /// <summary>
         /// the child of the node.
         /// </summary>
-        [CreateProperty]
+        [CreateProperty, DontSerialize]
         public Node Child { get => m_Child; internal set => m_Child = value; }
-        // Must be protected to avoid reflection in the property bag
-        // - see EditMode test NodePropertyBagPropertiesAreGeneratedAndNotReflection.
-        [SerializeReference, DontCreateProperty]
-        private Node m_Child;
+        [SerializeReference]
+        internal Node m_Child;
 
         /// <inheritdoc cref="AwakeParents" />
         protected internal override void AwakeParents()

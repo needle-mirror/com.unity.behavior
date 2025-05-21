@@ -67,7 +67,7 @@ namespace Unity.Behavior
         {
             GraphView.schedule.Execute(_ =>
             {
-                if (GraphView.ViewState.m_NodeModelToNodeUI.TryGetValue(newNode.ID, out NodeUI nodeUI))
+                if (GraphView.ViewState.m_NodeUILookupByID.TryGetValue(newNode.ID, out NodeUI nodeUI))
                 {
                     GraphView.ViewState.DeselectAll();
                     GraphView.ViewState.AddSelected(nodeUI);

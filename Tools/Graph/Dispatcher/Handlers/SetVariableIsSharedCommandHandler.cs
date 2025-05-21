@@ -6,6 +6,7 @@ internal class SetVariableIsSharedCommandHandler : CommandHandler<SetVariableIsS
     {
         command.Variable.IsShared = command.NewValue;
         DispatcherContext.Root.SendEvent(VariableRenamedEvent.GetPooled(DispatcherContext.Root, command.Variable));
+        BlackboardAsset.InvokeBlackboardChanged(BlackboardAsset.BlackboardChangedType.VariableSetGlobal);
         return true;
     }
 }

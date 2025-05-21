@@ -206,18 +206,19 @@ namespace Unity.Behavior.GraphFramework
             builder.ShowAtPosition(worldPosition.x, worldPosition.y);
         }
 
-        public virtual void CreateNodeUI(NodeModel nodeModel)
+        public virtual NodeUI CreateNodeUI(NodeModel nodeModel)
         {
             Type nodeUIType = NodeRegistry.GetUIType(nodeModel.GetType());
             if (nodeUIType == null)
             {
                 Debug.LogError($"Could not find node UI type for {nodeModel.GetType()}.");
-                return;
+                return null;
             }
 
             // Create UI
             NodeUI nodeUI = Activator.CreateInstance(nodeUIType, nodeModel) as NodeUI;
             ViewState.InitNodeUI(nodeUI, nodeModel);
+            return nodeUI;
         }
     }
 
@@ -231,15 +232,16 @@ namespace Unity.Behavior.GraphFramework
 
         // UI elements
         public IEnumerable<NodeUI> Nodes => m_Nodes;
-        private readonly List<NodeUI> m_Nodes = new ();
+        private readonly List<NodeUI> m_Nodes = new();
         public IEnumerable<Edge> Edges => m_Edges;
-        private readonly List<Edge> m_Edges = new ();
+        private readonly List<Edge> m_Edges = new();
         public HashSet<GraphElement> Selected => m_Selected;
-        private readonly HashSet<GraphElement> m_Selected = new ();
+        private readonly HashSet<GraphElement> m_Selected = new();
 
-        // Model->UI lookups
-        internal readonly Dictionary<SerializableGUID, NodeUI> m_NodeModelToNodeUI = new ();
-        private readonly Dictionary<PortModel, List<Edge>> m_PortToEdges = new ();
+        // Lookups tables
+        internal readonly Dictionary<SerializableGUID, NodeUI> m_NodeUILookupByID = new();
+        private readonly Dictionary<SerializableGUID, NodeModel> m_NodeLookupByID = new ();
+        private readonly Dictionary<PortModel, List<Edge>> m_PortToEdges = new();
 
         // Cached query containers for updating the view state.
         private readonly Dictionary<(SerializableGUID, SerializableGUID), Tuple<PortModel, PortModel>> m_EdgesInAsset = new();
@@ -265,181 +267,39 @@ namespace Unity.Behavior.GraphFramework
         /// </summary>
         /// <param name="isDragging">Used to know if we are dragging a node to avoid redundant performance heavy code</param>
         /// <param name="nodesToRefresh">The node UI list to refresh visuals</param>
-        internal void RefreshNodeUI(bool isDragging, List<NodeUI> nodesToRefresh)
+        internal void RefreshNodeUI(bool isDragging, IReadOnlyList<NodeUI> nodesToRefresh)
         {
             if (Asset == null)
-            {
                 return;
-            }
 
-            // Associate model data with UI. If asset has re/deserialized, the model data will have new instances.
-            foreach (NodeModel node in Asset.Nodes)
-            {
-                foreach (NodeUI nodeUI in Nodes)
-                {
-                    if (nodeUI.Model.ID == node.ID)
-                    {
-                        nodeUI.Model = node;
-                        break;
-                    }
-                }
-            }
+            // To keep for future performance profiling.
+            // System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
+            // stopwatch.Start();
 
-            // Setup edge lookups by ID pairs.
-            m_EdgesInAsset.Clear();
-            foreach (NodeModel node in Asset.Nodes)
-            {
-                foreach (PortModel inputPort in node.InputPortModels)
-                {
-                    foreach (PortModel outputPort in inputPort.Connections)
-                    {
-                        var key = (outputPort.NodeModel.ID, inputPort.NodeModel.ID);
-                        if (!m_EdgesInAsset.ContainsKey(key))
-                        {
-                            m_EdgesInAsset.Add(key, new Tuple<PortModel, PortModel>(outputPort, inputPort));
-                        }
-                    }
-                }
-            }
+            // Step 1: Update lookup tables and references
+            BuildNodeModelLookup();
+            BuildNodeUILookup(isDragging);
+            RebuildEdgeMappings();
+            UpdateEdgeReferences();
 
-            m_EdgeUIs.Clear();
-            foreach (Edge edge in m_Edges)
-            {
-                m_EdgeUIs.Add((edge.Start.PortModel.NodeModel.ID, edge.End.PortModel.NodeModel.ID), edge);
-            }
+            // Step 2: Node update (deletion, refresh and creation)
+            RemoveDeletedNodes();
+            UpdateExistingNodes(nodesToRefresh, isDragging);
+            CreateMissingNodes();
 
-            bool EdgeAndUIMatch(Tuple<PortModel, PortModel> edge, Edge edgeUI)
-            {
-                var edgeAndUIMatch = edgeUI.Start.PortModel.Name == edge.Item1.Name // same starting port name
-                                        && edgeUI.End.PortModel.Name == edge.Item2.Name; // same ending port name
-                return edgeAndUIMatch;    
-            }
+            // Step 3: Edges update (deletions and creations)
+            RemoveDeletedEdges();
+            CreateMissingEdges();
 
-            foreach (Edge edgeUI in m_Edges)
-            {
-                SerializableGUID edgeStartID = edgeUI.Start.PortModel.NodeModel.ID;
-                SerializableGUID edgeEndID = edgeUI.End.PortModel.NodeModel.ID;
-                if (m_EdgesInAsset.TryGetValue((edgeStartID, edgeEndID), out Tuple<PortModel, PortModel> edge) && EdgeAndUIMatch(edge, edgeUI))
-                {
-                    edgeUI.Start.PortModel = edge.Item1;
-                    edgeUI.End.PortModel = edge.Item2;
-                }
-            }
-
-            // Remove node UIs without corresponding node model in asset.
-            m_AssetNodeIDs.Clear();
-            foreach (NodeModel node in Asset.Nodes)
-            {
-                m_AssetNodeIDs.Add(node.ID);
-            }
-            m_NodeUIsToDelete.Clear();
-            foreach (NodeUI nodeUI in Nodes)
-            {
-                if (!m_AssetNodeIDs.Contains(nodeUI.Model.ID))
-                {
-                    m_NodeUIsToDelete.Add(nodeUI);
-                }
-            }
-            foreach (NodeUI nodeUI in m_NodeUIsToDelete)
-            {
-                DeleteNodeUI(nodeUI);
-            }
-
-            // Update node UIs.
-            foreach (NodeUI nodeUI in nodesToRefresh)
-            {
-                // Un-nest nodes removed from sequences but whose UI is still nested.
-                if (nodeUI.GetFirstAncestorOfType<SequenceGroup>() != null)
-                {
-                    bool nodeInSequence = false;
-                    foreach (NodeModel parent in nodeUI.Model.Parents)
-                    {
-                        if (parent is SequenceNodeModel)
-                        {
-                            nodeInSequence = true;
-                            break;
-                        }
-                    }
-
-                    if (!nodeInSequence)
-                    {
-                        nodeUI.RemoveFromHierarchy();
-                        nodeUI.Translate = new Translate(nodeUI.Model.Position.x, nodeUI.Model.Position.y);
-                        nodeUI.RemoveFromClassList("SequencedNode");
-                    }
-                }
-
-                // Refresh the node UI to pick up changes in the node model data.
-                nodeUI.Refresh(isDragging);
-            }
-
-            // Create node UIs for nodes in the asset that do not have a preexisting UI.
-            m_UINodeIDs.Clear();
-            foreach (NodeUI nodeUI in Nodes)
-            {
-                m_UINodeIDs.Add(nodeUI.Model.ID);
-            }
-            foreach (NodeModel node in Asset.Nodes)
-            {
-                if (!m_UINodeIDs.Contains(node.ID))
-                {
-                    GraphView.CreateNodeUI(node);
-                }
-            }
-
-            // Delete edge UIs without matching edge in asset.
-            m_EdgesToDelete.Clear();
-            foreach (Edge edgeUI in Edges)
-            {
-                SerializableGUID edgeStartID = edgeUI.Start.PortModel.NodeModel.ID;
-                SerializableGUID edgeEndID = edgeUI.End.PortModel.NodeModel.ID;
-                if (m_EdgesInAsset.TryGetValue((edgeStartID, edgeEndID), out Tuple<PortModel, PortModel> edge) &&
-                    EdgeAndUIMatch(edge, edgeUI))
-                {
-                    continue;
-                }
-                m_EdgesToDelete.Add(edgeUI);
-            }
-            m_EdgesToDelete.ForEach(DeleteEdgeUI);
-
-            // Create edge UIs for edges in asset that don't already exist.
-            foreach (Tuple<PortModel, PortModel> edge in m_EdgesInAsset.Values)
-            {
-                var hasEdgeUI = m_EdgeUIs.TryGetValue((edge.Item1.NodeModel.ID, edge.Item2.NodeModel.ID), out Edge edgeUI);
-                var edgeAndUIMatch = hasEdgeUI && EdgeAndUIMatch(edge, edgeUI);
-                if (!edgeAndUIMatch)
-                {
-                    CreateEdgeUI(edge.Item1, edge.Item2);
-                }
-            }
-
-            // Update sequence nodes!
-            foreach (NodeModel nodeModel in Asset.Nodes)
-            {
-                if (nodeModel is not SequenceNodeModel sequence)
-                {
-                    continue;
-                }
-
-                if (!m_NodeModelToNodeUI.TryGetValue(sequence.ID, out var value))
-                {
-                    continue;
-                }
-                
-                SequenceGroup sequenceUI = value as SequenceGroup;
-                int index = 0;
-                foreach (NodeModel nodeInSequence in sequence.Nodes)
-                {
-                    var foundNodeUI = m_NodeModelToNodeUI.TryGetValue(nodeInSequence.ID, out NodeUI nodeUI);
-                    if (foundNodeUI && nodeUI.parent != sequenceUI)
-                    {
-                        MoveNodeUIToSequence(nodeUI, sequenceUI, index);
-                    }
-                    index++;
-                }
-            }
+            // Step 4: Sequences update
+            UpdateSequences();
 
             ViewStateUpdated?.Invoke();
+
+            // To keep for future performance profiling.
+            // stopwatch.Stop();
+            // Debug.Log($"RefreshFromAsset completed in {stopwatch.ElapsedMilliseconds}ms" +
+            // $"(isDragging: {isDragging}, Nodes: {nodesToRefresh.Count}, Edges: {m_Edges.Count})");
         }
 
         internal void InitNodeUI(NodeUI nodeUI, NodeModel nodeModel)
@@ -448,7 +308,7 @@ namespace Unity.Behavior.GraphFramework
             nodeUI.usageHints |= UsageHints.DynamicTransform;
 
             // Update containers
-            m_NodeModelToNodeUI.Add(nodeModel.ID, nodeUI);
+            m_NodeUILookupByID.Add(nodeModel.ID, nodeUI);
             if (nodeModel is SequenceNodeModel)
             {
                 m_Nodes.Add(nodeUI);
@@ -456,6 +316,136 @@ namespace Unity.Behavior.GraphFramework
             else
             {
                 m_Nodes.Insert(0, nodeUI);
+            }
+        }
+
+        public void AddSelected(GraphElement element)
+        {
+            if (!m_Selected.Contains(element))
+            {
+                m_Selected.Add(element);
+                element.OnSelect();
+                element.AddToClassList("Selected");
+            }
+
+            SelectionUpdated?.Invoke(Selected);
+        }
+
+        public void RemoveSelected(GraphElement element)
+        {
+            var wasRemoved = m_Selected.Remove(element);
+            if (wasRemoved)
+            {
+                element.OnDeselect();
+                element.RemoveFromClassList("Selected");
+
+                SelectionUpdated?.Invoke(Selected);
+            }
+        }
+
+        public void SetSelected(IEnumerable<GraphElement> elements)
+        {
+            DeselectAll();
+            m_Selected.UnionWith(elements);
+            foreach (GraphElement selected in m_Selected)
+            {
+                selected.OnSelect();
+                selected.AddToClassList("Selected");
+            }
+            SelectionUpdated?.Invoke(Selected);
+        }
+
+        public void DeselectAll()
+        {
+            foreach (GraphElement selected in m_Selected)
+            {
+                selected.OnDeselect();
+                selected.RemoveFromClassList("Selected");
+            }
+            m_Selected.Clear();
+            SelectionUpdated?.Invoke(Selected);
+        }
+
+        public void SetSelected(IEnumerable<NodeModel> nodeModelsToSelect)
+        {
+            DeselectAll();
+            List<GraphElement> elementsToSelect = new List<GraphElement>();
+            foreach (NodeModel selected in nodeModelsToSelect)
+            {
+                if (m_NodeUILookupByID.TryGetValue(selected.ID, out NodeUI nodeUI))
+                {
+                    elementsToSelect.Add(nodeUI);
+                }
+            }
+            SetSelected(elementsToSelect);
+        }
+
+        public NodeUI GetNodeUIFromID(SerializableGUID id)
+        {
+            if (m_NodeUILookupByID.TryGetValue(id, out NodeUI nodeUI))
+            {
+                return nodeUI;
+            }
+
+            return null;
+        }
+
+
+        #region Node Management
+        private void BuildNodeModelLookup()
+        {
+            m_NodeLookupByID.Clear();
+            foreach (NodeModel node in Asset.Nodes)
+            {
+                m_NodeLookupByID[node.ID] = node;
+            }
+        }
+
+        private void BuildNodeUILookup(bool isDragging)
+        {
+            if (!isDragging)
+            {
+                // Complete rebuild of node UI lookup with model reassociation
+                // If asset has re/deserialized, the model data will have new instances.
+                m_NodeUILookupByID.Clear();
+                foreach (NodeUI nodeUI in Nodes)
+                {
+                    if (m_NodeLookupByID.TryGetValue(nodeUI.Model.ID, out NodeModel node))
+                    {
+                        if (nodeUI.Model != node)
+                            nodeUI.Model = node;
+
+                        m_NodeUILookupByID[node.ID] = nodeUI;
+                    }
+                }
+            }
+            else if (m_NodeUILookupByID.Count == 0)
+            {
+                // First-time build of node UI lookup without model reassociation
+                foreach (NodeUI nodeUI in Nodes)
+                {
+                    m_NodeUILookupByID[nodeUI.Model.ID] = nodeUI;
+                }
+            }
+            // When dragging with an existing lookup, we don't need to rebuild it
+        }
+
+        private void RemoveDeletedNodes()
+        {
+            m_NodeUIsToDelete.Clear();
+
+            foreach (NodeUI nodeUI in Nodes)
+            {
+                if (!m_NodeLookupByID.ContainsKey(nodeUI.Model.ID))
+                {
+                    m_NodeUIsToDelete.Add(nodeUI);
+                }
+            }
+
+            foreach (NodeUI nodeUI in m_NodeUIsToDelete)
+            {
+                DeleteNodeUI(nodeUI);
+                m_NodeUILookupByID.Remove(nodeUI.Model.ID);
             }
         }
 
@@ -478,48 +468,9 @@ namespace Unity.Behavior.GraphFramework
 
             // Remove the UI from remaining graph data containers.
             m_Nodes.Remove(nodeUI);
-            m_NodeModelToNodeUI.Remove(nodeUI.Model.ID);
+            m_NodeLookupByID.Remove(nodeUI.Model.ID);
             nodeUI.GetAllPortUIs().ForEach(DeletePortUI); // Delete ports and connected edges.
             nodeUI.RemoveFromHierarchy();
-        }
-
-        private void MoveNodeUIToSequence(NodeUI nodeUI, SequenceGroup sequenceUI, int index)
-        {
-            // Delete edges from initial node UI creation.
-            foreach (PortModel portModel in nodeUI.Model.AllPortModels)
-            {
-                if (m_PortToEdges.TryGetValue(portModel, out List<Edge> edges))
-                {
-                    m_EdgesToDelete.Clear();
-                    foreach (Edge edge in edges)
-                    {
-                        m_EdgesToDelete.Add(edge);
-                    }
-                    m_EdgesToDelete.ForEach(DeleteEdgeUI);
-                }
-            }
-
-            nodeUI.RemoveFromHierarchy(); // remove the node from the prior parent, as it will be added to sequence
-            nodeUI.style.position = Position.Relative;
-            nodeUI.transform.position = Vector2.zero;
-            nodeUI.style.left = StyleKeyword.Auto;
-            nodeUI.style.top = StyleKeyword.Auto;
-            nodeUI.AddToClassList("SequencedNode");
-
-            // When is the passed index incorrect?
-            if (index == -1 || index > sequenceUI.childCount)
-            {
-                index = sequenceUI.childCount;
-            }
-            // Add to sequence at desired index.
-            if (index >= sequenceUI.childCount)
-            {
-                sequenceUI.Add(nodeUI);
-            }
-            else
-            {
-                sequenceUI.Insert(index, nodeUI);
-            }
         }
 
         private void DeletePortUI(Port portUI)
@@ -537,6 +488,135 @@ namespace Unity.Behavior.GraphFramework
             portUI.RemoveFromHierarchy();
         }
 
+        private void UpdateExistingNodes(IReadOnlyList<NodeUI> nodesToRefresh, bool isDragging)
+        {
+            foreach (NodeUI nodeUI in nodesToRefresh)
+            {
+                UpdateNodeSequencingIfNeeded(nodeUI);
+                nodeUI.Refresh(isDragging);
+            }
+        }
+
+        private void UpdateNodeSequencingIfNeeded(NodeUI nodeUI)
+        {
+            if (nodeUI.GetFirstAncestorOfType<SequenceGroup>() == null)
+                return;
+
+            bool nodeInSequence = nodeUI.Model.Parents.Any(parent => parent is SequenceNodeModel);
+
+            if (!nodeInSequence)
+            {
+                nodeUI.RemoveFromHierarchy();
+                nodeUI.Translate = new Translate(nodeUI.Model.Position.x, nodeUI.Model.Position.y);
+                nodeUI.RemoveFromClassList("SequencedNode");
+            }
+        }
+
+        private void CreateMissingNodes()
+        {
+            foreach (NodeModel node in Asset.Nodes)
+            {
+                if (!m_NodeUILookupByID.ContainsKey(node.ID))
+                {
+                    NodeUI newNodeUI = GraphView.CreateNodeUI(node);
+                    m_NodeUILookupByID[node.ID] = newNodeUI;
+                }
+            }
+        }
+        #endregion
+
+        #region Edge Management
+        public static bool AreEdgeAndUIMatch(Tuple<PortModel, PortModel> edge, Edge edgeUI)
+        {
+            return edgeUI.Start.PortModel.Name == edge.Item1.Name &&
+                   edgeUI.End.PortModel.Name == edge.Item2.Name;
+        }
+
+        private void RebuildEdgeMappings()
+        {
+            m_EdgesInAsset.Clear();
+
+            // Build asset edge collection
+            foreach (NodeModel node in Asset.Nodes)
+            {
+                foreach (PortModel inputPort in node.InputPortModels)
+                {
+                    foreach (PortModel outputPort in inputPort.Connections)
+                    {
+                        var key = (outputPort.NodeModel.ID, inputPort.NodeModel.ID);
+                        if (!m_EdgesInAsset.ContainsKey(key))
+                        {
+                            m_EdgesInAsset.Add(key, new Tuple<PortModel, PortModel>(outputPort, inputPort));
+                        }
+                    }
+                }
+            }
+
+            // Build UI edge collection
+            m_EdgeUIs.Clear();
+            foreach (Edge edge in m_Edges)
+            {
+                var key = (edge.Start.PortModel.NodeModel.ID, edge.End.PortModel.NodeModel.ID);
+                m_EdgeUIs[key] = edge;
+            }
+        }
+
+        private void UpdateEdgeReferences()
+        {
+            foreach (Edge edgeUI in m_Edges)
+            {
+                SerializableGUID edgeStartID = edgeUI.Start.PortModel.NodeModel.ID;
+                SerializableGUID edgeEndID = edgeUI.End.PortModel.NodeModel.ID;
+                var key = (edgeStartID, edgeEndID);
+
+                if (m_EdgesInAsset.TryGetValue(key, out Tuple<PortModel, PortModel> edge) &&
+                    AreEdgeAndUIMatch(edge, edgeUI))
+                {
+                    if (edgeUI.Start.PortModel != edge.Item1)
+                        edgeUI.Start.PortModel = edge.Item1;
+
+                    if (edgeUI.End.PortModel != edge.Item2)
+                        edgeUI.End.PortModel = edge.Item2;
+                }
+            }
+        }
+
+        private void RemoveDeletedEdges()
+        {
+            m_EdgesToDelete.Clear();
+
+            foreach (Edge edgeUI in Edges)
+            {
+                SerializableGUID edgeStartID = edgeUI.Start.PortModel.NodeModel.ID;
+                SerializableGUID edgeEndID = edgeUI.End.PortModel.NodeModel.ID;
+                var key = (edgeStartID, edgeEndID);
+
+                if (m_EdgesInAsset.TryGetValue(key, out Tuple<PortModel, PortModel> edge) &&
+                    AreEdgeAndUIMatch(edge, edgeUI))
+                {
+                    continue;
+                }
+                m_EdgesToDelete.Add(edgeUI);
+            }
+
+            m_EdgesToDelete.ForEach(DeleteEdgeUI);
+        }
+
+        private void CreateMissingEdges()
+        {
+            foreach (var kvp in m_EdgesInAsset)
+            {
+                var edge = kvp.Value;
+                var key = (edge.Item1.NodeModel.ID, edge.Item2.NodeModel.ID);
+
+                if (!m_EdgeUIs.TryGetValue(key, out Edge edgeUI) ||
+                    !AreEdgeAndUIMatch(edge, edgeUI))
+                {
+                    CreateEdgeUI(edge.Item1, edge.Item2);
+                }
+            }
+        }
+        
         private void CreateEdgeUI(PortModel startPort, PortModel endPort)
         {
             Assert.IsTrue(startPort.IsInputPort != endPort.IsInputPort, "Cannot connect ports of the same type.");
@@ -645,76 +725,76 @@ namespace Unity.Behavior.GraphFramework
             edgeUI.RemoveFromHierarchy();
             m_Edges.Remove(edgeUI);
         }
+        #endregion // Edge Management
 
-        public void AddSelected(GraphElement element)
+        #region Sequence management
+        private void UpdateSequences()
         {
-            if (!m_Selected.Contains(element))
+            foreach (NodeModel nodeModel in Asset.Nodes)
             {
-                m_Selected.Add(element);
-                element.OnSelect();
-                element.AddToClassList("Selected");
-            }
+                if (nodeModel is not SequenceNodeModel sequence)
+                    continue;
 
-            SelectionUpdated?.Invoke(Selected);
-        }
+                if (!m_NodeUILookupByID.TryGetValue(sequence.ID, out NodeUI sequenceNodeUI) ||
+                    sequenceNodeUI is not SequenceGroup sequenceUI)
+                    continue;
 
-        public void RemoveSelected(GraphElement element)
-        {
-            var wasRemoved = m_Selected.Remove(element);
-            if (wasRemoved)
-            {
-                element.OnDeselect();
-                element.RemoveFromClassList("Selected");
-
-                SelectionUpdated?.Invoke(Selected);
+                UpdateSequenceNodeContents(sequence, sequenceUI);
             }
         }
 
-        public void SetSelected(IEnumerable<GraphElement> elements)
+        private void UpdateSequenceNodeContents(SequenceNodeModel sequence, SequenceGroup sequenceUI)
         {
-            DeselectAll();
-            m_Selected.UnionWith(elements);
-            foreach (GraphElement selected in m_Selected)
+            int index = 0;
+            foreach (NodeModel nodeInSequence in sequence.Nodes)
             {
-                selected.OnSelect();
-                selected.AddToClassList("Selected");
-            }
-            SelectionUpdated?.Invoke(Selected);
-        }
-
-        public void DeselectAll()
-        {
-            foreach (GraphElement selected in m_Selected)
-            {
-                selected.OnDeselect();
-                selected.RemoveFromClassList("Selected");
-            }
-            m_Selected.Clear();
-            SelectionUpdated?.Invoke(Selected);
-        }
-
-        public void SetSelected(IEnumerable<NodeModel> nodeModelsToSelect)
-        {
-            DeselectAll();
-            List<GraphElement> elementsToSelect = new List<GraphElement>();
-            foreach (NodeModel selected in nodeModelsToSelect)
-            {
-                if (m_NodeModelToNodeUI.TryGetValue(selected.ID, out NodeUI nodeUI))
+                if (m_NodeUILookupByID.TryGetValue(nodeInSequence.ID, out NodeUI nodeUI) &&
+                    nodeUI.parent != sequenceUI)
                 {
-                    elementsToSelect.Add(nodeUI);
+                    MoveNodeUIToSequence(nodeUI, sequenceUI, index);
+                }
+                index++;
+            }
+        }
+
+        private void MoveNodeUIToSequence(NodeUI nodeUI, SequenceGroup sequenceUI, int index)
+        {
+            // Delete edges from initial node UI creation.
+            foreach (PortModel portModel in nodeUI.Model.AllPortModels)
+            {
+                if (m_PortToEdges.TryGetValue(portModel, out List<Edge> edges))
+                {
+                    m_EdgesToDelete.Clear();
+                    foreach (Edge edge in edges)
+                    {
+                        m_EdgesToDelete.Add(edge);
+                    }
+                    m_EdgesToDelete.ForEach(DeleteEdgeUI);
                 }
             }
-            SetSelected(elementsToSelect);
-        }
 
-        public NodeUI GetNodeUIFromID(SerializableGUID id)
-        {
-            if (m_NodeModelToNodeUI.TryGetValue(id, out NodeUI nodeUI))
+            nodeUI.RemoveFromHierarchy(); // remove the node from the prior parent, as it will be added to sequence
+            nodeUI.style.position = Position.Relative;
+            nodeUI.transform.position = Vector2.zero;
+            nodeUI.style.left = StyleKeyword.Auto;
+            nodeUI.style.top = StyleKeyword.Auto;
+            nodeUI.AddToClassList("SequencedNode");
+
+            // When is the passed index incorrect?
+            if (index == -1 || index > sequenceUI.childCount)
             {
-                return nodeUI;
+                index = sequenceUI.childCount;
             }
-            
-            return null;
+            // Add to sequence at desired index.
+            if (index >= sequenceUI.childCount)
+            {
+                sequenceUI.Add(nodeUI);
+            }
+            else
+            {
+                sequenceUI.Insert(index, nodeUI);
+            }
         }
+        #endregion // Sequence management
     }
 }

@@ -2,7 +2,7 @@
 
 namespace Unity.Behavior.GraphFramework
 {
-    internal class CreateVariableFromLinkFieldCommand : Command
+    internal class CreateVariableFromLinkFieldCommand : Command, IBlackboardAssetCommand
     {
         public string Name { get; }
         public Type VariableType { get; }

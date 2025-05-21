@@ -158,9 +158,8 @@ namespace Unity.Behavior.GraphFramework
                 UnityEditor.Undo.RegisterCompleteObjectUndo(m_GraphView.Asset, nameof(MoveNodesCommand));
             }
 #endif
-            
             // We don't mark for undo in this case because we need special RegisterCompleteObjectUndo functionality above.
-            var moveCommand = new MoveNodesCommand(m_NodesToMove, m_Positions, m_ParentSequences, markUndo:false);
+            var moveCommand = new MoveNodesCommand(m_NodesToMove, m_Positions, m_ParentSequences, markUndo: false);
             m_GraphView.Dispatcher.DispatchImmediate(moveCommand, false);
             m_PointerDeltaPrev = deltaPointerPos;
             
@@ -203,6 +202,7 @@ namespace Unity.Behavior.GraphFramework
             {
                 return;
             }
+
 #if UNITY_EDITOR
             int undoGroup = -1;
             if (m_IsDragging)
@@ -210,9 +210,7 @@ namespace Unity.Behavior.GraphFramework
                 UnityEditor.Undo.SetCurrentGroupName("Move Nodes");
                 undoGroup = UnityEditor.Undo.GetCurrentGroup();
             }
-            
 #endif
-
             m_IsActive = false;
             target.ReleasePointer(evt.pointerId);
 
@@ -244,7 +242,7 @@ namespace Unity.Behavior.GraphFramework
             if (m_IsDragging)
             {
                 m_GraphViewState.RefreshFromAsset(false);
-                UnityEditor.Undo.CollapseUndoOperations(undoGroup); 
+                UnityEditor.Undo.CollapseUndoOperations(undoGroup);
             }
 #endif
         }

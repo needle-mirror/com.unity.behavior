@@ -4,7 +4,7 @@ using Unity.Behavior.GraphFramework;
 namespace Unity.Behavior
 {
     [Serializable]
-    internal class CreateVariableFromSerializedTypeCommand : Command
+    internal class CreateVariableFromSerializedTypeCommand : Command, IBlackboardAssetCommand
     {
         public string VariableTypeName;
         

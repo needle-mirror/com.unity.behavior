@@ -41,7 +41,20 @@ namespace Unity.Behavior.GraphFramework
             }
         }
 #endif
+        /// <summary>
+        /// Event triggered only when the text changes due to user input in the editable field.
+        /// Unlike standard change events, this is not raised when <see cref="Text"/> is set programmatically.
+        /// </summary>
+        public event System.Action<string> UserInputTextChanged;
 
+        /// <summary>
+        /// Gets or sets the text displayed in the editable label.
+        /// IMPORTANT: Due to internal UITK limitations, setting this property will always trigger 
+        /// change notifications because Label.text doesn't provide a SetValueWithoutNotify implementation.
+        /// If you need to distinguish between programmatic changes and user input changes,
+        /// subscribe to the <see cref="UserInputTextChanged"/> event instead, which only fires 
+        /// when changes come from user interactions with the field.
+        /// </summary>
 #if ENABLE_UXML_UI_SERIALIZATION
         [CreateProperty]
         [UxmlAttribute("text")]
@@ -121,6 +134,7 @@ namespace Unity.Behavior.GraphFramework
             ResourceLoadAPI.Load<VisualTreeAsset>("Packages/com.unity.behavior/Elements/Assets/EditableLabelLayout.uxml").CloneTree(this);
 
             m_Label = this.Q<Label>("Text");
+            m_Label.enableRichText = true;
             m_Field = this.Q<TextField>("TextField");
             this.Q(className: "unity-base-field__input")?.RemoveFromHierarchy();
 
@@ -148,6 +162,7 @@ namespace Unity.Behavior.GraphFramework
             Text = m_Field.value;
             evt.StopImmediatePropagation();
             SendEvent(ChangeEvent<string>.GetPooled(evt.previousValue, evt.newValue));
+            UserInputTextChanged?.Invoke(evt.newValue);
         }
 
         private void OnPointerDown(MouseDownEvent evt)

@@ -50,6 +50,7 @@ namespace Unity.Behavior
             EditorGUI.EndDisabledGroup();
             
             EditorGUILayout.PropertyField(behaviorProjectSettingsSO.FindProperty("m_AutoOpenNodeScriptsInExternalEditor"), new GUIContent("Auto-Open Node Scripts in External Editor"));
+            EditorGUILayout.PropertyField(behaviorProjectSettingsSO.FindProperty("m_AllowDisabledAgentDebugging"));
 
             behaviorProjectSettingsSO.ApplyModifiedProperties();
         }

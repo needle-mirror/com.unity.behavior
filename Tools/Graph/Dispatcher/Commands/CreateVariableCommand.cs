@@ -2,7 +2,7 @@ using System;
 
 namespace Unity.Behavior.GraphFramework
 {
-    internal class CreateVariableCommand : Command
+    internal class CreateVariableCommand : Command, IBlackboardAssetCommand
     {
         public string Name { get; }
         public bool ExactName { get; set; }

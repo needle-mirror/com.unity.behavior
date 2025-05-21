@@ -10,8 +10,39 @@ using Unity.Netcode;
 namespace Unity.Behavior
 {
     /// <summary>
-    /// Behavior agent component.
+    /// <para>Manages a behavior graph's lifecycle on a GameObject and handles data through blackboard variables.</para>
+    /// <para>The BehaviorGraphAgent maintains the following lifecycle states:</para>
+    /// <para>- <b>Uninitialized</b> - The graph has been assigned but not instantiated yet</para>
+    /// <para>- <b>Initialized</b> - The graph has been instantiated with a unique copy for this agent</para>
+    /// <para>- <b>Started</b> - The graph has started running</para>
+    /// <para>- <b>Running</b> - The graph is being updated each frame via Tick()</para>
+    /// <para>- <b>Ended</b> - The graph has been stopped and is no longer running</para>
+    ///
+    /// <para><b>Initialization Sequence:</b></para>
+    /// <para>- When a graph is assigned in the Inspector, it's automatically initialized during Awake()</para>
+    /// <para>- When assigning a graph via the Graph property at runtime, it's automatically initialized during the next Update()</para>
+    /// <para>- You can also explicitly control initialization by calling Init() manually</para>
+    ///
+    /// <para><b>Blackboard Variable Handling:</b></para>
+    /// <para>- Before initialization: SetVariableValue() sets agent-level overrides (visible in the Inspector)</para>
+    /// <para>- After initialization: SetVariableValue() sets values in the instanced graph's blackboard</para>
     /// </summary>
+    /// <example>
+    /// <para><b>Common Usage Patterns:</b></para>
+    /// <code>
+    /// // Basic usage - assign graph and configure at runtime
+    /// agent.Graph = myBehaviorGraph;  // Graph will auto-initialize next Update
+    /// agent.SetVariableValue("Destination", targetPosition);
+    /// 
+    /// // Template pattern - configure, then instantiate multiple agents
+    /// templateAgent.Graph = sharedGraph;
+    /// templateAgent.SetVariableValue("Speed", defaultSpeed);  // Sets override
+    /// 
+    /// var newAgent = Instantiate(templateAgent);
+    /// newAgent.Init();  // Explicitly initialize
+    /// newAgent.SetVariableValue("PatrolPoints", uniquePatrolPoints);  // Per-instance value
+    /// </code>
+    /// </example>
     [AddComponentMenu("AI/Behavior Agent")]
 #if NETCODE_FOR_GAMEOBJECTS
     public class BehaviorGraphAgent : NetworkBehaviour, ISerializationCallbackReceiver
@@ -22,8 +53,27 @@ namespace Unity.Behavior
         [SerializeReference] private BehaviorGraph m_Graph;
 
         /// <summary>
-        /// The graph of behaviours to be executed by the agent.
+        /// <para>The graph of behaviours to be executed by the agent.</para>
+        /// <para><b>When assigning a new graph to this property:</b></para>
+        /// <para>- The agent will be marked as uninitialized and will automatically initialize during the next Update cycle (if agent is enabled)</para>
+        /// <para>- You don't have to manually call Init() or Start() when setting this property</para>
+        ///
+        /// <para><b>About blackboard variable:</b></para>
+        /// <para>- Calling SetVariableValue() before the agent is initialized (after setting Graph but before the next Update) 
+        /// will set blackboard overrides at the agent level, visible in the inspector</para>
+        /// <para>- Calling SetVariableValue() after the agent is initialized will modify the individual instance variables</para>
+        /// <para>- This makes it possible to set default values that apply to all instances, or customize individual agent behaviors</para>
         /// </summary>
+        /// <example>
+        /// <code>
+        /// // Assign graph and set default value before initialization
+        /// agent.Graph = myGraph;
+        /// agent.SetVariableValue("Destination", new Vector3(10, 0, 10)); // Sets agent-level override
+        /// 
+        /// // After automatic initialization in Update, or manual Init():
+        /// agent.SetVariableValue("PatrolPoints", customPatrolPoints); // Sets instance-specific value
+        /// </code>
+        /// </example>
         public BehaviorGraph Graph
         {
             get => m_Graph;
@@ -58,6 +108,11 @@ namespace Unity.Behavior
         /// Events used to notify to the BehaviorGraphEditor that it needs to refresh its graph reference.
         /// </summary>
         internal System.Action OnRuntimeDeserializationEvent;
+
+        /// <summary>
+        ///  Backup of the first graph assigned to the agent, used by ReinitializeAndRestartGraph.
+        /// </summary>
+        private BehaviorGraph m_OriginalGraph;
 #endif
 
         [SerializeField][HideInInspector] 
@@ -202,8 +257,34 @@ namespace Unity.Behavior
         }
 
         /// <summary>
-        /// Initializes a new instance of the agent's behavior graph.
+        /// <para>Initializes a new instance of the agent's behavior graph.</para>
+        /// <para><b>When called, this method:</b></para>
+        /// <para>- Creates a unique instance of the assigned behavior graph</para>
+        /// <para>- Applies any blackboard variable overrides that were set prior to initialization</para>
+        /// <para>- Prepares the graph instance to run on this specific agent</para>
+        ///
+        /// <para><b>Initialization sequence:</b></para>
+        /// <para>- Called automatically in Awake() if a graph is assigned in the Inspector</para>
+        /// <para>- Called automatically in the next Update() after setting the Graph property</para>
+        /// <para>- Can be called manually to explicitly control the initialization timing</para>
+        /// <para>- If the agent is already initialized, this method only reassigns the GameObject to graph modules</para>
+        ///
+        /// <para><b>About blackboard variable:</b></para>
+        /// <para>- SetVariableValue() calls made before Init() set agent-level overrides</para>
+        /// <para>- SetVariableValue() calls made after Init() set variables on the instanced graph</para>
+        /// <para>- This allows for setting up default values before instantiation and instance-specific values after</para>
         /// </summary>
+        /// <example>
+        /// <code>
+        /// // Pattern for pre-configuring agents before instantiation:
+        /// templateAgent.Graph = sharedGraph;
+        /// templateAgent.SetVariableValue("BaseSpeed", 5f);  // Sets default override
+        /// 
+        /// // After spawning from template (or calling Init explicitly):
+        /// agent.Init();
+        /// agent.SetVariableValue("TargetPosition", GetRandomPosition());  // Sets instance variable
+        /// </code>
+        /// </example>
         public void Init()
         {
             if (m_Graph == null)
@@ -225,6 +306,12 @@ namespace Unity.Behavior
                 return;
             }
 
+#if UNITY_EDITOR
+            if (m_OriginalGraph == null)
+            {
+                m_OriginalGraph = m_Graph;
+            }
+#endif
             m_Graph = ScriptableObject.Instantiate(m_Graph);
             m_Graph.AssignGameObjectToGraphModules(gameObject);
             InitChannelsAndMetadata();
@@ -440,6 +527,28 @@ namespace Unity.Behavior
             }
             return false;
         }
+        
+        /// <summary>
+        /// Serializes the associated BehaviorGraph to data of TSerializedFormat type.
+        /// </summary>
+        /// <param name="serializer">Serializer to use.</param>
+        /// <param name="resolver">Object resolver to use.</param>
+        /// <typeparam name="TSerializedFormat">Type of serialized output.</typeparam>
+        /// <returns>Serialized data.</returns>
+        public TSerializedFormat Serialize<TSerializedFormat>(
+            RuntimeSerializationUtility.IBehaviorSerializer<TSerializedFormat> serializer, 
+            RuntimeSerializationUtility.IUnityObjectResolver<string> resolver)
+        {
+            if (m_Graph == null)
+            {
+                Debug.LogError("Can't serialize the agent because no graph has been assigned. Please assign a graph before serializing.");
+                return default;
+            }
+            
+            m_Graph.SerializeGraphModules();
+            var serializedFormat = serializer.Serialize(m_Graph, resolver);
+            return serializedFormat;
+        }
 
         /// <summary>
         /// Deserializes data on to the associated BehaviorGraph.
@@ -454,6 +563,7 @@ namespace Unity.Behavior
         {
             m_Graph = ScriptableObject.CreateInstance<BehaviorGraph>();
             serializer.Deserialize(serialized, m_Graph, resolver);
+            m_Graph.AssignGameObjectToGraphModules(gameObject);
             InitChannelsAndMetadata(applyOverride: false);
             m_Graph.DeserializeGraphModules();
 #if UNITY_EDITOR
@@ -461,21 +571,6 @@ namespace Unity.Behavior
 #endif
             m_IsInitialised = true;
             m_IsStarted = m_Graph.IsRunning;
-        }
-
-        /// <summary>
-        /// Serializes the associated BehaviorGraph to data of TSerializedFormat type.
-        /// </summary>
-        /// <param name="serializer">Serializer to use.</param>
-        /// <param name="resolver">Object resolver to use.</param>
-        /// <typeparam name="TSerializedFormat">Type of serialized output.</typeparam>
-        /// <returns>Serialized data.</returns>
-        public TSerializedFormat Serialize<TSerializedFormat>(
-            RuntimeSerializationUtility.IBehaviorSerializer<TSerializedFormat> serializer,
-            RuntimeSerializationUtility.IUnityObjectResolver<string> resolver)
-        {
-            m_Graph.SerializeGraphModules();
-            return serializer.Serialize(m_Graph, resolver);
         }
 
         private void InitChannelsAndMetadata(bool applyOverride = true)
@@ -723,6 +818,12 @@ namespace Unity.Behavior
             m_BlackboardOverrides = new Dictionary<SerializableGUID, BlackboardVariable>();
             foreach (BlackboardVariable variable in m_BlackboardVariableOverridesList)
             {
+                if (variable == null)
+                {
+                    // Skip override of variable that might not exist anymore.
+                    continue;
+                }
+
                 m_BlackboardOverrides.Add(variable.GUID, variable);
             }
         }
@@ -747,10 +848,20 @@ namespace Unity.Behavior
 
             // At this point, the variable either don't exist or is not overriden yet. 
             // We check for the source blackboard and override it if needed.
-            // TODO: If we want to support override of linked blackboard asset in the future, we will need to also add support for it here.
             if (!m_Graph.BlackboardReference.GetVariable<TValue>(variableName, out var candidate))
             {
-                return false;
+                foreach (var blackboardReference in m_Graph.RootGraph.BlackboardGroupReferences)
+                {
+                    if (blackboardReference.GetVariable<TValue>(variableName, out candidate))
+                    {
+                        break;
+                    }
+                }
+
+                if (candidate == null)
+                {
+                    return false;
+                }
             }
 
             var newOverride = candidate.Duplicate();
@@ -775,10 +886,20 @@ namespace Unity.Behavior
 
             // At this point, the variable either don't exist or is not overriden yet. 
             // We check for the source blackboard and override it if needed.
-            // TODO: If we want to support override of linked blackboard asset in the future, we will need to also add support for it here.
             if (!m_Graph.BlackboardReference.GetVariable<TValue>(guid, out var candidate))
             {
-                return false;
+                foreach (var blackboardReference in m_Graph.RootGraph.BlackboardGroupReferences)
+                {
+                    if (blackboardReference.GetVariable<TValue>(guid, out candidate))
+                    {
+                        break;
+                    }
+                }
+
+                if (candidate == null)
+                {
+                    return false;
+                }
             }
 
             var newOverride = candidate.Duplicate();
@@ -806,6 +927,21 @@ namespace Unity.Behavior
         }
 
 #if UNITY_EDITOR // Used for testing
+        [UnityEngine.ContextMenu("Reinitialize And Restart Graph", false)]
+        private void ReinitializeAndRestartGraph()
+        {
+            m_IsInitialised = false;
+            Graph = m_OriginalGraph;
+            Restart();
+            OnRuntimeDeserializationEvent?.Invoke();
+        }
+
+        [UnityEngine.ContextMenu("Reinitialize And Restart Graph", true)]
+        private bool ValidateReinitializeAndRestartGraph()
+        {
+            return UnityEditor.EditorApplication.isPlaying;
+        }
+
         internal bool TryGetBlackboardVariableOverride<TValue>(SerializableGUID guid, out TValue value)
         {
             if (m_BlackboardOverrides.TryGetValue(guid, out var bbv))

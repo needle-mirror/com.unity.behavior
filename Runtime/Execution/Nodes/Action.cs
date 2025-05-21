@@ -1,3 +1,5 @@
+using Unity.Behavior.Serialization;
+using Unity.Properties;
 using UnityEngine;
 
 namespace Unity.Behavior
@@ -10,11 +12,13 @@ namespace Unity.Behavior
         /// <summary>
         /// The parent of the node.
         /// </summary>
+        [CreateProperty, DontSerialize]
         public Node Parent
         {
             get => m_Parent;
             internal set { m_Parent = value; }
         }
+        
         [SerializeReference]
         internal Node m_Parent;
         

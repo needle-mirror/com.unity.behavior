@@ -24,9 +24,11 @@ namespace Unity.Behavior
         // This will only be used in movement without a navigation agent.
         [SerializeReference] public BlackboardVariable<float> SlowDownDistance = new BlackboardVariable<float>(1.0f);
 
-        private float m_PreviousStoppingDistance;
         private NavMeshAgent m_NavMeshAgent;
         private Animator m_Animator;
+        [CreateProperty] private float m_OriginalStoppingDistance = -1f;
+        [CreateProperty] private float m_OriginalSpeed = -1f;
+        private float m_CurrentSpeed;
 
         protected override Status OnStart()
         {
@@ -45,46 +47,27 @@ namespace Unity.Behavior
                 return Status.Failure;
             }
 
-            if (m_NavMeshAgent == null)
-            {
-                Vector3 agentPosition, locationPosition;
-                float distance = GetDistanceToLocation(out agentPosition, out locationPosition);
-                if (distance <= DistanceThreshold)
-                {
-                    return Status.Success;
-                }
+            Vector3 agentPosition, locationPosition;
+            float distance = GetDistanceToLocation(out agentPosition, out locationPosition);
+            bool destinationReached = distance <= DistanceThreshold;
 
-                float speed = Speed;
-
-                if (SlowDownDistance > 0.0f && distance < SlowDownDistance)
-                {
-                    float ratio = distance / SlowDownDistance;
-                    speed = Mathf.Max(0.1f, Speed * ratio);
-                }
-
-                Vector3 toDestination = locationPosition - agentPosition;
-                toDestination.y = 0.0f;
-                toDestination.Normalize();
-                agentPosition += toDestination * (speed * Time.deltaTime);
-                Agent.Value.transform.position = agentPosition;
-
-                // Look at the target.
-                Agent.Value.transform.forward = toDestination;
-            }
-            else if (m_NavMeshAgent.IsNavigationComplete())
+            if (destinationReached && (m_NavMeshAgent == null || !m_NavMeshAgent.pathPending))
             {
                 return Status.Success;
             }
+            else if (m_NavMeshAgent == null) // transform-based movement
+            {
+                m_CurrentSpeed = NavigationUtility.SimpleMoveTowardsLocation(Agent.Value.transform, locationPosition, Speed, distance, SlowDownDistance);
+            }
+
+            UpdateAnimatorSpeed();
 
             return Status.Running;
         }
 
         protected override void OnEnd()
         {
-            if (m_Animator != null)
-            {
-                m_Animator.SetFloat(AnimatorSpeedParam, 0);
-            }
+            UpdateAnimatorSpeed(0f);
 
             if (m_NavMeshAgent != null)
             {
@@ -92,7 +75,8 @@ namespace Unity.Behavior
                 {
                     m_NavMeshAgent.ResetPath();
                 }
-                m_NavMeshAgent.stoppingDistance = m_PreviousStoppingDistance;
+                m_NavMeshAgent.speed = m_OriginalSpeed;
+                m_NavMeshAgent.stoppingDistance = m_OriginalStoppingDistance;
             }
 
             m_NavMeshAgent = null;
@@ -101,6 +85,18 @@ namespace Unity.Behavior
 
         protected override void OnDeserialize()
         {
+            // If using a navigation mesh, we need to reset default value before Initialize.
+            m_NavMeshAgent = Agent.Value.GetComponentInChildren<NavMeshAgent>();
+            if (m_NavMeshAgent != null)
+            {
+                if (m_OriginalSpeed >= 0f)
+                    m_NavMeshAgent.speed = m_OriginalSpeed;
+                if (m_OriginalStoppingDistance >= 0f)
+                    m_NavMeshAgent.stoppingDistance = m_OriginalStoppingDistance;
+
+                m_NavMeshAgent.Warp(Agent.Value.transform.position);
+            }
+
             Initialize();
         }
 
@@ -111,13 +107,6 @@ namespace Unity.Behavior
                 return Status.Success;
             }
 
-            // If using animator, set speed parameter.
-            m_Animator = Agent.Value.GetComponentInChildren<Animator>();
-            if (m_Animator != null)
-            {
-                m_Animator.SetFloat(AnimatorSpeedParam, Speed);
-            }
-
             // If using a navigation mesh, set target position for navigation mesh agent.
             m_NavMeshAgent = Agent.Value.GetComponentInChildren<NavMeshAgent>();
             if (m_NavMeshAgent != null)
@@ -126,11 +115,16 @@ namespace Unity.Behavior
                 {
                     m_NavMeshAgent.ResetPath();
                 }
+
+                m_OriginalSpeed = m_NavMeshAgent.speed;
                 m_NavMeshAgent.speed = Speed;
-                m_PreviousStoppingDistance = m_NavMeshAgent.stoppingDistance;
+                m_OriginalStoppingDistance = m_NavMeshAgent.stoppingDistance;
                 m_NavMeshAgent.stoppingDistance = DistanceThreshold;
                 m_NavMeshAgent.SetDestination(locationPosition);
             }
+            
+            m_Animator = Agent.Value.GetComponentInChildren<Animator>();
+            UpdateAnimatorSpeed(0f);
 
             return Status.Running;
         }
@@ -140,6 +134,11 @@ namespace Unity.Behavior
             agentPosition = Agent.Value.transform.position;
             locationPosition = Location.Value;
             return Vector3.Distance(new Vector3(agentPosition.x, locationPosition.y, agentPosition.z), locationPosition);
+        }
+
+        private void UpdateAnimatorSpeed(float explicitSpeed = -1)
+        {
+            NavigationUtility.UpdateAnimatorSpeed(m_Animator, AnimatorSpeedParam, m_NavMeshAgent, m_CurrentSpeed, explicitSpeed: explicitSpeed);
         }
     }
 }

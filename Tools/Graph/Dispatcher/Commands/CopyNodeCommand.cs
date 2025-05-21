@@ -11,14 +11,15 @@ namespace Unity.Behavior.GraphFramework
             NodeModels = new List<NodeModel>();
         }
         
-        public CopyNodeCommand(NodeModel nodeModel, bool markUndo = true) : this(markUndo)
+        public CopyNodeCommand(NodeModel nodeModel, bool markUndo = false) : this(markUndo)
         {
             NodeModels.Add(nodeModel);
         }
         
-        public CopyNodeCommand(IEnumerable<NodeModel> nodeModels, bool markUndo = true) : this(markUndo)
+        public CopyNodeCommand(IEnumerable<NodeModel> nodeModels, bool markUndo = false) : this(markUndo)
         {
             NodeModels.AddRange(nodeModels);
+            SetAssetDirty = false;
         }
     }
 }

@@ -14,3 +14,5 @@ To continue your journey, refer to the following information:
 * [Create a behavior graph](create-behavior-graph.md)
 * [Behavior graph example](example.md)
 * [Debug the Agent in real time during Play mode](debug.md)
+* [Save and load running graph state](serialization.md)
+* [Runtime Serialization sample](xref:serialize-sample)

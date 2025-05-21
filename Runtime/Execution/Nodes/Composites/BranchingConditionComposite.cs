@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Unity.Behavior.Serialization;
 using Unity.Properties;
 using UnityEngine;
 
@@ -28,13 +29,15 @@ namespace Unity.Behavior
         /// The node that is executed if the condition is true.
         /// </summary>
         [SerializeReference] public Node True;
-        
+
         /// <summary>
         /// The node that is executed if the condition is false.
         /// </summary>
         [SerializeReference] public Node False;
 
-        private Node m_CurrentChild;
+        [SerializeReference] private Node m_CurrentChild;
+        [CreateProperty, DontSerialize]
+        public Node CurrentChild { get => m_CurrentChild; internal set => m_CurrentChild = value; }
 
         /// <inheritdoc cref="OnStart" />
         protected override Status OnStart()
@@ -43,14 +46,14 @@ namespace Unity.Behavior
             {
                 return Status.Failure;
             }
-            
+
             Status status;
 
             foreach (Condition condition in Conditions)
             {
                 condition.OnStart();
             }
-            
+
             if (ConditionUtils.CheckConditions(Conditions, RequiresAllConditions))
             {
                 if (True == null)
@@ -60,8 +63,8 @@ namespace Unity.Behavior
 #endif
                     return Status.Success;
                 }
-                status = StartNode(True);
                 m_CurrentChild = True;
+                status = StartNode(True);
             }
             else
             {
@@ -72,8 +75,8 @@ namespace Unity.Behavior
 #endif
                     return Status.Success;
                 }
-                status = StartNode(False);
                 m_CurrentChild = False;
+                status = StartNode(False);
             }
 
             return status switch
@@ -89,7 +92,7 @@ namespace Unity.Behavior
         {
             return m_CurrentChild.CurrentStatus;
         }
-        
+
         protected override void OnEnd()
         {
             base.OnEnd();

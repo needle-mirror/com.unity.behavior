@@ -22,6 +22,5 @@ After generating a branch, you can modify the behavior graph as needed. You can 
 
 ## Additional resources
 
-* [Create an action node using generative AI](gen-ai-node.md)
 * [Placeholder node in a behavior graph](placeholder-nodes.md)
 * [Best practices for using generative AI](gen-ai-best-practices.md)

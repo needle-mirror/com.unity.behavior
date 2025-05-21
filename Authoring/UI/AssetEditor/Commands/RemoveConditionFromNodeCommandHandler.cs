@@ -6,7 +6,6 @@ internal class RemoveConditionFromNodeCommandHandler : CommandHandler<RemoveCond
     public override bool Process(RemoveConditionFromNodeCommand command)
     {
         ConditionInfo info = ConditionUtility.GetInfoForConditionType(command.ConditionModel.ConditionType);
-        Asset.MarkUndo($"Remove condition {info.Name} from a node");
         BehaviorGraphNodeModel behaviorNodeModel = command.NodeModel as BehaviorGraphNodeModel;
 
         if (behaviorNodeModel is IConditionalNodeModel conditionalNodeModel)

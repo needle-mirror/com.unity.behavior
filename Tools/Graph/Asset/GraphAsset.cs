@@ -26,7 +26,7 @@ namespace Unity.Behavior.GraphFramework
             get => m_Nodes;
             set => m_Nodes = value;
         }
-        
+
         /// <summary>
         /// Does the asset needs to rebuilt its data.
         /// </summary>
@@ -39,23 +39,31 @@ namespace Unity.Behavior.GraphFramework
         public void MarkUndo(string description, bool hasOutstandingChange = true)
         {
 #if UNITY_EDITOR
-            UnityEditor.Undo.RecordObject(this, description);
+            // For any change not registered through dispatcher, we need to manually provide additional information.
+            if (hasOutstandingChange && description.Contains("(outstanding)") == false)
+            {
+                description += $" (outstanding)"; 
+            }
+            
+            var assetPath = UnityEditor.AssetDatabase.GetAssetPath(this);
+            if (description.Contains(assetPath) == false)
+            {
+                description += $" ({assetPath})";
+            }
+
+            UnityEditor.Undo.RegisterCompleteObjectUndo(this, description);
 #endif
             // There are still a few lingering non-command changes to asset data preceded by MarkUndo() calls.
             // In order to pick up these changes, set the asset dirty here too.
             SetAssetDirty(hasOutstandingChange);
-        }     
+        }
 
-        public void SaveAsset()
+        public virtual void SaveAsset()
         {
             HasOutstandingChanges = false;
-
 #if UNITY_EDITOR
             UnityEditor.EditorUtility.SetDirty(this);
-            // Note: Using AssetDatabase.SaveAssetIfDirty(this) saves the asset but doesn't pass the path to
-            // AssetModificationProcessor.OnWillSaveAssets(), which we use to rebuild graphs which reference this one.
-            // Instead, use AssetDatabase.SaveAssets().
-            UnityEditor.AssetDatabase.SaveAssets();
+            UnityEditor.AssetDatabase.SaveAssetIfDirty(this);
 #endif
         }
 

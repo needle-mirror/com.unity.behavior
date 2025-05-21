@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Unity.Behavior.SerializationExample
 {
     [Serializable, GeneratePropertyBag]
-    [NodeDescription(name: "ChooseTargetPosition", story: "Choose [TargetPosition]", category: "Action", id: "7ff79b93c9fb36dc46b238e19efaa31b")]
+    [NodeDescription(name: "ChooseTargetPosition", story: "Choose [TargetPosition]", category: "Action", id: "7ff79b93c9fb36dc46b238e19efaa81d")]
     public partial class ChooseTargetPosition : Action
     {
         [SerializeReference] public BlackboardVariable<Vector3> TargetPosition;

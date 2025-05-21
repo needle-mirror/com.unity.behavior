@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
+using Unity.Behavior.Serialization;
+using Unity.Properties;
 using UnityEngine;
-
 
 namespace Unity.Behavior
 {
@@ -14,6 +15,7 @@ namespace Unity.Behavior
         /// <summary>
         /// The parent of the node.
         /// </summary>
+        [CreateProperty, DontSerialize]
         public Node Parent { get => m_Parent; internal set { m_Parent = value; } }
         [SerializeReference]
         internal Node m_Parent;
@@ -21,6 +23,7 @@ namespace Unity.Behavior
         /// <summary>
         /// The children of the node.
         /// </summary>
+        [CreateProperty, DontSerialize]
         public List<Node> Children { get => m_Children; internal set => m_Children = value; }
         [SerializeReference]
         internal List<Node> m_Children = new List<Node>();

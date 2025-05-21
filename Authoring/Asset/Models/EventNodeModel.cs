@@ -11,6 +11,7 @@ namespace Unity.Behavior
         public static readonly string ChannelFieldName = "ChannelVariable";
 
         public override bool IsSequenceable => true;
+
         public SerializableType EventChannelType
         {
             get
@@ -31,15 +32,15 @@ namespace Unity.Behavior
                 return null;
             }
         }
-        
-        public EventNodeModel(NodeInfo nodeInfo) : base (nodeInfo) { }
+
+        public EventNodeModel(NodeInfo nodeInfo) : base(nodeInfo) { }
 
         protected EventNodeModel(EventNodeModel nodeModelOriginal, BehaviorAuthoringGraph asset) : base(nodeModelOriginal, asset) { }
 
         protected override void EnsureFieldValuesAreUpToDate()
         {
             Type channelType = EventChannelType;
-            if (channelType == null) 
+            if (channelType == null)
             {
                 // No channel is assigned, so remove variable fields.
                 m_FieldValues.Clear();
@@ -47,15 +48,20 @@ namespace Unity.Behavior
                 return;
             }
 
-            Type eventHandlerType = channelType.GetEvent("Event").EventHandlerType;
-            ParameterInfo[] messageParameters = eventHandlerType.GetMethod("Invoke")
-                .GetParameters()
-                .ToArray();
+            var eventHandlerType = EventChannelUtility.GetEventHandlerType(channelType);
+            if (eventHandlerType == null)
+            {
+                Debug.LogWarning($"Failed to retrieve event handler type for event channel '{channelType.Name}'. " +
+                    $"The class should be sealed and inherit from '{typeof(EventChannel).Name}'.");
+                return;
+            }
+
+            (ParameterInfo[] messageParameters, string[] parametersName) = EventChannelUtility.GetParametersInfoAndNameFromChanneltype(EventChannelType);
 
             // Check if number of message types is correct
             if (messageParameters.Length != m_FieldValues.Count - 1)
             {
-                RecreateFields(messageParameters, channelType);
+                RecreateFields(messageParameters, channelType, parametersName);
                 return;
             }
 
@@ -64,18 +70,20 @@ namespace Unity.Behavior
             {
                 int messageFieldIndex = i + 1;  // offset by one due to channel field + any addition field
                 ParameterInfo info = messageParameters[i];
-                Type fieldValueType = m_FieldValues[messageFieldIndex]?.Type;
-                if (fieldValueType == null || !fieldValueType.IsAssignableFrom(info.ParameterType))
+                var currentField = m_FieldValues[messageFieldIndex];
+                Type fieldValueType = currentField?.Type;
+                if (fieldValueType == null || !fieldValueType.IsAssignableFrom(info.ParameterType)
+                    || currentField?.FieldName != parametersName[i])
                 {
-                    RecreateFields(messageParameters, channelType);
+                    RecreateFields(messageParameters, channelType, parametersName);
                     return;
                 }
             }
         }
 
-        private void RecreateFields(ParameterInfo[] messageParameters, Type channelType)
+        private void RecreateFields(ParameterInfo[] messageParameters, Type channelType, string[] parametersName)
         {
-            bool MatchesMessageParam(FieldModel field) 
+            bool MatchesMessageParam(FieldModel field)
             {
                 return messageParameters.Any(param =>
                     field.FieldName == param.Name && (Type)field.Type == param.ParameterType);
@@ -86,7 +94,7 @@ namespace Unity.Behavior
             for (int m = 0; m < messageParameters.Length; m++)
             {
                 ParameterInfo info = messageParameters[m];
-                GetOrCreateField(info.Name, info.ParameterType);
+                GetOrCreateField(parametersName[m], info.ParameterType);
             }
         }
     }

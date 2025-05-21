@@ -10,18 +10,41 @@ namespace Unity.Behavior
     {
         internal BehaviorAuthoringGraph GraphAsset;
         private VisualElement m_BlackboardAssetsContainer;
+        private bool m_NeedBlackboardReferencesViewRefresh = true;
+#if UNITY_TEST_FRAMEWORK
+        /// <summary>
+        /// Set to false everytime InitializedListView is called.
+        /// Set to true only if blackboard assets view is refreshed during the call.
+        /// </summary>
+        internal bool IsBlackboardAssetViewRefreshed = false;
+#endif
 
         internal BehaviorGraphBlackboardView(BlackboardMenuCreationCallback menuCreationCallback) : base(menuCreationCallback) { }
         
         internal override void InitializeListView()
         {
-            UpdateListViewFromAsset(VariableListView, Asset, true);
+#if UNITY_TEST_FRAMEWORK
+            IsBlackboardAssetViewRefreshed = false;
+#endif
+            // Update graph asset blackboard
+            base.InitializeListView();
+
             if (GraphAsset == null)
             {
                 return;
             }
 
+            // Early out if no need to rebuild blackboard reference.
+            if (m_NeedBlackboardReferencesViewRefresh == false)
+            {
+                return;
+            }
+
             m_BlackboardAssetsContainer?.Clear();
+            m_NeedBlackboardReferencesViewRefresh = false;
+#if UNITY_TEST_FRAMEWORK
+            IsBlackboardAssetViewRefreshed = true;
+#endif
             if (GraphAsset.m_Blackboards.Count == 0)
             {
                 return;
@@ -34,6 +57,7 @@ namespace Unity.Behavior
             {
                 BlackboardAssetElement element = CreateAndGetBlackboardAssetElement(blackboardAsset);
                 m_BlackboardAssetsContainer?.Add(element);
+
                 UpdateListViewFromAsset(element.Variables, blackboardAsset, false);
 
                 element.RegisterCallback<PointerDownEvent>(evt =>
@@ -45,14 +69,45 @@ namespace Unity.Behavior
                         menu.Show();
                     }
                 });
-                
-                // Register change callbacks.
-                blackboardAsset.OnBlackboardChanged -= InitializeListView;
-                blackboardAsset.OnBlackboardChanged += InitializeListView;
+
+                // Register change callback for blackboard references.
+                blackboardAsset.OnBlackboardChanged -= OnBlackboardReferenceAssetChanged;
+                blackboardAsset.OnBlackboardChanged += OnBlackboardReferenceAssetChanged;
 
                 blackboardAsset.OnBlackboardDeleted -= OnRemoveBlackboardAssetFromGraphCommand;
                 blackboardAsset.OnBlackboardDeleted += OnRemoveBlackboardAssetFromGraphCommand;
             }
+        }
+
+        /// <summary>
+        /// To be called before InitializeListView to let the view know that it needs to refresh the
+        /// blackboard assets view.
+        /// </summary>
+        public void RequestBlackboardReferenceAssetsViewRefresh()
+        {
+            m_NeedBlackboardReferencesViewRefresh = true;
+        }
+
+        protected internal override void RefreshFromAsset()
+        {
+            // In case there is a mistmatched between bbref visual element and graphAsset.blackboards
+            // probably means that undo/redo happened and we need to refresh the view. 
+            // (minus 1 for the divider)
+            if (m_BlackboardAssetsContainer != null && (m_BlackboardAssetsContainer.childCount - 1) != GraphAsset.m_Blackboards.Count)
+            {
+                m_NeedBlackboardReferencesViewRefresh = true;
+                InitializeListView();
+            }
+            else
+            {
+                base.RefreshFromAsset();
+            }
+        }
+
+        private void OnBlackboardReferenceAssetChanged(BlackboardAsset.BlackboardChangedType changeType)
+        {
+            m_NeedBlackboardReferencesViewRefresh = true;
+            InitializeListView();
         }
 
         private void OnRemoveBlackboardAssetFromGraphCommand(BlackboardAsset blackboardAsset)
@@ -81,7 +136,7 @@ namespace Unity.Behavior
         {
             BlackboardVariableElement variableUI = base.CreateVariableUI(variable, listView, isEditable);
 
-            if (variable.Type.BaseType == typeof(EventChannelBase))
+            if (typeof(EventChannelBase).IsAssignableFrom(variable.Type))
             {
                 variableUI.IconImage = null;
                 variableUI.IconName = "event";

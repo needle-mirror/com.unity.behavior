@@ -39,6 +39,9 @@ namespace Unity.Behavior
         [SerializeField]
         private string m_Namespace = "";
 
+        [SerializeField]
+        private bool m_AllowDisabledAgentDebugging = false;
+
         public string GraphOwnerName
         {
             get => string.IsNullOrEmpty(m_GraphOwnerName) ? k_DefaultGraphOwnerName : m_GraphOwnerName;
@@ -162,6 +165,11 @@ namespace Unity.Behavior
             set => m_Namespace = value;
         }
 
+        public bool AllowDisabledAgentDebugging
+        {
+            get => m_AllowDisabledAgentDebugging;
+            set => m_AllowDisabledAgentDebugging = value;
+        }
 
         void OnDisable()
         {

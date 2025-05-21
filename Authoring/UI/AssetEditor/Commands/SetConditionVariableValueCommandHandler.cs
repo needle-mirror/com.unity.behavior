@@ -7,7 +7,6 @@ namespace Unity.Behavior
         public override bool Process(SetConditionVariableValueCommand command)
         {
             ConditionInfo info = ConditionUtility.GetInfoForConditionType(command.Condition.ConditionType);
-            Asset.MarkUndo($"Set condition {info.Name} variable {command.VariableName} value");
             ConditionModel condition = command.Condition;
             condition?.SetField(command.VariableName, command.Value);
 

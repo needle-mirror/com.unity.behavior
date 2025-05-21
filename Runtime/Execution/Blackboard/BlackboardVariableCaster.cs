@@ -15,7 +15,7 @@ namespace Unity.Behavior
         where TargetType : UnityEngine.Object
     {
         [SerializeReference]
-        private BlackboardVariable<SourceType> m_LinkedVariable;
+        protected BlackboardVariable<SourceType> m_LinkedVariable;
         protected TargetType m_LinkedObject;
         private bool m_CallbackRegistered = false;
 

@@ -13,9 +13,13 @@ namespace Unity.Behavior
         public const string k_TriggerModeFieldName = "Mode";
         public const string k_TriggerModeTooltips =
             "Select the event trigger behavior." +
-            "\n- \"Default\": the node will trigger only when it is idling and no child node is running." +
-            "\n- \"Restart\": ends all children nodes and then restart the execution from the node." +
-            "\n- \"Once\": the node will trigger only once and stop listening to the event channel.";
+            "\n- \"Default\": Processes a message only if the node is idle (no child node is running). " +
+                "Ignores any messages that arrive while busy." +
+            "\n- \"Restart\": When a message is received, stops all running child nodes and restarts execution from this node." +
+            "\n- \"Once\": Processes only the first message received, then permanently stops listening to the event channel." +
+            "\n- \"Queue\": The node stores all received messages in a queue. When the node becomes idle " +
+                "(no child node is running), it processes one message from the queue, " +
+                "then waits until idle again before processing the next queued message.";
 
         public override bool IsDuplicatable => true;
         public override bool IsSequenceable => false;

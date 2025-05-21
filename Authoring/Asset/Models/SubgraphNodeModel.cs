@@ -267,13 +267,16 @@ namespace Unity.Behavior
         {
             base.OnValidate();
 
-            ValidateCachedRuntimeGraph();
-
-            if (SubgraphAuthoringAsset.ContainsCyclicReferenceTo(Asset as BehaviorAuthoringGraph))
+            if (BehaviorGraphAssetRegistry.IsRegistryStateValid)
             {
-                Debug.LogWarning($"Subgraph {RuntimeSubgraph.name} contains a cyclic reference to {Asset.name}. The subgraph {RuntimeSubgraph.name} will be removed.");
-                SubgraphField.LinkedVariable.ObjectValue = null;
-                ClearFields();
+                ValidateCachedRuntimeGraph();
+
+                if (SubgraphAuthoringAsset.ContainsCyclicReferenceTo(Asset as BehaviorAuthoringGraph))
+                {
+                    Debug.LogWarning($"Subgraph {RuntimeSubgraph.name} contains a cyclic reference to {Asset.name}. The subgraph {RuntimeSubgraph.name} will be removed.");
+                    SubgraphField.LinkedVariable.ObjectValue = null;
+                    ClearFields();
+                }
             }
 
             UpdateIsDynamic();

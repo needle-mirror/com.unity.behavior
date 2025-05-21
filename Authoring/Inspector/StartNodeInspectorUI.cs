@@ -35,14 +35,14 @@ namespace Unity.Behavior
         private void OnRepeatValueChanged(ChangeEvent<bool> evt)
         {
             StartNodeModel startModel = InspectedNode as StartNodeModel;
-            startModel.Asset.MarkUndo("Toggle Start Node Repeat.");
+            startModel.Asset.MarkUndo("Toggle Start Node Repeat");
             startModel.Repeat = evt.newValue;
         }
         
         private void OnDelayRepeatValueChanged(ChangeEvent<bool> evt)
         {
             StartNodeModel startModel = InspectedNode as StartNodeModel;
-            startModel.Asset.MarkUndo("Toggle Start Node Delay Repeat To Next Tick.");
+            startModel.Asset.MarkUndo("Toggle Start Node Delay Repeat To Next Tick");
             startModel.AllowMultipleRepeatsPerTick = evt.newValue;
         }
     }

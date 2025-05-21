@@ -191,7 +191,7 @@ namespace Unity.Behavior
 
         internal void RefreshNode(SerializableGUID guid)
         {
-            if (ViewState.m_NodeModelToNodeUI.TryGetValue(guid, out NodeUI nodeUI))
+            if (ViewState.m_NodeUILookupByID.TryGetValue(guid, out NodeUI nodeUI))
             {
                 if (nodeUI is BehaviorNodeUI behaviorNodeUI)
                 {
@@ -334,18 +334,16 @@ namespace Unity.Behavior
             dialog.ConnectedOutputPorts.AddRange(inputConnections);
         }
 
-        public override void CreateNodeUI(NodeModel nodeModel)
+        public override NodeUI CreateNodeUI(NodeModel nodeModel)
         {
             if (nodeModel is not BehaviorGraphNodeModel behaviorNodeModel || nodeModel is PlaceholderNodeModel)
             {
-                base.CreateNodeUI(nodeModel);
-                return;
+                return base.CreateNodeUI(nodeModel);
             }
             NodeInfo info = NodeRegistry.GetInfoFromTypeID(behaviorNodeModel.NodeTypeID);
             if (info != null)
             {
-                base.CreateNodeUI(nodeModel);
-                return;
+                return base.CreateNodeUI(nodeModel);
             }
 
             Debug.LogWarning($"Serialized node: \"{behaviorNodeModel.NodeType}\" is invalid. " +
@@ -354,6 +352,7 @@ namespace Unity.Behavior
 
             PlaceholderNodeUI nodeUI = new PlaceholderNodeUI(nodeModel);
             ViewState.InitNodeUI(nodeUI, nodeModel);
+            return nodeUI;
         }
 
         internal void ShowActionNodeWizard(Vector2 mousePosition, PlaceholderNodeModel placeholderNodeModel = null)

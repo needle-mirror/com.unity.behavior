@@ -257,7 +257,6 @@ namespace Unity.Behavior
 
             if (!m_VariablesMap.TryGetValue(guid, out BlackboardVariable var))
             {
-                Debug.LogError($"Variable of type {typeof(TValue)} not found. GUID: {guid}");
                 return false;
             }
 
@@ -314,7 +313,6 @@ namespace Unity.Behavior
 
             if (!m_VariablesMap.TryGetValue(guid, out BlackboardVariable var))
             {
-                Debug.LogError($"Variable of type {typeof(TValue)} not found. GUID: {guid}");
                 return false;
             }
 

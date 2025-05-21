@@ -36,6 +36,4 @@ To replace the placeholder nodes with nodes created with generative artificial i
 
 ## Additional resources
 
-* [Create a branch using generative AI](gen-ai-behavior-graph.md)
 * [Placeholder node in a behavior graph](placeholder-nodes.md)
-* [Best practices for using generative AI](gen-ai-best-practices.md)

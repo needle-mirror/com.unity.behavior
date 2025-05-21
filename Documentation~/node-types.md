@@ -6,7 +6,7 @@ uid: node-types
 
 The logic flow of the behavior graph begins at the start node at the top. You can then add further nodes to develop and expand your behavior graph.
 
-The tables in this section provide information on the different types of nodes available in Unity Behavior along with their description.
+The following tables provide information on the different types of nodes available in Unity Behavior along with their description.
 
 ## Action node types
 
@@ -74,7 +74,7 @@ To use the **Action** nodes, select **Add** > **Action**.
 
 | Node | Description |
 | ---- | ----------- |
-| Start On Event Message | Starts the subgraph after receiving an event message.<br>You can change how the node responds to events using different modes:<br> * `Default`: Triggers the node only when it's idle and no child node is running.<br> * `Restart`: Ends all children nodes and then restarts the node.<br> * `Once`: Triggers the node only once and stops to listen to the event channel. |
+| Start On Event Message | Starts the subgraph after receiving an event message.<br>You can change how the node responds to events using different modes:<br> * `Default`: Processes a message only if the node is idle (no child node is running). Ignores any messages that arrive while busy.<br> * `Restart`: When a message is received, stops all running child nodes and restarts execution from this node.<br> * `Once`: Processes only the first message received, then permanently stops listening to the event channel.<br> * `Queue`: The node stores all received messages in a queue. When the node becomes idle (no child node is running), it processes one message from the queue, then waits until idle again before processing the next queued message. |
 | On Start | This is the root of the behavior graph. You can use multiple **On Start** nodes in your graph.|
 | Send Event Message | Sends an event message on the assigned channel. |
 | Wait for Event Message | Use this node when you want the game character to wait to receive an event message on the assigned channel. |
@@ -108,13 +108,13 @@ To use the **Action** nodes, select **Add** > **Action**.
 
 Unity Behavior supports subgraphs through the Run Subgraph node. This node provides two options: static or dynamic, depending on the assigned subgraph variable.
 
-The static option embeds the subgraph directly into the behavior graph, so you can set its **Blackboard** variables directly through the **Inspector**. The dynamic option allows changing the assigned **Blackboard** through the linked Subgraph variable but restricts **Blackboard** variables access to a shared **Blackboard Asset** used as an interface. 
+The static option embeds the subgraph directly into the behavior graph, so you can set its **Blackboard** variables directly through the **Inspector**. The dynamic option allows changing the assigned **Blackboard** through the linked Subgraph variable but restricts **Blackboard** variables access to a shared **Blackboard Asset** used as an interface.
 
 To add a Run Subgraph node, follow these steps:
 
-1. Right-click in the behavior graph editor and select **Add** > **Subgraphs** > **Run Subgraph**. 
-1. In the **Inspector**, select the **Subgraph** link icon. 
-1. To use a static subgraph, select the **Assets** tab and then select a behavior graph from the list to assign it to the node. 
+1. Right-click in the behavior graph editor and select **Add** > **Subgraphs** > **Run Subgraph**.
+1. In the **Inspector**, select the **Subgraph** link icon.
+1. To use a static subgraph, select the **Assets** tab and then select a behavior graph from the list to assign it to the node.
 
    To use a dynamic subgraph, select the **Variable** tab and assign a **Blackboard** variable to dynamically reference the subgraph.
 

@@ -44,7 +44,7 @@ To create a custom node, perform the following steps:
     > [!NOTE]
     > When describing the action, if you use a word that's the same as one of the **Blackboard** variables, it's automatically assigned the correct data type. For example, if the word `Target` with the `GameObject` data type is already defined on the **Blackboard** and you use it when describing the action, Unity Behavior will automatically assign the `GameObject` data type to the word `Target`.  
 
-8. Select **Create** to manually create the new custom node type or select **Use Generative AI** to create the base of the node's logic. For information on using the Generative AI feature, refer to [Create a behavior graph with generative AI](about-genai.md).
+8. Select **Create** to manually create the new custom node type.
 
     Unity Behavior generates a new `C#` script that defines the logic of the node. It has the story (as defined previously) as an attribute and the link fields as **Blackboard** variables. Additionally, it contains some empty overrides for the three possible entry points for a node's logic: `OnStart`, `OnUpdate`, and `OnEnd`.
 

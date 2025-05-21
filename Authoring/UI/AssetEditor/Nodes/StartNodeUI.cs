@@ -32,7 +32,7 @@ namespace Unity.Behavior
         private void OnRepeatValueChanged(ChangeEvent<bool> evt)
         {
             StartNodeModel startModel = Model as StartNodeModel;
-            startModel.Asset.MarkUndo("Toggle Start Node Repeat.");
+            startModel.Asset.MarkUndo("Toggle Start Node Repeat");
             startModel.Repeat = evt.newValue;
         }
 
