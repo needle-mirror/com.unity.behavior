@@ -60,8 +60,9 @@ namespace Unity.Behavior
             toggle.value = m_NodeModel.ShowStaticSubgraphRepresentation;
             toggle.RegisterValueChangedCallback(evt =>
             {
+                // It would be better to not set outstanding but we currently don't have a way to refresh the node UI.
+                m_NodeModel.Asset.MarkUndo("Toggle Show Subgraph Representation"); 
                 m_NodeModel.ShowStaticSubgraphRepresentation = evt.newValue;
-                m_NodeModel?.Asset.SetAssetDirty();
             });
             
             NodeProperties.Add(representationToggleElement);

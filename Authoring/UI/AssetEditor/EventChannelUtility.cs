@@ -34,7 +34,7 @@ namespace Unity.Behavior
         {   
             foreach (var type in AppDomain.CurrentDomain.GetAssemblies().SelectMany(assembly => assembly.GetTypes()))
             {
-                if (!IsEventChannelType(type, out Type eventChannelModelType) || type.IsGenericType || type.IsAbstract)
+                if (!IsEventChannelType(type, out Type eventChannelModelType) || type.IsGenericType || type.IsAbstract || type.IsNestedPrivate)
                 {
                     continue;
                 }

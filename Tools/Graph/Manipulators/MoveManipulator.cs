@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.AppUI.UI;
@@ -23,7 +24,10 @@ namespace Unity.Behavior.GraphFramework
         private readonly List<NodeUI> m_NodeUiToRefresh = new();
         private readonly List<Vector2> m_Positions = new();    
         private readonly List<SequenceNodeModel> m_ParentSequences = new();
-        
+#if UNITY_EDITOR
+        private bool m_IsOutstandingDrag;
+#endif
+
         public MoveManipulator()
         {
             activators.Add(new ManipulatorActivationFilter { button = MouseButton.LeftMouse });
@@ -49,7 +53,7 @@ namespace Unity.Behavior.GraphFramework
             target.UnregisterCallback<PointerUpEvent>(OnPointerUpEvent);
             target.UnregisterCallback<PointerMoveEvent>(OnPointerMoveEvent);
         }
-        
+
         private void OnPointerDownEvent(PointerDownEvent evt)
         {
             if (!CanStartManipulation(evt))
@@ -60,6 +64,9 @@ namespace Unity.Behavior.GraphFramework
             m_PointerPosStart = evt.position;
             m_PointerDeltaPrev = Vector2.zero;
             m_IsSelectionSequenceable = true;
+#if UNITY_EDITOR
+            m_IsOutstandingDrag = false;
+#endif
             foreach (GraphElement graphElement in m_GraphViewState.Selected)
             {
                 // If any of the selected nodes is not sequenceable, the whole set is determined not sequenceable.
@@ -123,7 +130,7 @@ namespace Unity.Behavior.GraphFramework
                             shouldUnnest = !parentUI.ContainsPoint(parentUI.WorldToLocal(evt.position));
                             if (shouldUnnest)
                             {
-                                nodePosition = parentUI.GetNodeWorldPosition(nodeUI) + deltaPointerPos / m_GraphView.Background.zoom;
+                                nodePosition = parentUI.GetNodeWorldPosition(nodeUI) + GetNodeSlideOffsetRelativeToParent(parentUI, deltaPointerPos / m_GraphView.Background.zoom);
                                 nodeUI.style.position = Position.Absolute;
                             }
                         }
@@ -138,11 +145,15 @@ namespace Unity.Behavior.GraphFramework
                     m_NodeUiToRefresh.Add(nodeUI);
                     m_Positions.Add(nodePosition);
                     m_NodesToMove.Add(nodeUI.Model);
-                    
+
                     if (shouldUnnest)
                     {
                         m_ParentSequences.Add(parentUI.Model as SequenceNodeModel);
                         m_NodeUiToRefresh.AddRange(parentUI.GetChildren<NodeUI>(false));
+#if UNITY_EDITOR
+                        // If a node is unested, we need to promote the group name to support data rebuild.
+                        m_IsOutstandingDrag = true;
+#endif
                     }
                     else
                     {
@@ -154,11 +165,19 @@ namespace Unity.Behavior.GraphFramework
 #if UNITY_EDITOR
             if (isFirstFrameOfDrag)
             {
-                UnityEditor.Undo.SetCurrentGroupName("Move Nodes");
+                string assetName = UnityEditor.AssetDatabase.GetAssetPath(m_GraphView.Asset);
+                UnityEditor.Undo.SetCurrentGroupName($"Move Nodes {(m_IsOutstandingDrag ? "(outstanding) " : string.Empty)}({assetName})");
                 UnityEditor.Undo.RegisterCompleteObjectUndo(m_GraphView.Asset, nameof(MoveNodesCommand));
             }
+            else if (m_IsOutstandingDrag)
+            {
+                // Promote undo group to outstanding in case it's not already the case.
+                string assetName = UnityEditor.AssetDatabase.GetAssetPath(m_GraphView.Asset);
+                UnityEditor.Undo.SetCurrentGroupName($"Move Nodes (outstanding) ({assetName})");
+            }
 #endif
-            // We don't mark for undo in this case because we need special RegisterCompleteObjectUndo functionality above.
+
+            // We don't mark for undo in this case because we need special manual handling of undo mechanism during the drag.
             var moveCommand = new MoveNodesCommand(m_NodesToMove, m_Positions, m_ParentSequences, markUndo: false);
             m_GraphView.Dispatcher.DispatchImmediate(moveCommand, false);
             m_PointerDeltaPrev = deltaPointerPos;
@@ -195,7 +214,7 @@ namespace Unity.Behavior.GraphFramework
             // Refresh visuals to reflect model changes.
             m_GraphViewState.RefreshNodeUI(true, m_NodeUiToRefresh); 
         }
-        
+
         private void OnPointerUpEvent(PointerUpEvent evt)
         {
             if (!CanStopManipulation(evt))
@@ -207,7 +226,6 @@ namespace Unity.Behavior.GraphFramework
             int undoGroup = -1;
             if (m_IsDragging)
             {
-                UnityEditor.Undo.SetCurrentGroupName("Move Nodes");
                 undoGroup = UnityEditor.Undo.GetCurrentGroup();
             }
 #endif
@@ -239,6 +257,12 @@ namespace Unity.Behavior.GraphFramework
             }
 
 #if UNITY_EDITOR
+            // We wait until the end of the drag before dirtying the asset to prevent rebuilding and hiccups while dragging.
+            if (m_IsOutstandingDrag)
+            {
+                m_GraphView.Asset.SetAssetDirty(setHasOutStandingChange: true);
+            }
+
             if (m_IsDragging)
             {
                 m_GraphViewState.RefreshFromAsset(false);
@@ -294,7 +318,18 @@ namespace Unity.Behavior.GraphFramework
             
             return localPos.y < dropTarget.localBound.height / 2 ? 0 : 1;
         }
-        
+
+        private static Vector2 GetNodeSlideOffsetRelativeToParent(Group parentUI, Vector2 scaledMovementDelta)
+        {
+            // Remaps normalized mouse movement from the range [-1, 1] to [0, 1].
+            float normalizedHorizontalDirection = Mathf.InverseLerp(-1, 1, scaledMovementDelta.normalized.x);
+            float horizontalScaledSlideOffset = normalizedHorizontalDirection * parentUI.localBound.size.x;
+
+            // Horizontal: Use directional sliding (left=0%, right=100% of parent width) to avoid grab position issues.
+            // Vertical: Use actual movement delta since node heights are small and consistent.
+            return new Vector2(horizontalScaledSlideOffset, scaledMovementDelta.y);
+        }
+
         private bool TryGetSequenceableDropTarget(Vector2 mousePos, out NodeUI dropTarget)
         {
             dropTarget = null;

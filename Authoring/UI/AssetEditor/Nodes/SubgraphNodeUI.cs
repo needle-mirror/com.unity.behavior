@@ -184,6 +184,8 @@ namespace Unity.Behavior
 
             if (graphAsset == null)
             {
+                m_StoryLine.Clear();
+                PopulateGraphSelectionLine();
                 return;
             }
             
@@ -210,7 +212,7 @@ namespace Unity.Behavior
             {
                 if (m_SubgraphNodeModel.ShowStaticSubgraphRepresentation)
                 {
-                    PopulateSubgraphStoryLine();   
+                    PopulateSubgraphStoryLine();
                 }
                 else
                 {

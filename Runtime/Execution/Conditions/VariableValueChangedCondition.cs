@@ -56,6 +56,7 @@ namespace Unity.Behavior
                 return;
             }
             
+            m_HasVariableChanged = false;
             Variable.OnValueChanged -= OnVariableValueChange;
             Variable.OnValueChanged += OnVariableValueChange;
         }

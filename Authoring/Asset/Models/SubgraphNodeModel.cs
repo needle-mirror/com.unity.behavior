@@ -306,6 +306,16 @@ namespace Unity.Behavior
 
         public void ValidateCachedRuntimeGraph()
         {
+            if (SubgraphAuthoringAsset == null)
+            {
+                m_ShowStaticSubgraphRepresentation = false;
+                m_IsDynamic = false;
+#if UNITY_EDITOR
+                Asset?.SetAssetDirty(setHasOutStandingChange: false);
+#endif
+                return;
+            }
+
             if (SubgraphAuthoringAsset == null && m_SubgraphAssetId != new SerializableGUID() 
                 && SubgraphField.LinkedVariable != null)
             {

@@ -528,6 +528,23 @@ namespace Unity.Behavior
 
         private void SaveSubgraphRepresentation()
         {
+#if UNITY_EDITOR
+            int currentUndoGroup = -1;
+            string currentUndoName = string.Empty;
+
+            void MarkUndoAndSaveDataForUndoCollapse()
+            {
+                Asset.MarkUndo($"Change Subgraph Representation", hasOutstandingChange: false);
+                currentUndoGroup = Undo.GetCurrentGroup();
+                currentUndoName = Undo.GetCurrentGroupName();
+            }
+
+            if (Asset.Story.Story != m_StoryEditor.Sentence.LastSentence)
+            {
+                MarkUndoAndSaveDataForUndoCollapse();
+            }
+#endif
+
             // Assign story info on asset.
             Asset.Story = new StoryInfo
             {
@@ -545,11 +562,27 @@ namespace Unity.Behavior
                         string.Equals(assetVar.Name, storyVariable.Name, StringComparison.CurrentCultureIgnoreCase)
                         && assetVar.Type == (Type)storyVariable.Type))
                 {
+#if UNITY_EDITOR
+                    // If the story hasn't changed but variable type has, register undo and prepare to collapse.
+                    if (currentUndoGroup == -1)
+                    {
+                        MarkUndoAndSaveDataForUndoCollapse();
+                    }
+#endif
+
                     string varName = char.ToUpper(storyVariable.Name.First()) + storyVariable.Name.Substring(1);
                     Type varType = BlackboardUtils.GetVariableModelTypeForType(storyVariable.Type);
                     Dispatcher.DispatchImmediate(new CreateVariableCommand(varName, varType) { ExactName = true }, setHasOutstandingChanges: false);
                 }
             }
+
+#if UNITY_EDITOR
+            if (currentUndoGroup != -1)
+            {
+                Undo.SetCurrentGroupName(currentUndoName);
+                Undo.CollapseUndoOperations(currentUndoGroup);
+            }
+#endif
         }
 
         public override bool IsAssetVersionUpToDate()
@@ -597,6 +630,8 @@ namespace Unity.Behavior
         {
             base.OnUndoRedoPerformed();
             GraphView.Query<BehaviorNodeUI>().ForEach(nodeUI => nodeUI.UpdateLinkFields());
+            // Manually refreshes subgraph node UI as their underlying graph asset might have changed.
+            GraphView.Query<SubgraphNodeUI>().ForEach(subgraphNodeUI =>  subgraphNodeUI.Refresh(false));
         }
 #endif
 

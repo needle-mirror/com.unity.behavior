@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.11] - 2025-06-11
+
+### Fixed
+- Exposed EventChannels' EventHandlerDelegate and Event.
+- Fixed VariableValueChanged condition not properly resetting its internal state when being registered a second time.
+- Fixed graph runtime data not being regenerated when dragging a node out of a sequence.
+- Fixed node positioning when dragging out of a sequence.
+- Fixed edit subgraph representation not saving the asset.
+- Fixed edit subgraph representation undo/redo support.
+- Fixes various RunSubgraph node UI and inspector refresh issues.
+
+### Known Issues
+- Renaming a type referenced by a Blackboard Variable will make the variable disappear from blackboard assets and may cause errors when opening the graph editor.
+- Same Known Issues as 1.0.10
+
 ## [1.0.10] - 2025-05-21
 
 ### Added

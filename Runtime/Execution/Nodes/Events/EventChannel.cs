@@ -22,7 +22,7 @@ namespace Unity.Behavior
         /// <returns>The created event handler.</returns>
         public abstract Delegate CreateEventHandler(BlackboardVariable[] vars, System.Action callback);
         /// <summary>
-        /// registers a listener to the channel.
+        /// Registers a listener to the channel.
         /// </summary>
         /// <param name="unityAction">The delegate to register.</param>
         public abstract void RegisterListener(Delegate unityAction);
@@ -56,7 +56,20 @@ namespace Unity.Behavior
     /// </summary>
     public abstract class EventChannel : EventChannelBase, IEventHandlerWithoutNotify
     {
-        private delegate void EventHandlerDelegate();
+        /// <summary>
+        /// Represents the method that will handle events.
+        /// </summary>
+        public delegate void EventHandlerDelegate();
+
+        /// <summary>
+        /// Occurs when the event channel raises an event.
+        /// </summary>
+        public event EventHandlerDelegate Event
+        {
+            add { m_Event += value; }
+            remove { m_Event -= value; }
+        }
+
         private event EventHandlerDelegate m_Event;
 
         /// <summary>
@@ -114,7 +127,21 @@ namespace Unity.Behavior
     /// <typeparam name="T0">Type of the message variable</typeparam>
     public abstract class EventChannel<T0> : EventChannelBase, IEventHandlerWithoutNotify
     {
-        private delegate void EventHandlerDelegate(T0 value0);
+        /// <summary>
+        /// Represents the method that will handle events with one parameters of type T0.
+        /// </summary>
+        /// <param name="value0">The first parameter value provided when the event is raised.</param>
+        public delegate void EventHandlerDelegate(T0 value0);
+        
+        /// <summary>
+        /// Occurs when the event channel raises an event.
+        /// </summary>
+        public event EventHandlerDelegate Event
+        {
+            add { m_Event += value; }
+            remove { m_Event -= value; }
+        }
+
         private event EventHandlerDelegate m_Event;
 
         /// <summary>
@@ -181,7 +208,22 @@ namespace Unity.Behavior
     /// <typeparam name="T1">Type of the second message variable</typeparam>
     public abstract class EventChannel<T0, T1> : EventChannelBase, IEventHandlerWithoutNotify
     {
-        private delegate void EventHandlerDelegate(T0 value0, T1 value1);
+        /// <summary>
+        /// Represents the method that will handle events with one parameters of types T0 and T1.
+        /// </summary>
+        /// <param name="value0">The first parameter value provided when the event is raised.</param>
+        /// <param name="value1">The second parameter value provided when the event is raised.</param>
+        public delegate void EventHandlerDelegate(T0 value0, T1 value1);
+
+        /// <summary>
+        /// Occurs when the event channel raises an event.
+        /// </summary>
+        public event EventHandlerDelegate Event
+        {
+            add { m_Event += value; }
+            remove { m_Event -= value; }
+        }
+
         private event EventHandlerDelegate m_Event;
 
         /// <summary>
@@ -258,7 +300,23 @@ namespace Unity.Behavior
     /// <typeparam name="T2">Type of the third message variable</typeparam>
     public abstract class EventChannel<T0, T1, T2> : EventChannelBase, IEventHandlerWithoutNotify
     {
-        private delegate void EventHandlerDelegate(T0 value0, T1 value1, T2 value2);
+        /// <summary>
+        /// Represents the method that will handle events with one parameters of types T0, T1 and T2.
+        /// </summary>
+        /// <param name="value0">The first parameter value provided when the event is raised.</param>
+        /// <param name="value1">The second parameter value provided when the event is raised.</param>
+        /// <param name="value2">The third parameter value provided when the event is raised.</param>
+        public delegate void EventHandlerDelegate(T0 value0, T1 value1, T2 value2);
+
+        /// <summary>
+        /// Occurs when the event channel raises an event.
+        /// </summary>
+        public event EventHandlerDelegate Event
+        {
+            add { m_Event += value; }
+            remove { m_Event -= value; }
+        }
+
         private event EventHandlerDelegate m_Event;
 
         /// <summary>
@@ -343,7 +401,24 @@ namespace Unity.Behavior
     /// <typeparam name="T3">Type of the fourth message variable</typeparam>
     public abstract class EventChannel<T0, T1, T2, T3> : EventChannelBase, IEventHandlerWithoutNotify
     {
-        private delegate void EventHandlerDelegate(T0 value0, T1 value1, T2 value2, T3 value3);
+        /// <summary>
+        /// Represents the method that will handle events with one parameters of types T0, T1, T2 and T3.
+        /// </summary>
+        /// <param name="value0">The first parameter value provided when the event is raised.</param>
+        /// <param name="value1">The second parameter value provided when the event is raised.</param>
+        /// <param name="value2">The third parameter value provided when the event is raised.</param>
+        /// <param name="value3">The fourth parameter value provided when the event is raised.</param>
+        public delegate void EventHandlerDelegate(T0 value0, T1 value1, T2 value2, T3 value3);
+
+        /// <summary>
+        /// Occurs when the event channel raises an event.
+        /// </summary>
+        public event EventHandlerDelegate Event
+        {
+            add { m_Event += value; }
+            remove { m_Event -= value; }
+        }
+
         private event EventHandlerDelegate m_Event;
 
         /// <summary>
