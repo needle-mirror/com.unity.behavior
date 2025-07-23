@@ -1,7 +1,7 @@
 {
   "name": "com.unity.behavior",
   "displayName": "Behavior",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "unity": "6000.0",
   "unityRelease": "16f1",
   "description": "Unity Behavior is a graph-based tool to create and run behavior trees with a modular architecture.\n\n▪ Human-readable graphs flow top-to-bottom with plain-language nodes\n▪ Comprehensive library of pre-built nodes for movement, detection, and decision-making\n▪ Seamless C# integration with a familiar lifecycle model\n▪ Hierarchical design supporting reusable subgraphs\n▪ Real-time debugging visualization during Play mode\n▪ Event-driven architecture for dynamic game reactions\n\nIdeal for NPC behaviors, quest logic, environmental interactions, and game state management.\n\nA demo showcasing this package can be found in the Asset Store <a href=https://assetstore.unity.com/packages/templates/tutorials/behavior-demo-for-unity-298313>https://assetstore.unity.com/packages/templates/tutorials/behavior-demo-for-unity-298313</a>.",
@@ -41,15 +41,15 @@
     }
   ],
   "_upm": {
-    "changelog": "### Fixed\n- Exposed EventChannels' EventHandlerDelegate and Event.\n- Fixed VariableValueChanged condition not properly resetting its internal state when being registered a second time.\n- Fixed graph runtime data not being regenerated when dragging a node out of a sequence.\n- Fixed node positioning when dragging out of a sequence.\n- Fixed edit subgraph representation not saving the asset.\n- Fixed edit subgraph representation undo/redo support.\n- Fixes various RunSubgraph node UI and inspector refresh issues.\n\n### Known Issues\n- Renaming a type referenced by a Blackboard Variable will make the variable disappear from blackboard assets and may cause errors when opening the graph editor.\n- Same Known Issues as 1.0.10"
+    "changelog": "### Changed\n- Light and Dark themes overhaul. (BEHAVB-279)\n- Graph assets now generates their runtime asset on creation.\n- `Tools > Behavior > Validate All Graphs` now generates runtime asset if needed.\n\n### Fixed\n- Optimized `SwitchComposite` to cache enum values and eliminate redundant GC allocations when the underlying BlackboardVariable hasn't changed. (BEHAVB-331)\n- Fixed `WaitForAnyComposite` stuck on the first frame of playmode.\n- Fixed nested `RunSubgraph` nodes causing infinite asset reimport. (BEHAVB-333)\n- Fixed BehaviorAssetPostProcessor processing asset during domain reload.\n\n### Known Issues\n- Same Known Issues as 1.0.11"
   },
   "upmCi": {
-    "footprint": "7c96c7e48d065c80dd50edbbc5701fe4db647f54"
+    "footprint": "669ecf52fc9a847fe604ef44c61f39f8c8a35eba"
   },
   "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.behavior@1.0/manual/index.html",
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.ai.designer-monorepo.git",
     "type": "git",
-    "revision": "be8be4d2c0eebb8daa5a35e24c24ea0a39d387f9"
+    "revision": "59edf2392daa9bd3d3f8490400c9eb9462426f5c"
   }
 }

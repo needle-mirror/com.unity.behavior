@@ -12,6 +12,10 @@ BlackboardView {
     flex-grow: 1;
 }
 
+.unity-collection-view__item:checked {
+    color: var( --behavior-ui-text-color); /* Fixes blackboard element selected. */
+}
+
 #SearchContainer {
     flex-shrink: 0;
     flex-grow: 1;

@@ -14,15 +14,35 @@ BehaviorGraphEditor {
 
 /* App UI canvas style override */
 .appui-canvas__background {
-    --grid-background-color: var(--appui-backgrounds-50);
-    --line-color: var(--appui-backgrounds-300);
-    --thick-line-color: var(--appui-backgrounds-300);
-    --thickness: 1;
-    --next-grid-scale-factor: 4;
+    --grid-background-color: var(--graph-color-canvas-background);
+
+    --draw-points: 0; /* 1 to draw points, 0 to draw lines */
+    --thickness: 2; /* Line thickness */
+    --line-spacing: 16; /* 12px of spacing between each lines' center point */
+    --line-color: var(--graph-color-canvas-grid-base);
+    
+    --thick-lines: 0; /* Every N lines the line is thicker (use 0 to disable) */
+    --thick-line-thickness: 2; /* line or point thickness for thicker ones */
+    --thick-line-color: var(--graph-color-canvas-grid);
+    
+    --next-grid-scale-factor: 4; /* 0 to disable, N to get the next grid N times bigger than the previous one */
 }
 
 BehaviorGraphView {
     overflow: hidden;
+}
+
+#CollapseIcon.unity-image
+{
+    --unity-image-tint-color: var(--unity-behavior-ui-icon-color);
+}
+
+.appui-icon--folder{
+    --unity-image-tint-color: var(--unity-behavior-ui-icon-color);
+}
+
+.appui-icon--debug{
+    --unity-image-tint-color: var(--unity-behavior-ui-icon-color);
 }
 
 #EditorView {

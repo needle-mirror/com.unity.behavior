@@ -88,25 +88,6 @@ namespace Unity.Behavior
         }
 
         /// <summary>
-        /// Sets the value of a given variable.
-        /// </summary>
-        /// <param name="var">The variable to be assigned the specified value.</param>
-        /// <param name="value">The value to be assigned to the variable.</param>
-        /// <typeparam name="DataType">The type of value to be assigned to the variable.</typeparam>
-        /// <returns>Returns true if the value was set on the variable and false otherwise.</returns>
-        internal static bool SetTypedBlackboardVariableValue<DataType>(BlackboardVariable var, DataType value)
-        {
-            if (var is BlackboardVariable<DataType> typedVar)
-            {
-                typedVar.Value = value;
-                return true;
-            }
-
-            Debug.LogError($"Variable of type {var?.GetType()} cannot be set with value of type {typeof(DataType)}.");
-            return false;
-        }
-
-        /// <summary>
         /// Returns true if the two variables are equal and false otherwise.
         /// </summary>
         /// <param name="other">The variable to compare to.</param>

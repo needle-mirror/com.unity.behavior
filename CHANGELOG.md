@@ -4,11 +4,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.12] - 2025-07-23
+
+### Changed
+- Light and Dark themes overhaul. (BEHAVB-279)
+- Graph assets now generates their runtime asset on creation.
+- `Tools > Behavior > Validate All Graphs` now generates runtime asset if needed.
+
+### Fixed
+- Optimized `SwitchComposite` to cache enum values and eliminate redundant GC allocations when the underlying BlackboardVariable hasn't changed. (BEHAVB-331)
+- Fixed `WaitForAnyComposite` stuck on the first frame of playmode.
+- Fixed nested `RunSubgraph` nodes causing infinite asset reimport. (BEHAVB-333)
+- Fixed BehaviorAssetPostProcessor processing asset during domain reload.
+
+### Known Issues
+- Same Known Issues as 1.0.11
+
 ## [1.0.11] - 2025-06-11
 
 ### Fixed
 - Exposed EventChannels' EventHandlerDelegate and Event.
-- Fixed VariableValueChanged condition not properly resetting its internal state when being registered a second time.
+- Fixed VariableValueChanged condition not properly resetting its internal state when being registered a second time. (BEHAVB-306)
 - Fixed graph runtime data not being regenerated when dragging a node out of a sequence.
 - Fixed node positioning when dragging out of a sequence.
 - Fixed edit subgraph representation not saving the asset.

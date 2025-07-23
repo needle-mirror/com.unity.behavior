@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using Unity.Properties;
 
@@ -22,18 +21,36 @@ namespace Unity.Behavior
         [CreateProperty]
         private int m_CurrentChild = -1;
 
+        // Cache for enum type information
+        private int m_CachedIntValue = -1;
+        private Type m_CachedEnumType;
+        private Array m_CachedEnumValues;
+        private Dictionary<int, int> m_CachedValueToChildIndexMap = new();
+
+        // Used to know when the enum value has changed
+        private bool m_IsInitialized = false;
+        private bool m_HasEnumChanged = false;
+
         /// <inheritdoc cref="OnStart" />
         protected override Status OnStart()
         {
-            if (Children.Count == 0)
+            // Not initizalized means no BBV is assigned.
+            if (Children.Count == 0 || m_IsInitialized == false)
             {
                 return Status.Success;
             }
 
-            m_CurrentChild = Array.IndexOf(Enum.GetValues(EnumVariable.ObjectValue.GetType()), EnumVariable.ObjectValue);
-
-            if (m_CurrentChild >= Children.Count || m_CurrentChild < 0)
+            if (m_HasEnumChanged)
             {
+                UpdateCaches();
+            }
+
+            // Reset child index
+            m_CurrentChild = -1;
+
+            if (!m_CachedValueToChildIndexMap.TryGetValue(m_CachedIntValue, out m_CurrentChild) || m_CurrentChild >= Children.Count)
+            {
+                // If the value is not found in the cache, return the default status
                 return DefaultStatus;
             }
 
@@ -52,22 +69,68 @@ namespace Unity.Behavior
             };
         }
 
+
         /// <inheritdoc cref="OnUpdate" />
         protected override Status OnUpdate()
         {
-            return Children[m_CurrentChild].CurrentStatus;
+            if (m_CurrentChild >= 0 && m_CurrentChild < Children.Count)
+            {
+                var child = Children[m_CurrentChild];
+                return child != null ? child.CurrentStatus : DefaultStatus;
+            }
+
+            return DefaultStatus;
         }
 
         /// <inheritdoc cref="ResetStatus" />
         protected internal override void ResetStatus()
         {
             CurrentStatus = Status.Uninitialized;
-            foreach (var child in NullFreeChildren())
+
+            for (int i = 0; i < Children.Count; i++)
             {
-                child.ResetStatus();
+                var child = Children[i];
+                if (child != null)
+                {
+                    child.ResetStatus();
+                }
+            }
+
+            // Listen to changes in the enum variable only once, this is use to avoid boxing.
+            if (m_IsInitialized == false && EnumVariable?.ObjectValue != null) // boxing cost ONLY when not initialized.
+            {
+                m_IsInitialized = true;
+                EnumVariable.OnValueChanged += () => m_HasEnumChanged = true;
+                UpdateCaches();
             }
         }
 
-        private IEnumerable<Node> NullFreeChildren() => Children.Where(child => child != null);
+        private void UpdateCaches()
+        {
+            // Boxing value is unavoidable because enum type is unknown at compile time.
+            // If you need a GC free solution, consider creating a new Composite that uses the explicit enum type.
+            var enumValue = EnumVariable.ObjectValue;
+            m_CachedIntValue = (int)enumValue;
+            m_HasEnumChanged = false;
+
+            EnsureEnumCacheIsValid(enumValue.GetType());
+        }
+
+        private void EnsureEnumCacheIsValid(Type enumType)
+        {
+            if (m_CachedEnumValues != null && m_CachedEnumType == enumType)
+            {
+                return;
+            }
+
+            m_CachedValueToChildIndexMap.Clear();
+            m_CachedEnumType = enumType;
+            m_CachedEnumValues = Enum.GetValues(enumType);
+
+            for (int i = 0; i < m_CachedEnumValues.Length; i++)
+            {
+                m_CachedValueToChildIndexMap[Convert.ToInt32(m_CachedEnumValues.GetValue(i))] = i;
+            }
+        }
     }
 }

@@ -310,9 +310,6 @@ namespace Unity.Behavior
             {
                 m_ShowStaticSubgraphRepresentation = false;
                 m_IsDynamic = false;
-#if UNITY_EDITOR
-                Asset?.SetAssetDirty(setHasOutStandingChange: false);
-#endif
                 return;
             }
 

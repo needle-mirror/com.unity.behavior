@@ -1,5 +1,6 @@
 using System;
 using Unity.AppUI.UI;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -144,6 +145,14 @@ namespace Unity.Behavior.GraphFramework
             m_LinkButton = new Icon();
             m_LinkButton.iconName = "Link";
             m_LinkButton.image = ResourceLoadAPI.Load<Texture2D>("Packages/com.unity.behavior/Blackboard/Assets/Icons/link.png");
+            
+#if UNITY_EDITOR
+            if (!EditorGUIUtility.isProSkin)
+            {
+                m_LinkButton.tintColor = new Color(0.33f, 0.33f, 0.33f); // new Color(85, 85, 85);
+            }
+#endif
+          
             m_LinkButton.pickingMode = PickingMode.Position;
             m_LinkButton.AddToClassList("LinkButton");
             m_LinkButton.AddManipulator(new Pressable(OnLinkButton));

@@ -16,7 +16,7 @@ namespace Unity.Behavior
     internal partial class WaitForAnyComposite : Join
     {
         [CreateProperty] private int m_StartCount;
-        [CreateProperty] private double m_LastFrameTimestamp;
+        [CreateProperty] private double m_LastFrameTimestamp = -1.0;
         [CreateProperty] private Status m_PreviousStatus;
 
         /// <inheritdoc cref="OnStart" />
@@ -28,6 +28,7 @@ namespace Unity.Behavior
             {
                 return m_PreviousStatus;
             }
+
             m_LastFrameTimestamp = currentFrame;
             m_PreviousStatus = Status.Waiting;
             if (Child == null)

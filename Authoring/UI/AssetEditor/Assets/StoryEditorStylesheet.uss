@@ -62,7 +62,7 @@ StoryFieldWithValidation TextArea {
     text-overflow: ellipsis;
     margin: 0;
     padding: 0;
-    color: var(--appui-color-white);
+    color: var(--behavior-ui-text-color);
 }
 
 StoryFieldWithValidation TextElement {

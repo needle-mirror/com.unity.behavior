@@ -38,17 +38,17 @@
 }
 
 .Edge {
-    color: white;
+    color: var(--behavior-ui-edge-color);
     --edge-thickness: 2.0;
 }
 
 .Edge:hover {
-    color: rgba(68, 192, 255, 255);
+    color: var(--behavior-ui-edge-hover-color);
     --edge-thickness: 4.0;
 }
 
 .Edge.Selected {
-    color: rgba(68, 192, 255, 255);
+    color: var(--behavior-ui-edge-hover-color);
     --edge-thickness: 2.0;
 }
 
@@ -64,10 +64,6 @@
  .HighlightInputs .Edge.ActiveEdgeConnectManipulator {
     opacity: 1.0;
  }
-
-.appui-canvas__background {
-    --grid-background-color: var(--appui-color-dark-gray-200);
-}
 
 .appui-canvas__horizontal-scroller,
 .appui-canvas__vertical-scroller {

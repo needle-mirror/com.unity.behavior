@@ -6,7 +6,7 @@
     align-content: center;
     border-radius: var(--appui-border-radius-md);
     border-width: 1px;
-    border-color: rgba(0, 0, 0, 0.5);
+    border-color: var(--graph-color-node-border);
 }
 
 .GraphNode {
@@ -18,7 +18,7 @@
 }
 
 .GraphNode:hover > #SelectionBorder {
-    border-color: var(--appui-accent-100);
+    border-color: var(--graph-color-node-selection-highlight);
     border-radius: var(--appui-border-radius-md);
 }
 
@@ -67,7 +67,7 @@
 
 #NodeContentContainer {
     flex-direction: row;
-    background-color: var(--appui-backgrounds-300);
+    background-color: var(--graph-color-node-background);
     border-radius: var(--appui-border-radius-md);
     min-height: 36px;
     align-items: center;

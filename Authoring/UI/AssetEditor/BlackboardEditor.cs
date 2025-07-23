@@ -39,6 +39,7 @@ namespace Unity.Behavior
             style.flexGrow = 1;
 
             AddToClassList("Behavior");
+            BehaviorUIThemeManager.RegisterElement(this);
             styleSheets.Add(ResourceLoadAPI.Load<StyleSheet>("Packages/com.unity.behavior/Authoring/UI/AssetEditor/Assets/BlackboardEditorStylesheet.uss"));
             ResourceLoadAPI.Load<VisualTreeAsset>("Packages/com.unity.behavior/Authoring/UI/AssetEditor/Assets/BlackboardEditorLayout.uxml").CloneTree(this);
 
@@ -65,6 +66,7 @@ namespace Unity.Behavior
             this.Q<VisualElement>("BlackboardEditorPanel").Add(m_Blackboard);
             
             RegisterCallback<AttachToPanelEvent>(OnAttachToPanel);
+            RegisterCallback<DetachFromPanelEvent>(OnDetachFromPanel);
         }
 
         private void OnAttachToPanel(AttachToPanelEvent evt)
@@ -73,11 +75,27 @@ namespace Unity.Behavior
             Undo.undoRedoPerformed += OnUndoRedoPerformed;
 #endif
             
+#if UNITY_EDITOR
             // Add graph icon stylesheet for the App UI panel.
-            if (GetFirstAncestorOfType<Panel>() != null)
+            var firstAncestorOfType = GetFirstAncestorOfType<Panel>();
+            if (firstAncestorOfType != null)
             {
-                GetFirstAncestorOfType<Panel>().styleSheets.Add(ResourceLoadAPI.Load<StyleSheet>("Packages/com.unity.behavior/Elements/Assets/GraphIconStylesheet.uss"));
+                BehaviorUIThemeManager.RegisterElement(firstAncestorOfType);
             }
+#endif
+        }
+        
+        private void OnDetachFromPanel(DetachFromPanelEvent evt)
+        {
+            BehaviorUIThemeManager.UnregisterElement(this);
+            
+#if UNITY_EDITOR
+            var firstAncestorOfType = GetFirstAncestorOfType<Panel>();
+            if (firstAncestorOfType != null)
+            {
+                BehaviorUIThemeManager.UnregisterElement(firstAncestorOfType);
+            }
+#endif
         }
 
 #if UNITY_EDITOR

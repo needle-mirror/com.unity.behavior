@@ -14,19 +14,19 @@
     padding-left: 2px;
     border-width: 1px;
     border-radius: var(--appui-border-radius-md);
-    background-color: #2A2A2A;
+    background-color: var(--unity-behavior-ui-linkfield-bg-color);
     border-color: var(--appui-alias-field-border-color-default);
 }
 
 BaseLinkField {
     border-width: 1px;
     border-radius: var(--appui-border-radius-md);
-    background-color: #2A2A2A;
+    background-color: var(--unity-behavior-ui-linkfield-bg-color);
     border-color: var(--appui-alias-field-border-color-default);
 }
 
 .Runtime-Object-Field .unity-base-field__label {
-    color: #C4C4C4;
+    color: var(--linkfield-text-color);
     padding-top: 0;
 }
 
@@ -109,15 +109,15 @@ BaseLinkField {
 }
 
 .LinkButton:disabled {
-    --unity-image-tint-color: var(--appui-foregrounds-25);
+    --unity-image-tint-color: var(--unity-behavior-ui-link-button-tint-color-disabled);
 }
 
 .LinkButton:hover {
-    --unity-image-tint-color: white;
+    --unity-image-tint-color: var(--unity-behavior-ui-link-button-tint-color-hover);
 }
 
 .LinkButton:hover:disabled {
-    --unity-image-tint-color: var(--appui-foregrounds-25);
+    --unity-image-tint-color: var(--unity-behavior-ui-link-button-tint-color-disabled);
 }
 
 BaseLinkField {
@@ -195,7 +195,7 @@ BaseLinkField .LinkButton {
 }
 
 .FieldNameLabel {
-    color: #BCBCBC;
+    color: var(--linkfield-text-color);
     margin: 0;
     padding: 0;
     opacity: 0.5;
@@ -211,7 +211,7 @@ BaseLinkField .LinkButton {
     height: 19px;
     max-height: 19px;
     border-radius: var(--appui-border-radius-md);
-    background-color: #2A2A2A;
+    background-color: var(--unity-behavior-ui-linkfield-bg-color);
     border-color: var(--appui-alias-field-border-color-default);
 }
 
@@ -268,7 +268,7 @@ BaseLinkField .LinkButton {
 }
 
 .LinkedLabel {
-    color: #FFF;
+    color: var(--unity-behavior-ui-linkfield-text-color);
     margin-right: 2px;
     flex-shrink: 0;
 }

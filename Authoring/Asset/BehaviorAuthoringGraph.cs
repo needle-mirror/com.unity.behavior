@@ -37,7 +37,7 @@ namespace Unity.Behavior
         }
 
         [SerializeReference] private BehaviorGraph m_RuntimeGraph;
-        public bool HasRuntimeGraph => m_RuntimeGraph != null;
+        public bool HasRuntimeGraph => m_RuntimeGraph != null && m_RuntimeGraph.RootGraph != null;
 #endif
 
         [SerializeField]
@@ -115,8 +115,8 @@ namespace Unity.Behavior
 
         protected override void OnEnable()
         {
-            ValidateAssetNames(validateMainAsset: true);
             base.OnEnable();
+            ValidateAssetNames(validateMainAsset: true);
         }
 
         /// <inheritdoc cref="OnValidate" />
@@ -227,6 +227,7 @@ namespace Unity.Behavior
             {
                 return;
             }
+
             string assetPath = AssetDatabase.GetAssetPath(this);
             string assetPathName = System.IO.Path.GetFileNameWithoutExtension(assetPath);
             if (name != assetPathName)
@@ -490,7 +491,7 @@ namespace Unity.Behavior
             graph.name = assetObject.name;
             assetObject.m_RuntimeGraph = graph;
             AssetDatabase.AddObjectToAsset(graph, assetObject);
-            assetObject.OnValidate();
+            assetObject.OnValidate(); // Can probably be remove in the future. 
             AssetDatabase.SaveAssetIfDirty(assetObject);
             return graph;
 #endif
@@ -745,8 +746,12 @@ namespace Unity.Behavior
         /// </remark>
         internal void RebuildGraphAndBlackboardRuntimeData()
         {
-            var authoringBB = Blackboard as BehaviorBlackboardAuthoringAsset;
-            if (authoringBB != null)
+            if (Blackboard == null)
+            {
+                EnsureAssetHasBlackboard();
+            }
+
+            if (Blackboard is BehaviorBlackboardAuthoringAsset authoringBB)
             {
                 if (!authoringBB.IsAssetVersionUpToDate())
                 {
@@ -754,10 +759,9 @@ namespace Unity.Behavior
                 }
 
                 BuildRuntimeGraph();
+                authoringBB.HasOutstandingChanges = false;
+                HasOutstandingChanges = false;
             }
-
-            HasOutstandingChanges = false;
-            authoringBB.HasOutstandingChanges = false;
         }
 
         /// <summary>
@@ -784,21 +788,23 @@ namespace Unity.Behavior
                 .FirstOrDefault(asset => asset is BehaviorGraph) as BehaviorGraph;
             if (graph != null)
             {
+                // Newly created graph soon to be generated.
+                if (m_RuntimeGraph == null || m_RuntimeGraph.RootGraph == null)
+                {
+                    return;
+                }
+
                 // This usually happen when the asset is duplicated.
                 if (graph != this.m_RuntimeGraph)
                 {
                     m_RuntimeGraph = graph;
                 }
 
-                if (m_RuntimeGraph.RootGraph == null)
-                {
-                    return;
-                }
-
                 if (m_RuntimeGraph.RootGraph.AuthoringAssetID != AssetID)
                 {
                     m_RuntimeGraph.RootGraph.AuthoringAssetID = AssetID;
                 }
+
                 if (m_RuntimeGraph.RootGraph.VersionTimestamp != VersionTimestamp)
                 {
                     SetDirtyAndSyncRuntimeGraphTimestamp(outstandingChange: false);
@@ -808,7 +814,7 @@ namespace Unity.Behavior
             {
                 // In this case, the asset lost reference to it's runtime graph (deleted).
                 m_RuntimeGraph = null;
-                SetAssetDirty(false);
+                SetAssetDirty(true);
             }
         }
 #endif

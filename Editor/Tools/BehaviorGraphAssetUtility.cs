@@ -26,7 +26,16 @@ namespace Unity.Behavior
 
                 if (graph != null)
                 {
-                    graph.OnValidate(); // Assets will dirty themselves when needed.
+                    if (!graph.HasRuntimeGraph)
+                    {
+                        // Ensures all graphs have valid runtime data.
+                        graph.RebuildGraphAndBlackboardRuntimeData();
+                    }
+                    else
+                    {
+                        graph.OnValidate(); // Assets will dirty themselves when needed.
+                    }
+
                     Debug.Log($"Validated: {path}", graph);
                 }
             }

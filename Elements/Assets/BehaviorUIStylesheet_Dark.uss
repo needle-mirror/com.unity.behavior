@@ -1,0 +1,61 @@
+@import "GraphIconStylesheet_Dark.uss";
+
+:root {
+    /* Text colors */
+    --behavior-ui-text-color: #C4C4C4;
+    --behavior-node-title-text-color: #FFFFFF;
+    --behavior-ui-secondary-text-color: var(--appui-foregrounds-50);
+    --behavior-ui-tertiary-text-color: var(--appui-foregrounds-25);
+    --behavior-ui-placeholder-text-color: var(--appui-color-dark-gray-900);
+    --behavior-ui-linked-text-color: var(--appui-color-dark-gray-1100);
+
+    /* Toolbar */
+    --behavior-toolbar-background-color: #383838;
+    
+    /* Blackboard */
+    --unity-behavior-ui-blackboard-icon: --appui-foregrounds-50;
+
+    /* Background colors */
+    --behavior-ui-variable-container-bg: var(--appui-color-transparent-black-100);
+    --behavior-ui-hover-bg: var(--appui-color-transparent-black-100);
+    --behavior-ui-border-bg: var(--appui-backgrounds-100);
+    --behavior-ui-placeholder-bg: var(--appui-backgrounds-100);
+    
+    /* Node title background colors */
+    --behavior-ui-node-start-bg: var(--appui-color-green-800);
+    --behavior-ui-node-modifier-bg: var(--appui-color-purple-800);
+    --behavior-ui-node-condition-bg: var(--appui-color-orange-800);
+    
+    /* Node colors */
+    --graph-color-node-border: rgba(0, 0, 0, 0.5);
+    --graph-color-node-background: #3F3F3F;
+    --graph-color-node-selection-highlight: #44C0FF;
+
+    /* Border colors */
+    --behavior-ui-border-color: var(--appui-backgrounds-100);
+    --behavior-ui-shared-variable-border: #C9B33F;
+    
+    /* Edge colors */
+    --behavior-ui-edge-color: white;
+    --behavior-ui-edge-hover-color: #44C0FF;
+    
+    /* Floating panel */
+    --overlay-color-background: #383838;
+    --floating-panel-title-text-color: #C4C4C4;
+    
+    /* GraphView colors */
+    --graph-color-canvas-background: #191919;
+    --graph-color-canvas-grid-base: #282828;
+    --graph-color-canvas-grid: #3E3E3E;
+
+    /* Sequence group */
+    --unity-behavior-ui-sequence-bg-color: #383838;
+    --unity-behavior-ui-sequence-bg-border-color: #2D2D2D;
+
+    /* Link Field */
+    --linkfield-text-color: #BCBCBC;
+    --unity-behavior-ui-linkfield-bg-color: #383838;
+    --unity-behavior-ui-linkfield-text-color: var(--appui-foregrounds);
+    --unity-behavior-ui-link-button-tint-color-hover: white;
+    --unity-behavior-ui-link-button-tint-color-disabled: rgba(196, 196, 196, 0.7);
+}

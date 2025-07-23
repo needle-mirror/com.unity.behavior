@@ -25,8 +25,8 @@ namespace Unity.Behavior
         [SerializeField] internal List<string> NamedChildren;
 
         [SerializeField] internal StoryInfo StoryInfo = new();
-        [SerializeField] internal string Story => StoryInfo.Story;
-        [SerializeField] internal List<VariableInfo> Variables => StoryInfo.Variables;
+        internal string Story => StoryInfo.Story;
+        internal List<VariableInfo> Variables => StoryInfo.Variables;
     }
     
     [Serializable]
@@ -55,10 +55,10 @@ namespace Unity.Behavior
         [SerializeField] internal string Name;
         [SerializeField] internal string Category;
         [SerializeField] internal string FilePath;
-        [SerializeField] internal string Path => string.IsNullOrEmpty(Category) ? Name : $"{Category}/{Name}";
+        internal string Path => string.IsNullOrEmpty(Category) ? Name : $"{Category}/{Name}";
         [SerializeField] internal StoryInfo StoryInfo = new();
-        [SerializeField] internal string Story => StoryInfo.Story;
-        [SerializeField] internal List<VariableInfo> Variables => StoryInfo.Variables;
+        internal string Story => StoryInfo.Story;
+        internal List<VariableInfo> Variables => StoryInfo.Variables;
     }
 
     internal class NodeRegistry

@@ -20,8 +20,8 @@ namespace UnityEngine.UIExtras
             }
         }
         
-        public static string s_MatchFormatPrefix = "<color=#FFFFFF><b>";
-        public static string s_MatchFormatSuffix = "</b></color>";
+        public static string s_matchFormatPrefix = "<b>";
+        public static string s_MatchFormatSuffix = "</b>";
 
         private static List<(int, int)> FindAllOccurrences(string query, string candidate)
         {
@@ -184,7 +184,7 @@ namespace UnityEngine.UIExtras
             {
                 Match matchOffset = matchIndexLengths[idx];
                 text = text.Insert(matchOffset.Offset + matchOffset.Length, s_MatchFormatSuffix);
-                text = text.Insert(matchOffset.Offset, s_MatchFormatPrefix);
+                text = text.Insert(matchOffset.Offset, s_matchFormatPrefix);
             }
 
             return text;

@@ -18,6 +18,7 @@ namespace Unity.Behavior
                         "from the agent's context menu.";
 
         private const string k_UndoScheduledBoolName = "BehaviorAsset_UndoRedoScheduled";
+        private const string k_GraphToRebuildSessioStateKey = "BehaviorAssetPostProcessor_GraphsToRebuild";
 
         private static HashSet<BehaviorAuthoringGraph> s_GraphsToRebuild = new ();
         private static bool s_HasRebuildAssets = false;
@@ -31,6 +32,8 @@ namespace Unity.Behavior
         private static void RegisterUndoListener()
         {
             Undo.undoRedoEvent += OnUndoRedoEvent;
+            AssemblyReloadEvents.beforeAssemblyReload += CacheGraphToRebuild;
+            AssemblyReloadEvents.afterAssemblyReload += RetrieveGraphToRebuild;
         }
 
         [RuntimeInitializeOnLoadMethod()]
@@ -167,6 +170,12 @@ namespace Unity.Behavior
                 // Trigger validation for any graphs that have been rebuilt.
                 foreach (var referencingGraph in s_GraphsToRebuild)
                 {
+                    // Skip pending deletion asset.
+                    if (!EditorUtility.IsPersistent(referencingGraph))
+                    {
+                        continue;
+                    }
+
                     referencingGraph.OnValidate();
                 }
 
@@ -184,26 +193,16 @@ namespace Unity.Behavior
             // Identify graph or blackboard assets that have been saved or reimported.
             GatherAssetsToRebuild(importedAssets, ref s_GraphsToRebuild);
 
-            if (s_GraphsToRebuild.Count == 0)
+            if (EditorApplication.isCompiling)
             {
+#if BEHAVIOR_DEBUG_ASSET_IMPORT
+                if (s_GraphsToRebuild.Count > 0)
+                    Debug.Log($"Found {s_GraphsToRebuild.Count} graph(s) to rebuild but currently compiling. Resuming after.");
+#endif
                 return;
             }
 
-            foreach (var referencingGraph in s_GraphsToRebuild)
-            {
-                // GraphAsset.HasOutstandingChanges property is only set to false when the GraphAsset.SaveAsset is called.
-                // We call a custom method to rebuild graph and embedded blackboard and we will save all the asset afterward.
-                // This is an optimization because SaveAssetIfDirty doesn't scale when working with lots of graph dependencies (subgraphs and blackboard assets).
-                referencingGraph.RebuildGraphAndBlackboardRuntimeData();
-
-                // WARNING: DO NOT use `AssetDatabase.SaveAssetIfDirty` in the loop.
-                // It works, but it is NOT scalable on performance (~300ms per asset).
-            }
-
-            s_HasRebuildAssets = true;
-
-            // The save is going to cause a recurse asset import.
-            AssetDatabase.SaveAssets();
+            RebuildBehaviorGraphAssets();
         }
 
         public static bool GatherAssetsToRebuild(IReadOnlyList<string> paths, ref HashSet<BehaviorAuthoringGraph> assetsToRebuild)
@@ -229,6 +228,20 @@ namespace Unity.Behavior
             }
 
             int newAssetFound = 0;
+
+            // Everytime a new graph asset is created, this loop ensures it generates its runtime assets.
+            foreach (BehaviorAuthoringGraph changedGraph in changedGraphAssets)
+            {
+                if (!changedGraph.HasRuntimeGraph) 
+                {
+#if BEHAVIOR_DEBUG_ASSET_IMPORT
+                    Debug.Log($"Graph {changedGraph.name} is missing a runtime graph. Rebuilding.", changedGraph);
+#endif
+                    newAssetFound++;
+                    assetsToRebuild.Add(changedGraph);
+                }
+            }
+
             // Get all assets that contain references to the assets being saved.
             foreach (BehaviorAuthoringGraph asset in BehaviorGraphAssetRegistry.GlobalRegistry.Assets)
             {
@@ -259,7 +272,7 @@ namespace Unity.Behavior
                     if (asset.ContainsStaticSubgraphReferenceTo(changedGraph) && !asset.IsDependencyUpToDate(changedGraph))
                     {
 #if BEHAVIOR_DEBUG_ASSET_IMPORT
-                        UnityEngine.Debug.Log($"Subgraph {changedGraph.name} was changed and the dependent graph '{asset.name}' need to be updated", changedGraph);
+                        Debug.Log($"Subgraph {changedGraph.name} was changed and the dependent graph '{asset.name}' need to be updated", changedGraph);
 #endif
                         ++newAssetFound;
                         asset.AddOrUpdateDependency(changedGraph);
@@ -279,6 +292,81 @@ namespace Unity.Behavior
             }
 
             return newAssetFound > 0;
+        }
+
+        private static void RebuildBehaviorGraphAssets()
+        {
+            if (s_GraphsToRebuild.Count == 0)
+            {
+                return;
+            }
+
+            foreach (var referencingGraph in s_GraphsToRebuild)
+            {
+                // Skip pending deletion asset.
+                if (!EditorUtility.IsPersistent(referencingGraph))
+                {
+                    continue;
+                }
+
+                // GraphAsset.HasOutstandingChanges property is only set to false when the GraphAsset.SaveAsset is called.
+                // We call a custom method to rebuild graph and embedded blackboard and we will save all the asset afterward.
+                // This is an optimization because SaveAssetIfDirty doesn't scale when working with lots of graph dependencies (subgraphs and blackboard assets).
+                referencingGraph.RebuildGraphAndBlackboardRuntimeData();
+
+                // WARNING: DO NOT use `AssetDatabase.SaveAssetIfDirty` in the loop.
+                // It works, but it is NOT scalable on performance (~300ms per asset).
+            }
+
+            s_HasRebuildAssets = true;
+
+            // The save is going to cause a recurse asset import.
+            AssetDatabase.SaveAssets();
+        }
+
+        /// <summary>
+        /// Caches the paths of graphs that need to be rebuilt into session state before assembly reload.
+        /// </summary>
+        private static void CacheGraphToRebuild()
+        {
+            if (s_GraphsToRebuild.Count == 0)
+            {
+                return;
+            }
+
+#if BEHAVIOR_DEBUG_ASSET_IMPORT
+            Debug.Log($"Caching {s_GraphsToRebuild.Count} pending graph(s) before domain reload.");
+#endif
+            var assetPaths = s_GraphsToRebuild
+                .Where(graph => graph != null && EditorUtility.IsPersistent(graph)) // Ensure the graph is persistent (and not a pending deletion)
+                .Select(graph => AssetDatabase.GetAssetPath(graph))
+                .Where(path => !string.IsNullOrEmpty(path));
+
+            var cachedPaths = string.Join(",", assetPaths);
+            SessionState.SetString(k_GraphToRebuildSessioStateKey, cachedPaths);
+        }
+
+        /// <summary>
+        /// Retrieves the cached paths of graphs to rebuild from session state after assembly reload.
+        /// </summary>
+        private static void RetrieveGraphToRebuild()
+        {
+            // Retrieve cached paths from session state.
+            var cachedPaths = SessionState.GetString(k_GraphToRebuildSessioStateKey, string.Empty);
+            if (string.IsNullOrEmpty(cachedPaths))
+            {
+                return;
+            }
+
+            SessionState.EraseString(k_GraphToRebuildSessioStateKey);
+            var paths = cachedPaths.Split(new[] { ',' }, System.StringSplitOptions.RemoveEmptyEntries);
+
+            // Rebuild the graphs if still relevant.
+#if BEHAVIOR_DEBUG_ASSET_IMPORT
+            Debug.Log($"Retrieved {paths.Length} pending graph(s) post domain reload.");
+#endif
+            GatherAssetsToRebuild(paths, ref s_GraphsToRebuild);
+            RebuildBehaviorGraphAssets();
         }
     }
 }

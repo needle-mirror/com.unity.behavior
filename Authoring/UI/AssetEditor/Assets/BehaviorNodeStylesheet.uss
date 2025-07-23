@@ -1,5 +1,5 @@
 #NodeTitle Label {
-    color: var(--appui-color-white);
+    color: var(--behavior-node-title-text-color);
     -unity-text-align: middle-center;
     -unity-font-definition: url('/Packages/com.unity.dt.app-ui/PackageResources/Fonts/Inter-SemiBold.ttf');
 }
@@ -103,11 +103,11 @@ SetValueNodeUI #Content {
 }
 
 .Start #NodeTitle {
-    background-color: var(--appui-color-green-800);
+    background-color: var(--behavior-ui-node-start-bg);
 }
 
 .Start #NodeTitle > #NodeTitleLabel {
-    color: var(--appui-color-white);
+    color: var(--behavior-node-title-text-color);
     font-size: var(--appui-font-sizes-100);
     -unity-font-definition: url('/Packages/com.unity.dt.app-ui/PackageResources/Fonts/Inter-SemiBold.ttf');
     align-self: center;
@@ -135,7 +135,7 @@ SetValueNodeUI #Content {
 }
 
 .Modifier #NodeTitle, .Composite #NodeTitle  {
-    background-color: var(--appui-color-purple-800);
+    background-color: var(--behavior-ui-node-modifier-bg);
     display: flex;
     padding: 2px 10px;
     flex-direction: column;
@@ -152,11 +152,11 @@ SetValueNodeUI #Content {
 /* Condition node styles */
 
 .Condition #NodeTitle {
-    background-color: var(--appui-color-orange-800);
+    background-color: var(--behavior-ui-node-condition-bg);
 }
 
 .Condition #NodeColor {
-    background-color: var(--appui-color-orange-800);
+    background-color: var(--behavior-ui-node-condition-bg);
 }
 
 ConditionElement {
@@ -173,7 +173,7 @@ NodeConditionElement {
 }
 
 .SwitchNodeUI #NodeTitle {
-    background-color: var(--appui-color-orange-800);
+    background-color: var(--behavior-ui-node-condition-bg);
 }
 
 .SwitchNodeUI #Content {
@@ -316,16 +316,16 @@ JoinNodeUI .InputPort:hover #Port-Icon  {
 
 .PlaceholderStoryContainer > Label {
     padding: 0px;
-    color: var(--appui-color-dark-gray-900);
+    color: var(--behavior-ui-placeholder-text-color);
 }
 
 .Placeholder #NodeContentContainer 
 {
-    background-color: var(--appui-backgrounds-100);
+    background-color: var(--behavior-ui-placeholder-bg);
 }
 
 .PlaceholderStoryContainer .LinkedLabel {
-    color: var(--appui-color-dark-gray-1100);
+    color: var(--behavior-ui-linked-text-color);
     margin-right: 2px;
     flex-shrink: 0;
 }

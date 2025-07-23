@@ -1,9 +1,9 @@
 SequenceGroup > #SelectionBorder > #NodeContentContainer {
   padding: var(--appui-static-spacing-150);
-  border-color: #2D2D2D;
+  border-color: var(--unity-behavior-ui-sequence-bg-border-color);
   border-width: 1px;
   border-radius: var(--appui-border-radius-md);
-  background-color: var(--appui-color-transparent-black-300);
+  background-color: var(--unity-behavior-ui-sequence-bg-color);
 }
 
 SequenceGroup > #SelectionBorder {

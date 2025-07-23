@@ -3,6 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using Unity.AppUI.UI;
 using Unity.Behavior.GraphFramework;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.UIExtras;
 
@@ -30,7 +34,9 @@ namespace Unity.Behavior
             set
             {
                 m_SupportedTypes = value;
+#if UNITY_EDITOR
                 CreateVariablesSearchOptions();
+#endif
             }
         }
         internal List<SearchView.Item> m_SupportedTypesSearchItems;
@@ -125,20 +131,104 @@ namespace Unity.Behavior
             OnPropertyValueChanged?.Invoke();
         }
 
+#if UNITY_EDITOR
         private void CreateVariablesSearchOptions()
         {
             m_SupportedTypesSearchItems = new();
+
+            bool basicTypesIconIsSetup = false;
+            bool vectorTypesIconIsSetup = false;
+            bool resourcesIconIsSetup = false;
+            bool listIconIsSetup = false;
+            bool otherIconIsSetup = false;
+            bool enumIconIsSetup = false;
+         
             foreach (var item in SupportedTypes)
             {
+                SetupIconsCategories(item, ref basicTypesIconIsSetup, ref vectorTypesIconIsSetup, 
+                    ref resourcesIconIsSetup, ref listIconIsSetup, ref otherIconIsSetup, ref enumIconIsSetup);
+
                 if (item.IconImage != null)
                 {
-                    m_SupportedTypesSearchItems.Add(new SearchView.Item(item.Path, item.IconImage, data: item.Type.Type));
+                    m_SupportedTypesSearchItems.Add(new SearchView.Item(item.Path, item.IconImage, data: item.Type?.Type));
                 }
                 else
                 {
-                    m_SupportedTypesSearchItems.Add(new SearchView.Item(item.Path, item.Icon, data: item.Type.Type));
+                    m_SupportedTypesSearchItems.Add(new SearchView.Item(item.Path, item.Icon, data: item.Type?.Type));
                 }
             }
         }
+
+        private void SetupIconsCategories(BlackboardOption item, ref bool basicTypesIconIsSetup, ref bool vectorTypesIconIsSetup,
+            ref bool resourcesIconIsSetup, ref bool listIconIsSetup, ref bool otherIconIsSetup, ref bool enumIconIsSetup)
+        {
+            if (!basicTypesIconIsSetup && item.Path.StartsWith("Basic Types"))
+            {
+                var iconPath = "Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/float.png";
+                if (EditorGUIUtility.isProSkin)
+                {
+                    iconPath = "Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/d_float.png";
+                }
+
+                m_SupportedTypesSearchItems.Add(new SearchView.Item("Basic Types", ResourceLoadAPI.Load<Texture2D>(iconPath), data: null));
+                basicTypesIconIsSetup = true;
+            }
+            else if (!vectorTypesIconIsSetup && item.Path.StartsWith("Vector Types"))
+            {
+                var iconPath = "Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/Vector3.png";
+                if (EditorGUIUtility.isProSkin)
+                {
+                    iconPath = "Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/d_Vector3.png";
+                }
+                    
+                m_SupportedTypesSearchItems.Add(new SearchView.Item("Vector Types", ResourceLoadAPI.Load<Texture2D>(iconPath), data: null));
+                vectorTypesIconIsSetup = true;
+            }
+            else if (!resourcesIconIsSetup && item.Path.StartsWith("Resources"))
+            {
+                var iconPath = "Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/source.png";
+                if (EditorGUIUtility.isProSkin)
+                {
+                    iconPath = "Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/d_source.png";
+                }
+                    
+                m_SupportedTypesSearchItems.Add(new SearchView.Item("Resources", ResourceLoadAPI.Load<Texture2D>(iconPath), data: null));
+                resourcesIconIsSetup = true;
+            }
+            else if (!listIconIsSetup && item.Path.StartsWith("List"))
+            {
+                var iconPath = "Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/list.png";
+                if (EditorGUIUtility.isProSkin)
+                {
+                    iconPath = "Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/d_list.png";
+                }
+                    
+                m_SupportedTypesSearchItems.Add(new SearchView.Item("List", ResourceLoadAPI.Load<Texture2D>(iconPath), data: null));
+                listIconIsSetup = true;
+            }
+            else if (!otherIconIsSetup && item.Path.StartsWith("Other"))
+            {
+                var iconPath = "Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/others.png";
+                if (EditorGUIUtility.isProSkin)
+                {
+                    iconPath = "Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/d_others.png";
+                }
+                    
+                m_SupportedTypesSearchItems.Add(new SearchView.Item("Other", ResourceLoadAPI.Load<Texture2D>(iconPath), data: null));
+                otherIconIsSetup = true;
+            }
+            else if (!enumIconIsSetup && item.Path.StartsWith("Enumeration"))
+            {
+                var iconPath = "Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/enum.png";
+                if (EditorGUIUtility.isProSkin)
+                {
+                    iconPath = "Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/d_enum.png";
+                }
+                    
+                m_SupportedTypesSearchItems.Add(new SearchView.Item("Enumeration", ResourceLoadAPI.Load<Texture2D>(iconPath), data: null));
+                enumIconIsSetup = true;
+            }
+        }
+#endif
     }
 }

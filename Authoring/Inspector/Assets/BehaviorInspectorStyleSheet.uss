@@ -4,7 +4,7 @@
 
 Label {
 	margin-top: 2px;
-	color: var(--appui-primary-1200);
+	color: var(--behavior-ui-text-color);
 }
 
 .Inspector-FieldContainer {
@@ -86,7 +86,7 @@ BehaviorLinkField {
 }
 
 #Info-Name {
-	color: var(--appui-primary-1200);
+	color: var(--behavior-ui-text-color);
 	font-size: var(--appui-font-sizes-100);
 	-unity-font-style: bold;
 	flex-grow: 1;

@@ -9,7 +9,7 @@
 }
 
 #VariableContainer {
-    background-color: var(--appui-color-transparent-black-100);
+    background-color: var(--behavior-ui-variable-container-bg);
     border-radius: var(--appui-border-radius-md);
     align-items: flex-start;
     align-self: stretch;
@@ -24,7 +24,7 @@
 }
 
 #VariableContainer:hover {
-    background-color: var(--appui-backgrounds-300);
+    background-color: var(--behavior-ui-hover-bg);
 }
 
 #TitleContainer {
@@ -42,7 +42,7 @@
 }
 
 #Info Label {
-    color: var(--appui-color-white);
+    color: var(--behavior-ui-text-color);
     font-size: var(--appui-font-sizes-100);
     flex-shrink: 1;
     padding: 0;
@@ -63,7 +63,7 @@
     -unity-text-align: middle-right;
     -unity-font-style: initial;
     font-size: 11px;
-    color: var(--appui-foregrounds-50);
+    color: var(--behavior-ui-secondary-text-color);
     overflow: hidden;
     text-overflow: ellipsis;
     margin: 0;
@@ -116,7 +116,7 @@
 }
 
 .Collapsed #VariableContainer:hover {
-    background-color: var(--appui-backgrounds-300);
+    background-color: var(--behavior-ui-hover-bg);
 }
 
 #ValueContainer {
@@ -129,9 +129,13 @@
 }
 
 #ValueContainer Label {
-    color: var(--appui-foregrounds-25);
+    color: var(--behavior-ui-tertiary-text-color);
     padding: 0;
     margin-left: 0;
+}
+
+#Info #Name:checked {
+    color: var(--behavior-ui-text-color);
 }
 
 .BlackboardVariable #NameField {
@@ -175,8 +179,8 @@ Vector4Field {
 }
 
 ScrollView {
-    background-color: var(--appui-backgrounds-300);
-    border-color: var(--appui-backgrounds-100);
+    background-color: var(--behavior-ui-hover-bg);
+    border-color: var(--behavior-ui-border-bg);
     padding-left: var(--appui-static-spacing-50);
     padding-right: var(--appui-static-spacing-50);
 }
@@ -190,14 +194,14 @@ ScrollView {
     flex-grow: 1;
     width: auto;
     min-width: 70px;
-    color: var(--appui-foregrounds-50);
+    color: var(--behavior-ui-secondary-text-color);
     -unity-text-align: middle-left;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .VariableDefaultFieldLabel {
-    color: var(--appui-foregrounds-25);
+    color: var(--behavior-ui-tertiary-text-color);
     font-size: var(--appui-font-sizes-100);
     padding: 0;
     align-self: center;
@@ -228,7 +232,7 @@ ScrollView {
 }
 
 .unity-list-view__footer Button:hover {
-    background-color: rgba(255,255,255,0.025)
+    background-color: rgba(255,255,255,0.025);
 }
 
 .unity-object-field {
@@ -242,7 +246,7 @@ ScrollView {
 
 .SharedVariable #Name {
     border-bottom-width: 1px;
-    border-bottom-color: #C9B33F;
+    border-bottom-color: var(--behavior-ui-shared-variable-border);
 }
 
 #VariableToggleContainer {
@@ -261,6 +265,6 @@ ScrollView {
 
 #SharedToggle #appui-toggle__label {
     border-bottom-width: 1px;
-    border-bottom-color: #C9B33F;
+    border-bottom-color: var(--behavior-ui-shared-variable-border);
     height: 15px;
 }

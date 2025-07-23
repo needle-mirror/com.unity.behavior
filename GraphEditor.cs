@@ -64,6 +64,7 @@ namespace Unity.Behavior.GraphFramework
             focusable = true;
 
             AddToClassList("GraphEditor");
+            BehaviorUIThemeManager.RegisterElement(this);
             styleSheets.Add(ResourceLoadAPI.Load<StyleSheet>(stylesheetFile));
             VisualTreeAsset visualTree = ResourceLoadAPI.Load<VisualTreeAsset>(layoutfile);
             visualTree.CloneTree(this);
@@ -177,12 +178,14 @@ namespace Unity.Behavior.GraphFramework
             ToggleBlackboard(true);
             ToggleNodeInspector(true);
 
-            // Add graph icon stylesheet for the App UI panel.
-            if (GetFirstAncestorOfType<Panel>() != null)
-            {
-                GetFirstAncestorOfType<Panel>().styleSheets.Add(ResourceLoadAPI.Load<StyleSheet>("Packages/com.unity.behavior/Elements/Assets/GraphIconStylesheet.uss"));
-            }
 #if UNITY_EDITOR
+            // Add graph icon stylesheet for the App UI panel.
+            var firstAncestorOfType = GetFirstAncestorOfType<Panel>();
+            if (firstAncestorOfType != null)
+            {
+                BehaviorUIThemeManager.RegisterElement(firstAncestorOfType);
+            }
+            
             Undo.undoRedoPerformed += OnUndoRedoPerformed;
             EditorApplication.playModeStateChanged += EditorApplication_playModeStateChanged;
 #endif
@@ -190,7 +193,16 @@ namespace Unity.Behavior.GraphFramework
 
         private void OnDetachFromPanel(DetachFromPanelEvent evt)
         {
+            BehaviorUIThemeManager.UnregisterElement(this);
+
 #if UNITY_EDITOR
+            // Add graph icon stylesheet for the App UI panel.
+            var firstAncestorOfType = GetFirstAncestorOfType<Panel>();
+            if (firstAncestorOfType != null)
+            {
+                BehaviorUIThemeManager.UnregisterElement(firstAncestorOfType);
+            }
+            
             Undo.undoRedoPerformed -= OnUndoRedoPerformed;
             EditorApplication.playModeStateChanged -= EditorApplication_playModeStateChanged;
 #endif

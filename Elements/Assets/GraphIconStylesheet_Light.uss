@@ -1,0 +1,116 @@
+/* Basic types */
+
+.appui-icon--boolean--regular {
+    --unity-image: url("/Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/bool.png");
+}
+
+.appui-icon--double--regular {
+    --unity-image: url("/Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/float.png");
+}
+
+.appui-icon--string--regular {
+    --unity-image: url("/Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/string.png");
+}
+
+.appui-icon--color--regular {
+    --unity-image: url("/Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/color.png");
+}
+
+.appui-icon--float--regular {
+    --unity-image: url("/Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/float.png");
+}
+
+.appui-icon--integer--regular {
+    --unity-image: url("/Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/int.png");
+}
+
+.appui-icon--vector2--regular {
+    --unity-image: url("/Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/vector2.png");
+}
+
+.appui-icon--vector3--regular {
+    --unity-image: url("/Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/vector3.png");
+}
+
+.appui-icon--vector4--regular {
+    --unity-image: url("/Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/vector4.png");
+}
+
+.appui-icon--object--regular {
+    --unity-image: resource("GameObject Icon");
+}
+
+/* List types */
+
+.appui-icon--list-boolean--regular {
+    --unity-image: url("/Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/list_bool.png");
+}
+
+.appui-icon--list-double--regular {
+    --unity-image: url("/Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/list_float.png");
+}
+
+.appui-icon--list-string--regular {
+    --unity-image: url("/Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/list_string.png");
+}
+
+.appui-icon--list-color--regular {
+    --unity-image: url("/Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/list_v4.png");
+}
+
+.appui-icon--list-float--regular {
+    --unity-image: url("/Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/list_float.png");
+}
+
+.appui-icon--list-integer--regular {
+    --unity-image: url("/Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/list_int.png");
+}
+
+.appui-icon--list-vector2--regular {
+    --unity-image: url("/Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/list_v2.png");
+}
+
+.appui-icon--list-vector3--regular {
+    --unity-image: url("/Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/list_v3.png");
+}
+
+.appui-icon--list-vector4--regular {
+    --unity-image: url("/Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/list_v4.png");
+}
+
+.appui-icon--list-object--regular {
+    --unity-image: url("/Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/list.png");
+}
+
+
+/* Other */
+
+.appui-icon--plus--regular {
+    --unity-image: url("/Packages/com.unity.behavior/Blackboard/Assets/Icons/CreateAddNew.png");
+}
+
+.appui-icon--enum--regular {
+    --unity-image: url("/Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/enum.png");
+}
+
+.appui-icon--others--regular {
+    --unity-image: url("/Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/others.png");
+}
+
+.appui-icon--source--regular {
+    --unity-image: url("/Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/source.png");
+}
+
+.appui-icon--event--regular {
+    --unity-image: url("/Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/event.png");
+}
+
+.appui-icon--debug--regular {
+    --unity-image: url("/Packages/com.unity.behavior/Blackboard/Assets/Icons/Debug_Mode_Off.png");
+    --unity-image-tint-color: black;
+}
+
+.appui-icon--folder--regular {
+    --unity-image: url("/Packages/com.unity.behavior/Blackboard/Assets/Icons/Folder.png");
+    --unity-image-tint-color: black;
+}

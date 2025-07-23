@@ -11,7 +11,7 @@ FloatingPanel {
     border-width: 1px;
     border-radius: var(--appui-alias-control-border-radius);
     border-color: var(--appui-backgrounds-50);
-    background-color: var(--appui-backgrounds-200);
+    background-color: var(--overlay-color-background);
     --box-shadow-offset-y: 4;
     --box-shadow-spread: 0;
     --box-shadow-blur: 15;
@@ -35,6 +35,7 @@ FloatingPanel {
 }
 
 #FloatingPanelAppBar .appui-localized-text {
+    color: var(--floating-panel-title-text-color);
     -unity-text-align: middle-center;
     -unity-font-definition: url('/Packages/com.unity.dt.app-ui/PackageResources/Fonts/Inter-SemiBold.ttf');
 }

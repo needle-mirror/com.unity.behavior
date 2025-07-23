@@ -85,6 +85,10 @@
 
 /* Other */
 
+.appui-icon--plus--regular {
+    --unity-image: url("/Packages/com.unity.behavior/Blackboard/Assets/Icons/d_CreateAddNew.png");
+}
+
 .appui-icon--enum--regular {
     --unity-image: url("/Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/d_enum.png");
 }
@@ -101,3 +105,12 @@
     --unity-image: url("/Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/d_event.png");
 }
 
+.appui-icon--debug--regular {
+    --unity-image: url("/Packages/com.unity.behavior/Blackboard/Assets/Icons/d_Debug_Mode_Off.png");
+    --unity-image-tint-color: white;
+}
+
+.appui-icon--folder--regular {
+    --unity-image: url("/Packages/com.unity.behavior/Blackboard/Assets/Icons/d_Folder.png");
+    --unity-image-tint-color: white;
+}
