@@ -1,7 +1,6 @@
 #if UNITY_EDITOR
 using UnityEngine;
 using UnityEditor;
-using UnityEngine.Serialization;
 
 namespace Unity.Behavior
 {
@@ -41,6 +40,15 @@ namespace Unity.Behavior
 
         [SerializeField]
         private bool m_AllowDisabledAgentDebugging = false;
+
+        [SerializeField]
+        private bool m_IgnoreMissingManagedReferencesInBuild = false;
+
+        public bool IgnoreMissingManagedReferencesInBuild
+        {
+            get => m_IgnoreMissingManagedReferencesInBuild;
+            set => m_IgnoreMissingManagedReferencesInBuild = value;
+        }
 
         public string GraphOwnerName
         {

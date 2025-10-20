@@ -11,7 +11,7 @@ namespace Unity.Behavior
             {
                 return false;
             }
-            
+
             return fromType.IsSubclassOf(typeof(Component)) && toType.IsSubclassOf(typeof(Component));
         }
 

@@ -44,9 +44,12 @@ namespace Unity.Behavior
         public event ValueChangedCallback OnValueChanged = delegate { };
 
         /// <summary>
-        /// Invokes the OnValueChanged callback.
+        /// <para>Invokes the OnValueChanged callback. This method should be called when the internal value has been modified without using the Value property setter.</para>
+        /// <para>Common scenarios includes:</para>
+        /// <para>- When modifying collection elements (e.g., adding/removing items from a List)</para>
+        /// <para>- When modifying properties of a reference type stored in the value</para>
         /// </summary>
-        internal void InvokeValueChanged() => OnValueChanged.Invoke();
+        public void InvokeValueChanged() => OnValueChanged.Invoke();
 
         /// <summary>
         /// Duplicates the variable
@@ -70,12 +73,6 @@ namespace Unity.Behavior
         {
             if (isShared)
             {
-                // For global variables
-                if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(BlackboardVariable<>))
-                {
-                    return (SharedBlackboardVariable)Activator.CreateInstance(type);
-                }
-
                 return Activator.CreateInstance(typeof(SharedBlackboardVariable<>).MakeGenericType(type)) as BlackboardVariable;
             }
 

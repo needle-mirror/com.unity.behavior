@@ -17,11 +17,11 @@ namespace Unity.Behavior
             Debug.Log($"{ownerPrefix} {name} = {value}", owner);
         }
     }
-    
+
     [Serializable, GeneratePropertyBag]
     [NodeDescription(
-        name: "Log Variable", 
-        story: "Log [variable] to the console", 
+        name: "Log Variable",
+        story: "Log [variable] to the console",
         description: "Logs the value of a variable to the console.",
         category: "Action/Debug",
         id: "b95551d408d852c7e54ce84d1369f56a")]
@@ -35,11 +35,11 @@ namespace Unity.Behavior
             return Status.Success;
         }
     }
-    
+
     [Serializable, GeneratePropertyBag]
     [NodeDescription(
-        name: "Log Variable Change", 
-        story: "Log [variable] change to the console", 
+        name: "Log Variable Change",
+        story: "Log [variable] change to the console",
         description: "Logs the value of a variable to the console when it changes.",
         category: "Action/Debug",
         id: "b95551d408d852c7e54ce84d1369f56b")]
@@ -60,7 +60,7 @@ namespace Unity.Behavior
         }
 
         protected override Status OnUpdate() => Status.Success;
-        
+
         protected override void OnEnd()
         {
             if (Variable != null)
@@ -90,7 +90,7 @@ namespace Unity.Behavior
             AwakeNode(this);
         }
     }
-    
+
     [Serializable, GeneratePropertyBag]
     [NodeDescription(
         name: "Log Message",
@@ -106,7 +106,7 @@ namespace Unity.Behavior
             Warning,
             Error
         }
-        
+
         [SerializeReference] public BlackboardVariable<string> Message;
         [SerializeReference] public BlackboardVariable<LogType> LogLevel = new BlackboardVariable<LogType>(LogType.Info);
 
@@ -116,7 +116,7 @@ namespace Unity.Behavior
             {
                 return Status.Failure;
             }
-            
+
             switch (LogLevel.Value)
             {
                 case LogType.Info:
@@ -133,4 +133,3 @@ namespace Unity.Behavior
         }
     }
 }
-

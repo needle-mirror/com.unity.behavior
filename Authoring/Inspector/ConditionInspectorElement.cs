@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Unity.Behavior.GraphFramework;
 using Unity.AppUI.UI;
 using UnityEngine.UIElements;
@@ -21,20 +21,20 @@ namespace Unity.Behavior
             m_NodeModel = nodeModel;
             if (m_NodeModel != null)
             {
-                CreateElement();   
+                CreateElement();
             }
         }
 
         private void CreateElement()
         {
             styleSheets.Add(ResourceLoadAPI.Load<StyleSheet>("Packages/com.unity.behavior/Authoring/Inspector/Assets/ConditionInspectorElementStylesheet.uss"));
-            
+
             Add(CreateTruncateOptionField());
-            
+
             Divider divider = new Divider();
             divider.size = Size.S;
             Add(divider);
-            
+
             m_AssignButton = new Button();
             m_AssignButton.name = "AssignConditionButton";
             m_AssignButton.title = "Assign Condition";
@@ -63,7 +63,7 @@ namespace Unity.Behavior
             truncateOptionElement.tooltip = "Collapse the node to a compact size if multiple conditions are added";
             Toggle toggle = new Toggle();
             truncateOptionElement.Add(toggle);
-            
+
             toggle.value = m_NodeModel.ShouldTruncateNodeUI;
             toggle.RegisterValueChangedCallback(evt =>
             {
@@ -105,7 +105,7 @@ namespace Unity.Behavior
                         else
                         {
                             string path = info.FilePath.Replace("\\", "/");
-                            CodeEditor.CodeEditor.Editor.CurrentCodeEditor.OpenProject(path);   
+                            CodeEditor.CodeEditor.Editor.CurrentCodeEditor.OpenProject(path);
                         }
                     });
 #endif
@@ -129,10 +129,10 @@ namespace Unity.Behavior
                 ConditionInfo info = ConditionUtility.GetInfoForConditionType(condition.GetType());
                 searchItems.Add(new SearchView.Item(
                     path: info.Path,
-                    data: condition ));
+                    data: condition));
             }
-            
-            SearchWindow.Show("Add Condition", searchItems, OnConditionSelected, m_AssignButton,  200, 244, false);
+
+            SearchWindow.Show("Add Condition", searchItems, OnConditionSelected, m_AssignButton, 200, 244, false);
         }
 
         private void OnConditionSelected(SearchView.Item obj)
@@ -148,33 +148,33 @@ namespace Unity.Behavior
                 m_ConditionListView.RefreshItems();
             }
         }
-        
+
         private void ShowConditionWizard()
         {
 #if UNITY_EDITOR
             GraphEditor editor = GetFirstAncestorOfType<GraphEditor>();
             BehaviorGraphView view = editor.Q<BehaviorGraphView>();
             BehaviorGraphNodeModel model = m_NodeModel as BehaviorGraphNodeModel;
-            
+
             // Only this nees to use the new command, all the old stays the same as it was..
             ConditionWizardWindow.GetAndShowWindow(view, Util.GetVariableSuggestions(model?.Asset), DeferAddConditionToNode);
 #endif
         }
-        
+
         private void DeferAddConditionToNode(string conditionType)
         {
             BehaviorGraphNodeModel node = m_NodeModel as BehaviorGraphNodeModel;
-            (node?.Asset as BehaviorAuthoringGraph).CommandBuffer.SerializeDeferredCommand(new AddConditionFromSerializedCommand(node.ID, conditionType, true)); 
+            (node?.Asset as BehaviorAuthoringGraph).CommandBuffer.SerializeDeferredCommand(new AddConditionFromSerializedCommand(node.ID, conditionType, true));
             m_ConditionListView.RefreshItems();
         }
-        
+
         private void ApplyWrapClassOnChildElements(GeometryChangedEvent evt)
         {
             if (evt.target is not VisualElement container)
             {
                 return;
             }
-            
+
             float containerWidth = container.resolvedStyle.width;
             float currentRowWidth = 0;
             VisualElement previousChild = null;

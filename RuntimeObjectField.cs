@@ -98,30 +98,30 @@ namespace Unity.Behavior.GraphFramework
         public RuntimeEnumField() : this(null)
         {
         }
-        
+
         public RuntimeEnumField(string label) : base(label, null)
         {
             AddToClassList("Runtime-Object-Field");
             styleSheets.Add(ResourceLoadAPI.Load<StyleSheet>("Packages/com.unity.behavior/Elements/Assets/RuntimeObjectFieldStyles.uss"));
-            
+
             labelElement.focusable = false;
 
             AddToClassList(ussClassName);
             labelElement.AddToClassList(labelUssClassName);
         }
     }
-    
+
     internal class RuntimeListField<T> : BaseField<List<T>>
     {
         public RuntimeListField() : this(null)
         {
         }
-        
+
         public RuntimeListField(string label) : base(label, null)
         {
             AddToClassList("Runtime-Object-Field");
             styleSheets.Add(ResourceLoadAPI.Load<StyleSheet>("Packages/com.unity.behavior/Elements/Assets/RuntimeObjectFieldStyles.uss"));
-            
+
             labelElement.focusable = false;
 
             AddToClassList(ussClassName);

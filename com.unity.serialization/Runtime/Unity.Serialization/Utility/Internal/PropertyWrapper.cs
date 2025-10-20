@@ -1,10 +1,10 @@
-﻿using Unity.Properties;
+using Unity.Properties;
 
 namespace Unity.Behavior.Serialization
 {
     interface IPropertyWrapper
     {
-        
+
     }
 
     struct PropertyWrapper<T> : IPropertyWrapper
@@ -12,11 +12,11 @@ namespace Unity.Behavior.Serialization
         class PropertyBag : ContainerPropertyBag<PropertyWrapper<T>>, IPropertyWrapper
         {
             Property Property { get; } = new Property();
-            
+
             public PropertyBag()
                 => AddProperty(Property);
         }
-        
+
         class Property : Property<PropertyWrapper<T>, T>, IPropertyWrapper
         {
             public override string Name => nameof(Value);
@@ -33,7 +33,7 @@ namespace Unity.Behavior.Serialization
             {
                 Unity.Properties.PropertyBag.Register(new PropertyBag());
             }
-            
+
             Value = value;
         }
     }

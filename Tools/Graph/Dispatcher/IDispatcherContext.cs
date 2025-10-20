@@ -6,7 +6,7 @@ namespace Unity.Behavior.GraphFramework
     {
         public BlackboardView BlackboardView { get; }
         public GraphEditor GraphEditor { get; }
-        public GraphView GraphView { get;  }
+        public GraphView GraphView { get; }
         public GraphAsset GraphAsset { get; }
         public BlackboardAsset BlackboardAsset { get; }
         public VisualElement Root { get; }

@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using Unity.AppUI.UI;
 using UnityEngine;
@@ -11,7 +11,7 @@ namespace Unity.Behavior
     internal class EditableListRegion : VisualElement
     {
         internal readonly List<string> m_EditableList;
-        
+
         internal event System.Action OnListUpdated;
 
         internal Button AddButton;
@@ -20,7 +20,7 @@ namespace Unity.Behavior
         private const string k_DuplicateErrorText = "Names must be unique and cannot be empty.";
 
         private TextFieldWithValidation m_LastAddedTextField;
-        
+
         internal EditableListRegion(List<string> listToEdit)
         {
             ResourceLoadAPI.Load<VisualTreeAsset>("Packages/com.unity.behavior/Authoring/UI/NodeWizard/Assets/EditableListRegionLayout.uxml").CloneTree(this);
@@ -30,7 +30,7 @@ namespace Unity.Behavior
             AddButton = this.Q<Button>("AddItemButton");
             AddButton.RegisterCallback<ClickEvent>(OnAddNewItemClicked);
         }
-        
+
         internal void OnAddNewItemClicked(ClickEvent _)
         {
             int index = m_EditableList.Count + 1;
@@ -47,12 +47,12 @@ namespace Unity.Behavior
             UpdateList();
             m_LastAddedTextField?.Focus();
         }
-        
+
         internal void UpdateList()
         {
             VisualElement listItemContainer = this.Q<VisualElement>("ListItemContainer");
             listItemContainer.Clear();
-            
+
             int i = 0;
             foreach (string itemName in m_EditableList)
             {
@@ -91,7 +91,7 @@ namespace Unity.Behavior
             int count = m_EditableList.Count(str => RemoveSpaces(str) == fieldValueWithoutSpaces);
             return count >= 2;
         }
-        
+
         internal void OnListItemUpdate(ChangingEvent<string> evt)
         {
             if (evt.target is not TextFieldWithValidation textField)
@@ -101,10 +101,10 @@ namespace Unity.Behavior
 
             int index = (int)textField.userData;
             m_EditableList[index] = evt.newValue;
-            
+
             OnListUpdated?.Invoke();
         }
-        
+
         private void OnRemoveListFieldItem(ClickEvent e)
         {
             if (e.target is not IconButton removeButton)
@@ -115,17 +115,17 @@ namespace Unity.Behavior
             m_EditableList.RemoveAt((int)removeButton.userData);
             UpdateList();
         }
-        
+
         public bool IncludesDuplicates()
         {
             return m_EditableList.Select(RemoveSpaces).ToList().GroupBy(value => value).Any(g => g.Count() > 1 || string.IsNullOrWhiteSpace(g.Key));
         }
-        
+
         private static string RemoveSpaces(string str)
         {
             return str.Replace(" ", string.Empty);
         }
-        
+
         internal bool AllItemFieldsValid()
         {
             List<TextFieldWithValidation> fields = this.Query<TextFieldWithValidation>().ToList();

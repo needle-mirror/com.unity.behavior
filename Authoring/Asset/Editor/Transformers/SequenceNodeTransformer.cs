@@ -17,14 +17,11 @@ namespace Unity.Behavior
         public void ProcessNode(GraphAssetProcessor graphAssetProcessor, NodeModel nodeModel, Node node)
         {
             SequenceNodeModel sequenceNodeModel = nodeModel as SequenceNodeModel;
-			SequenceComposite sequence = node as SequenceComposite;
+            SequenceComposite sequence = node as SequenceComposite;
             foreach (var childNodeModel in sequenceNodeModel.Nodes)
             {
                 switch (childNodeModel)
                 {
-                    case PlaceholderNodeModel:
-                        // Ignore Placeholder Nodes in a sequence.
-                        break;
                     case BehaviorGraphNodeModel aidnm:
                         var childNode = graphAssetProcessor.GetOrCreateNode(aidnm);
                         if (childNode != null)

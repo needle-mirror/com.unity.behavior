@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Properties;
@@ -13,16 +13,16 @@ namespace Unity.Behavior.Serialization.Json
         {
             // ReSharper disable once InconsistentNaming
             internal int m_Index;
-            
+
             // ReSharper disable once InconsistentNaming
             internal SerializedValueView m_View;
-            
+
             /// <inheritdoc/>
             public int Index => m_Index;
 
             /// <inheritdoc/>
             public override string Name => m_Index.ToString();
-            
+
             /// <inheritdoc/>
             public override bool IsReadOnly => true;
 
@@ -32,11 +32,11 @@ namespace Unity.Behavior.Serialization.Json
             public override void SetValue(ref SerializedArrayView container, SerializedValueView value)
                 => throw new InvalidOperationException("Property is ReadOnly.");
         }
-        
+
         struct Enumerator : IEnumerator<IProperty<SerializedArrayView>>
         {
             int m_Index;
-            
+
             SerializedArrayView.Enumerator m_Enumerator;
 
             public Enumerator(SerializedArrayView.Enumerator enumerator)
@@ -48,7 +48,7 @@ namespace Unity.Behavior.Serialization.Json
             public bool MoveNext()
             {
                 m_Index++;
-                return m_Enumerator.MoveNext();  
+                return m_Enumerator.MoveNext();
             }
 
             public void Reset()
@@ -78,7 +78,7 @@ namespace Unity.Behavior.Serialization.Json
         {
             readonly SerializedArrayView m_Container;
 
-            public Enumerable(SerializedArrayView container) 
+            public Enumerable(SerializedArrayView container)
                 => m_Container = container;
 
             public IEnumerator<IProperty<SerializedArrayView>> GetEnumerator()
@@ -87,7 +87,7 @@ namespace Unity.Behavior.Serialization.Json
             IEnumerator IEnumerable.GetEnumerator()
                 => new Enumerator(m_Container.GetEnumerator());
         }
-        
+
         public override PropertyCollection<SerializedArrayView> GetProperties()
             => PropertyCollection<SerializedArrayView>.Empty;
 
@@ -104,13 +104,13 @@ namespace Unity.Behavior.Serialization.Json
             {
                 i++;
 
-                if (i != index) 
+                if (i != index)
                     continue;
-                
-                property = new Property {m_Index = index, m_View = enumerator.Current};
+
+                property = new Property { m_Index = index, m_View = enumerator.Current };
                 return true;
             }
-            
+
             property = null;
             return false;
         }

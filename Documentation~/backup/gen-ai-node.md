@@ -30,12 +30,12 @@ To create an action using the generative artificial intelligence (AI) feature of
     The code displays a statutory legal message at the top indicating that Unity Behavior generative AI tool has generated the code.
 
     ![Legal message](Images/legal-comment.png)
-    
+
     The new node appears on the Unity Behavior graph editor.
 
     ![New node](Images/gen-ai-node.png)
 11. Place the node at the relevant position in the behavior graph by performing the following steps:
-    1. Click the node you want to move. 
+    1. Click the node you want to move.
     2. Drag the node to the relevant position in the behavior graph.
     3. Release the mouse button to drop the node into place.
 12. To link the variable to the link field, click the **link** icon in the new node and select the relevant variable from the list.

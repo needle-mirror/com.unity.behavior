@@ -11,7 +11,7 @@ namespace Unity.Behavior
     [Serializable, GeneratePropertyBag]
     [NodeDescription(
         name: "Restart",
-        description: "Restarts branch when assigned conditions are true.", 
+        description: "Restarts branch when assigned conditions are true.",
         category: "Flow/Abort",
         id: "4d0888f06af04abd987e4b7d61f72e36")]
     internal partial class RestartModifier : Modifier, IConditional
@@ -27,7 +27,7 @@ namespace Unity.Behavior
         protected override Status OnStart()
         {
             base.OnStart();
-            
+
             if (Child == null)
             {
                 return Status.Failure;
@@ -37,7 +37,7 @@ namespace Unity.Behavior
             {
                 condition.OnStart();
             }
-            
+
             Status status = StartNode(Child);
             if (status == Status.Success)
                 return Status.Success;
@@ -53,7 +53,7 @@ namespace Unity.Behavior
                 EndNodesAndRestart();
                 return Status.Running;
             }
-            // Check the child status 
+            // Check the child status
             Status status = Child.CurrentStatus;
             if (status == Status.Success)
                 return Status.Success;
@@ -67,7 +67,7 @@ namespace Unity.Behavior
         {
             Graph.EndNode(Child);
             Graph.StartNode(Child);
-            
+
             // Reset the conditions
             foreach (Condition condition in Conditions)
             {
@@ -79,7 +79,7 @@ namespace Unity.Behavior
         protected override void OnEnd()
         {
             base.OnEnd();
-            
+
             foreach (Condition condition in Conditions)
             {
                 condition.OnEnd();

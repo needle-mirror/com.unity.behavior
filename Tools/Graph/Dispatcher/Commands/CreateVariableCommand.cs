@@ -8,7 +8,7 @@ namespace Unity.Behavior.GraphFramework
         public bool ExactName { get; set; }
         public Type VariableType { get; }
         public object[] Args { get; }
-        
+
         public CreateVariableCommand(string name, Type variableType, params object[] args) : base(true)
         {
             Name = name;

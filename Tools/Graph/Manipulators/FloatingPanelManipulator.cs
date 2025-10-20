@@ -65,7 +65,7 @@ namespace Unity.Behavior.GraphFramework
         private void Move(PointerMoveEvent evt)
         {
             Vector3 pointerDelta = evt.position - PointerStartPosition;
-            
+
             Panel.transform.position = new Vector2((TargetStartPosition.x + pointerDelta.x), (TargetStartPosition.y + pointerDelta.y));
             Panel.ClampPositionWithinParent();
 
@@ -116,7 +116,7 @@ namespace Unity.Behavior.GraphFramework
             {
                 return;
             }
-            
+
             // Enable dragging only when the floating panel content element or the AppBar is being dragged.
             if (targetElement.name == "PanelContent" || targetElement is AppBar)
             {
@@ -133,62 +133,62 @@ namespace Unity.Behavior.GraphFramework
             {
                 return;
             }
-            
+
             Vector2 positionOffset = Vector2.zero;
             Vector2 sizeOffset = Vector2.zero;
 
             switch (m_Selected)
             {
                 case Selection.Upper:
-                {
-                    positionOffset.y += deltaFromStart.y;
-                    sizeOffset.y -= deltaFromStart.y;
-                    break;
-                }
+                    {
+                        positionOffset.y += deltaFromStart.y;
+                        sizeOffset.y -= deltaFromStart.y;
+                        break;
+                    }
                 case Selection.Right:
-                {
-                    sizeOffset.x += deltaFromStart.x;
-                    break;
-                }
+                    {
+                        sizeOffset.x += deltaFromStart.x;
+                        break;
+                    }
                 case Selection.Lower:
-                {
-                    sizeOffset.y += deltaFromStart.y;
-                    break;
-                }
+                    {
+                        sizeOffset.y += deltaFromStart.y;
+                        break;
+                    }
                 case Selection.Left:
-                {
-                    sizeOffset.x -= deltaFromStart.x;
-                    positionOffset.x += deltaFromStart.x;
-                    break;
-                }
+                    {
+                        sizeOffset.x -= deltaFromStart.x;
+                        positionOffset.x += deltaFromStart.x;
+                        break;
+                    }
                 case Selection.LowerRight:
-                {
-                    sizeOffset += deltaFromStart;
-                    break;
-                }
+                    {
+                        sizeOffset += deltaFromStart;
+                        break;
+                    }
                 case Selection.LowerLeft:
-                {
-                    sizeOffset.y += deltaFromStart.y;
-                    sizeOffset.x -= deltaFromStart.x;
-                    positionOffset.x += deltaFromStart.x;
-                    break;
-                }
+                    {
+                        sizeOffset.y += deltaFromStart.y;
+                        sizeOffset.x -= deltaFromStart.x;
+                        positionOffset.x += deltaFromStart.x;
+                        break;
+                    }
                 case Selection.UpperRight:
-                {
-                    sizeOffset.y -= deltaFromStart.y;
-                    sizeOffset.x += deltaFromStart.x;
-                    positionOffset.y += deltaFromStart.y;
-                    break;
-                }
+                    {
+                        sizeOffset.y -= deltaFromStart.y;
+                        sizeOffset.x += deltaFromStart.x;
+                        positionOffset.y += deltaFromStart.y;
+                        break;
+                    }
                 case Selection.UpperLeft:
-                {
-                    sizeOffset -= deltaFromStart;
-                    positionOffset = deltaFromStart;
-                    break;
-                }
+                    {
+                        sizeOffset -= deltaFromStart;
+                        positionOffset = deltaFromStart;
+                        break;
+                    }
             }
             Vector2 unclampedNewSize = PanelStartSize + sizeOffset;
-            
+
             // Clamp new calculated size between panel minimum width and height values.
             float largerWidth = Mathf.Max(unclampedNewSize.x, Panel.resolvedStyle.minWidth.value + k_ResizerSize * 2);
             float largerHeight = Mathf.Max(unclampedNewSize.y, Panel.resolvedStyle.minHeight.value + k_ResizerSize * 2 + Panel.Q<AppBar>().resolvedStyle.height);
@@ -206,7 +206,7 @@ namespace Unity.Behavior.GraphFramework
         private Selection GetPointerSelectionOnPanel(PointerDownEvent evt)
         {
             VisualElement targetElement = evt.target as VisualElement;
-            
+
             if (targetElement != null && targetElement.GetFirstAncestorOfType<FloatingPanel>() == Panel)
             {
                 return targetElement.name switch

@@ -92,6 +92,7 @@ namespace Unity.Behavior
                 if (info != null)
                 {
                     NodeTypeID = info.TypeID;
+                    Asset.SetAssetDirty(true);
                 }
             }
         }

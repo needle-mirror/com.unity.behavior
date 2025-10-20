@@ -21,9 +21,9 @@ To access the event nodes, select **Add** > **Events**. Unity Behavior provides 
 
 The **On Start** node is the entry point of a behavior graph. It activates immediately when the graph begins to run, specifically during the first update frame of BehaviorGraphAgent.
 
-You can have multiple **On Start** nodes in a single behavior graph to allow multiple branches to run in parallel. Each **On Start** node has a **Repeat** option to re-trigger the actions connected to the behavior graph multiple times. 
+You can have multiple **On Start** nodes in a single behavior graph to allow multiple branches to run in parallel. Each **On Start** node has a **Repeat** option to re-trigger the actions connected to the behavior graph multiple times.
 
-> [!NOTE]  
+> [!NOTE]
 > In Unity Behavior, running in parallel refers to running sequentially from left to right, rather than concurrently in a multithreaded manner.
 
 ## Send Event Message
@@ -38,7 +38,7 @@ An event channel is a [Scriptable Object](https://docs.unity3d.com/Manual/class-
 
 To use event nodes that send or receive event messages, such as [**Send Event Message**](#send-event-message), [**Start On Event Message**](#start-on-event-message), and [**Wait for Event Message**](#wait-for-event-message), you must create or select an event channel. This channel ensures these nodes can coordinate actions based on the event messages.
 
-For example, an agent spots an enemy and sends an `EnemySpotted` event using an event channel. Other parts of the graph that listen to the same channel can respond appropriately, such as start combat actions or alert allies. 
+For example, an agent spots an enemy and sends an `EnemySpotted` event using an event channel. Other parts of the graph that listen to the same channel can respond appropriately, such as start combat actions or alert allies.
 
 To create an event channel, follow these steps:
 
@@ -48,7 +48,7 @@ To create an event channel, follow these steps:
 
    * Select the link icon in the **Event Channel** field of the **Send Event Message** node and then select **Create Event Channel**.
 
-   * Select the **+** icon on the **Blackboard**, select **Events**, and then select **Create new event channel type**. 
+   * Select the **+** icon on the **Blackboard**, select **Events**, and then select **Create new event channel type**.
 
 1. In the **New Event Channel** window, enter the **Name** of the event channel. For example, `Enemy Detected`.
 

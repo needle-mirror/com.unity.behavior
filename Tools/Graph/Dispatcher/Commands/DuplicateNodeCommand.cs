@@ -6,7 +6,7 @@ namespace Unity.Behavior.GraphFramework
     internal class DuplicateNodeCommand : Command
     {
         public List<NodeModel> NodeModels { get; }
-        
+
         public Vector2 Position { get; protected set; }
 
         protected DuplicateNodeCommand(bool markUndo = true) : base(markUndo)

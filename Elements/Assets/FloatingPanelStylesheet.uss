@@ -173,7 +173,7 @@ FloatingPanel {
     cursor: resize-up-right;
 }
 
-.CollapsedPanel #UpperRight, .CollapsedPanel #UpperLeft, .CollapsedPanel #LowerLeft, 
+.CollapsedPanel #UpperRight, .CollapsedPanel #UpperLeft, .CollapsedPanel #LowerLeft,
 .CollapsedPanel #LowerRight, .CollapsedPanel #Lower, .CollapsedPanel #Upper {
     visibility: hidden;
 }

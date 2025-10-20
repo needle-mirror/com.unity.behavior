@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Unity.Behavior.GraphFramework;
 using Unity.Properties;
@@ -20,7 +20,7 @@ namespace Unity.Behavior
         /// The blackboard reference used for accessing variables.
         /// </summary>
         public BlackboardReference BlackboardReference => RootGraph?.BlackboardReference;
-        
+
         /// <summary>
         /// True if the graph is running, false otherwise.
         /// </summary>
@@ -35,11 +35,19 @@ namespace Unity.Behavior
         /// <summary>
         /// The primary entry point for the behaviour defined by the BehaviorAuthoringGraph.
         /// </summary>
-        [SerializeReference]
-        internal BehaviorGraphModule RootGraph;
+        internal BehaviorGraphModule RootGraph => Graphs.Count > 0 ? Graphs[0] : null;
 
-        [SerializeReference, DontCreateProperty]
+        [SerializeField, DontCreateProperty]
         internal BehaviorGraphDebugInfo m_DebugInfo;
+
+        [SerializeField]
+        private bool m_WasCompileWithPlaceholderNode = false;
+
+        internal bool CompiledWithPlaceholderNode
+        {
+            get => m_WasCompileWithPlaceholderNode;
+            set => m_WasCompileWithPlaceholderNode = value;
+        }
 
         /// <summary>
         /// Begins execution of the behavior graph.
@@ -86,6 +94,19 @@ namespace Unity.Behavior
             Start();
         }
 
+        /// <summary>
+        /// Determines whether this <see cref="BehaviorGraph"/> instance and the specified <paramref name="other"/> graph
+        /// originate from the same source asset.
+        /// </summary>
+        /// <param name="other">The other <see cref="BehaviorGraph"/> to compare against.</param>
+        /// <returns>True if both graphs have a valid graph module and their AuthoringAssetID values are equal;
+        /// False otherwise.</returns>
+        public bool HasSameSourceAssetAs(BehaviorGraph other)
+        {
+            bool areAssetValid = this.RootGraph != null && other != null && other.RootGraph != null;
+            return areAssetValid && this.RootGraph.AuthoringAssetID == other.RootGraph.AuthoringAssetID;
+        }
+
         internal void AssignGameObjectToGraphModules(GameObject gameObject)
         {
             if (RootGraph == null)
@@ -99,7 +120,7 @@ namespace Unity.Behavior
                 graphModule.GameObject = gameObject;
             }
         }
-        
+
         /// <summary>
         /// Raise OnRuntimeSerialize in each BehaviorGraphModule to notify nodes.
         /// </summary>
@@ -137,5 +158,63 @@ namespace Unity.Behavior
             }
 #endif
         }
+
+
+#if UNITY_EDITOR
+        internal bool ContainsPlaceholderNodes()
+        {
+            if (!UnityEditor.EditorUtility.IsPersistent(this))
+            {
+                return false;
+            }
+
+            bool foundPlaceholderNode = false;
+            foreach (var graphModule in Graphs)
+            {
+                if (graphModule == null)
+                {
+                    continue;
+                }
+
+                ValidateRuntimeNode(graphModule.Root, ref foundPlaceholderNode);
+            }
+
+            return foundPlaceholderNode;
+        }
+
+        private void ValidateRuntimeNode(Node node, ref bool foundPlaceholderNode)
+        {
+            if (node == null)
+            {
+                return;
+            }
+
+            switch (node)
+            {
+                case Action:
+                    break;
+                case Modifier modifier:
+                    ValidateRuntimeNode(modifier.Child, ref foundPlaceholderNode);
+                    break;
+                case Composite composite:
+                    for (int c = composite.Children.Count - 1; c >= 0 ; c--)
+                    {
+                        if (composite.Children[c] == null)
+                        {
+                            foundPlaceholderNode = true;
+                            return;
+                        }
+                        else
+                        {
+                            ValidateRuntimeNode(composite.Children[c], ref foundPlaceholderNode);
+                        }
+                    }
+                    break;
+                case Join join:
+                    ValidateRuntimeNode(join.Child, ref foundPlaceholderNode);
+                    break;
+            }
+        }
+#endif
     }
 }

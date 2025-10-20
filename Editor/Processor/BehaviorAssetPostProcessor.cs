@@ -20,7 +20,7 @@ namespace Unity.Behavior
         private const string k_UndoScheduledBoolName = "BehaviorAsset_UndoRedoScheduled";
         private const string k_GraphToRebuildSessioStateKey = "BehaviorAssetPostProcessor_GraphsToRebuild";
 
-        private static HashSet<BehaviorAuthoringGraph> s_GraphsToRebuild = new ();
+        private static HashSet<BehaviorAuthoringGraph> s_GraphsToRebuild = new();
         private static bool s_HasRebuildAssets = false;
         /// <summary>
         /// Set to true once user accepts undo redo during playmode. Last for a unique playmode session.
@@ -83,7 +83,6 @@ namespace Unity.Behavior
                     var graphBlackboard = graphAsset.Blackboard as BehaviorBlackboardAuthoringAsset;
                     if (graphBlackboard != null)
                     {
-                        graphBlackboard.BuildRuntimeBlackboard();
                         AssetDatabase.SaveAssetIfDirty(graphBlackboard);
                     }
                 }
@@ -176,10 +175,10 @@ namespace Unity.Behavior
                         continue;
                     }
 
-                    referencingGraph.OnValidate();
+                    referencingGraph.ValidateAsset();
                 }
 
-                s_HasRebuildAssets = false; 
+                s_HasRebuildAssets = false;
                 s_GraphsToRebuild.Clear();
 
                 // Save after validation to ensure parent graphs can access the latest version of subgraphs.
@@ -191,7 +190,9 @@ namespace Unity.Behavior
             }
 
             // Identify graph or blackboard assets that have been saved or reimported.
-            GatherAssetsToRebuild(importedAssets, ref s_GraphsToRebuild);
+            AssetLogger.CanLogMissingTypeInManagedRefErrorMessage = false;
+            ValidateAndGatherAssetsToRebuild(importedAssets, ref s_GraphsToRebuild);
+            AssetLogger.CanLogMissingTypeInManagedRefErrorMessage = true;
 
             if (EditorApplication.isCompiling)
             {
@@ -205,40 +206,90 @@ namespace Unity.Behavior
             RebuildBehaviorGraphAssets();
         }
 
-        public static bool GatherAssetsToRebuild(IReadOnlyList<string> paths, ref HashSet<BehaviorAuthoringGraph> assetsToRebuild)
+        public static bool ValidateAndGatherAssetsToRebuild(IReadOnlyList<string> paths, ref HashSet<BehaviorAuthoringGraph> assetsToRebuild)
         {
             if (paths.Count == 0)
             {
                 return false;
             }
-            
-            // Retrieve any blackboards.
-            var changedBlackboardAssets = new List<BehaviorBlackboardAuthoringAsset>(paths
+
+            // Retrieve all blackboards and graphs from the imported assets
+            var importedBlackboardAssets = new List<BehaviorBlackboardAuthoringAsset>(paths
                 .Where(path => AssetDatabase.GetMainAssetTypeAtPath(path) == typeof(BehaviorBlackboardAuthoringAsset))
                 .Select(path => AssetDatabase.LoadAssetAtPath<BehaviorBlackboardAuthoringAsset>(path)));
 
-            // Retrieve graphs that had outstanding change or was reverted.
-            var changedGraphAssets = new List<BehaviorAuthoringGraph>(paths
+            var importedGraphAssets = new List<BehaviorAuthoringGraph>(paths
                 .Where(path => AssetDatabase.GetMainAssetTypeAtPath(path) == typeof(BehaviorAuthoringGraph))
                 .Select(path => AssetDatabase.LoadAssetAtPath<BehaviorAuthoringGraph>(path)));
 
-            if (changedBlackboardAssets.Count == 0 && changedGraphAssets.Count == 0)
+            if (importedBlackboardAssets.Count == 0 && importedGraphAssets.Count == 0)
             {
                 return false;
             }
 
             int newAssetFound = 0;
+            HashSet<BehaviorBlackboardAuthoringAsset> changedBlackboardAssets = new();
 
-            // Everytime a new graph asset is created, this loop ensures it generates its runtime assets.
-            foreach (BehaviorAuthoringGraph changedGraph in changedGraphAssets)
+            foreach (var changedBlackboard in importedBlackboardAssets)
             {
-                if (!changedGraph.HasRuntimeGraph) 
+                // Blackboard assets are ScriptableObject and can't have a ScriptedImporter.
+                // We use AssetPostProcessor as entry-point instead and validate here just before batching any outstanding operation.
+                changedBlackboard.ValidateAsset();
+
+                // Ensure no blackboard window is open if there the asset is invalid.
+                if (CheckForSerializedReferenceWithMissingTypes<BehaviorBlackboardAuthoringAsset, BlackboardWindow>(changedBlackboard,
+                    (a, w) => { return w.Asset == a; }))
+                {
+                    continue;
+                }
+
+                // Rebuild runtime blackboard on the spot and add to list to check against graphs.
+                if (!changedBlackboard.IsAssetVersionUpToDate())
+                {
+                    changedBlackboard.BuildRuntimeBlackboard();
+                    changedBlackboardAssets.Add(changedBlackboard);
+                }
+            }
+
+            // Check graphs for placeholder before validation in order to get rid of serialized reference from runtime graph.
+            // If not done before, further validation will not be reached as deemed unsolvable with placeholder only.
+            BehaviorAuthoringGraph.CheckAndValidatePlaceholdersInGraphAssets(false);
+
+            foreach (BehaviorAuthoringGraph changedGraph in importedGraphAssets)
+            {
+                // Graph assets are ScriptableObject and can't have a ScriptedImporter.
+                // We use AssetPostProcessor as entry-point instead and validate here just before batching any outstanding operation.
+                changedGraph.ValidateAsset();
+
+                if (CheckForSerializedReferenceWithMissingTypes<BehaviorAuthoringGraph, BehaviorWindow>(changedGraph,
+                    (a, w) => { return w.Asset == a; }))
+                {
+                    continue;
+                }
+
+                // Ensures a new graph asset generates its runtime asset.
+                if (!changedGraph.HasRuntimeGraph)
                 {
 #if BEHAVIOR_DEBUG_ASSET_IMPORT
                     Debug.Log($"Graph {changedGraph.name} is missing a runtime graph. Rebuilding.", changedGraph);
 #endif
                     newAssetFound++;
                     assetsToRebuild.Add(changedGraph);
+                    continue;
+                }
+
+                // Ensures a dirty graph asset with outstanding changed rebuild its runtime asset.
+                if (changedGraph.NeedRebuild)
+                {
+                    newAssetFound++;
+                    assetsToRebuild.Add(changedGraph);
+                    continue;
+                }
+
+                // If no oustanding change, just write the changes to the disk.
+                if (EditorUtility.IsDirty(changedGraph))
+                {
+                    AssetDatabase.SaveAssetIfDirty(changedGraph);
                 }
             }
 
@@ -261,7 +312,7 @@ namespace Unity.Behavior
                     }
                 }
 
-                foreach (BehaviorAuthoringGraph changedGraph in changedGraphAssets)
+                foreach (BehaviorAuthoringGraph changedGraph in importedGraphAssets)
                 {
                     if (ReferenceEquals(asset, changedGraph))
                     {
@@ -292,6 +343,29 @@ namespace Unity.Behavior
             }
 
             return newAssetFound > 0;
+        }
+
+        // Returns true if asset has missing types.
+        private static bool CheckForSerializedReferenceWithMissingTypes<AssetType, AssetEditorType>(AssetType asset, System.Func<AssetType, AssetEditorType, bool> predicate)
+            where AssetType : ScriptableObject, ISerializationValidator
+            where AssetEditorType : EditorWindow
+        {
+            if (asset.ContainsInvalidSerializedReferences())
+            {
+                var window = Resources.FindObjectsOfTypeAll<AssetEditorType>()
+                    .Where((w) => predicate(asset, w))
+                    .FirstOrDefault();
+
+                if (window)
+                {
+                    ErrorMessages.DisplayWindowClosingDialog(asset);
+                    window.Close();
+                }
+
+                return true;
+            }
+
+            return false;
         }
 
         private static void RebuildBehaviorGraphAssets()
@@ -365,7 +439,9 @@ namespace Unity.Behavior
 #if BEHAVIOR_DEBUG_ASSET_IMPORT
             Debug.Log($"Retrieved {paths.Length} pending graph(s) post domain reload.");
 #endif
-            GatherAssetsToRebuild(paths, ref s_GraphsToRebuild);
+            AssetLogger.CanLogMissingTypeInManagedRefErrorMessage = false;
+            ValidateAndGatherAssetsToRebuild(paths, ref s_GraphsToRebuild);
+            AssetLogger.CanLogMissingTypeInManagedRefErrorMessage = true;
             RebuildBehaviorGraphAssets();
         }
     }

@@ -15,13 +15,13 @@ namespace Unity.Behavior.GraphFramework
         private Icon m_Icon;
 
         public ListView Variables => m_VariableListView;
-        
-        public string Name 
+
+        public string Name
         {
             get => m_NameLabel.text;
             set => m_NameLabel.text = value;
         }
-        
+
         public BlackboardAssetElement(BlackboardAsset asset) : this()
         {
             m_Asset = asset;
@@ -45,7 +45,7 @@ namespace Unity.Behavior.GraphFramework
                 }
                 else
                 {
-                    Expand();  
+                    Expand();
                 }
             };
             m_Icon = this.Q<Icon>("BlackboardAssetIcon");
@@ -54,7 +54,7 @@ namespace Unity.Behavior.GraphFramework
             {
                 BlackboardWindowDelegate.Open(m_Asset as BehaviorBlackboardAuthoringAsset);
             };
-            
+
             m_VariableListView.horizontalScrollingEnabled = false;
             m_VariableListView.virtualizationMethod = CollectionVirtualizationMethod.DynamicHeight;
 #if UNITY_2023_2_OR_NEWER
@@ -72,14 +72,14 @@ namespace Unity.Behavior.GraphFramework
 
         private void Collapse()
         {
-            RemoveFromClassList("AssetExpanded");  
+            RemoveFromClassList("AssetExpanded");
             AddToClassList("AssetCollapsed");
         }
 
         private void Expand()
         {
-            RemoveFromClassList("AssetCollapsed");  
-            AddToClassList("AssetExpanded");   
+            RemoveFromClassList("AssetCollapsed");
+            AddToClassList("AssetExpanded");
         }
     }
 }

@@ -8,9 +8,9 @@ namespace Unity.Behavior.Serialization.Json
     {
         void IJsonAdapter<DirectoryInfo>.Serialize(in JsonSerializationContext<DirectoryInfo> context, DirectoryInfo value)
         {
-            if (null == value) 
+            if (null == value)
                 context.Writer.WriteNull();
-            else 
+            else
                 context.Writer.WriteValue(value.GetRelativePath());
         }
 
@@ -21,9 +21,9 @@ namespace Unity.Behavior.Serialization.Json
 
         void IJsonAdapter<FileInfo>.Serialize(in JsonSerializationContext<FileInfo> context, FileInfo value)
         {
-            if (null == value) 
+            if (null == value)
                 context.Writer.WriteNull();
-            else 
+            else
                 context.Writer.WriteValue(value.GetRelativePath());
         }
 

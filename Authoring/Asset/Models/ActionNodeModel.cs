@@ -18,7 +18,7 @@ namespace Unity.Behavior
         public override void OnValidate()
         {
             base.OnValidate();
-            
+
             NodeInfo nodeInfo = NodeRegistry.GetInfoFromTypeID(NodeTypeID);
             if (nodeInfo == null)
             {
@@ -40,7 +40,7 @@ namespace Unity.Behavior
                 }
             }
         }
-        
+
         private void FixNodeFields(MemberInfo[] fields)
         {
             // Cache the old fields.
@@ -60,9 +60,9 @@ namespace Unity.Behavior
                     fieldValues.Add(oldField);
                     continue;
                 }
-                
+
                 // If the field is a blackboard variable, create an associated field model.
-                Type variableFieldType = GetTypeFromMemberInfo(memberInfo); 
+                Type variableFieldType = GetTypeFromMemberInfo(memberInfo);
                 if (variableFieldType.IsGenericType && variableFieldType.GetGenericTypeDefinition() == typeof(BlackboardVariable<>))
                 {
                     fieldValues.Add(GetOrCreateField(memberInfo.Name, variableFieldType.GetGenericArguments()[0]));
@@ -70,7 +70,7 @@ namespace Unity.Behavior
             }
             m_FieldValues = fieldValues;
         }
-        
+
         private static Type GetTypeFromMemberInfo(MemberInfo member)
         {
             switch (member)
@@ -82,7 +82,7 @@ namespace Unity.Behavior
             }
             throw new Exception("Invalid MemberInfo");
         }
-        
+
         private static MemberInfo[] GetFieldsAndProperties(Type actionType)
         {
             var bindingFlags = BindingFlags.Instance | BindingFlags.Public;

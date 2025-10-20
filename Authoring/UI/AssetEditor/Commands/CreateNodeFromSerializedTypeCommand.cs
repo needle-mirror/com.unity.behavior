@@ -9,7 +9,7 @@ namespace Unity.Behavior
     {
         public string NodeTypeName;
         public Vector2 Position;
-        
+
         public CreateNodeFromSerializedTypeCommand(string nodeTypeName, Vector2 position, bool markUndo) : base(markUndo)
         {
             NodeTypeName = nodeTypeName;

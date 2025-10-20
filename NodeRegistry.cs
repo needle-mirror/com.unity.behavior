@@ -30,7 +30,8 @@ namespace Unity.Behavior.GraphFramework
                 {
                     return typeof(EnumVariableElement);
                 }
-                if (typeof(UnityEngine.Object).IsAssignableFrom(genericArgs[0])) {
+                if (typeof(UnityEngine.Object).IsAssignableFrom(genericArgs[0]))
+                {
                     return typeof(ObjectVariableElement);
                 }
             }
@@ -49,12 +50,12 @@ namespace Unity.Behavior.GraphFramework
         Dictionary<Type, Type> m_VariableModelTypeToUIType = new Dictionary<Type, Type>();
         Dictionary<Type, Type> m_UITypeToVariableModelType = new Dictionary<Type, Type>();
 
-        internal bool m_Initialized => m_UITypeToNodeModelType.Count != 0;  
+        internal bool m_Initialized => m_UITypeToNodeModelType.Count != 0;
 
         NodeRegistry()
         {
             if (m_Instance == null)
-            {            
+            {
                 m_Instance = this;
                 Init();
             }
@@ -106,7 +107,7 @@ namespace Unity.Behavior.GraphFramework
             {
                 IEnumerable<AttributeType> attributes = uiType.GetCustomAttributes<AttributeType>();
                 if (attributes == null || attributes.Count() == 0)
-                { 
+                {
                     continue;
                 }
 

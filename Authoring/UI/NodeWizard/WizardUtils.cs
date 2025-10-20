@@ -28,7 +28,7 @@ namespace Unity.Behavior
 
             return modal;
         }
-        
+
         internal static string GetCategoryFieldValue(TextField categoryField, Dropdown categoryDropdown)
         {
             if (categoryField.style.display == DisplayStyle.None && !categoryDropdown.value.Any())

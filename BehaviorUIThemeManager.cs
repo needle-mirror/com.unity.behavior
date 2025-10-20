@@ -10,14 +10,10 @@ using UnityEditor;
 namespace Unity.Behavior.GraphFramework
 {
 
-#if UNITY_EDITOR
     [InitializeOnLoad]
-#endif
     internal static class BehaviorUIThemeManager
     {
-#if UNITY_EDITOR
         private static bool s_LastKnownThemeIsDark;
-#endif
         private static string lastKnownThemeKey = "lastKnownThemeKey";
         private const string DarkThemeStylesheetPath = "Packages/com.unity.behavior/Elements/Assets/BehaviorUIStylesheet_Dark.uss";
         private const string LightThemeStylesheetPath = "Packages/com.unity.behavior/Elements/Assets/BehaviorUIStylesheet_Light.uss";
@@ -29,24 +25,18 @@ namespace Unity.Behavior.GraphFramework
         // Track registered elements with weak references to avoid memory leaks
         private static readonly List<WeakReference<VisualElement>> s_RegisteredElements = new List<WeakReference<VisualElement>>();
 
-#if UNITY_EDITOR
         public static bool IsDarkTheme => EditorGUIUtility.isProSkin;
-#else
-        public static bool IsDarkTheme => true;
-#endif
         public static event System.Action ThemeChanged;
 
         static BehaviorUIThemeManager()
         {
-#if UNITY_EDITOR
             s_LastKnownThemeIsDark = SessionState.GetBool(lastKnownThemeKey, IsDarkTheme);
             if (s_LastKnownThemeIsDark == IsDarkTheme)
             {
                 SessionState.SetBool(lastKnownThemeKey, IsDarkTheme);
             }
- 
+
             EditorApplication.update += CheckThemeChange;
-#endif
             // Preload the stylesheets
             LoadStyleSheets();
         }
@@ -132,7 +122,6 @@ namespace Unity.Behavior.GraphFramework
             element.styleSheets.Add(GetThemeStyleSheet());
         }
 
-#if UNITY_EDITOR
         private static void CheckThemeChange()
         {
             if (s_LastKnownThemeIsDark != IsDarkTheme)
@@ -147,7 +136,6 @@ namespace Unity.Behavior.GraphFramework
                 ThemeChanged?.Invoke();
             }
         }
-#endif
 
         private static void UpdateAllRegisteredElements()
         {

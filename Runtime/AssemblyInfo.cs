@@ -9,4 +9,4 @@ using Unity.Properties;
 [assembly: InternalsVisibleTo("Unity.Behavior.Tests.Performance")]
 [assembly: InternalsVisibleTo("Unity.Ontology.Runtime")]
 [assembly: InternalsVisibleTo("Unity.Behavior.Serialization.Tests")]
-[assembly:GeneratePropertyBagsForAssembly]
+[assembly: GeneratePropertyBagsForAssembly]

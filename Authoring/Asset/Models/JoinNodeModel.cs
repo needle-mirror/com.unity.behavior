@@ -1,4 +1,4 @@
-﻿namespace Unity.Behavior
+namespace Unity.Behavior
 {
     [NodeModelInfo(typeof(WaitForAnyComposite))]
     [NodeModelInfo(typeof(WaitForAllComposite))]
@@ -7,7 +7,7 @@
         public override int MaxInputsAccepted => int.MaxValue;
 
         public JoinNodeModel(NodeInfo nodeInfo) : base(nodeInfo) { }
-        
+
         protected JoinNodeModel(JoinNodeModel nodeModelOriginal, BehaviorAuthoringGraph asset) : base(nodeModelOriginal, asset)
         {
         }

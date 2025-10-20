@@ -4,7 +4,7 @@ uid: serialize-scripts
 
 # Script and serialization architecture
 
-In the **Runtime Serialization** sample, the serialization system consists of scene scripts and data classes. 
+In the **Runtime Serialization** sample, the serialization system consists of scene scripts and data classes.
 
 Use this section to do the following:
 

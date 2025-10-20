@@ -9,9 +9,9 @@ namespace Unity.Behavior
     internal static class StoryElementUtility
     {
         internal delegate BaseLinkField OnCreateLinkField(string name, SerializableType type);
-        
+
         internal delegate ComparisonConditionElement OnCreateComparisonElement(string name, ComparisonType comparisonEnum);
-        
+
         internal static void CreateStoryElement(string story, List<VariableInfo> variables, VisualElement element, OnCreateLinkField onCreateLinkField, OnCreateComparisonElement comparisonElementCallback = null)
         {
             string[] words = story.Split(' ');
@@ -58,7 +58,7 @@ namespace Unity.Behavior
                     continue;
                 }
                 // If the comparison element has been defined as a blackboard variable comparison, link the variable fields.
-                LinkComparisonElementFields(comparisonElement, element);   
+                LinkComparisonElementFields(comparisonElement, element);
             }
 
             if (currentLabel.Length != 0)
@@ -104,7 +104,7 @@ namespace Unity.Behavior
                 }
             }
         }
-        
+
         internal static void LinkComparisonElementFields(ComparisonConditionElement comparisonElement, VisualElement element)
         {
             BaseLinkField variableField = null;
@@ -116,14 +116,14 @@ namespace Unity.Behavior
                 {
                     variableField = field;
                     variableField.FieldName = field.FieldName;
-                }   
+                }
                 else if (field.FieldName == comparisonElement.Attribute.ComparisonValue)
                 {
                     valueField = field;
                     valueField.FieldName = field.FieldName;
                 }
             }
-            
+
             // If the left operand is defined as a Blackboard variable
             if (variableField != null)
             {
@@ -142,12 +142,12 @@ namespace Unity.Behavior
             // If the variable link is changed
             if (variableField != null)
             {
-                variableField.OnLinkChanged += _ =>
+                variableField.OnLinkChanged += (_, _) =>
                 {
                     RefreshVariableLinkField(variableField, comparisonElement.ConditionModel);
                     comparisonElement.RefreshOperatorsFromVariable(variableField);
                     RefreshComparisonValueLinkField(valueField, variableField, comparisonElement);
-                    
+
                     // Ensure that the NodeUI is being updated on link change.
                     BehaviorNodeUI nodeUI = comparisonElement.GetFirstAncestorOfType<BehaviorNodeUI>();
                     nodeUI?.UpdateLinkFields();
@@ -165,7 +165,7 @@ namespace Unity.Behavior
                 fieldModel.LocalValue = BlackboardVariable.CreateForType(typeof(object));
                 return;
             }
-            
+
             variableField.LinkVariableType = assignedVariable.Type;
             fieldModel.LocalValue = BlackboardVariable.CreateForType(assignedVariable.Type);
         }
@@ -176,7 +176,7 @@ namespace Unity.Behavior
             {
                 return;
             }
-            
+
             string fieldName = valueField.FieldName;
             VisualElement parentElement = valueField.parent;
             valueField.RemoveFromHierarchy();
@@ -193,8 +193,8 @@ namespace Unity.Behavior
                 {
                     var variableType = variableField.LinkedVariable.Type;
                     valueField = LinkFieldUtility.CreateConditionLinkField(fieldName, variableType, comparisonElement.ConditionModel);
-                
-                    // With the new field created, we need to update the field model's local value type. 
+
+                    // With the new field created, we need to update the field model's local value type.
                     if (!comparisonElement.ConditionModel.HasField(fieldName, variableType))
                     {
                         // Remove the field if it exists but has a different type.
@@ -202,7 +202,7 @@ namespace Unity.Behavior
                         // Add the new field
                         comparisonElement.ConditionModel.GetOrCreateField(fieldName, variableType);
                     }
-                }   
+                }
             }
 
             valueField.FieldName = fieldName;

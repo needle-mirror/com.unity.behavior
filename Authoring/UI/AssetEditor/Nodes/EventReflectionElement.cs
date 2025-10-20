@@ -201,7 +201,7 @@ namespace Unity.Behavior
         private void PopulateAssignFields(string message, Type[] eventMessageTypes)
         {
             ClearAssignFields();
-            
+
             int messageFieldIndex = 0;
             string[] messageWords = message.Split(" ");
             for (int i = 0; i < messageWords.Length; ++i)

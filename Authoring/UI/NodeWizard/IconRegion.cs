@@ -1,4 +1,4 @@
-﻿#if UNITY_EDITOR
+#if UNITY_EDITOR
 using System;
 using System.IO;
 using UnityEditor;
@@ -13,34 +13,34 @@ namespace Unity.Behavior
     {
         private const string k_ResourceFolder = "Resources/";
         private const string k_IconHelpText = "You can set an icon for your node. The file needs to be under a \"Resources\" folder to be displayed correctly.";
-        
+
         internal string IconPath { get; set; }
         internal ObjectField IconField => m_IconField;
-        
+
         private readonly ObjectField m_IconField;
         private readonly HelpBox m_IconHelpBox;
 
         internal System.Action OnIconFieldChangedCallback;
-        
+
         internal IconRegion()
         {
             ResourceLoadAPI.Load<VisualTreeAsset>("Packages/com.unity.behavior/Authoring/UI/NodeWizard/Assets/IconRegionLayout.uxml").CloneTree(this);
-            
+
             m_IconField = this.Q<ObjectField>("IconField");
             m_IconField.objectType = typeof(Texture2D);
             m_IconField.RegisterValueChangedCallback(OnIconFieldChanged);
-            
+
             m_IconHelpBox = this.Q<HelpBox>("IconHelpBox");
             m_IconHelpBox.text = k_IconHelpText;
         }
-        
+
         private void OnIconFieldChanged(ChangeEvent<UnityEngine.Object> changeEvent)
         {
             string currentPath = AssetDatabase.GetAssetPath(changeEvent.newValue);
             IconPath = IsFilePathValid(currentPath) ? GetIconFilePath(currentPath) : "";
             OnIconFieldChangedCallback?.Invoke();
         }
-        
+
         internal static string GetIconFilePath(string path)
         {
             if (string.IsNullOrWhiteSpace(path))
@@ -50,7 +50,7 @@ namespace Unity.Behavior
             int startIndex = path.LastIndexOf(k_ResourceFolder, StringComparison.Ordinal) + k_ResourceFolder.Length;
             return Path.ChangeExtension(path[startIndex..], null);
         }
-        
+
         private bool IsFilePathValid(string path)
         {
             // if the path is empty, we consider it "valid", but we need to remove possible warning text
@@ -72,7 +72,7 @@ namespace Unity.Behavior
                 m_IconHelpBox.messageType = HelpBoxMessageType.Warning;
                 return false;
             }
-            
+
             m_IconHelpBox.text = k_IconHelpText;
             m_IconHelpBox.messageType = HelpBoxMessageType.None;
 

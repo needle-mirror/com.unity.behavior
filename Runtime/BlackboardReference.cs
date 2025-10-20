@@ -12,13 +12,13 @@ namespace Unity.Behavior
     {
         [SerializeReference]
         private Blackboard m_Blackboard = new Blackboard();
-        
+
         /// <summary>
         /// An instantiated copy of the Blackboard asset to be used.
         /// </summary>
         public Blackboard Blackboard => m_Blackboard;
-        
-        [SerializeReference]
+
+        [SerializeField]
         private RuntimeBlackboardAsset m_Source;
 
         internal RuntimeBlackboardAsset SourceBlackboardAsset
@@ -29,16 +29,16 @@ namespace Unity.Behavior
                 m_Source = value;
                 if (value != null)
                 {
-                    m_Blackboard.GenerateInstanceData(value.Blackboard, SourceBlackboardAsset);   
+                    m_Blackboard.GenerateInstanceData(value.Blackboard, SourceBlackboardAsset);
                 }
             }
         }
-        
+
         /// <summary>
         /// Adds a variable of a given type and value to the blackboard. A variable will only be added if one with the
         /// same name does not already exist within the blackboard's variables.
         /// </summary>
-        /// <param name="name">The name of the variable</param> 
+        /// <param name="name">The name of the variable</param>
         /// <param name="value">The value to assign to be assigned to the variable</param>
         /// <typeparam name="TValue">The type of value stored by the variable</typeparam>
         /// <returns>Returns true if the variable is added and false if a matching variable already exists.</returns>
@@ -47,12 +47,12 @@ namespace Unity.Behavior
             var wasSuccessful = Blackboard.AddVariable(name, value);
             return wasSuccessful;
         }
-        
+
         /// <summary>
         /// Gets a variable associated with the specified name and value type. For values of type subclassed from
         /// UnityEngine.Object, use the non-generic method.
         /// </summary>
-        /// <param name="name">The name of the variable</param> 
+        /// <param name="name">The name of the variable</param>
         /// <param name="variable">The blackboard variable matching the name and value type</param>
         /// <typeparam name="TValue">The type of value stored by the variable</typeparam>
         /// <returns>Returns true if a variable matching the name and type is found. Returns false otherwise.</returns>
@@ -61,11 +61,11 @@ namespace Unity.Behavior
             var wasSuccessful = Blackboard.GetVariable(name, out variable);
             return wasSuccessful;
         }
-        
+
         /// <summary>
         /// Gets the variable associated with the specified name.
         /// </summary>
-        /// <param name="name">The name of the variable</param> 
+        /// <param name="name">The name of the variable</param>
         /// <param name="variable">Contains the value associated with the specified name, if the named variable is found;
         /// otherwise, the default value is assigned.</param>
         /// <returns>Returns true if a variable matching the name and type is found. Returns false otherwise.</returns>
@@ -78,7 +78,7 @@ namespace Unity.Behavior
         /// <summary>
         /// Tries to get the variable's value associated with the specified name.
         /// </summary>
-        /// <param name="name">The name of the variable</param> 
+        /// <param name="name">The name of the variable</param>
         /// <param name="value">The value associated with the specified name, if the named variable is found;
         /// otherwise, the default value is assigned.</param>
         /// <typeparam name="TValue">The type of value stored by the variable</typeparam>
@@ -103,9 +103,9 @@ namespace Unity.Behavior
         }
 
         /// <summary>
-        /// Gets the ID of the variable associated with the specified name. 
+        /// Gets the ID of the variable associated with the specified name.
         /// </summary>
-        /// <param name="name">The name of the variable</param> 
+        /// <param name="name">The name of the variable</param>
         /// <param name="id">Contains the ID associated with the specified name, if the named variable is found;
         /// otherwise, the default value is assigned.</param>
         /// <returns>Returns true if a variable matching the name and type is found. Returns false otherwise.</returns>
@@ -126,7 +126,7 @@ namespace Unity.Behavior
             var wasSuccessful = Blackboard.GetVariable(guid, out variable);
             return wasSuccessful;
         }
-        
+
         /// <summary>
         /// Gets a variable associated with the specified GUID and value type.
         /// </summary>
@@ -139,7 +139,7 @@ namespace Unity.Behavior
             var wasSuccessful = Blackboard.GetVariable(guid, out variable);
             return wasSuccessful;
         }
-        
+
         /// <summary>
         /// Sets the value of the variable associated with the specified GUID.
         /// </summary>

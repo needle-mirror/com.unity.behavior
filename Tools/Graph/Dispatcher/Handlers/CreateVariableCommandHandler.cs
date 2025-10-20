@@ -8,7 +8,7 @@ internal class CreateVariableCommandHandler : CommandHandler<CreateVariableComma
         CreateBlackboardVariable(command.VariableType, command.Name, command.ExactName, command.Args);
         return true;
     }
-    
+
     private void CreateBlackboardVariable(Type type, string name, bool exactName, params object[] args)
     {
         VariableModel variable = Activator.CreateInstance(type, args) as VariableModel;

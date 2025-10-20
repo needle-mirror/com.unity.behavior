@@ -1,4 +1,4 @@
-﻿using Unity.Behavior.GraphFramework;
+using Unity.Behavior.GraphFramework;
 
 namespace Unity.Behavior
 {
@@ -11,7 +11,7 @@ namespace Unity.Behavior
 
             NodeModel branchNode = Asset.CreateNode(command.InsertedNodeTypeInfo.ModelType, command.Position,
                 null, new object[] { command.InsertedNodeTypeInfo });
-            
+
             // Connect new node input port to connected output ports.
             if (branchNode.TryDefaultInputPortModel(out PortModel branchNodeInputPort))
             {
@@ -20,7 +20,7 @@ namespace Unity.Behavior
                     Asset.ConnectEdge(connectToOutputPort, branchNodeInputPort);
                 }
             }
-            
+
             // Connect new node output port to connected input ports.
             if (branchNode.TryDefaultOutputPortModel(out PortModel branchNodeOutputPort))
             {
@@ -29,7 +29,7 @@ namespace Unity.Behavior
                     Asset.ConnectEdge(branchNodeOutputPort, inputPort);
                 }
             }
-            
+
             return true;
         }
     }

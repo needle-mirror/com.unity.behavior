@@ -15,7 +15,7 @@ namespace Unity.Behavior
         [SerializeField] internal SerializableType SerializableType;
         [SerializeField] internal SerializableGUID TypeID;
         [SerializeField] internal SerializableType ModelType;
-        
+
         [SerializeField] internal string Name;
         [SerializeField] internal string Description;
         [SerializeField] internal Texture2D Icon;
@@ -28,7 +28,7 @@ namespace Unity.Behavior
         internal string Story => StoryInfo.Story;
         internal List<VariableInfo> Variables => StoryInfo.Variables;
     }
-    
+
     [Serializable]
     internal class StoryInfo
     {
@@ -38,14 +38,26 @@ namespace Unity.Behavior
     }
 
     [Serializable]
-    internal class VariableInfo
+    internal class VariableInfo : IEquatable<VariableInfo>
     {
         public string Name;
         public SerializableType Type;
         public object DefaultValue;
         public string Tooltip;
+
+        public bool Equals(VariableInfo other)
+        {
+            if (other is null)
+                return false;
+
+            if (ReferenceEquals(this, other))
+                return true;
+
+            return string.Equals(Name, other.Name) &&
+                   Equals(Type, other.Type);
+        }
     }
-    
+
     [Serializable]
     internal class ConditionInfo
     {
@@ -65,16 +77,16 @@ namespace Unity.Behavior
     {
         private static NodeRegistry m_Instance;
         internal static NodeRegistry Instance => m_Instance ??= new NodeRegistry();
-        
+
         private List<NodeInfo> m_NodeInfos = new List<NodeInfo>();
         internal static List<NodeInfo> NodeInfos => Instance.m_NodeInfos;
-        
+
         internal Dictionary<Type, NodeInfo> m_TypeToNodeInfo = new Dictionary<Type, NodeInfo>();
         internal Dictionary<SerializableGUID, NodeInfo> m_TypeIDToNodeInfo = new Dictionary<SerializableGUID, NodeInfo>();
         internal Dictionary<SerializableGUID, ConditionInfo> m_TypeIDToConditionInfo = new Dictionary<SerializableGUID, ConditionInfo>();
         internal Dictionary<Type, Type> m_RuntimeNodeTypeToNodeModelType = new Dictionary<Type, Type>();
         public HashSet<string> NodeCategories { get; private set; } = new HashSet<string>();
-        
+
         NodeRegistry()
         {
             Init();
@@ -96,7 +108,7 @@ namespace Unity.Behavior
         }
 
         void Init()
-        { 
+        {
             m_TypeToNodeInfo.Clear();
             m_TypeIDToNodeInfo.Clear();
             m_TypeIDToConditionInfo.Clear();
@@ -145,13 +157,13 @@ namespace Unity.Behavior
             Instance.m_TypeIDToNodeInfo.TryGetValue(typeID, out NodeInfo info);
             return info;
         }
-        
+
         public static ConditionInfo GetConditionInfoFromTypeID(SerializableGUID typeID)
         {
             Instance.m_TypeIDToConditionInfo.TryGetValue(typeID, out ConditionInfo info);
             return info;
         }
-        
+
         private void PopulateConditionTypeInfo()
         {
             IEnumerable<Type> typeList = ConditionUtility.GetConditionTypes();
@@ -174,7 +186,7 @@ namespace Unity.Behavior
                 }
             }
         }
-        
+
         private void PopulateTypeInfo()
         {
 #if UNITY_EDITOR
@@ -214,8 +226,8 @@ namespace Unity.Behavior
                             }
                         }
                         else if (type.IsSubclassOf(typeof(Composite)))
-                        { 
-                            if (type == typeof(SwitchComposite)) 
+                        {
+                            if (type == typeof(SwitchComposite))
                             {
                                 modelType = typeof(SwitchNodeModel);
                             }
@@ -233,7 +245,7 @@ namespace Unity.Behavior
                             modelType = typeof(ModifierNodeModel);
                         }
                     }
-                    
+
                     var info = new NodeInfo
                     {
                         SerializableType = new SerializableType(type),
@@ -246,7 +258,7 @@ namespace Unity.Behavior
                         FilePath = attribute.FilePath,
                         HideInSearch = attribute.HideInSearch,
                         NamedChildren = GetNamesOfChildren(type).ToList(),
-                        StoryInfo = new StoryInfo { Story = attribute.Story, Variables = GetNodeVariables(type), StoryVariableNames = GetStoryVariableNames(attribute.Story)},
+                        StoryInfo = new StoryInfo { Story = attribute.Story, Variables = GetNodeVariables(type), StoryVariableNames = GetStoryVariableNames(attribute.Story) },
                     };
 
                     if (info.Category.Length > 0)
@@ -284,10 +296,10 @@ namespace Unity.Behavior
             {
                 if (typeof(BlackboardVariable).IsAssignableFrom(property.PropertyType))
                 {
-                    variables.Add(new VariableInfo { Name = property.Name, Type = property.PropertyType, DefaultValue = property.GetValue(objInstance), Tooltip = GetVariableTooltip(property) } );
+                    variables.Add(new VariableInfo { Name = property.Name, Type = property.PropertyType, DefaultValue = property.GetValue(objInstance), Tooltip = GetVariableTooltip(property) });
                 }
             }
-            
+
             FieldInfo[] fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public);
             foreach (FieldInfo field in fields)
             {
@@ -299,12 +311,12 @@ namespace Unity.Behavior
                     }
 
                     Type invalidType = null;
-                    if (!IsBlackboardVariableTypeValid(field, ref invalidType)) 
+                    if (!IsBlackboardVariableTypeValid(field, ref invalidType))
                     {
                         Debug.LogWarning("Invalid generic type for field " + field.Name + " of type " + invalidType + " on " + type.FullName + ". BlackboardVariable types must derive from UnityEngine.Object.");
                     }
-                    
-                    variables.Add(new VariableInfo { Name = field.Name, Type = field.FieldType, DefaultValue = field.GetValue(objInstance), Tooltip = GetVariableTooltip(field) } );
+
+                    variables.Add(new VariableInfo { Name = field.Name, Type = field.FieldType, DefaultValue = field.GetValue(objInstance), Tooltip = GetVariableTooltip(field) });
                 }
                 else if (field.FieldType == typeof(Node) && type.IsSubclassOf(typeof(Composite)))
                 {
@@ -313,7 +325,7 @@ namespace Unity.Behavior
                         Debug.LogWarning("SerializeReference attribute missing from field " + field.Name + " on type " + type.Name);
                     }
                 }
-                
+
             }
             return variables;
         }
@@ -337,39 +349,39 @@ namespace Unity.Behavior
         {
             Type underlyingSystemType = field.FieldType.UnderlyingSystemType;
 
-            if (!underlyingSystemType.IsGenericType) 
-            { 
+            if (!underlyingSystemType.IsGenericType)
+            {
                 return true;
             }
 
-            bool allArgumentsValid = true; 
-  
+            bool allArgumentsValid = true;
+
             foreach (Type type in underlyingSystemType.GenericTypeArguments)
             {
                 bool isObject = type.IsSubclassOf(typeof(UnityEngine.Object));
                 bool isPrimitive = type.IsPrimitive;
                 bool isEnum = type.IsEnum;
                 bool isStatic = Util.GetSupportedTypes().Contains(type);
-                    
-                if (!isObject && 
+
+                if (!isObject &&
                     !isPrimitive &&
                     !isEnum &&
                     !isStatic)
                 {
                     invalidType = type;
-                    allArgumentsValid = false; 
+                    allArgumentsValid = false;
                     break;
                 }
             }
 
             return allArgumentsValid;
-        } 
-        
+        }
+
         internal static List<string> GetStoryVariableNames(string story)
         {
             List<string> splits = story.Split(' ').ToList();
             List<string> storyVariables = new List<string>();
-                    
+
             foreach (string split in splits)
             {
                 if (split.StartsWith("[") && split.EndsWith("]"))

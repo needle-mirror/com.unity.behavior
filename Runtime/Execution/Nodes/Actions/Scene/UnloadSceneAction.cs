@@ -18,7 +18,7 @@ namespace Unity.Behavior
             "\nIf only the Scene name is given this will unload the first Scene in the list that matches.")]
         [SerializeReference] public BlackboardVariable<string> SceneName;
         [SerializeReference] public BlackboardVariable<UnloadSceneOptions> UnloadOptions;
-        
+
         [CreateProperty] private bool m_PendingOperation;
         private AsyncOperation m_AsyncOperation;
 

@@ -12,10 +12,10 @@ internal class AddConditionFromSerializedTypeCommandHandler : CommandHandler<Add
             .GetAssemblies()
             .SelectMany(x => x.GetTypes())
             .FirstOrDefault(t => typeof(Condition).IsAssignableFrom(t) && t.Name == command.ConditionType + "Condition");
-        
+
         List<Condition> conditions = ConditionUtility.GetConditions();
         Condition foundCondition = null;
-        
+
         foreach (Condition condition in conditions)
         {
             if (condition.GetType() == type)
@@ -25,7 +25,7 @@ internal class AddConditionFromSerializedTypeCommandHandler : CommandHandler<Add
         }
         if (foundCondition == null)
             return false;
-        
+
         ConditionInfo info = ConditionUtility.GetInfoForConditionType(foundCondition.GetType());
 
         NodeModel foundNode = null;
@@ -42,7 +42,7 @@ internal class AddConditionFromSerializedTypeCommandHandler : CommandHandler<Add
         {
             return false;
         }
-        
+
         BehaviorGraphNodeModel behaviorNodeModel = foundNode as BehaviorGraphNodeModel;
         if (behaviorNodeModel is IConditionalNodeModel conditionalNodeModel)
         {

@@ -19,7 +19,7 @@ namespace Unity.Behavior
             AddToClassList("NodeInspectorUI");
             styleSheets.Add(ResourceLoadAPI.Load<StyleSheet>("Packages/com.unity.behavior/Authoring/Inspector/Assets/BehaviorInspectorStyleSheet.uss"));
             ResourceLoadAPI.Load<VisualTreeAsset>("Packages/com.unity.behavior/Authoring/Inspector/Assets/BehaviorGraphInspectorLayout.uxml").CloneTree(this);
-            
+
             Label titleLabel = this.Q<Label>("Info-Name");
             Label infoDescriptionLabel = this.Q<Label>("Info-Description");
             Label subtitleLabel = this.Q<Label>("Subtitle");
@@ -45,7 +45,7 @@ namespace Unity.Behavior
         public override void Refresh()
         {
             base.Refresh();
-            
+
             if (m_GraphDescription != null && m_InspectedGraph.Description != m_GraphDescription.value)
             {
                 m_GraphDescription.SetValueWithoutNotify(m_InspectedGraph.Description);

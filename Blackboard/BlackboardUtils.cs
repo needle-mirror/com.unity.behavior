@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 using UnityEditor;
 #endif
 #if !UNITY_EDITOR
-// Don't remove this using (even if Rider claims it is unused), it is used in a runtime only part in GetEnumVariableTypes() 
+// Don't remove this using (even if Rider claims it is unused), it is used in a runtime only part in GetEnumVariableTypes()
 using System.Reflection;
 #endif
 using UnityEngine;
@@ -50,7 +50,7 @@ namespace Unity.Behavior.GraphFramework
             if (type.IsEnum)
             {
                 return m_VariableTypeIconNames[typeof(Enum)];
-            } 
+            }
             if (m_VariableTypeIconNames.TryGetValue(type, out string iconName))
             {
                 return iconName;
@@ -58,7 +58,7 @@ namespace Unity.Behavior.GraphFramework
 
             return string.Empty;
         }
-        
+
         public static Texture2D GetIcon(this Type type)
         {
             if (type == null)
@@ -86,7 +86,7 @@ namespace Unity.Behavior.GraphFramework
                 m_VariableTypeIconNames.Add(variableType, iconName);
             }
         }
-        
+
         public static Texture2D GetScriptableObjectIcon(ScriptableObject obj)
         {
             if (obj != null)
@@ -109,7 +109,7 @@ namespace Unity.Behavior.GraphFramework
         public static string GetNewVariableName(string typeName, BlackboardAsset asset)
         {
             string variableName = $"New {typeName}";
-            
+
             string pattern = @"^" + Regex.Escape(variableName) + @"(?: \((\d+)\))?$";
 
             if (asset == null)
@@ -121,6 +121,12 @@ namespace Unity.Behavior.GraphFramework
             bool variableNameWithNoPostfixFound = false;
             foreach (VariableModel variable in asset.Variables)
             {
+                // If the type of the variable is missing, Variable will appear null.
+                if (variable == null)
+                {
+                    continue;
+                }
+
                 if (variable.Name == variableName)
                 {
                     variableNameWithNoPostfixFound = true;

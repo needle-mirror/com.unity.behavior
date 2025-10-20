@@ -9,7 +9,7 @@ namespace Unity.Behavior
     {
         [HideInInspector, SerializeReference]
         private List<Command> m_Commands = new List<Command>();
-        
+
         public void SerializeDeferredCommand(Command command)
         {
             m_Commands.Add(command);

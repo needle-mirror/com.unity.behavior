@@ -14,15 +14,15 @@ namespace Unity.Behavior.Serialization.Json
         readonly char[] m_ManagedBuffer;
         readonly GCHandle m_GCHandle;
         readonly char* m_PinnedPtr;
-        
+
         public char* GetUnsafePtr() => m_PinnedPtr;
         public char[] GetManagedArray() => m_ManagedBuffer;
-        
+
         public ManagedCharBuffer(int length)
         {
             m_ManagedBuffer = new char[length];
             m_GCHandle = GCHandle.Alloc(m_ManagedBuffer, GCHandleType.Pinned);
-            m_PinnedPtr = (char*) m_GCHandle.AddrOfPinnedObject().ToPointer();
+            m_PinnedPtr = (char*)m_GCHandle.AddrOfPinnedObject().ToPointer();
         }
 
         public void Dispose()
@@ -66,20 +66,20 @@ namespace Unity.Behavior.Serialization.Json
         int m_NextBufferIndex;
         Task<int> m_ReadBlockTask;
 
-        public AsyncBlockReader(Stream input, int bufferSize, bool leaveInputOpen) 
-            : base (input, bufferSize, leaveInputOpen)
+        public AsyncBlockReader(Stream input, int bufferSize, bool leaveInputOpen)
+            : base(input, bufferSize, leaveInputOpen)
         {
             var charBufferSize = bufferSize / sizeof(char);
-            
+
             m_Buffers = new List<ManagedCharBuffer>
             {
-                new ManagedCharBuffer(charBufferSize), 
+                new ManagedCharBuffer(charBufferSize),
                 new ManagedCharBuffer(charBufferSize)
             };
             m_NextBufferIndex = 0;
             m_ReadBlockTask = default;
         }
-        
+
         public override BlockInfo GetNextBlock()
         {
             var buffer = m_Buffers[m_NextBufferIndex++];
@@ -126,11 +126,11 @@ namespace Unity.Behavior.Serialization.Json
                 IsFinal = count != chars.Length
             };
         }
-        
+
         public override void Reset()
         {
             base.Reset();
-            
+
             m_NextBufferIndex = 0;
             m_ReadBlockTask?.Dispose();
             m_ReadBlockTask = null;
@@ -139,7 +139,7 @@ namespace Unity.Behavior.Serialization.Json
         public override void Dispose()
         {
             base.Dispose();
-            
+
             m_ReadBlockTask?.Dispose();
             m_ReadBlockTask = null;
 
@@ -157,8 +157,8 @@ namespace Unity.Behavior.Serialization.Json
     {
         ManagedCharBuffer m_Buffer;
 
-        public SyncBlockReader(Stream input, int bufferSize, bool leaveInputOpen) 
-            : base (input, bufferSize, leaveInputOpen)
+        public SyncBlockReader(Stream input, int bufferSize, bool leaveInputOpen)
+            : base(input, bufferSize, leaveInputOpen)
         {
             var charBufferSize = bufferSize / sizeof(char);
             m_Buffer = new ManagedCharBuffer(charBufferSize);
@@ -167,14 +167,14 @@ namespace Unity.Behavior.Serialization.Json
         public override BlockInfo GetNextBlock()
         {
             var count = Reader.ReadBlock(m_Buffer.GetManagedArray(), 0, m_Buffer.GetManagedArray().Length);
-            
+
             return new BlockInfo
             {
                 Block = new UnsafeBuffer<char>(m_Buffer.GetUnsafePtr(), count),
                 IsFinal = count != m_Buffer.GetManagedArray().Length
             };
         }
-        
+
         public override void Dispose()
         {
             base.Dispose();

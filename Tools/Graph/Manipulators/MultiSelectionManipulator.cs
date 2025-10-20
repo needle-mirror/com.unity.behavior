@@ -31,7 +31,7 @@ namespace Unity.Behavior.GraphFramework
             target.RegisterCallback<PointerDownEvent>(OnPointerDownEvent);
             target.RegisterCallback<PointerMoveEvent>(OnPointerMoveEvent);
             target.RegisterCallback<PointerUpEvent>(OnPointerUpEvent);
-        }        
+        }
 
         protected override void UnregisterCallbacksFromTarget()
         {
@@ -39,7 +39,7 @@ namespace Unity.Behavior.GraphFramework
             target.UnregisterCallback<PointerMoveEvent>(OnPointerMoveEvent);
             target.UnregisterCallback<PointerUpEvent>(OnPointerUpEvent);
         }
-        
+
         private void OnPointerDownEvent(PointerDownEvent evt)
         {
             if (!CanStartManipulation(evt))
@@ -51,7 +51,7 @@ namespace Unity.Behavior.GraphFramework
             {
                 m_IsActive = true;
                 m_PointerDownPosition = evt.localPosition;
-                m_WorldPointerDownPosition = evt.position ;
+                m_WorldPointerDownPosition = evt.position;
                 m_SelectionBoxElement.style.left = m_PointerDownPosition.x;
                 m_SelectionBoxElement.style.top = m_PointerDownPosition.y;
             }
@@ -81,7 +81,7 @@ namespace Unity.Behavior.GraphFramework
             Vector2 viewportScaledSize = viewportPos - viewportPosStart;
             Vector2 absoluteViewportScaledSize = new Vector2(Mathf.Abs(viewportScaledSize.x), Mathf.Abs(viewportScaledSize.y));
             Rect rect = new Rect(new Vector2(Mathf.Min(viewportPosStart.x, viewportPos.x), Mathf.Min(viewportPosStart.y, viewportPos.y)), absoluteViewportScaledSize);
-           
+
             List<NodeUI> nodes = GetNodesInRect(rect, out List<NodeUI> notInsideRect);
             foreach (NodeUI node in nodes)
             {
@@ -96,11 +96,12 @@ namespace Unity.Behavior.GraphFramework
             {
                 m_GraphView.ViewState.RemoveSelected(notInsideRect[i]);
             }
-            
+
             Vector2 selectionSizeWorld = (Vector2)evt.position - m_WorldPointerDownPosition;
-            Rect worldRect = new Rect(Mathf.Min(m_WorldPointerDownPosition.x, evt.position .x), Mathf.Min(m_WorldPointerDownPosition.y, evt.position .y), Mathf.Abs(selectionSizeWorld.x), Mathf.Abs(selectionSizeWorld.y));
+            Rect worldRect = new Rect(Mathf.Min(m_WorldPointerDownPosition.x, evt.position.x), Mathf.Min(m_WorldPointerDownPosition.y, evt.position.y), Mathf.Abs(selectionSizeWorld.x), Mathf.Abs(selectionSizeWorld.y));
             List<Edge> edgesInRect = GetEdgesInRect(worldRect);
-            edgesInRect.ForEach(edge => {
+            edgesInRect.ForEach(edge =>
+            {
                 m_GraphView.ViewState.AddSelected(edge);
             });
             foreach (Edge edge in m_GraphView.ViewState.Edges)
@@ -123,7 +124,7 @@ namespace Unity.Behavior.GraphFramework
             m_IsActive = false;
             m_SelectionBoxElement.RemoveFromHierarchy();
         }
-        
+
         private List<Edge> GetEdgesInRect(Rect rect)
         {
             List<Edge> edges = new List<Edge>();

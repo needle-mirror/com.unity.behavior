@@ -29,7 +29,7 @@ namespace Unity.Behavior.GraphFramework
 
         internal VisualElement InputPortsContainer { get; }
         internal VisualElement OutputPortsContainer { get; }
-        
+
         internal VisualElement SelectionBorder { get; }
         internal VisualElement DebugIconElement { get; }
 
@@ -44,7 +44,7 @@ namespace Unity.Behavior.GraphFramework
                 }
             }
         }
-        
+
         public NodeUI(NodeModel nodeModel)
         {
             m_NodeModel = nodeModel;
@@ -56,7 +56,7 @@ namespace Unity.Behavior.GraphFramework
             InputPortsContainer = this.Q("InputPortsContainer");
             OutputPortsContainer = this.Q("OutputPortsContainer");
             SelectionBorder = this.Q("SelectionBorder");
-            
+
             contentContainer = this.Q("Content");
 
             NodeTitle = this.Q("NodeTitle");
@@ -76,7 +76,7 @@ namespace Unity.Behavior.GraphFramework
                 var translate = new Translate(Model.Position.x, Model.Position.y);
                 Translate = translate;
             }
-            
+
             // Send event to notify any edges of updated position. The edges don't need data, just the event.
             GeometryChangedEvent geometryEvent = GeometryChangedEvent.GetPooled(default, default);
             geometryEvent.target = this;
@@ -92,7 +92,7 @@ namespace Unity.Behavior.GraphFramework
                 if (portModel.IsInputPort)
                 {
                     InputPortsContainer.Add(CreatePortUI(portModel));
-                } 
+                }
                 else
                 {
                     OutputPortsContainer.Add(CreatePortUI(portModel));
@@ -107,10 +107,10 @@ namespace Unity.Behavior.GraphFramework
         public List<Port> GetInputPortUIs() => InputPortsContainer.Query<Port>().ToList();
         public List<Port> GetOutputPortUIs() => OutputPortsContainer.Query<Port>().ToList();
         public List<Port> GetAllPortUIs() => GetInputPortUIs().Concat(GetOutputPortUIs()).ToList();
-         
-        public IEnumerable<NodeUI> GetChildNodeUIs() => 
+
+        public IEnumerable<NodeUI> GetChildNodeUIs() =>
             GetOutputPortUIs().SelectMany(port => port.Edges.Select(edge => edge.End.GetFirstAncestorOfType<NodeUI>()));
-        public IEnumerable<NodeUI> GetParentNodeUIs() => 
+        public IEnumerable<NodeUI> GetParentNodeUIs() =>
             GetInputPortUIs().SelectMany(port => port.Edges.Select(edge => edge.Start.GetFirstAncestorOfType<NodeUI>()));
 
         public virtual bool IsGroup => false;

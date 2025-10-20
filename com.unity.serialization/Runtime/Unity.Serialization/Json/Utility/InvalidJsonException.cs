@@ -30,7 +30,7 @@ namespace Unity.Behavior.Serialization.Json
         {
 
         }
-        
+
         /// <summary>
         /// Initialized a new instance of the <see cref="InvalidJsonException"/> class with a specified error message.
         /// </summary>
@@ -50,7 +50,7 @@ namespace Unity.Behavior.Serialization.Json
             : base(message, inner)
         {
         }
-        
+
         /// <summary>
         /// Initializes a new instance of the <see cref="InvalidJsonException" /> class with serialized data.
         /// </summary>

@@ -5,26 +5,26 @@ using System.IO;
 using UnityEngine.Serialization;
 
 namespace Unity.Behavior.Serialization.Json
-{    
+{
     struct BlockInfo
     {
         public UnsafeBuffer<char> Block;
         public bool IsFinal;
     }
-    
+
     interface IUnsafeStreamBlockReader : IDisposable
     {
         /// <summary>
         /// Resets the reader for re-use.
         /// </summary>
         void Reset();
-        
+
         /// <summary>
         /// Returns the next block in the stream.
         /// </summary>
         BlockInfo GetNextBlock();
     }
-    
+
     /// <summary>
     /// Parameters used to configure the <see cref="SerializedObjectReader"/>.
     /// </summary>
@@ -79,7 +79,7 @@ namespace Unity.Behavior.Serialization.Json
             StripStringEscapeCharacters = true
         };
     }
-    
+
     /// <summary>
     /// The <see cref="SerializedObjectReader"/> is the high level API used to deserialize a stream of data.
     /// </summary>
@@ -87,7 +87,7 @@ namespace Unity.Behavior.Serialization.Json
     {
         readonly Allocator m_Label;
         [NativeDisableUnsafePtrRestriction] UnsafeSerializedObjectReader* m_Data;
-        
+
         /// <summary>
         /// If this flag is true. No exceptions are thrown unless <see cref="CheckAndThrowInvalidJsonException"/> is called.
         /// </summary>
@@ -96,7 +96,7 @@ namespace Unity.Behavior.Serialization.Json
             get => m_Data->RequiresExplicitExceptionHandling;
             set => m_Data->RequiresExplicitExceptionHandling = value;
         }
-        
+
         static PackedBinaryStream OpenBinaryStreamWithConfiguration(SerializedObjectReaderConfiguration configuration, Allocator label)
         {
             if (configuration.TokenBufferSize < 16)
@@ -115,7 +115,7 @@ namespace Unity.Behavior.Serialization.Json
 
             return new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, configuration.BlockBufferSize, configuration.UseReadAsync ? FileOptions.Asynchronous : FileOptions.None);
         }
-        
+
         /// <summary>
         /// Initializes a new instance of the <see cref="SerializedObjectReader"/> class based on the specified configuration.
         /// </summary>
@@ -202,7 +202,7 @@ namespace Unity.Behavior.Serialization.Json
         /// <param name="label">The memory allocator label to use.</param>
         /// <param name="leaveInputOpen">True to leave the input stream open after the reader object is disposed; otherwise, false.</param>
         /// <param name="leaveOutputOpen">True to leave the output stream open after the reader object is disposed; otherwise, false.</param>
-        public SerializedObjectReader(Stream input, PackedBinaryStream output, Allocator label =  SerializationConfiguration.DefaultAllocatorLabel, bool leaveInputOpen = true, bool leaveOutputOpen = true)
+        public SerializedObjectReader(Stream input, PackedBinaryStream output, Allocator label = SerializationConfiguration.DefaultAllocatorLabel, bool leaveInputOpen = true, bool leaveOutputOpen = true)
             : this(input, output, SerializedObjectReaderConfiguration.Default, label, leaveInputOpen, leaveOutputOpen)
         {
         }
@@ -232,7 +232,7 @@ namespace Unity.Behavior.Serialization.Json
         public SerializedObjectReader(Stream input, PackedBinaryStream output, SerializedObjectReaderConfiguration configuration, Allocator label = SerializationConfiguration.DefaultAllocatorLabel, bool leaveInputOpen = true, bool leaveOutputOpen = true)
         {
             m_Label = label;
-            m_Data = (UnsafeSerializedObjectReader*) UnsafeUtility.Malloc(sizeof(UnsafeSerializedObjectReader), UnsafeUtility.AlignOf<UnsafeSerializedObjectReader>(), m_Label);
+            m_Data = (UnsafeSerializedObjectReader*)UnsafeUtility.Malloc(sizeof(UnsafeSerializedObjectReader), UnsafeUtility.AlignOf<UnsafeSerializedObjectReader>(), m_Label);
             *m_Data = new UnsafeSerializedObjectReader(input, output, configuration, label, leaveInputOpen, leaveOutputOpen);
         }
 
@@ -247,7 +247,7 @@ namespace Unity.Behavior.Serialization.Json
             : this(buffer, length, OpenBinaryStreamWithConfiguration(configuration, label), configuration, label, false)
         {
         }
-        
+
         /// <summary>
         /// Initializes a new instance of the <see cref="SerializedObjectReader"/> class based on the specified input buffer, output stream and configuration.
         /// </summary>
@@ -264,7 +264,7 @@ namespace Unity.Behavior.Serialization.Json
         internal SerializedObjectReader(char* buffer, int length, PackedBinaryStream output, SerializedObjectReaderConfiguration configuration, Allocator label = SerializationConfiguration.DefaultAllocatorLabel, bool leaveOutputOpen = true)
         {
             m_Label = label;
-            m_Data = (UnsafeSerializedObjectReader*) UnsafeUtility.Malloc(sizeof(UnsafeSerializedObjectReader), UnsafeUtility.AlignOf<UnsafeSerializedObjectReader>(), m_Label);
+            m_Data = (UnsafeSerializedObjectReader*)UnsafeUtility.Malloc(sizeof(UnsafeSerializedObjectReader), UnsafeUtility.AlignOf<UnsafeSerializedObjectReader>(), m_Label);
             *m_Data = new UnsafeSerializedObjectReader(buffer, length, output, configuration, label, leaveOutputOpen);
         }
 
@@ -319,7 +319,7 @@ namespace Unity.Behavior.Serialization.Json
         {
             return m_Data->Step(out view, node);
         }
-        
+
         /// <summary>
         /// Reads the specified data and returns a new <see cref="SerializedValueView"/>.
         /// </summary>
@@ -407,8 +407,8 @@ namespace Unity.Behavior.Serialization.Json
         {
             if (count > views.Length)
                 throw new IndexOutOfRangeException();
-            
-            return m_Data->ReadArrayElementBatch((SerializedValueView*) views.GetUnsafePtr(), count);
+
+            return m_Data->ReadArrayElementBatch((SerializedValueView*)views.GetUnsafePtr(), count);
         }
 
         /// <summary>
@@ -421,7 +421,7 @@ namespace Unity.Behavior.Serialization.Json
         {
             return m_Data->ReadArrayElementBatch(views, count);
         }
-        
+
         /// <summary>
         /// Discards completed data from the buffers.
         /// </summary>

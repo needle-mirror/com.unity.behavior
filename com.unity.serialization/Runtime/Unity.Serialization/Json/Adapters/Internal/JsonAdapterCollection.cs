@@ -7,11 +7,11 @@ namespace Unity.Behavior.Serialization.Json
     enum JsonAdapterFilter
     {
         None = 0,
-        
+
         UserDefined = 1 << 0,
-        Global      = 1 << 1,
-        Internal    = 1 << 2,
-            
+        Global = 1 << 1,
+        Internal = 1 << 2,
+
         All = ~0
     }
 
@@ -33,7 +33,7 @@ namespace Unity.Behavior.Serialization.Json
             readonly List<IJsonAdapter> m_UserDefinedAdapters;
             readonly List<IJsonAdapter> m_GlobalAdapters;
             readonly JsonAdapter m_InternalAdapter;
-            
+
             IJsonAdapter m_Current;
             State m_State;
             int m_Index;
@@ -52,10 +52,10 @@ namespace Unity.Behavior.Serialization.Json
 
             public bool MoveNext()
             {
-                for (;;)
+                for (; ; )
                 {
                     m_Index++;
-                    
+
                     switch (m_State)
                     {
                         case State.User:
@@ -90,19 +90,19 @@ namespace Unity.Behavior.Serialization.Json
                 }
             }
         }
-        
+
         public JsonAdapter InternalAdapter;
         public List<IJsonAdapter> Global;
         public List<IJsonAdapter> UserDefined;
-        
-        public Enumerator GetEnumerator(JsonAdapterFilter filter = JsonAdapterFilter.All) 
+
+        public Enumerator GetEnumerator(JsonAdapterFilter filter = JsonAdapterFilter.All)
             => new Enumerator(filter.HasFlag(JsonAdapterFilter.UserDefined) ? UserDefined : null, filter.HasFlag(JsonAdapterFilter.Global) ? Global : null, filter.HasFlag(JsonAdapterFilter.Internal) ? InternalAdapter : null);
-        
+
         public static bool ContainsPrimitiveOrStringAdapter(List<IJsonAdapter> adapters)
         {
             if (null == adapters)
                 return false;
-            
+
             foreach (var adapter in adapters)
             {
                 switch (adapter)

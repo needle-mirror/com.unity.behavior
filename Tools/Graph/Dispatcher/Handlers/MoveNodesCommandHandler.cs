@@ -1,7 +1,7 @@
 namespace Unity.Behavior.GraphFramework
 {
     internal class MoveNodesCommandHandler : CommandHandler<MoveNodesCommand>
-    {        
+    {
         public override bool Process(MoveNodesCommand command)
         {
             for (int i = 0; i < command.NodeModels.Count; i++)
@@ -16,10 +16,10 @@ namespace Unity.Behavior.GraphFramework
                     RemoveFromParentSequence(nodeModel, parentSequence);
                 }
             }
-            
+
             return true;
         }
-        
+
         private void RemoveFromParentSequence(NodeModel node, SequenceNodeModel sequenceNodeModel)
         {
             // Unlink sequence and node.
@@ -36,11 +36,11 @@ namespace Unity.Behavior.GraphFramework
                 // If the sequence contains only one remaining action, remove it as well.
                 NodeModel lastRemainingNode = sequenceNodeModel.Nodes[0];
                 lastRemainingNode.Position = sequenceNodeModel.Position;
-                
+
                 // Unlink from sequence
                 sequenceNodeModel.Nodes.Remove(lastRemainingNode);
                 lastRemainingNode.Parents.Remove(sequenceNodeModel);
-                
+
                 // Preserve incoming and outgoing connections.
                 lastRemainingNode.TryDefaultInputPortModel(out PortModel inputPort);
                 foreach (PortModel parentNodePort in sequenceNodeModel.IncomingConnections)
@@ -52,7 +52,7 @@ namespace Unity.Behavior.GraphFramework
                 {
                     Asset.ConnectEdge(outputPort, childNodePort);
                 }
-                
+
                 // Delete the now empty sequence.
                 Asset.DeleteNode(sequenceNodeModel);
             }

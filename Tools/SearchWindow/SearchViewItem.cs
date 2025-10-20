@@ -1,4 +1,4 @@
-﻿using Unity.AppUI.UI;
+using Unity.AppUI.UI;
 using UnityEngine.UIElements;
 using Unity.Behavior.GraphFramework;
 
@@ -32,9 +32,11 @@ namespace UnityEngine.UIExtras
             tabIndex = -1;
         }
 
-        public TreeNode<SearchView.Item> Item {
+        public TreeNode<SearchView.Item> Item
+        {
             get => userData as TreeNode<SearchView.Item>;
-            set {
+            set
+            {
                 userData = value;
                 if (value.Value.Icon != null)
                 {
@@ -42,18 +44,14 @@ namespace UnityEngine.UIExtras
                 }
                 else if (!string.IsNullOrEmpty(value.Value.IconName))
                 {
-                    m_Icon.iconName = value.Value.IconName;                    
+                    m_Icon.iconName = value.Value.IconName;
                 }
 
                 m_Icon.EnableInClassList("HiddenIcon", value.Value.Icon == null && string.IsNullOrEmpty(value.Value.IconName));
                 m_Name = value.Value.Name;
                 m_Label.text = value.Value.FormattedName;
+                m_Label.SetEnabled(value.Value.Enabled);
                 Description = value.Value.Description;
-
-                if (!value.Value.Enabled)
-                {
-                    m_Label.style.color = new StyleColor(Color.gray);
-                }
 
                 if (value.ChildCount == 0)
                 {

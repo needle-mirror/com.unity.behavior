@@ -9,7 +9,7 @@ namespace Unity.Behavior.GraphFramework
     internal class FloatingPanel : ExVisualElement
     {
         internal VisualElement Content { get; }
-        
+
         public string Title
         {
             get => m_PanelAppBar.title;
@@ -26,7 +26,7 @@ namespace Unity.Behavior.GraphFramework
             set
             {
                 m_IsCollapsable = value;
-                SetCollapsable();   
+                SetCollapsable();
             }
         }
         private bool m_IsCollapsable;
@@ -39,7 +39,7 @@ namespace Unity.Behavior.GraphFramework
                     iconName = "caret-down",
                     name = "CollapseIcon"
                 };
-                SetupCollapsableAppBarTitle(collapseIcon);   
+                SetupCollapsableAppBarTitle(collapseIcon);
             }
         }
 
@@ -85,7 +85,7 @@ namespace Unity.Behavior.GraphFramework
         {
             panel.parent?.Remove(panel);
         }
-        
+
         public void Remove()
         {
             parent.Remove(this);
@@ -95,14 +95,14 @@ namespace Unity.Behavior.GraphFramework
         {
             styleSheets.Add(ResourceLoadAPI.Load<StyleSheet>("Packages/com.unity.behavior/Elements/Assets/FloatingPanelStylesheet.uss"));
             ResourceLoadAPI.Load<VisualTreeAsset>("Packages/com.unity.behavior/Elements/Assets/FloatingPanelLayout.uxml").CloneTree(this);
-         
+
             this.AddManipulator(new FloatingPanelManipulator(view));
 
             Content = content;
             this.name = name;
-            
+
             m_DefaultPosition = defaultPosition;
-            
+
             m_PanelAppBar = this.Q<AppBar>("FloatingPanelAppBar");
             // To ensure that the AppBar is detectable by pointer events on all editor versions.
             m_PanelAppBar.pickingMode = PickingMode.Position;
@@ -113,10 +113,10 @@ namespace Unity.Behavior.GraphFramework
                 m_CloseButton.style.display = DisplayStyle.Flex;
                 m_CloseButton.clicked += Remove;
             }
-            
+
             // Set preference keys.
-            XPosPrefsKey =  name + "FrameX";
-            YPosPrefsKey =  name + "FrameY";
+            XPosPrefsKey = name + "FrameX";
+            YPosPrefsKey = name + "FrameY";
             WidthPrefsKey = name + "FrameWidth";
             HeightPrefsKey = name + "FrameHeight";
             IsCollapsedPrefsKey = name + "IsCollapsed";
@@ -125,7 +125,7 @@ namespace Unity.Behavior.GraphFramework
             SetPositionFromDefaultPosition();
             style.width = style.minWidth;
             style.height = k_DefaultHeight;
-            
+
 #if UNITY_EDITOR
             bool inEditorContext = view.panel.contextType == ContextType.Editor;
 
@@ -147,9 +147,9 @@ namespace Unity.Behavior.GraphFramework
             // If content has a parent, remove it from existing hierarchy.
             if (content.parent != null)
             {
-                content.RemoveFromHierarchy();   
+                content.RemoveFromHierarchy();
             }
-            
+
             this.Q<VisualElement>("PanelContent").Add(Content);
             RegisterCallback<GeometryChangedEvent>(OnGeometryChangedEvent);
             RegisterCallback<AttachToPanelEvent>(OnAttachToPanel);
@@ -213,7 +213,7 @@ namespace Unity.Behavior.GraphFramework
             this.Q<Icon>("CollapseIcon").iconName = "caret-down";
             if (m_ExpandedHeight != 0)
             {
-                style.height = m_ExpandedHeight;   
+                style.height = m_ExpandedHeight;
             }
 
             bool inEditorContext = panel.contextType == ContextType.Editor;
@@ -241,7 +241,7 @@ namespace Unity.Behavior.GraphFramework
             style.width = Mathf.Clamp(resolvedStyle.width, resolvedStyle.width, parent.worldBound.width);
             style.height = Mathf.Clamp(resolvedStyle.height, resolvedStyle.height, parent.worldBound.height);
         }
-        
+
         internal void ClampPositionWithinParent()
         {
             if (parent == null)

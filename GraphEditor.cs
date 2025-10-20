@@ -24,6 +24,7 @@ namespace Unity.Behavior.GraphFramework
         public GraphAsset Asset { get; private set; }
         public BlackboardView Blackboard { get; }
         public InspectorView Inspector { get; }
+        public bool UndoRedoDirty { get; private set; }
 
         BlackboardView IDispatcherContext.BlackboardView => Blackboard;
 
@@ -45,7 +46,6 @@ namespace Unity.Behavior.GraphFramework
         private const string k_DefaultStylesheetFile = "Packages/com.unity.behavior/Tools/Graph/Assets/GraphEditorStylesheet.uss";
 
         private long m_LastAssetVersion = -1u;
-        private bool m_UndoRedoDirty;
 #if UNITY_EDITOR
         private bool m_PlayModeEditingGranted = false;
 #endif
@@ -104,18 +104,16 @@ namespace Unity.Behavior.GraphFramework
 
             Dispatcher.Tick();
 
-            if (m_UndoRedoDirty)
+            if (UndoRedoDirty)
             {
                 GraphView?.RefreshFromAsset();
                 Blackboard?.RefreshFromAsset();
                 Inspector?.Refresh();
-                m_UndoRedoDirty = false;
+                UndoRedoDirty = false;
             }
 
             if (Asset.HasOutstandingChanges && m_LastAssetVersion != Asset.VersionTimestamp && CheckPlayModeEditionGranted())
             {
-                // BEHAVB-175: Workaround to force refresh field model after a blackboard variable rename.
-                Asset.OnValidate();
                 OnAssetSave();
 
                 Blackboard?.RefreshFromAsset();
@@ -131,10 +129,6 @@ namespace Unity.Behavior.GraphFramework
         public virtual void Load(GraphAsset asset)
         {
             Asset = asset;
-            if (asset)
-            {
-                asset.OnValidate();
-            }
 
             // Check if there is a need to reload.
             if (m_LastAssetVersion == Asset.VersionTimestamp)
@@ -143,7 +137,7 @@ namespace Unity.Behavior.GraphFramework
             }
 
             Blackboard.Load(Asset.Blackboard);
-            GraphView.Load(asset);
+            GraphView.Load(Asset);
             m_LastAssetVersion = Asset.VersionTimestamp;
             m_Toolbar.AssetTitle.text = Asset.name;
         }
@@ -185,7 +179,7 @@ namespace Unity.Behavior.GraphFramework
             {
                 BehaviorUIThemeManager.RegisterElement(firstAncestorOfType);
             }
-            
+
             Undo.undoRedoPerformed += OnUndoRedoPerformed;
             EditorApplication.playModeStateChanged += EditorApplication_playModeStateChanged;
 #endif
@@ -202,7 +196,7 @@ namespace Unity.Behavior.GraphFramework
             {
                 BehaviorUIThemeManager.UnregisterElement(firstAncestorOfType);
             }
-            
+
             Undo.undoRedoPerformed -= OnUndoRedoPerformed;
             EditorApplication.playModeStateChanged -= EditorApplication_playModeStateChanged;
 #endif
@@ -352,7 +346,7 @@ namespace Unity.Behavior.GraphFramework
             }
 
             return result;
-#else 
+#else
             return true;
 #endif
         }
@@ -360,9 +354,9 @@ namespace Unity.Behavior.GraphFramework
 #if UNITY_EDITOR
         protected virtual void OnUndoRedoPerformed()
         {
-            m_UndoRedoDirty = UnityEditor.EditorUtility.IsDirty(Asset) || UnityEditor.EditorUtility.IsDirty(Asset.Blackboard);
+            UndoRedoDirty = UnityEditor.EditorUtility.IsDirty(Asset) || UnityEditor.EditorUtility.IsDirty(Asset.Blackboard);
 #if BEHAVIOR_DEBUG_UNDO_REDO
-            if (m_UndoRedoDirty)
+            if (UndoRedoDirty)
             {
                 Debug.Log($"GraphEditor[{Asset.name}].OnUndoRedoPerformed");
             }

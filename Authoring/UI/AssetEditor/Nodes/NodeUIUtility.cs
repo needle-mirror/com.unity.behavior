@@ -1,4 +1,4 @@
-﻿using Unity.Behavior.GraphFramework;
+using Unity.Behavior.GraphFramework;
 using UnityEngine.UIElements;
 
 namespace Unity.Behavior

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Unity.Behavior.GraphFramework;
 using UnityEngine;
@@ -30,7 +30,13 @@ namespace Unity.Behavior
         /// <summary>
         /// The Blackboard for the RuntimeBlackboardAsset.
         /// </summary>
-        public Blackboard Blackboard => m_Blackboard;
+        public Blackboard Blackboard
+        {
+            get => m_Blackboard;
+#if UNITY_EDITOR
+            internal set => m_Blackboard = value;
+#endif
+        }
 
         [SerializeField]
         private List<SerializableGUID> m_SharedBlackboardVariableGuids = new List<SerializableGUID>();
@@ -66,7 +72,12 @@ namespace Unity.Behavior
         private static void RuntimeInitialize()
         {
             EditorApplication.playModeStateChanged += InternalPlaymodeStateChanged;
-            s_AssetToBackup.RemoveWhere(asset => asset == null);
+            s_AssetToBackup.RemoveWhere(asset => asset == null
+#if UNITY_EDITOR
+                || UnityEditor.SerializationUtility.HasManagedReferencesWithMissingTypes(asset)
+#endif
+            );
+
             foreach (var asset in s_AssetToBackup)
             {
                 asset.BackupAuthoringValue();
@@ -106,6 +117,9 @@ namespace Unity.Behavior
             m_ValueOnEnterPlaymode.Clear();
             foreach (BlackboardVariable variable in m_Blackboard.Variables)
             {
+                // Can happens when dealing with dependent subgraph blackboard that have missing type.
+                if (variable == null) continue;
+
                 // We skip owner.
                 if (variable.GUID == BehaviorGraph.k_GraphSelfOwnerID) continue;
 
@@ -148,8 +162,6 @@ namespace Unity.Behavior
         /// <inheritdoc cref="OnAfterDeserialize"/>
         public void OnAfterDeserialize()
         {
-            Blackboard?.ValidateVariables();
-
             if (m_SharedBlackboardVariableGuids == null)
             {
                 m_SharedBlackboardVariableGuids = new List<SerializableGUID>();

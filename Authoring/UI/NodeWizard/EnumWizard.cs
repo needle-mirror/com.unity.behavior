@@ -1,4 +1,4 @@
-﻿#if UNITY_EDITOR
+#if UNITY_EDITOR
 using System.Collections.Generic;
 using Unity.AppUI.UI;
 using UnityEngine.UIElements;
@@ -13,10 +13,10 @@ namespace Unity.Behavior
 
         private const string k_NameFieldPlaceholderName = "New Enum";
         private const string k_MemberPlaceholderName = "Member";
-        
+
         private readonly List<string> m_EnumMembers = new();
         private readonly EditableListRegion m_EnumMembersRegion;
-        
+
         internal WizardStepper Stepper;
         private Modal m_Modal;
 
@@ -33,13 +33,13 @@ namespace Unity.Behavior
 
             m_NameField = this.Q<TextFieldWithValidation>(k_NameField);
             this.Q<HelpText>().Text = "Enum types can be used to logically group values, e.g. \"Status => Idle, Fleeing, Attacking, Patrolling\". You can then create variables in the blackboard and control the flow of your behavior, for example by using a \"Switch\" node.";
-            
+
             // Set up a custom region for enum member creation.
             m_EnumMembersRegion = new EditableListRegion(m_EnumMembers);
             m_EnumMembersRegion.AddButton.title = "Add " + k_MemberPlaceholderName;
             m_EnumMembersRegion.FieldPlaceholderName = k_MemberPlaceholderName;
             Add(m_EnumMembersRegion);
-            
+
             // Add one default member.
             m_EnumMembers.Add(k_MemberPlaceholderName + " 1");
             m_EnumMembersRegion.UpdateList();
@@ -48,27 +48,27 @@ namespace Unity.Behavior
             Stepper.StepperContainer.style.width = k_WizardWidth;
 
             UpdateCreateButtonState();
-            
+
             Stepper.ConfirmButton.clicked += OnCreateClicked;
-            
+
             m_EnumMembersRegion.OnListUpdated += () =>
             {
                 ValidateAllTextFields();
                 UpdateCreateButtonState();
             };
 
-            
+
             m_NameField.PlaceholderText = k_NameFieldPlaceholderName;
             m_NameField.OnItemValidation += UpdateCreateButtonState;
             m_NameField.Value = m_NameField.PlaceholderText;
-            
+
             UpdateCreateButtonState();
         }
 
         private void UpdateCreateButtonState()
         {
             bool allValid = m_EnumMembers.Count > 0 && m_NameField.ValidateWithoutNotify() && !m_EnumMembersRegion.IncludesDuplicates() && m_EnumMembersRegion.AllItemFieldsValid();
-            
+
             Stepper.ConfirmButton.SetEnabled(allValid);
         }
 

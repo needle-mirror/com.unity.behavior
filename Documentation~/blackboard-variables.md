@@ -19,7 +19,7 @@ Use this step-by-step guide to use a **Blackboard** asset in a behavior graph.
 
 1. Right-click an empty area of the **Assets** window.
 2. Select **Create** > **Behavior** > **Blackboard**.
- 
+
    The **Blackboard** asset displays in the **Assets** window.
 3. Select the **Backboard** asset and specify a name that reflects its purpose.
 4. Double-click the **Blackboard** asset to open the **Blackboard** editor.
@@ -28,7 +28,7 @@ Use this step-by-step guide to use a **Blackboard** asset in a behavior graph.
 
 Use the **Blackboard** asset to create different variables on the **Blackboard**. You can then add and use the new **Blackboard** across multiple behavior graphs.
 
-1. Click the **+** icon on the **Blackboard** editor. 
+1. Click the **+** icon on the **Blackboard** editor.
 
    The **Add Variable** window displays. It lists the following variables:
 
@@ -48,7 +48,7 @@ Use the **Blackboard** asset to create different variables on the **Blackboard**
 
 ## Step 3: Use the Blackboard asset in a behavior graph
 
-After you have created a **Blackboard** asset and have added variables to it, you can use the **Blackboard** asset in a different behavior graph. 
+After you have created a **Blackboard** asset and have added variables to it, you can use the **Blackboard** asset in a different behavior graph.
 
 Perform the following steps:
 
@@ -62,11 +62,11 @@ Perform the following steps:
 
 4. Select the **Blackboard** asset you created in [Step 1: Create a Blackboard asset](#step-1-create-a-blackboard-asset).
 
-   The **Blackboard** asset displays on the Unity Behavior graph's **Blackboard**. 
+   The **Blackboard** asset displays on the Unity Behavior graph's **Blackboard**.
 
    > [!NOTE]
    > If you don't create **Blackboard** assets, the option to select a **Blackboard** variable doesn't display in the behavior graph's **Blackboard** list.
-   
+
    To add new variables on the behavior graph **Blackboard**, select the **+** icon. To add new variables or edit any variable added on the behavior graph's **Blackboard** from the **Blackboard** asset, use the **Blackboard** editor.
 
 > [!NOTE]
@@ -88,6 +88,22 @@ To use these options, do the following:
 1. Right-click on a variable in the **Blackboard**.
 2. Select **Expose** to expose and access a variable externally.
 3. Select **Shared** to share the variable with other behavior graphs that reference the same **Blackboard**.
+
+### Implicit casting of Blackboard variables
+
+Unity Behavior supports implicit casting when you assign a Blackboard variable (BBV) of one type to a node field of another type. This links variables more flexibly without manually converting types.
+
+For example, use implicit casting to do the following:
+
+* Assign a `float` BBV to a node field of type `int`: results in a math cast `(int)BBV.Value`.
+* Assign a `GameObject` BBV to a node field of type `ComponentA`: results in `gao.GetComponent<ComponentA>`.
+* Assign a `ComponentA` BBV to a node field of type `GameObject`: results in `componentA.gameObject`.
+* Assign a `ComponentA` BBV to a node field of type `ComponentB`: results in `componentA.GetComponent<ComponentB>`.
+
+Unity automatically filters BBV Blackboard variables so that only compatible types appear in the assignment list.
+
+> [!NOTE]
+> As of Unity Behavior 1.0.13, the editor shows no visual distinction between a direct match and an implicit cast.
 
 ## Additional resources
 

@@ -12,16 +12,17 @@ namespace Unity.Behavior.GraphFramework
             get => ClassListContains("DebugHighlight");
             set => EnableInClassList("DebugHighlight", value);
         }
-        
-        public Port Start { 
+
+        public Port Start
+        {
             get => m_Start;
-            set 
+            set
             {
                 m_Start?.GetFirstAncestorOfType<GraphElement>().UnregisterCallback<GeometryChangedEvent>(OnLinkMove);
                 m_Start = value;
                 m_Start?.GetFirstAncestorOfType<GraphElement>().RegisterCallback<GeometryChangedEvent>(OnLinkMove);
                 MarkDirtyAndRepaint();
-            } 
+            }
         }
 
         public Port End
@@ -35,15 +36,15 @@ namespace Unity.Behavior.GraphFramework
                 MarkDirtyAndRepaint();
             }
         }
-        
-        public Vector2 StartPosition 
-        { 
+
+        public Vector2 StartPosition
+        {
             get => m_StartPosition;
             set
             {
                 m_StartPosition = value;
                 MarkDirtyAndRepaint();
-            } 
+            }
         }
 
         public Vector2 EndPosition
@@ -55,23 +56,23 @@ namespace Unity.Behavior.GraphFramework
                 MarkDirtyAndRepaint();
             }
         }
-        
+
         private Vector2 m_StartWorldPosition => m_Start != null
             ? m_Start.LocalToWorld((Vector2)m_Start.transform.position
-                                   + new Vector2(m_Start.resolvedStyle.width, 10.0f)/2)
+                                   + new Vector2(m_Start.resolvedStyle.width, 10.0f) / 2)
             : m_StartPosition;
-        
+
         private Vector2 m_EndWorldPosition => m_End != null
             ? m_End.LocalToWorld((Vector2)m_End.transform.position
-                                 + new Vector2(m_End.resolvedStyle.width, m_End.resolvedStyle.height)/2)
+                                 + new Vector2(m_End.resolvedStyle.width, m_End.resolvedStyle.height) / 2)
             : m_EndPosition;
-        
+
         internal enum EdgeVisualisationType
         {
             Bezier,
             Sharp,
         }
-        
+
         private Port m_Start;
         private Port m_End;
         private Vector2 m_StartPosition;
@@ -88,8 +89,8 @@ namespace Unity.Behavior.GraphFramework
 
         // Cached vertex data
         private const int k_NumEdgeSegments = 100;
-        private readonly Vertex[] m_Vertices = new Vertex[4*k_NumEdgeSegments];
-        private readonly ushort[] m_Indices = new ushort[6*k_NumEdgeSegments];
+        private readonly Vertex[] m_Vertices = new Vertex[4 * k_NumEdgeSegments];
+        private readonly ushort[] m_Indices = new ushort[6 * k_NumEdgeSegments];
 
         internal EdgeVisualisationType EdgeVisualisation { get; set; } = EdgeVisualisationType.Sharp;
 
@@ -127,7 +128,7 @@ namespace Unity.Behavior.GraphFramework
                     return ContainsPointSharp(localPoint);
                 default:
                     throw new Exception("Unknown EdgeVisualisationType");
-            }            
+            }
         }
 
         private bool ContainsPointSharp(Vector2 localPoint)
@@ -171,7 +172,7 @@ namespace Unity.Behavior.GraphFramework
             float maxX = Mathf.Max(lineStart.x, lineEnd.x) + lineThickness;
             float minY = Mathf.Min(lineStart.y, lineEnd.y) - lineThickness;
             float maxY = Mathf.Max(lineStart.y, lineEnd.y) + lineThickness;
-            return point.x >= minX &&       
+            return point.x >= minX &&
                    point.x <= maxX &&
                    point.y >= minY &&
                    point.y <= maxY;
@@ -193,7 +194,7 @@ namespace Unity.Behavior.GraphFramework
             m_Start?.GetFirstAncestorOfType<GraphElement>().RegisterCallback<GeometryChangedEvent>(OnLinkMove);
             m_End?.GetFirstAncestorOfType<GraphElement>().RegisterCallback<GeometryChangedEvent>(OnLinkMove);
             m_GraphView = GetFirstAncestorOfType<GraphView>();
-            
+
             SetStyle();
             MarkDirtyAndRepaint();
         }
@@ -300,7 +301,7 @@ namespace Unity.Behavior.GraphFramework
 
             // Draw the final 2 connecting semi circles.
             DrawQuarterCircle(bottomSemiCircleCenter, obj, color, circleRadius, thickness, kCircleSegments, halfWaySign > 0 ? Mathf.PI * 0.5f * 4 : Mathf.PI * 0.5f * 3);
-            DrawQuarterCircle(topSemiCircleCenter, obj, color, circleRadius, thickness, kCircleSegments, halfWaySign > 0 ? Mathf.PI * 0.5f * 2: Mathf.PI * 0.5f);
+            DrawQuarterCircle(topSemiCircleCenter, obj, color, circleRadius, thickness, kCircleSegments, halfWaySign > 0 ? Mathf.PI * 0.5f * 2 : Mathf.PI * 0.5f);
 
         }
 
@@ -326,8 +327,8 @@ namespace Unity.Behavior.GraphFramework
             float halfThickness = thickness * 0.5f;
             float innerRadius = radius - halfThickness;
             float outerRadius = radius + halfThickness;
-            
-            MeshWriteData mesh = obj.Allocate(numSegments * 2, (numSegments-1) * 12);
+
+            MeshWriteData mesh = obj.Allocate(numSegments * 2, (numSegments - 1) * 12);
             for (int i = 0; i < numSegments; ++i)
             {
                 float angle = circleOffset + i * Mathf.PI * 0.5f / (numSegments - 1);
@@ -368,9 +369,9 @@ namespace Unity.Behavior.GraphFramework
         {
             float halfThickness = thickness * 0.5f;
             MeshWriteData mesh = obj.Allocate(4, 12);
-            Vector3 perpendicularDirection = Vector2.Perpendicular((endPosition- startPosition).normalized);
+            Vector3 perpendicularDirection = Vector2.Perpendicular((endPosition - startPosition).normalized);
             Vector3 perpendicularOffset = perpendicularDirection * halfThickness;
-            mesh.SetNextVertex(new Vertex() { position = new Vector3(startPosition.x, startPosition.y, Vertex.nearZ) - perpendicularOffset, tint = color});
+            mesh.SetNextVertex(new Vertex() { position = new Vector3(startPosition.x, startPosition.y, Vertex.nearZ) - perpendicularOffset, tint = color });
             mesh.SetNextVertex(new Vertex() { position = new Vector3(startPosition.x, startPosition.y, Vertex.nearZ) + perpendicularOffset, tint = color });
             mesh.SetNextVertex(new Vertex() { position = new Vector3(endPosition.x, endPosition.y, Vertex.nearZ) - perpendicularOffset, tint = color });
             mesh.SetNextVertex(new Vertex() { position = new Vector3(endPosition.x, endPosition.y, Vertex.nearZ) + perpendicularOffset, tint = color });
@@ -407,7 +408,7 @@ namespace Unity.Behavior.GraphFramework
             Vector2 endPositionWorld = m_EndWorldPosition;
             Vector2 topLeftWorld = new Vector2(Mathf.Min(startPositionWorld.x, endPositionWorld.x), Mathf.Min(startPositionWorld.y, endPositionWorld.y));
             Vector2 bottomRightWorld = new Vector2(Mathf.Max(startPositionWorld.x, endPositionWorld.x), Mathf.Max(startPositionWorld.y, endPositionWorld.y));
-            
+
             Vector2 scale = worldTransform.lossyScale;
             float xPadding = kPadding + kArrowHalfThickness;
             float yPadding = kVerticalMargins + kPadding;
@@ -417,15 +418,15 @@ namespace Unity.Behavior.GraphFramework
                 topLeftWorld.y -= yPadding * scale.y;
                 bottomRightWorld.y += yPadding * scale.y;
             }
-            
+
             topLeftWorld.x -= xPadding * scale.x;
             bottomRightWorld.x += xPadding * scale.x;
-             
-            float width = Math.Abs(bottomRightWorld.x - topLeftWorld.x)/scale.x;
-            float height = Math.Abs(bottomRightWorld.y - topLeftWorld.y)/scale.y;
-            
+
+            float width = Math.Abs(bottomRightWorld.x - topLeftWorld.x) / scale.x;
+            float height = Math.Abs(bottomRightWorld.y - topLeftWorld.y) / scale.y;
+
             transform.position = m_GraphView != null ? m_GraphView.Viewport.WorldToLocal(topLeftWorld) : topLeftWorld;
-            
+
             style.width = width;
             style.height = height;
         }
@@ -434,7 +435,7 @@ namespace Unity.Behavior.GraphFramework
         {
             for (int i = 0; i < k_NumEdgeSegments; ++i)
             {
-                int indexOffset = i*4;
+                int indexOffset = i * 4;
                 m_Vertices[indexOffset + 0] = new Vertex();
                 m_Vertices[indexOffset + 1] = new Vertex();
                 m_Vertices[indexOffset + 2] = new Vertex();
@@ -459,13 +460,13 @@ namespace Unity.Behavior.GraphFramework
             float prevPositionY = startPosition.y;
             for (int i = 0; i < k_NumEdgeSegments; ++i)
             {
-                CalculateCubicBezierPoint((i+1) / (float)(k_NumEdgeSegments), startPosition, control1, control2, targetPosition, out var nextPositionX, out var nextPositionY);
-                
+                CalculateCubicBezierPoint((i + 1) / (float)(k_NumEdgeSegments), startPosition, control1, control2, targetPosition, out var nextPositionX, out var nextPositionY);
+
                 float pX = nextPositionX - prevPositionX;
                 float pY = nextPositionY - prevPositionY;
                 float pHalfLength = Mathf.Sqrt(pX * pX + pY * pY);
-                float pHalfX = -pY/pHalfLength * halfThickness;
-                float pHalfY = pX/pHalfLength * halfThickness;
+                float pHalfX = -pY / pHalfLength * halfThickness;
+                float pHalfY = pX / pHalfLength * halfThickness;
 
                 int indexOffset = i * 4;
 
@@ -490,7 +491,7 @@ namespace Unity.Behavior.GraphFramework
             mesh.SetAllVertices(m_Vertices);
             mesh.SetAllIndices(m_Indices);
         }
-        
+
         private static void GetControlPoints(Vector3 start, Vector3 end, out Vector3 control1, out Vector3 control2)
         {
             float heightDifference = end.y - start.y;
@@ -563,7 +564,7 @@ namespace Unity.Behavior.GraphFramework
             CalculateCubicBezierPoint(min, startPosition, control1, control2, targetPosition, out float p0x, out float p0y);
             CalculateCubicBezierPoint(max, startPosition, control1, control2, targetPosition, out float p1x, out float p1y);
 
-            Vector2 size = new Vector2(p1x-p0x, p1y-p0y);
+            Vector2 size = new Vector2(p1x - p0x, p1y - p0y);
             Vector2 center = new Vector2(p0x, p0y) + size * 0.5f;
             float radius = Mathf.Max(Mathf.Abs(size.x), Mathf.Abs(size.y));
             float radiusSquared = radius * radius;
@@ -603,7 +604,7 @@ namespace Unity.Behavior.GraphFramework
             {
                 return IsEdgeInRectSharpBottomToTop(rect, m_StartWorldPosition, m_EndWorldPosition);
             }
-            
+
             // Test against three line segments:
             // 1. From startPosition straight down to halfwayPointY
             // 2. Holding y constant, then over to endPosition.x
@@ -611,7 +612,7 @@ namespace Unity.Behavior.GraphFramework
             float halfwayPointY = (endPosition.y + startPosition.y) * 0.5f;
             return
                 rect.Overlaps(Rect.MinMaxRect(startPosition.x, startPosition.y, startPosition.x, halfwayPointY), true) ||
-                rect.Overlaps(Rect.MinMaxRect(startPosition.x,  halfwayPointY,  endPosition.x, halfwayPointY), true) ||
+                rect.Overlaps(Rect.MinMaxRect(startPosition.x, halfwayPointY, endPosition.x, halfwayPointY), true) ||
                 rect.Overlaps(Rect.MinMaxRect(endPosition.x, halfwayPointY, endPosition.x, endPosition.y), true);
         }
 

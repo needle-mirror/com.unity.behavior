@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Behavior.GraphFramework;
@@ -12,7 +12,7 @@ namespace Unity.Behavior
         {
             if (!command.NodeModels.Any())
             {
-                return true;   
+                return true;
             }
 
             NodeCopyData copyNodeList = new NodeCopyData
@@ -21,7 +21,7 @@ namespace Unity.Behavior
             };
             string jsonString = JsonUtility.ToJson(copyNodeList);
             GUIUtility.systemCopyBuffer = jsonString;
-            
+
             return true;
         }
     }

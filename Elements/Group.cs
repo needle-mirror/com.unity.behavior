@@ -15,9 +15,11 @@ namespace Unity.Behavior.GraphFramework
 
         public override VisualElement contentContainer => m_ContentContainer;
         public override bool IsGroup => true;
-        public string Name {
+        public string Name
+        {
             get => m_NameLabel.text;
-            set {
+            set
+            {
                 m_NameLabel.text = value;
                 m_NameField.SetValueWithoutNotify(value);
             }

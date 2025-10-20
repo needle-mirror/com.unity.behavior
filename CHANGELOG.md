@@ -4,6 +4,63 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.13] - 2025-10-20
+
+### Added
+- Update App UI to it's 2.0.0 release version.
+- Added pre-build check that prevents compilation when BehaviorGraphs contain unresolved missing type references.
+- Added inspector editor helpbox to warn users about invalid asset state.
+- Added new `BehaviorGraph.HasSameSourceAsset` API to compare source asset of different runtime graphs instance.
+- Added version number to authoring graphs to handle serialization version update.
+- Added authoring graph asset validation for managed references and placeholder.
+- Added `Tools > Behavior > Check Assets Integrity` to identify assets with missing types or placeholder nodes.
+- Added `Edit` button to Behavior authoring assets inspectors.
+
+### Changed
+- BehaviorGraphAgent now displays the source graph asset in inspector during playmode instead of the virtual graph instance.
+- Graph and Blackboard windows will now close automatically if they detect that their assets have managed references with missing types.
+- Graph and Blackboard asset inspector editors aligned and updated to use UITK.
+- To prevent data loss, it is no longer possible to rename or move a Behavior asset with missing type in managed references.
+- Authoring graph's SubgraphInfo now store direct asset reference instead of SerializedGUID.
+- Removed redundant `RootGraph` from the Graph asset serialization.
+- Improved Behavior assets import and validation reliability.
+- Moved Behavior Authoring Graph's 'Regenerate Runtime Assets' button to context menu item.
+- Exposed `BlackboardVariable.InvokeValueChanged` allowing to manually invoke the event when modifying collection elements or reference type properties that don't call the `Value` setter.
+- Changed `BehaviorGraphAgent.Init` to clone again a new instance of the assigned graph and restart the graph execution.
+- Changed  `DefaultExecutionOrder` from `BehaviorGraphAgent` to `-50` to ensure that agents are initialized (`Awake` call) before most user-defined script wake up. If you expect your code to execute `Awake` before `BehaviorGraphAgent`, you can also use `DefaultExecutionOrder` with a value lower or equal to `-51`.
+
+### Fixed
+- Fixed BehaviorGraphAgentEditor overriding agent graph assigned from code when its original graph value is null. (BEHAVB-324)
+- Fixed use of SerializeReference attribute in the package.
+- Fixed Blackboard asset deleting serialized references with missing types.
+- Fixed Graph asset deleting node model using serialized references with missing types.
+- Fixed exception handling to prevent graph execution when managed references have missing types.
+- Screen position and zoom level are now restored on domain reload when a graph is open.
+- Fixed runtime graph asset sometimes becoming the main object instead of the authoring graph.
+- Fixed RunSubgraphDynamic stuck after changing subgraph while the node is running.
+- Fixed `ConditionUtils.CompareReferences` not comparing objects when enum is set to `NotEqual`.
+- Fixed runtime graphs not rebuilt when node types changed from external changes (e.g., from source control).
+- Fixed authoring graph accumulating obsolete node model info data.
+- Fixed placeholder node information not displaying correctly in graph inspector and editor views.
+- Fixed 'Create' button on placeholder nodes not working.
+- Fixed SubgraphNodeModel accumulating obsolete field model data.
+- Reduced StartOnEvent GC when using Queue mode.
+- Fixed clone of disabled BehaviorGraphAgent sharing the same graph instance as the original agent. (BEHAVB-341)
+- Fixed OnStart root nodes execute in creation order instead of node position in graph. (BEHAVB-347)
+- Fixed node execution order not updated when authoring graph node positions are changed, including OnStart root nodes.
+- Fixed edits to blackboard asset re-centers the graph (BEHAVB-337).
+- Fixed an issue where you had to undo twice to undo instead of once when removing or adding a subgraph from a run subgraph node.
+- Fixed an issue where the undo / redo callstack was lost when you undo certain actions.
+- Fixed dynamic subgraph's blackboard variables not invoking parent's blackboard variable OnValueChanged.
+- Fixed `RunSubgraphDynamic` nodes sharing references when using the same source SubgraphVariable.
+- Fixed `Switch` node inspector field not properly updating node UI ports.
+- Fixed `BehaviorGraphAgent.BlackboardReference` being accessible before the agent is initialized.
+
+### Known Issues
+- Same Known Issues as 1.0.12
+- When having Behavior assets with missing type in managed reference, changing Editor Theme can results in a warning `Unknown managed type referenced` followed by an error `A scripted class has a different serialization layout when loading.`. When this happens, it is very likely that the affected assets have been corrupted. Most visible impact would be some GUID and references turned into bytes arrays. In this state, any attempt to edit or use such asset will result in null reference exception. If this happens, the best course of action is to revert the changes to the serialized field. It should fix the issue afterward.
+- Duplicating a `RunSubgraphDynamic` node will not properly copy the Blackboard Asset field, if assigned.
+
 ## [1.0.12] - 2025-07-23
 
 ### Changed
@@ -19,6 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Known Issues
 - Same Known Issues as 1.0.11
+- Runtime graph nodes execution order do not changed when only node positions are changed in the authoring graph. Workaround is to reconnect an edge to force a rebuild. (BEHAVB-343)
 
 ## [1.0.11] - 2025-06-11
 
@@ -68,7 +126,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed an issue in PatrolAction where the agent would incorrectly mark waypoints as reached during path calculation, causing it to skip waypoints when wait times were used. (Credit to @viento20340)
 - Fixed navigation nodes not reverting NavMeshAgent speed to its original value when node's `OnEnd` was called.
 - Fixed navigation nodes overriding default NavMeshAgent stopping distance post runtime deserialization.
-- Fixed order of the Blackboard variable list in the Inspector window becomes unsynchronized when the list order is changed in the Behaviour Graph window's Blackboard. (BEHAVB-288) 
+- Fixed order of the Blackboard variable list in the Inspector window becomes unsynchronized when the list order is changed in the Behaviour Graph window's Blackboard. (BEHAVB-288)
 
 ### Known Issues
 - `RunSubgraph (Static)` node doesn't refresh properly when the referenced subgraph asset is deleted.
@@ -126,7 +184,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - It is possible to assign assets and prefab to `StartOnEvent` and `WaitForEvent` nodes fields. This will do nothing as they are field used to transfer the event values to blackboard variables.
 - `RunSubgraph (Static)` nodes referencing a renamed graph before renaming displays its old name.
 - Blackboard asset variables cannot be changed from the graph window. Graphs are always going to use default value from the source linked blackboard asset. A workaround to change the default value for these variables is to use the `SetVariableValue` node in the graph or the `BehaviorGraphAgent.SetVariableValue` API at runtime.
-- Order of the Blackboard variable list in the Inspector window becomes unsynchronized when the list order is changed in the Behaviour Graph window's Blackboard. Note that any outstanding change to the graph will refresh the order. (BEHAVB-288) 
+- Order of the Blackboard variable list in the Inspector window becomes unsynchronized when the list order is changed in the Behaviour Graph window's Blackboard. Note that any outstanding change to the graph will refresh the order. (BEHAVB-288)
 - Abort and Restart modifiers now only check their conditions once at the beginning of each graph update. With the removal of deferred node execution, if a child node changes a value that would trigger these modifiers' conditions, the effect won't be detected until the next frame. For conditional behaviors that depend on changes made by child nodes, you need to add a WaitForFrame node to ensure proper evaluation. Example pattern: `Abort -> Trigger condition -> WaitForFrame -> following nodes...`.
 
 
@@ -191,7 +249,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Editing Subgraph Representation will no longer add duplicate variables.
 - Softened search fields filtering so that, for example, 'int list' and 'list int' will return 'Integer List'.
-- Fixed WaitForAnyComposite not ending correctly yielding multiple runs of child nodes. 
+- Fixed WaitForAnyComposite not ending correctly yielding multiple runs of child nodes.
 - Editing a node with the node wizard (edit node definition) will no longer remove to Action/Modifer/Sequence postfix.
 - Fixed an issue where automatic save path for enums and event channels saved the file name into the save path settings and caused an infinite loop when saving the next file.
 - Remove erroneous references to Muse in the API docs.
@@ -280,7 +338,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - TriggerEvent now logs message when EventChannel is not assigned.
-- Added MakeSceneActive option to LoadLevel node for Additive mode. 
+- Added MakeSceneActive option to LoadLevel node for Additive mode.
 - Added new UI visualization for Shared blackboard variables.
 
 ### Changed
@@ -290,8 +348,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added missing Switch node inspector.
 - Fixed Shared Blackboard Variable causing a stack overflow in case it was referencing itself.
 - Fixed invalid generation of Shared Blackboard Variable on the source runtime blackboard asset.
-- Blackboard variable Exposed and Shared values can now be toggled on and off from the variable instead of right-clicking. 
-- Changed variable renaming to trim out any leading or trailing whitespace. 
+- Blackboard variable Exposed and Shared values can now be toggled on and off from the variable instead of right-clicking.
+- Changed variable renaming to trim out any leading or trailing whitespace.
 - The branch generation correction feature has been disabled for backend related issues.
 
 ### Fixed
@@ -322,7 +380,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Nodes that generate their own children (for example Switch and Flow nodes with named ports) will auto align their children better than before.
 - Condition context menu will show "Inspect Script" instead of "Edit Script" when opened for a built-in condition.
 - Switch Node: Removed the warnings about no connected child during operation to avoid spamming the log.
-- Creating or renaming variables with a duplicate name is not allowed anymore within a Blackboard asset. 
+- Creating or renaming variables with a duplicate name is not allowed anymore within a Blackboard asset.
 
 ### Fixed
 - Text truncate issues on story editor dropdown elements.
@@ -366,7 +424,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - BlackboardVariable support for various Resource types.
 - BlackboardVariables of type UnityEngine.Object can now have an embedded value in their field (previously needed to set it in the GameObject's inspector).
-- Added new behaviors to StartOnEvent node (Default, Restart, Once).  
+- Added new behaviors to StartOnEvent node (Default, Restart, Once).
 - Blackboard assets can now be created through the Project view Create menu.
 - Added serialization/deserializatioon support for graph, blackboard and node values to JSON. Added demonstation sample.
 - Allow using `TooltipAttribute` on BlackboardVariables to display a tooltip.
@@ -428,7 +486,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Conditions not getting copied properly when a conditional node was duplicated.
 - Fixed navigation nodes sometimes stalling after being called successively.
 - Fixed click events going through to elements underneath search menu items.
-- Fixed UI styling issues on the Start On Event node. 
+- Fixed UI styling issues on the Start On Event node.
 - Fixed warnings being logged unnecessarily in the BehaviorGraphAgent API's.
 
 ### Known Issues

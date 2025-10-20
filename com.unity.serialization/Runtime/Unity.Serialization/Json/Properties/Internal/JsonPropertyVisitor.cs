@@ -9,18 +9,18 @@ namespace Unity.Behavior.Serialization.Json
         /// The key used as an id when a given object has references to it.
         /// </summary>
         internal const string k_SerializedId = "$id";
-            
+
         /// <summary>
         /// The key used when an object is a serialized reference. This member will refers to the <see cref="k_SerializedId"/> of another object.
         /// </summary>
         internal const string k_SerializedReferenceKey = "$ref";
-        
+
         /// <summary>
         /// The key used when writing out custom type information.
         /// This can be consumed during deserialization to reconstruct the concrete type.
         /// </summary>
         internal const string k_SerializedTypeKey = "$type";
-            
+
         /// <summary>
         /// The key used when writing out serialized version information.
         /// This can be consumed during deserialization to handle migration.
@@ -31,7 +31,7 @@ namespace Unity.Behavior.Serialization.Json
         /// The key used to hold collection elements when extra mata-data is present.
         /// </summary>
         internal const string k_SerializedElementsKey = "$elements";
-        
+
         /// <summary>
         /// Scope used to lock the current visitor as being in use.
         /// </summary>
@@ -55,7 +55,7 @@ namespace Unity.Behavior.Serialization.Json
                 m_Visitor.IsLocked = false;
             }
         }
-        
+
         internal readonly struct PropertyScope : IDisposable
         {
             readonly JsonPropertyVisitor m_Visitor;
@@ -73,17 +73,17 @@ namespace Unity.Behavior.Serialization.Json
                 m_Visitor.Property = m_Property;
             }
         }
-        
+
         /// <summary>
         /// Returns true if the reader is currently in use.
         /// </summary>
         internal bool IsLocked { get; private set; }
-        
+
         /// <summary>
         /// Returns the property for the currently visited container.
         /// </summary>
         internal IProperty Property { get; private set; }
-        
+
         /// <summary>
         /// Creates a container property scope for the visitation.
         /// </summary>

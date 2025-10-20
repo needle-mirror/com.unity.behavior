@@ -32,7 +32,7 @@ namespace Unity.Behavior
         }
 
         internal void CreateFields(NodeInfo nodeInfo)
-        {            
+        {
             tooltip = nodeInfo.Name;
 
             Clear();
@@ -44,12 +44,12 @@ namespace Unity.Behavior
             }
 
             IsTwoLineElement = true;
-            StoryElementUtility.CreateStoryElement(nodeInfo.Story , nodeInfo.Variables, this, (variableName, type) =>
-            {
-                BaseLinkField field = LinkFieldUtility.CreateNodeLinkField(variableName, type);
-                field.FieldName = variableName;
-                return field;
-            });
+            StoryElementUtility.CreateStoryElement(nodeInfo.Story, nodeInfo.Variables, this, (variableName, type) =>
+           {
+               BaseLinkField field = LinkFieldUtility.CreateNodeLinkField(variableName, type);
+               field.FieldName = variableName;
+               return field;
+           });
         }
     }
 }

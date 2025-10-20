@@ -12,14 +12,14 @@ namespace Unity.Behavior.Serialization.Json
         /// The deserialized version of the type.
         /// </summary>
         public readonly int SerializedVersion;
-        
+
         /// <summary>
         /// The in-memory representation of the value being deserialized.
         /// </summary>
         public readonly SerializedObjectView SerializedObject;
-        
+
         /// <summary>
-        /// The serialized type as reported by the underlying stream. This can be used in contravariant migrations. 
+        /// The serialized type as reported by the underlying stream. This can be used in contravariant migrations.
         /// </summary>
         public readonly Type SerializedType;
 
@@ -27,7 +27,7 @@ namespace Unity.Behavior.Serialization.Json
         /// The user data provided in deserialization parameters.
         /// </summary>
         public readonly object UserData;
-        
+
         /// <summary>
         /// The internal visitor, used to re-enter in to normal deserialization.
         /// </summary>
@@ -65,7 +65,7 @@ namespace Unity.Behavior.Serialization.Json
         /// <returns>A new instance of <typeparamref name="TValue"/> initialized with data from the root object.</returns>
         public TValue Read<TValue>()
             => Read<TValue>(SerializedObject);
-        
+
         /// <summary>
         /// Reads a top level member as the specified <typeparamref name="TValue"/> type.
         /// </summary>
@@ -86,7 +86,7 @@ namespace Unity.Behavior.Serialization.Json
                 return false;
             }
         }
-        
+
         /// <summary>
         /// Reads a top level member as the specified <typeparamref name="TValue"/> type.
         /// </summary>
@@ -128,7 +128,7 @@ namespace Unity.Behavior.Serialization.Json
             Read(ref value, view);
             return value;
         }
-        
+
         /// <summary>
         /// Reads the specified <see cref="SerializedValueView"/> in to the given reference.
         /// </summary>
@@ -140,63 +140,63 @@ namespace Unity.Behavior.Serialization.Json
             switch (view.Type)
             {
                 case TokenType.String:
-                {
-                    var v = view.AsStringView().ToString();
-                    TypeConversion.TryConvert(ref v, out value);
-                    break;
-                }
+                    {
+                        var v = view.AsStringView().ToString();
+                        TypeConversion.TryConvert(ref v, out value);
+                        break;
+                    }
                 case TokenType.Primitive:
-                {
-                    var p = view.AsPrimitiveView();
-
-                    if (p.IsIntegral())
                     {
-                        if (p.IsSigned())
+                        var p = view.AsPrimitiveView();
+
+                        if (p.IsIntegral())
                         {
-                            var v = p.AsInt64();
+                            if (p.IsSigned())
+                            {
+                                var v = p.AsInt64();
+                                TypeConversion.TryConvert(ref v, out value);
+                            }
+                            else
+                            {
+                                var v = p.AsUInt64();
+                                TypeConversion.TryConvert(ref v, out value);
+                            }
+                        }
+                        else if (p.IsDecimal() || p.IsInfinity() || p.IsNaN())
+                        {
+                            var v = p.AsFloat();
                             TypeConversion.TryConvert(ref v, out value);
                         }
-                        else
+                        else if (p.IsBoolean())
                         {
-                            var v = p.AsUInt64();
+                            var v = p.AsBoolean();
                             TypeConversion.TryConvert(ref v, out value);
                         }
-                    }
-                    else if (p.IsDecimal() || p.IsInfinity() || p.IsNaN())
-                    {
-                        var v = p.AsFloat();
-                        TypeConversion.TryConvert(ref v, out value);
-                    }
-                    else if (p.IsBoolean())
-                    {
-                        var v = p.AsBoolean();
-                        TypeConversion.TryConvert(ref v, out value);
-                    }
-                    else if (p.IsNull())
-                    {
-                        value = default;
-                    }
+                        else if (p.IsNull())
+                        {
+                            value = default;
+                        }
 
-                    break;
-                }
+                        break;
+                    }
                 case TokenType.Object:
                 case TokenType.Array:
-                {
-                    var serializedType = !TypeTraits<TValue>.IsAbstractOrInterface
-                        ? typeof(TValue) 
-                        : null;
-                    
-                    using (m_Visitor.CreateSerializedTypeScope(serializedType))
-                    using (m_Visitor.CreateViewScope(view.AsUnsafe()))
-                    using (m_Visitor.CreateDisableRootMigrationScope(true))
                     {
-                        var container = new PropertyWrapper<TValue>(value);
-                        PropertyContainer.TryAccept(m_Visitor, ref container);
-                        value = container.Value;
-                    }
+                        var serializedType = !TypeTraits<TValue>.IsAbstractOrInterface
+                            ? typeof(TValue)
+                            : null;
 
-                    break;
-                }
+                        using (m_Visitor.CreateSerializedTypeScope(serializedType))
+                        using (m_Visitor.CreateViewScope(view.AsUnsafe()))
+                        using (m_Visitor.CreateDisableRootMigrationScope(true))
+                        {
+                            var container = new PropertyWrapper<TValue>(value);
+                            PropertyContainer.TryAccept(m_Visitor, ref container);
+                            value = container.Value;
+                        }
+
+                        break;
+                    }
                 default:
                     throw new ArgumentOutOfRangeException();
             }

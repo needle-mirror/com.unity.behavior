@@ -11,9 +11,9 @@ namespace Unity.Behavior.Serialization.Json
 
         public int JsonTokenNextIndex;
         public int JsonTokenParentIndex;
-        
+
         public bool StripStringEscapeCharacters;
-        
+
         public UnsafePackedBinaryWriter(UnsafeJsonTokenStream* jsonTokenStream, UnsafePackedBinaryStream* packedBinaryStream)
         {
             m_JsonTokenStream = jsonTokenStream;
@@ -22,20 +22,20 @@ namespace Unity.Behavior.Serialization.Json
             JsonTokenParentIndex = -1;
             StripStringEscapeCharacters = true;
         }
-        
+
         public void Dispose()
         {
         }
-        
+
         public void Seek(int index, int parent)
         {
             JsonTokenNextIndex = index;
             JsonTokenParentIndex = parent;
         }
-        
+
         internal SerializedValueView GetView(int index)
         {
-            if ((uint) index >= (uint) m_PackedBinaryStream->TokenNextIndex)
+            if ((uint)index >= (uint)m_PackedBinaryStream->TokenNextIndex)
             {
                 throw new IndexOutOfRangeException();
             }
@@ -44,18 +44,18 @@ namespace Unity.Behavior.Serialization.Json
             var handle = m_PackedBinaryStream->Handles[token.HandleIndex];
             return new SerializedValueView(m_PackedBinaryStream, new Handle { Index = token.HandleIndex, Version = handle.DataVersion });
         }
-        
+
         public int Write(UnsafeBuffer<char> buffer, int count)
         {
             if (count <= 0)
                 return 0;
-            
+
             // NOTE: This method was ported from a parallel job. The previous implementation had a first pass 'WriteTokens'
             //       which computes the start and end points for characters we care about in the input buffer. The 'WriteCharacters`
-            //       step would then go wide and copy all characters to the final binary buffer. 
-            // 
+            //       step would then go wide and copy all characters to the final binary buffer.
+            //
             // TODO: This method should be re-worked with raw single method performance in mind.
-            
+
             var length = Math.Min(JsonTokenNextIndex + count, m_JsonTokenStream->TokenNextIndex);
             count = length - JsonTokenNextIndex;
 
@@ -74,12 +74,12 @@ namespace Unity.Behavior.Serialization.Json
 
             return count;
         }
-        
+
         int WriteTokens(UnsafeBuffer<char> buffer, int count)
         {
             var binaryBufferPosition = m_PackedBinaryStream->BufferPosition;
             var inputTokenLength = Math.Min(JsonTokenNextIndex + count, m_JsonTokenStream->TokenNextIndex);
-            
+
             for (; JsonTokenNextIndex < inputTokenLength; JsonTokenNextIndex++, m_PackedBinaryStream->TokenNextIndex++)
             {
                 var inputToken = m_JsonTokenStream->Tokens[JsonTokenNextIndex];
@@ -110,66 +110,66 @@ namespace Unity.Behavior.Serialization.Json
                 {
                     case TokenType.Array:
                     case TokenType.Object:
-                    {
-                        JsonTokenParentIndex = JsonTokenNextIndex;
-                        m_PackedBinaryStream->TokenParentIndex = m_PackedBinaryStream->TokenNextIndex;
-                    }
-                    break;
-
-                    case TokenType.Primitive:
-                    case TokenType.String:
-                    case TokenType.Comment:
-                    {
-                        if (inputToken.Parent == -1 || m_JsonTokenStream->Tokens[inputToken.Parent].Type == TokenType.Object || inputToken.End == -1)
                         {
                             JsonTokenParentIndex = JsonTokenNextIndex;
                             m_PackedBinaryStream->TokenParentIndex = m_PackedBinaryStream->TokenNextIndex;
                         }
+                        break;
 
-                        if (inputToken.Start != -1)
+                    case TokenType.Primitive:
+                    case TokenType.String:
+                    case TokenType.Comment:
                         {
-                            binaryBufferPosition += sizeof(int);
-                        }
-                        
-                        var start = inputToken.Start != -1 ? inputToken.Start : 0;
-                        var end = inputToken.End != -1 ? inputToken.End : buffer.Length;
-
-                        if (StripStringEscapeCharacters && inputToken.Type == TokenType.String)
-                        {
-                            var validCharacterCount = 0;
-                            
-                            for (var i = start; i < end; i++)
+                            if (inputToken.Parent == -1 || m_JsonTokenStream->Tokens[inputToken.Parent].Type == TokenType.Object || inputToken.End == -1)
                             {
-                                if (buffer.Buffer[i] == '\\')
-                                {
-                                    i++;
+                                JsonTokenParentIndex = JsonTokenNextIndex;
+                                m_PackedBinaryStream->TokenParentIndex = m_PackedBinaryStream->TokenNextIndex;
+                            }
 
-                                    if (i < end)
+                            if (inputToken.Start != -1)
+                            {
+                                binaryBufferPosition += sizeof(int);
+                            }
+
+                            var start = inputToken.Start != -1 ? inputToken.Start : 0;
+                            var end = inputToken.End != -1 ? inputToken.End : buffer.Length;
+
+                            if (StripStringEscapeCharacters && inputToken.Type == TokenType.String)
+                            {
+                                var validCharacterCount = 0;
+
+                                for (var i = start; i < end; i++)
+                                {
+                                    if (buffer.Buffer[i] == '\\')
+                                    {
+                                        i++;
+
+                                        if (i < end)
+                                        {
+                                            validCharacterCount++;
+                                        }
+                                        else
+                                        {
+                                            // Our last character was an escaped character. We need to record this so the next token write can swap the character.
+                                            binaryToken.LastCharacterIsEscaped = true;
+                                        }
+                                    }
+                                    else
                                     {
                                         validCharacterCount++;
                                     }
-                                    else 
-                                    {
-                                        // Our last character was an escaped character. We need to record this so the next token write can swap the character.
-                                        binaryToken.LastCharacterIsEscaped = true;
-                                    }
                                 }
-                                else
-                                {
-                                    validCharacterCount++;
-                                }
+
+                                binaryBufferPosition += validCharacterCount * sizeof(ushort);
                             }
-                            
-                            binaryBufferPosition += validCharacterCount * sizeof(ushort);
+                            else
+                            {
+                                binaryBufferPosition += (end - start) * sizeof(ushort);
+                            }
                         }
-                        else
-                        {
-                            binaryBufferPosition += (end - start) * sizeof(ushort);
-                        }
-                    }
-                    break;
+                        break;
                 }
-                
+
                 m_PackedBinaryStream->Tokens[m_PackedBinaryStream->TokenNextIndex] = binaryToken;
                 m_PackedBinaryStream->Handles[binaryToken.HandleIndex].DataVersion++;
             }
@@ -218,120 +218,120 @@ namespace Unity.Behavior.Serialization.Json
 
         void WriteCharacters(int inputTokenStartIndex, int outputTokenStartIndex, UnsafeBuffer<char> buffer, int count)
         {
-            for (var index=0; index<count; index++)
+            for (var index = 0; index < count; index++)
             {
                 var inputTokenIndex = index + inputTokenStartIndex;
                 var inputToken = m_JsonTokenStream->Tokens[inputTokenIndex];
-                
+
                 switch (inputToken.Type)
                 {
                     case TokenType.String:
                     case TokenType.Primitive:
                     case TokenType.Comment:
-                    {
-                        var binaryTokenIndex = index + outputTokenStartIndex;
-                        var binaryToken = m_PackedBinaryStream->Tokens[binaryTokenIndex];
-                        var position = binaryToken.Position;
-                        
-                        if (inputToken.Start != -1)
                         {
-                            position += sizeof(int);
-                        }
+                            var binaryTokenIndex = index + outputTokenStartIndex;
+                            var binaryToken = m_PackedBinaryStream->Tokens[binaryTokenIndex];
+                            var position = binaryToken.Position;
 
-                        var start = inputToken.Start != -1 ? inputToken.Start : 0;
-                        var end = inputToken.End != -1 ? inputToken.End : buffer.Length;
-
-                        if (inputToken.Type == TokenType.String && StripStringEscapeCharacters)
-                        {
-                            void WriteCharacterEscaped(ref UnsafePackedBinaryWriter writer, ref int p, char c)
+                            if (inputToken.Start != -1)
                             {
-                                switch (c)
+                                position += sizeof(int);
+                            }
+
+                            var start = inputToken.Start != -1 ? inputToken.Start : 0;
+                            var end = inputToken.End != -1 ? inputToken.End : buffer.Length;
+
+                            if (inputToken.Type == TokenType.String && StripStringEscapeCharacters)
+                            {
+                                void WriteCharacterEscaped(ref UnsafePackedBinaryWriter writer, ref int p, char c)
                                 {
-                                    case '\\':
-                                        writer.Write(ref p, '\\');
-                                        break;
-                                    case '"':
-                                        writer.Write(ref p, '\"');
-                                        break;
-                                    case 't':
-                                        writer.Write(ref p, '\t');
-                                        break;
-                                    case 'r':
-                                        writer.Write(ref p, '\r');
-                                        break;
-                                    case 'n':
-                                        writer.Write(ref p, '\n');
-                                        break;
-                                    case 'b':
-                                        writer.Write(ref p, '\b');
-                                        break;
-                                    case '0':
-                                        writer.Write(ref p, '\0');
-                                        break;
-                                    default:
-                                        writer.Write(ref p, '\0');
-                                        break;
+                                    switch (c)
+                                    {
+                                        case '\\':
+                                            writer.Write(ref p, '\\');
+                                            break;
+                                        case '"':
+                                            writer.Write(ref p, '\"');
+                                            break;
+                                        case 't':
+                                            writer.Write(ref p, '\t');
+                                            break;
+                                        case 'r':
+                                            writer.Write(ref p, '\r');
+                                            break;
+                                        case 'n':
+                                            writer.Write(ref p, '\n');
+                                            break;
+                                        case 'b':
+                                            writer.Write(ref p, '\b');
+                                            break;
+                                        case '0':
+                                            writer.Write(ref p, '\0');
+                                            break;
+                                        default:
+                                            writer.Write(ref p, '\0');
+                                            break;
+                                    }
+                                }
+
+                                var i = start;
+
+                                if (i < end && inputToken.Start == -1 && m_PackedBinaryStream->Tokens[binaryTokenIndex - 1].LastCharacterIsEscaped)
+                                    WriteCharacterEscaped(ref this, ref position, buffer.Buffer[i++]);
+
+                                for (; i < end; i++)
+                                {
+                                    if (buffer.Buffer[i] == '\\')
+                                    {
+                                        i++;
+
+                                        if (i < end)
+                                            WriteCharacterEscaped(ref this, ref position, buffer.Buffer[i]);
+                                    }
+                                    else
+                                    {
+                                        Write(ref position, buffer.Buffer[i]);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                for (var i = start; i < end; i++)
+                                {
+                                    Write(ref position, ((ushort*)buffer.Buffer)[i]);
                                 }
                             }
 
-                            var i = start;
-
-                            if (i < end && inputToken.Start == -1 && m_PackedBinaryStream->Tokens[binaryTokenIndex - 1].LastCharacterIsEscaped)
-                                WriteCharacterEscaped(ref this, ref position, buffer.Buffer[i++]);
-                            
-                            for (; i < end; i++)
+                            if (inputToken.End != -1)
                             {
-                                if (buffer.Buffer[i] == '\\')
-                                {
-                                    i++;
+                                var startTokenIndex = inputTokenIndex;
 
-                                    if (i < end)
-                                        WriteCharacterEscaped(ref this, ref position, buffer.Buffer[i]);
-                                }
-                                else
+                                for (; ; )
                                 {
-                                    Write(ref position, buffer.Buffer[i]);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            for (var i = start; i < end; i++)
-                            {
-                                Write(ref position, ((ushort*) buffer.Buffer)[i]);
-                            }
-                        }
+                                    if (inputToken.Start != -1 || inputToken.Parent == -1)
+                                    {
+                                        break;
+                                    }
 
-                        if (inputToken.End != -1)
-                        {
-                            var startTokenIndex = inputTokenIndex;
-
-                            for (;;)
-                            {
-                                if (inputToken.Start != -1 || inputToken.Parent == -1)
-                                {
-                                    break;
+                                    startTokenIndex = inputToken.Parent;
+                                    inputToken = m_JsonTokenStream->Tokens[startTokenIndex];
                                 }
 
-                                startTokenIndex = inputToken.Parent;
-                                inputToken = m_JsonTokenStream->Tokens[startTokenIndex];
+                                var offset = startTokenIndex - inputTokenIndex;
+                                var startPosition = m_PackedBinaryStream->Tokens[binaryTokenIndex + offset].Position;
+                                var byteLength = position - startPosition;
+                                byteLength -= sizeof(int);
+                                Write(ref startPosition, byteLength / sizeof(ushort));
                             }
-
-                            var offset = startTokenIndex - inputTokenIndex;
-                            var startPosition = m_PackedBinaryStream->Tokens[binaryTokenIndex + offset].Position;
-                            var byteLength = position - startPosition;
-                            byteLength -= sizeof(int);
-                            Write(ref startPosition, byteLength / sizeof(ushort));
                         }
-                    }
-                    break;
+                        break;
                 }
             }
         }
 
         void Write<T>(ref int position, T value) where T : unmanaged
         {
-            *(T*) (m_PackedBinaryStream->Buffer + position) = value;
+            *(T*)(m_PackedBinaryStream->Buffer + position) = value;
             position += sizeof(T);
         }
 
@@ -357,7 +357,7 @@ namespace Unity.Behavior.Serialization.Json
             return parent.Type == TokenType.Object;
         }
     }
-    
+
     unsafe struct PackedBinaryWriter : IDisposable
     {
         readonly Allocator m_Label;
@@ -365,7 +365,7 @@ namespace Unity.Behavior.Serialization.Json
 
         public int TokenNextIndex => m_Data->JsonTokenNextIndex;
         public int TokenParentIndex => m_Data->JsonTokenParentIndex;
-        
+
         /// <summary>
         /// Indicates if escape characters should be stripped during reads.
         /// </summary>
@@ -378,7 +378,7 @@ namespace Unity.Behavior.Serialization.Json
         public PackedBinaryWriter(JsonTokenStream tokenStream, PackedBinaryStream binaryStream, Allocator label)
         {
             m_Label = label;
-            m_Data = (UnsafePackedBinaryWriter*) UnsafeUtility.Malloc(sizeof(UnsafePackedBinaryWriter), UnsafeUtility.AlignOf<UnsafePackedBinaryWriter>(), label);
+            m_Data = (UnsafePackedBinaryWriter*)UnsafeUtility.Malloc(sizeof(UnsafePackedBinaryWriter), UnsafeUtility.AlignOf<UnsafePackedBinaryWriter>(), label);
             *m_Data = new UnsafePackedBinaryWriter(tokenStream.GetUnsafePtr(), binaryStream.GetUnsafePtr());
         }
 

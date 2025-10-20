@@ -2,7 +2,7 @@
 uid: behavior-features
 ---
 
-# Unity Behavior key features
+# Introduction
 
 Unity Behavior accelerates behavior authoring with a visual workflow, runtime integration, and modular architecture.
 

@@ -14,7 +14,7 @@ The following table describes the key differences between [Unity Visual Scriptin
 | ------ | ---------------------- | -------------- |
 | Purpose | Visual alternative to C# for implementing general game logic. | High-level tool for defining what an entity should do next. |
 | Abstraction level | Low-level: focuses on how to implement logic, step by step. | High-level: focuses on behavior outcomes like success, failure, or waiting. |
-| Design model	| Based on programming constructs (for example, variables, loops, and conditionals). | Based on behavior tasks and decision-making states. |
+| Design model  | Based on programming constructs (for example, variables, loops, and conditionals). | Based on behavior tasks and decision-making states. |
 | Example question | `How do I implement this functionality?` | `What should this object or character do next?` |
 | Typical applications | Broad logic including UI flow, gameplay systems, or mathematical operations. | AI behavior, interactions, contextual event handling, character decisions. |
 

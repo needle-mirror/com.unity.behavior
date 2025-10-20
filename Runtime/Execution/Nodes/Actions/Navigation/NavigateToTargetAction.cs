@@ -63,8 +63,8 @@ namespace Unity.Behavior
             }
 
             // Check if the target position has changed.
-            bool boolUpdateTargetPosition = !Mathf.Approximately(m_LastTargetPosition.x, Target.Value.transform.position.x) 
-                || !Mathf.Approximately(m_LastTargetPosition.y, Target.Value.transform.position.y) 
+            bool boolUpdateTargetPosition = !Mathf.Approximately(m_LastTargetPosition.x, Target.Value.transform.position.x)
+                || !Mathf.Approximately(m_LastTargetPosition.y, Target.Value.transform.position.y)
                 || !Mathf.Approximately(m_LastTargetPosition.z, Target.Value.transform.position.z);
 
             if (boolUpdateTargetPosition)
@@ -75,7 +75,7 @@ namespace Unity.Behavior
 
             float distance = GetDistanceXZ();
             bool destinationReached = distance <= (DistanceThreshold + m_ColliderOffset);
-            
+
             if (destinationReached && (m_NavMeshAgent == null || !m_NavMeshAgent.pathPending))
             {
                 return Status.Success;
@@ -123,7 +123,7 @@ namespace Unity.Behavior
                     m_NavMeshAgent.speed = m_OriginalSpeed;
                 if (m_OriginalStoppingDistance >= 0f)
                     m_NavMeshAgent.stoppingDistance = m_OriginalStoppingDistance;
-                
+
                 m_NavMeshAgent.Warp(Agent.Value.transform.position);
             }
 
@@ -177,12 +177,12 @@ namespace Unity.Behavior
             {
                 case TargetPositionMode.ClosestPointOnAnyCollider:
                     Collider anyCollider = Target.Value.GetComponentInChildren<Collider>(includeInactive: false);
-                    if (anyCollider == null || anyCollider.enabled == false) 
+                    if (anyCollider == null || anyCollider.enabled == false)
                         break;
                     return anyCollider.ClosestPoint(Agent.Value.transform.position);
                 case TargetPositionMode.ClosestPointOnTargetCollider:
                     Collider targetCollider = Target.Value.GetComponent<Collider>();
-                    if (targetCollider == null || targetCollider.enabled == false) 
+                    if (targetCollider == null || targetCollider.enabled == false)
                         break;
                     return targetCollider.ClosestPoint(Agent.Value.transform.position);
             }

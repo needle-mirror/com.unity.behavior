@@ -9,7 +9,7 @@ namespace Unity.Behavior.GraphFramework
         [HideInInspector]
         [SerializeField]
         public SerializableGUID AssetID = SerializableGUID.Generate();
-        
+
         [SerializeReference, HideInInspector]
         private List<VariableModel> m_Variables = new();
         public List<VariableModel> Variables
@@ -46,7 +46,8 @@ namespace Unity.Behavior.GraphFramework
             VariableSetGlobal
         }
 
-        [SerializeField][HideInInspector]
+        [SerializeField]
+        [HideInInspector]
         internal long m_VersionTimestamp;
         public long VersionTimestamp => m_VersionTimestamp;
 
@@ -54,38 +55,37 @@ namespace Unity.Behavior.GraphFramework
         /// Delegate for blackboard changes.
         /// </summary>
         public delegate void BlackboardChangedCallback(BlackboardChangedType changeType);
-        
+
         /// <summary>
         /// Callback used for changes in the blackboard asset.
         /// </summary>
         public event BlackboardChangedCallback OnBlackboardChanged = delegate { };
-        
+
         /// <summary>
         /// Invokes the OnBlackboardChanged callback.
         /// </summary>
         public void InvokeBlackboardChanged(BlackboardChangedType changeType) => OnBlackboardChanged.Invoke(changeType);
-        
+
         /// <summary>
         /// Delegate for deleted blackboard assets.
         /// </summary>
         public delegate void BlackboardDeletedCallback(BlackboardAsset blackboard);
-        
+
         /// <summary>
         /// Callback used for notifying when the asset is deleted.
         /// </summary>
         public event BlackboardDeletedCallback OnBlackboardDeleted = delegate { };
-        
+
         /// <summary>
         /// Invokes the OnBlackboardDeleted callback.
         /// </summary>
         public void InvokeBlackboardDeleted() => OnBlackboardDeleted.Invoke(this);
 
-        internal virtual void OnValidate()
+        internal virtual void ValidateAsset()
         {
-            Variables.RemoveAll(variable => variable == null);
             foreach (VariableModel variable in Variables)
             {
-                variable.OnValidate();
+                variable?.OnValidate();
             }
         }
 
@@ -104,7 +104,7 @@ namespace Unity.Behavior.GraphFramework
             // In order to pick up these changes, set the asset dirty here too.
             SetAssetDirty();
         }
-        
+
         public void SetAssetDirty()
         {
             m_VersionTimestamp = DateTime.Now.Ticks;
@@ -116,7 +116,6 @@ namespace Unity.Behavior.GraphFramework
 
         public virtual void SaveAsset()
         {
-            HasOutstandingChanges = false;
 #if UNITY_EDITOR
             UnityEditor.EditorUtility.SetDirty(this);
             UnityEditor.AssetDatabase.SaveAssetIfDirty(this);

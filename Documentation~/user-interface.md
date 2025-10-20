@@ -17,7 +17,6 @@ This section provides a tour of the most common components of the Unity Behavior
 
 ## Additional resources
 
-* [Install Unity Behavior with the Package Manager](install-behavior.md)
-* [Get started with Unity Behavior](get-started.md)
+* [Install Unity Behavior](install-behavior.md)
+* [Create with Unity Behavior](get-started.md)
 * [Debug the Agent in real time during Play mode](debug.md)
-

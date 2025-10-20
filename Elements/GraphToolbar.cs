@@ -10,7 +10,7 @@ namespace Unity.Behavior.GraphFramework
     internal partial class GraphToolbar : VisualElement
     {
 #if !ENABLE_UXML_UI_SERIALIZATION
-        internal new class UxmlFactory : UxmlFactory<GraphToolbar, UxmlTraits> {}
+        internal new class UxmlFactory : UxmlFactory<GraphToolbar, UxmlTraits> { }
 #endif
         public override VisualElement contentContainer => this;
         public ActionButton OpenAssetButton => this.Q<ActionButton>("OpenAssetButton");

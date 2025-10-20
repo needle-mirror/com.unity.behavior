@@ -22,7 +22,7 @@ namespace Unity.Behavior.GraphFramework
         // Reused containers for commands.
         private readonly List<NodeModel> m_NodesToMove = new();
         private readonly List<NodeUI> m_NodeUiToRefresh = new();
-        private readonly List<Vector2> m_Positions = new();    
+        private readonly List<Vector2> m_Positions = new();
         private readonly List<SequenceNodeModel> m_ParentSequences = new();
 #if UNITY_EDITOR
         private bool m_IsOutstandingDrag;
@@ -74,7 +74,7 @@ namespace Unity.Behavior.GraphFramework
                 {
                     m_IsSelectionSequenceable = false;
                 }
-                
+
                 if (graphElement.ContainsPoint(graphElement.WorldToLocal(evt.position)))
                 {
                     m_IsActive = true;
@@ -90,12 +90,12 @@ namespace Unity.Behavior.GraphFramework
             {
                 return;
             }
-            
+
             if (!target.HasPointerCapture(evt.pointerId))
             {
                 target.CapturePointer(evt.pointerId);
             }
-            
+
             bool isFirstFrameOfDrag = !m_IsDragging;
             m_IsDragging = true;
 
@@ -104,7 +104,7 @@ namespace Unity.Behavior.GraphFramework
             m_Positions.Clear();
             m_ParentSequences.Clear();
             m_NodeUiToRefresh.Clear();
-            
+
             Vector2 deltaPointerPos = (Vector2)evt.position - m_PointerPosStart;
             Vector2 scaledDeltaPointerPos = (deltaPointerPos - m_PointerDeltaPrev) / m_GraphView.Background.zoom;
             foreach (GraphElement graphElement in m_GraphViewState.Selected)
@@ -139,7 +139,7 @@ namespace Unity.Behavior.GraphFramework
                     // Bring moved nodes to front.
                     if (isFirstFrameOfDrag && parentUI == null)
                     {
-                        nodeUI.BringToFront(); 
+                        nodeUI.BringToFront();
                     }
 
                     m_NodeUiToRefresh.Add(nodeUI);
@@ -181,7 +181,7 @@ namespace Unity.Behavior.GraphFramework
             var moveCommand = new MoveNodesCommand(m_NodesToMove, m_Positions, m_ParentSequences, markUndo: false);
             m_GraphView.Dispatcher.DispatchImmediate(moveCommand, false);
             m_PointerDeltaPrev = deltaPointerPos;
-            
+
             // Update insertion indicator.
             if (m_IsSelectionSequenceable && TryGetSequenceableDropTarget(evt.position, out NodeUI dropTarget))
             {
@@ -200,7 +200,7 @@ namespace Unity.Behavior.GraphFramework
                 {
                     m_GraphView.Add(m_InsertIndicator);
                     m_IsIndicatorVisible = true;
-                    
+
                 }
                 int dropIndex = GetDropIndex(evt.position, dropTarget);
                 m_InsertIndicator.transform.position = new Vector2(dropTarget.localBound.x + offsetX + 2.0f, GetDropIndexYPosition(dropIndex, dropTarget));
@@ -210,9 +210,9 @@ namespace Unity.Behavior.GraphFramework
                 m_InsertIndicator.RemoveFromHierarchy();
                 m_IsIndicatorVisible = false;
             }
-            
+
             // Refresh visuals to reflect model changes.
-            m_GraphViewState.RefreshNodeUI(true, m_NodeUiToRefresh); 
+            m_GraphViewState.RefreshNodeUI(true, m_NodeUiToRefresh);
         }
 
         private void OnPointerUpEvent(PointerUpEvent evt)
@@ -249,6 +249,28 @@ namespace Unity.Behavior.GraphFramework
                     }
                 }
 
+                // Iterates over all the node with several and reorder node connection if needed.
+                var portsToReorder = m_NodesToMove
+                    .SelectMany(node => node.InputPortModels
+                        .Where(parent => parent.Connections.Count > 0)
+                        .SelectMany(parent => parent.Connections)
+                        .Where(HasConnectionOrderChanged))
+                    .Distinct()
+                    .ToList();
+
+                if (portsToReorder.Any() || m_NodesToMove.Any(node => !node.InputPortModels.Any()))
+                {
+                    m_IsOutstandingDrag = true;
+                    // Promote undo group to outstanding in case it's not already the case.
+                    string assetName = UnityEditor.AssetDatabase.GetAssetPath(m_GraphView.Asset);
+                    UnityEditor.Undo.SetCurrentGroupName($"Move Nodes (outstanding) ({assetName})");
+
+                    foreach (var parentPort in portsToReorder) // Skip if empty
+                    {
+                        ReorderConnectionsByPosition(parentPort);
+                    }
+                }
+
                 // Handle Drop.
                 if (m_IsSelectionSequenceable && TryGetSequenceableDropTarget(evt.position, out NodeUI dropTarget))
                 {
@@ -269,6 +291,26 @@ namespace Unity.Behavior.GraphFramework
                 UnityEditor.Undo.CollapseUndoOperations(undoGroup);
             }
 #endif
+
+            bool HasConnectionOrderChanged(PortModel parentPortModel)
+            {
+                var connections = parentPortModel.Connections;
+                // Checks whether the connections are ordered from left to right based on their NodeModel's X position.
+                // .Zip allows to compare each connection to its immediate neighbor:
+                //      For each pair, it checks if the first node's X position is less than or equal to the second's.
+                // .All(x => x) is false if any adjacent pair is out of order.
+                // The result is negated, so the function returns true if the order has changed and needs to be fixed.
+                return connections.Count > 1 &&
+                        !connections.Zip(connections.Skip(1),
+                            (a, b) => a.NodeModel.Position.x <= b.NodeModel.Position.x)
+                        .All(x => x);
+            }
+
+            void ReorderConnectionsByPosition(PortModel parentPortModel)
+            {
+                parentPortModel.Connections.Sort((firstConnection, secondConnection) =>
+                    firstConnection.NodeModel.Position.x.CompareTo(secondConnection.NodeModel.Position.x));
+            }
         }
 
         private static float GetDropIndexYPosition(int dropIndex, NodeUI dropTarget)
@@ -286,7 +328,7 @@ namespace Unity.Behavior.GraphFramework
             {
                 VisualElement child = dropTarget[dropIndex];
                 return dropTarget.WorldToLocal(new Vector2(0.0f, child.worldBound.yMin)).y + dropTarget.localBound.y;
-            } 
+            }
             else
             {
                 VisualElement child = dropTarget[dropTarget.childCount - 1];
@@ -305,7 +347,7 @@ namespace Unity.Behavior.GraphFramework
                     if (worldMousePosition.y <= child.worldBound.center.y)
                     {
                         return index;
-                    } 
+                    }
                     if (worldMousePosition.y <= child.worldBound.yMax)
                     {
                         return index + 1;
@@ -315,7 +357,7 @@ namespace Unity.Behavior.GraphFramework
                 return dropTarget.childCount;
             }
 
-            
+
             return localPos.y < dropTarget.localBound.height / 2 ? 0 : 1;
         }
 
@@ -353,12 +395,12 @@ namespace Unity.Behavior.GraphFramework
             }
             return false;
         }
-        
+
         private void HandleDrop(Vector2 mousePos, NodeUI dropTarget)
         {
             Dictionary<NodeModel, NodeUI> nodeModelToNodeUI = new Dictionary<NodeModel, NodeUI>();
             List<NodeModel> nodesToAdd = new();
-            List<SequenceNodeModel> sequencesToDelete = new(); 
+            List<SequenceNodeModel> sequencesToDelete = new();
             int index = GetDropIndex(mousePos, dropTarget);
             if (dropTarget.IsGroup)
             {
@@ -385,11 +427,11 @@ namespace Unity.Behavior.GraphFramework
                 {
                     // Selected node is a group. Add nested nodes to new sequence.
                     foreach (var nodeInSequence in sequenceGroup.Children().OfType<NodeUI>())
-                    {   
+                    {
                         nodesToAdd.Add(nodeInSequence.Model);
                         nodeModelToNodeUI.Add(nodeInSequence.Model, nodeInSequence);
                     }
-                    
+
                     // Add the selected parent sequence to deletion list.
                     sequencesToDelete.Add(sequenceGroup.Model as SequenceNodeModel);
                 }
@@ -398,7 +440,7 @@ namespace Unity.Behavior.GraphFramework
                     nodesToAdd.Add(selectedNodeUI.Model);
                     nodeModelToNodeUI.Add(selectedNodeUI.Model, selectedNodeUI);
                 }
-                
+
                 selectedNodeUI.MarkDirtyAndRepaint();
             }
 

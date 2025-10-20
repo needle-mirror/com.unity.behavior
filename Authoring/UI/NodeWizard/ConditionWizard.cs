@@ -1,4 +1,4 @@
-﻿#if UNITY_EDITOR
+#if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,11 +14,11 @@ namespace Unity.Behavior
         private const string k_ConditionStoryHelpText = "Describe the condition being checked. For example: \"Agent is in proximity to Enemy\"";
 
         private Action<string> m_OnComplete;
-        
+
         public ConditionWizard(Action<string> onOnComplete)
         {
             m_OnComplete = onOnComplete;
-            
+
             StoryField.RegisterValueChangingCallback(OnStoryFieldChanged);
 
             NameField.PlaceholderText = k_NameFieldPlaceholderName;
@@ -41,7 +41,7 @@ namespace Unity.Behavior
             Stepper.NextButton.clicked += () => { NameField.Value ??= NameField.PlaceholderText; };
             Stepper.AddStep(this.Q<VisualElement>("NameCategoryView"));
             Stepper.AddStep(this.Q<VisualElement>("StoryView"), OnShowStoryStep, OnHideStoryStep);
-            
+
             CreateButton = Stepper.ConfirmButton;
             Stepper.ConfirmButton.SetEnabled(false);
             Stepper.ConfirmButton.clicked += OnCreateClicked;
@@ -51,7 +51,7 @@ namespace Unity.Behavior
         {
             NodeConditionElement conditionElement = new NodeConditionElement(null);
             conditionElement.AddToClassList("ConditionPreview");
-            
+
             ConditionInfo info = new ConditionInfo();
             info.Name = string.IsNullOrEmpty(NameValue) ? NameField.PlaceholderText : NameValue;
             info.StoryInfo.Story = Sentence.ToString();
@@ -63,7 +63,7 @@ namespace Unity.Behavior
             {
                 info.StoryInfo.Variables.Add(new VariableInfo() { Name = variable.Key, Type = variable.Value });
             }
-            
+
             conditionElement.InitFromConditionInfo(info);
             List<VisualElement> operatorFields = conditionElement.Children().Where(child => child is EnumLinkField<ConditionOperator> or EnumLinkField<BooleanOperator>).ToList();
             foreach (VisualElement field in operatorFields)
@@ -86,7 +86,7 @@ namespace Unity.Behavior
         private void UpdateCreateButtonState()
         {
             bool allValid = NameField.ValidateWithoutNotify() && StoryField.ValidateWithoutNotify() && !string.IsNullOrEmpty(StoryField.Value);
-            
+
             Stepper.ConfirmButton.SetEnabled(allValid);
         }
 
@@ -99,7 +99,7 @@ namespace Unity.Behavior
                 Story = Sentence.ToString(),
                 Variables = Sentence.GetStoryVariables()
             };
-            
+
             if (ConditionGeneratorUtility.CreateConditionAsset(data))
             {
                 m_OnComplete(data.Name);
@@ -115,8 +115,8 @@ namespace Unity.Behavior
             CategoryDropdown.bindItem = (item, i) => item.label = categories[i];
             CategoryDropdown.sourceItems = categories;
             CategoryDropdown.SetValueWithoutNotify(new []{ 1 });
-            
-            CategoryDropdown.RegisterValueChangedCallback( evt =>  {    
+
+            CategoryDropdown.RegisterValueChangedCallback( evt =>  {
                 if (evt.newValue.Last() == 0)
                 {
                     if (CategoryField.value == null)

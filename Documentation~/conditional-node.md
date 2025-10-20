@@ -30,7 +30,7 @@ To assign conditions to the **Conditional Branch** node, do the following:
 
    The available options are **Any Are True** and **All Are True**.
 
-2. (Optional) Enable **Truncate Node** to combine multiple conditions or actions into a single, neat node. 
+2. (Optional) Enable **Truncate Node** to combine multiple conditions or actions into a single, neat node.
 
    This makes the behavior tree less cluttered and easier to read.
 
@@ -48,17 +48,17 @@ To assign conditions to the **Conditional Branch** node, do the following:
 
     4. Select **Create**.<br>Unity Behavior generates a new `C#` script that defines the new condition.
 
-    5. Select **Save**.<br>To use the new condition, select **Assign Condition** > **Variable Conditions** > **[new_condition]**. 
+    5. Select **Save**.<br>To use the new condition, select **Assign Condition** > **Variable Conditions** > **[new_condition]**.
 
 5. Select **Variable Conditions** to add a pre-defined condition.
 
-   The available options are:<br> 
+   The available options are:<br>
    * **Variable Comparison**: To use this condition, insert any variable from the **Blackboard** and use it to evaluate the condition.
    * **Variable Value Changed**: To use this condition, insert any variable from the **Blackboard**. It returns `True` if the value of the variable changes and `False` if the variable remains unchanged. You can use this condition with the **Abort** and **Restart** nodes. For more information, refer to [Abort and Restart nodes](behavior-graph.md#modifier-node).
 
-6. Select the relevant pre-defined condition.<br> The selected condition appears both on the node and the **Node Inspector**. To remove a condition, right-click the condition in the **Node Inspector** and select **Delete**. 
+6. Select the relevant pre-defined condition.<br> The selected condition appears both on the node and the **Node Inspector**. To remove a condition, right-click the condition in the **Node Inspector** and select **Delete**.
 
-If the **Conditional Branch** node evaluates one condition, it will branch off to either **True** or **False**. 
+If the **Conditional Branch** node evaluates one condition, it will branch off to either **True** or **False**.
 
 ![One condition](Images/cond_branch.png)
 
@@ -82,10 +82,10 @@ To apply Conditional node as an Action node, do the following:
 1. Right-click an empty area of the Unity Behavior graph editor and click **Add** > **Action** > **Conditional**.
 
 2. Select **Conditional Guard**.
- 
+
    The selected node displays both on the Unity Behavior graph editor and the **Node Inspector**.
-    
-   The **Conditional Guard** node allows the flow of logic to pass only if the assigned conditions are met. This node can use multiple conditions. 
+
+   The **Conditional Guard** node allows the flow of logic to pass only if the assigned conditions are met. This node can use multiple conditions.
 
 3. In the **Node Inspector**, select the condition that must be true for the node to run from the **Continue if** dropdown.<br> The available options are **Any Are True** and **All Are True**.
 

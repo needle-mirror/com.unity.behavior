@@ -20,7 +20,7 @@ namespace Unity.Behavior
 #endif
 
         internal BehaviorGraphBlackboardView(BlackboardMenuCreationCallback menuCreationCallback) : base(menuCreationCallback) { }
-        
+
         internal override void InitializeListView()
         {
 #if UNITY_TEST_FRAMEWORK
@@ -51,7 +51,7 @@ namespace Unity.Behavior
             }
 
             CreateBlackboardAssetsSection();
-            
+
             // Initializing blackboards for each added Blackboard asset group.
             foreach (BehaviorBlackboardAuthoringAsset blackboardAsset in GraphAsset.m_Blackboards)
             {
@@ -91,7 +91,7 @@ namespace Unity.Behavior
         protected internal override void RefreshFromAsset()
         {
             // In case there is a mistmatched between bbref visual element and graphAsset.blackboards
-            // probably means that undo/redo happened and we need to refresh the view. 
+            // probably means that undo/redo happened and we need to refresh the view.
             // (minus 1 for the divider)
             if (m_BlackboardAssetsContainer != null && (m_BlackboardAssetsContainer.childCount - 1) != GraphAsset.m_Blackboards.Count)
             {

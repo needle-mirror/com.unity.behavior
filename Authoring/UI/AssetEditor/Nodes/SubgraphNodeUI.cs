@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Behavior.GraphFramework;
@@ -13,7 +13,7 @@ namespace Unity.Behavior
         private SubgraphNodeModel m_SubgraphNodeModel => Model as SubgraphNodeModel;
 
         private string m_SubgraphFieldName => SubgraphNodeModel.k_SubgraphFieldName;
-        private readonly List<BaseLinkField> m_StoryFields = new ();
+        private readonly List<BaseLinkField> m_StoryFields = new();
         private readonly BaseLinkField m_LinkedGraphField;
         private readonly VisualElement m_GraphSelectionLine;
         private readonly VisualElement m_StoryLine;
@@ -32,30 +32,31 @@ namespace Unity.Behavior
 
             m_GraphSelectionLine = this.Q<VisualElement>("GraphSelectionLine");
             m_StoryLine = this.Q<VisualElement>("StoryLine");
-            
+
             // The linked graph field holds a SerializableGUID, but there isn't a LinkField type for that, so use
             // a BaseLinkField for now.
-            m_LinkedGraphField = new BaseLinkField { 
-                FieldName = m_SubgraphFieldName, 
+            m_LinkedGraphField = new BaseLinkField
+            {
+                FieldName = m_SubgraphFieldName,
                 LinkVariableType = typeof(BehaviorGraph),
                 AllowAssetEmbeds = true
             };
             m_LinkedGraphField.Model = m_SubgraphNodeModel;
-            m_LinkedGraphField.OnLinkChanged += _ =>
+            m_LinkedGraphField.OnLinkChanged += (_, wasUndo) =>
             {
-                m_LinkedGraphField.Dispatcher.DispatchImmediate(new SetNodeVariableLinkCommand(nodeModel, m_LinkedGraphField.FieldName, m_LinkedGraphField.LinkVariableType, m_LinkedGraphField.LinkedVariable, true));
+                m_LinkedGraphField.Dispatcher.DispatchImmediate(new SetNodeVariableLinkCommand(nodeModel, m_LinkedGraphField.FieldName, m_LinkedGraphField.LinkVariableType, m_LinkedGraphField.LinkedVariable, !wasUndo));
                 m_SubgraphNodeModel.SubgraphField.LinkedVariable = m_LinkedGraphField.LinkedVariable;
                 m_SubgraphNodeModel.OnValidate();
                 m_SubgraphNodeModel.CacheRuntimeGraphId();
             };
-            
+
             m_LinkedGraphField.RegisterCallback<LinkFieldTypeChangeEvent>(_ => UpdateFields());
 
             PopulateGraphSelectionLine();
 
             if (m_SubgraphNodeModel is { IsDynamic: false })
             {
-                PopulateSubgraphStoryLine();   
+                PopulateSubgraphStoryLine();
             }
         }
 
@@ -142,23 +143,23 @@ namespace Unity.Behavior
                 {
                     oldFields.Remove(linkField);
                 }
-                
+
                 m_StoryLine.Add(linkField);
-                
+
                 // Ensure that variables are overridden also from the NodeUI story fields.
                 linkField.RegisterCallback<LinkFieldValueChangeEvent>(_ =>
                 {
                     m_SubgraphNodeModel.SetVariableOverride(variable.ID, true);
                 });
-                
-                linkField.OnLinkChanged += _ =>
+
+                linkField.OnLinkChanged += (_, _) =>
                 {
                     m_SubgraphNodeModel.SetVariableOverride(variable.ID, true);
                 };
             }
-            
+
             m_StoryLine.Add(new Label(currentLabelContents));
-            
+
             // Remove remaining old fields that haven't been reused.
             oldFields.ForEach(field => field.RemoveFromHierarchy());
         }
@@ -173,10 +174,6 @@ namespace Unity.Behavior
             BehaviorAuthoringGraph graphAsset = null;
 #endif
 
-            if (m_SubgraphNodeModel.SubgraphField != null)
-            {
-                m_LinkedGraphField.LinkedVariable = m_SubgraphNodeModel.SubgraphField.LinkedVariable;
-            }
             if (m_LinkedGraphField.LinkedVariable == null)
             {
                 m_LinkedGraphField.Q<Label>().text = SubgraphNodeModel.k_SubgraphFieldName;
@@ -188,7 +185,7 @@ namespace Unity.Behavior
                 PopulateGraphSelectionLine();
                 return;
             }
-            
+
             BehaviorAuthoringGraph subgraphAsset = BehaviorGraphAssetRegistry.GlobalRegistry.Assets.FirstOrDefault(asset => asset.AssetID == graphAsset.AssetID);
             if (subgraphAsset.ContainsCyclicReferenceTo(m_SubgraphNodeModel.Asset as BehaviorAuthoringGraph))
             {
@@ -221,12 +218,12 @@ namespace Unity.Behavior
                 }
             }
         }
-        
+
         private void ClearStoryLine()
         {
             // Clear serialized data for story fields
             m_SubgraphNodeModel.m_FieldValues.RemoveAll(field => field.FieldName != m_SubgraphFieldName || field.FieldName != SubgraphNodeModel.k_BlackboardFieldName);
-            
+
             // Remove node UI
             foreach (BaseLinkField field in m_StoryFields)
             {

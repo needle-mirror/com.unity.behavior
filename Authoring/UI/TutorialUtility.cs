@@ -14,18 +14,18 @@ namespace Unity.Behavior
         internal static void CreateAndShowEdgeConnectTutorial(VisualElement view)
         {
             List<Texture2D> frames = ResourceLoadAPI.LoadAll<Texture2D>("Packages/com.unity.behavior/Authoring/UI/AssetEditor/Assets/Images/EdgeConnectTutorial/");
-            
+
             Dialog dialog = new Dialog();
             dialog.styleSheets.Add(ResourceLoadAPI.Load<StyleSheet>("Packages/com.unity.behavior/Authoring/UI/AssetEditor/Assets/TutorialStylesheet.uss"));
             dialog.dismissable = true;
             dialog.description = "Congratulations, you've added your first node! To connect nodes, drag a line from the Edge of one node into another.";
-            
+
             TutorialAnimation tutorialAnimation = new TutorialAnimation(frames);
             dialog.hierarchy.Insert(1, tutorialAnimation);
             dialog.Q<Divider>().style.display = DisplayStyle.None;
 
             Button continueButton = CreateContinueButton(dialog, "Continue");
-            
+
             Modal modal = Modal.Build(view, dialog);
             continueButton.clicked += modal.Dismiss;
             modal.Show();
@@ -34,18 +34,18 @@ namespace Unity.Behavior
         internal static void CreateAndShowSequencingTutorial(VisualElement view)
         {
             List<Texture2D> frames = ResourceLoadAPI.LoadAll<Texture2D>("Packages/com.unity.behavior/Authoring/UI/AssetEditor/Assets/Images/SequenceTutorial/");
-         
+
             Dialog dialog = new Dialog();
             dialog.styleSheets.Add(ResourceLoadAPI.Load<StyleSheet>("Packages/com.unity.behavior/Authoring/UI/AssetEditor/Assets/TutorialStylesheet.uss"));
             dialog.dismissable = true;
             dialog.description = "Great, you've added your first two Action nodes! To sequence Actions, drag and drop the Action nodes together into a group.";
-            
+
             TutorialAnimation tutorialAnimation = new TutorialAnimation(frames);
             dialog.hierarchy.Insert(1, tutorialAnimation);
             dialog.Q<Divider>().style.display = DisplayStyle.None;
-            
+
             Button continueButton = CreateContinueButton(dialog, "Continue");
-            
+
             Modal modal = Modal.Build(view, dialog);
             continueButton.clicked += modal.Dismiss;
             modal.Show();
@@ -56,7 +56,7 @@ namespace Unity.Behavior
             Button button = new Button();
             button.title = buttonText;
             button.variant = ButtonVariant.Accent;
-            
+
             VisualElement buttonGroup = dialog.Q<VisualElement>("appui-dialog__buttongroup");
             buttonGroup.Add(button);
 

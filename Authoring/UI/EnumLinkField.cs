@@ -72,7 +72,7 @@ namespace Unity.Behavior
             linkFieldSpacer.style.visibility = Visibility.Hidden;
             m_Field.Q<VisualElement>("appui-picker__trailingcontainer").Add(linkFieldSpacer);
         }
-        
+
         private void OnValueChanged(ChangeEvent<IEnumerable<int>> evt)
         {
             using LinkFieldValueChangeEvent changeEvent = LinkFieldValueChangeEvent.GetPooled(this, value);

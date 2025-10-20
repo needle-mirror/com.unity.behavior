@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace Unity.Behavior
 {
@@ -21,7 +21,7 @@ namespace Unity.Behavior
             var result = gameObject.GetComponent<T>();
             if (result == null)
                 result = gameObject.AddComponent<T>();
-            
+
             return result;
         }
     }

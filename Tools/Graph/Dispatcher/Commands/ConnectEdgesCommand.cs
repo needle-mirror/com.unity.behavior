@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace Unity.Behavior.GraphFramework
@@ -7,7 +7,7 @@ namespace Unity.Behavior.GraphFramework
     {
         public List<Tuple<PortModel, PortModel>> PortPairsToConnect { get; }
 
-        public ConnectEdgesCommand(List<Tuple<PortModel, PortModel>> portPairs, bool markUndo= true) : base(markUndo)
+        public ConnectEdgesCommand(List<Tuple<PortModel, PortModel>> portPairs, bool markUndo = true) : base(markUndo)
         {
             PortPairsToConnect = portPairs;
         }

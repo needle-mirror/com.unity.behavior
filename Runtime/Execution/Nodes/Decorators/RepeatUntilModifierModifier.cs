@@ -10,7 +10,7 @@ namespace Unity.Behavior
     [Serializable, GeneratePropertyBag]
     [NodeDescription(
         name: "Repeat Until Failure",
-        description: "Repeats until failure", 
+        description: "Repeats until failure",
         category: "Flow/Repeat",
         hideInSearch: true,
         icon: "Icons/repeat_until_change",
@@ -35,7 +35,7 @@ namespace Unity.Behavior
                 return Status.Failure;
             }
             m_CurrentFrame = Time.frameCount;
-            
+
             Status childStatus = StartNode(Child);
             return GetReturnStatusForStartingChild(childStatus);
         }
@@ -58,7 +58,7 @@ namespace Unity.Behavior
             {
                 return Status.Failure;
             }
-            
+
             return Status.Waiting;
         }
 
@@ -71,7 +71,7 @@ namespace Unity.Behavior
                 default: return Status.Waiting;
             }
         }
-        
+
         protected override void OnDeserialize()
         {
             m_CurrentFrame = Time.frameCount + m_FrameDelta;
@@ -79,17 +79,17 @@ namespace Unity.Behavior
 
         protected override void OnSerialize()
         {
-            m_FrameDelta = Time.frameCount - m_CurrentFrame; 
+            m_FrameDelta = Time.frameCount - m_CurrentFrame;
         }
     }
-    
+
     /// <summary>
     /// Repeats operation of the node until success.
     /// </summary>
     [Serializable, GeneratePropertyBag]
     [NodeDescription(
         name: "Repeat Until Success",
-        description: "Repeats until success", 
+        description: "Repeats until success",
         category: "Flow/Repeat",
         icon: "Icons/repeat_until_change",
         hideInSearch: true,
@@ -114,7 +114,7 @@ namespace Unity.Behavior
                 return Status.Failure;
             }
             m_CurrentFrame = Time.frameCount;
-            
+
             Status childStatus = StartNode(Child);
             return GetReturnStatusForStartingChild(childStatus);
         }
@@ -149,7 +149,7 @@ namespace Unity.Behavior
                 default: return Status.Waiting;
             }
         }
-        
+
         protected override void OnDeserialize()
         {
             m_CurrentFrame = Time.frameCount + m_FrameDelta;
@@ -157,7 +157,7 @@ namespace Unity.Behavior
 
         protected override void OnSerialize()
         {
-            m_FrameDelta = Time.frameCount - m_CurrentFrame; 
+            m_FrameDelta = Time.frameCount - m_CurrentFrame;
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using Unity.Behavior.GraphFramework;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -24,20 +24,20 @@ namespace Unity.Behavior
         internal override void UpdateLinkFields()
         {
             CreateNodeConditionElements();
-            
+
             // Refresh the fields.
             this.Query<BaseLinkField>().ForEach(field =>
             {
                 if (field.userData is ConditionModel condition)
                 {
-                    field.UpdateValue(condition.GetVariableLink(field.FieldName, field.LinkVariableType));   
+                    field.UpdateValue(condition.GetVariableLink(field.FieldName, field.LinkVariableType));
                 }
             });
             this.Query<ComparisonConditionElement>().ForEach(comparisonElement =>
             {
                 if (comparisonElement.Attribute != null)
                 {
-                    StoryElementUtility.LinkComparisonElementFields(comparisonElement, comparisonElement.parent);   
+                    StoryElementUtility.LinkComparisonElementFields(comparisonElement, comparisonElement.parent);
                 }
             });
         }
@@ -45,7 +45,7 @@ namespace Unity.Behavior
         protected void CreateNodeConditionElements()
         {
             NodeValueContainer.Clear();
-            
+
             if (m_ConditionFieldContainer == null)
             {
                 m_ConditionFieldContainer = new VisualElement();
@@ -107,17 +107,17 @@ namespace Unity.Behavior
                 NodeConditionElement element = new NodeConditionElement(condition);
                 if (index != 0)
                 {
-                    element.AddToClassList("ConditionElementMargin");  
+                    element.AddToClassList("ConditionElementMargin");
                 }
                 // Add a prefix to the condition element if one is assigned.
                 if (!string.IsNullOrEmpty(ConditionElementPrefix))
                 {
                     element.Insert(0, new Label(ConditionElementPrefix));
                 }
-                
+
                 container.Add(element);
-            }   
+            }
         }
-        
+
     }
 }

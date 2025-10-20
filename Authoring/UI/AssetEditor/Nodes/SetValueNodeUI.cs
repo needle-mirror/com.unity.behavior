@@ -24,22 +24,22 @@ namespace Unity.Behavior
             Type variableType = fieldModel?.LinkedVariable != null ? fieldModel.LinkedVariable.Type : typeof(object);
             m_VariableLinkField = new BaseLinkField()
             {
-                FieldName = k_VariableFieldName, 
-                LinkVariableType = variableType, 
+                FieldName = k_VariableFieldName,
+                LinkVariableType = variableType,
                 Model = nodeModel
             };
-            
+
             Add(new Label("Set"));
             Add(m_VariableLinkField);
             Add(new Label("to"));
             CreateNewValueField();
 
-            m_VariableLinkField.OnLinkChanged += assignedVariable =>
+            m_VariableLinkField.OnLinkChanged += (assignedVariable, wasUndo) =>
             {
-                m_VariableLinkField.Dispatcher.DispatchImmediate(new SetNodeVariableLinkCommand(m_Model, m_VariableLinkField.FieldName, m_VariableLinkField.LinkVariableType, m_VariableLinkField.LinkedVariable, true));
+                m_VariableLinkField.Dispatcher.DispatchImmediate(new SetNodeVariableLinkCommand(m_Model, m_VariableLinkField.FieldName, m_VariableLinkField.LinkVariableType, m_VariableLinkField.LinkedVariable, !wasUndo));
                 Type fieldType = assignedVariable?.Type ?? typeof(object);
-                m_VariableLinkField.LinkVariableType = fieldType; 
-                UpdateModelFields(assignedVariable, fieldType); 
+                m_VariableLinkField.LinkVariableType = fieldType;
+                UpdateModelFields(assignedVariable, fieldType);
                 UpdateLinkFields();
             };
         }
@@ -82,19 +82,19 @@ namespace Unity.Behavior
                     fieldModel.LocalValue = BlackboardVariable.CreateForType(typeof(object));
                     fieldModel.LinkedVariable = null;
                 }
-                
+
                 m_ValueLinkField = new BaseLinkField() { FieldName = k_ValueFieldName, Model = Model };
                 m_ValueLinkField.SetEnabled(false);
             }
             else
             {
-                // With the new field created, we need to update the field model's local value type. 
+                // With the new field created, we need to update the field model's local value type.
                 BehaviorGraphNodeModel.FieldModel fieldModel = (Model as BehaviorGraphNodeModel).GetOrCreateField(k_ValueFieldName, m_VariableLinkField.LinkedVariable.Type);
                 if (fieldModel.LocalValue.Type != m_VariableLinkField.LinkedVariable.Type)
                 {
                     fieldModel.LocalValue = BlackboardVariable.CreateForType(m_VariableLinkField.LinkedVariable.Type);
                 }
-                
+
                 // Set up the new value field.
                 m_ValueLinkField = LinkFieldUtility.CreateNodeLinkField(k_ValueFieldName, m_VariableLinkField.LinkedVariable.Type);
                 m_ValueLinkField.FieldName = k_ValueFieldName;

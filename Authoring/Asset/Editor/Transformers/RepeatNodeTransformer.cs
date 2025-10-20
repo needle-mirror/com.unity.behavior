@@ -23,7 +23,7 @@ namespace Unity.Behavior
             {
                 repeater.AllowMultipleRepeatsPerTick = repeatNodeModel.AllowMultipleRepeatsPerTick;
             }
-            
+
         }
     }
 }

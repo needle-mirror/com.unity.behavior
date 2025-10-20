@@ -12,12 +12,15 @@ namespace Unity.Behavior
     [CanEditMultipleObjects]
     internal class BehaviorGraphAgentEditor : Editor
     {
+        private readonly GUIContent k_BehaviorGraphGUIContent = new GUIContent("Behavior Graph",
+            "The runtime graph used as a reference. It is instantiated and executed on the agent at runtime.");
         private readonly List<BehaviorGraphAgent> m_TargetAgents = new();
         private bool m_ShowBlackboard = true;
         private readonly Dictionary<SerializableGUID, bool> m_ListVariableFoldoutStates = new Dictionary<SerializableGUID, bool>();
         private readonly Dictionary<SerializableGUID, VariableModel> m_VariableGUIDToVariableModel = new Dictionary<SerializableGUID, VariableModel>();
         private long m_MappedBlackboardVersion = 0;
         private BehaviorGraph m_SharedGraph;
+        private BehaviorGraph m_TargetGraphToDisplay;
         bool m_ModificationsMade = false;
 
         private BehaviorGraphAgent m_TargetAgent;
@@ -100,12 +103,22 @@ namespace Unity.Behavior
                 UpdateBehaviorGraphIfNeeded(targetAgent);
             }
 
-            // We need the agent in order to set the Graph property in case of playmode assignment. 
+            // We need the agent in order to set the Graph property in case of playmode assignment.
             m_TargetAgent = target as BehaviorGraphAgent;
+            RefreshAssignedGraph();
+        }
+
+        private void RefreshAssignedGraph()
+        {
             m_GraphProperty = serializedObject.FindProperty("m_Graph");
             Debug.Assert(m_GraphProperty != null);
             var graph = m_GraphProperty.objectReferenceValue as BehaviorGraph;
             m_CurrentGraphID = graph != null && graph.RootGraph != null ? graph.RootGraph.AuthoringAssetID : default;
+
+            if (Application.isPlaying)
+            {
+                m_TargetGraphToDisplay = m_TargetAgent.Graph != null ? m_TargetAgent.OriginalGraph : null;
+            }
         }
 
         private void FindSharedGraph()
@@ -130,24 +143,37 @@ namespace Unity.Behavior
             "NetcodeRunOnlyOnOwner"
         };
 
-
         public override void OnInspectorGUI()
         {
             DrawPropertiesExcluding(serializedObject, kPropertiesToExclude);
-            // Draw the graph field. If a new runtime graph is assigned, set the graph on the target and mark it dirty.
-            EditorGUILayout.PropertyField(m_GraphProperty, new GUIContent("Behavior Graph"));
-            DetectAssetDragDrop();
+            if (Application.isPlaying)
+            {
+                DrawPlaymodeInspector();
+            }
+            else
+            {
+                // Draw the graph field. If a new runtime graph is assigned, set the graph on the target and mark it dirty.
+                EditorGUILayout.PropertyField(m_GraphProperty, k_BehaviorGraphGUIContent);
+            }
+
+            m_ModificationsMade |= DetectAssetDragDrop();
 
 #if NETCODE_FOR_GAMEOBJECTS
             EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(BehaviorGraphAgent.NetcodeRunOnlyOnOwner)), new GUIContent("Netcode: Run only on Owner"));
 #endif
             serializedObject.ApplyModifiedProperties();
 
+            if (SerializationUtility.HasManagedReferencesWithMissingTypes(m_GraphProperty.objectReferenceValue))
+            {
+                EditorGUILayout.HelpBox("The Behavior Graph contains missing types. Please fix the graph before proceeding.", MessageType.Error);
+                return;
+            }
+
             // If the change was made in playmode, make sure the affected agent are calling the proper callbacks.
             m_ModificationsMade |= DetectRuntimeGraphAssignment();
 
             FindSharedGraph();
-            
+
             // Update overrides list before drawing the blackboard.
             foreach (BehaviorGraphAgent targetAgent in m_TargetAgents)
             {
@@ -164,10 +190,69 @@ namespace Unity.Behavior
                 DrawBlackboard(SharedGraph.BlackboardReference.Blackboard.Variables);
             }
 
+            // Debug.Log($"m_Targets count = {m_TargetAgents.Count} - SharedGraph = {SharedGraph?.name}");
+
             if (m_ModificationsMade)
             {
                 serializedObject.Update();
                 m_ModificationsMade = false;
+            }
+        }
+
+        private void DrawPlaymodeInspector()
+        {
+            bool mixedValue = false;
+            bool originalMixedValue = EditorGUI.showMixedValue;
+            BehaviorGraph firstGraph = m_TargetGraphToDisplay;
+            if (m_TargetAgents.Count > 0)
+            {
+                foreach (var target in m_TargetAgents)
+                {
+                    var targetGraph = target.Graph != null ? target.OriginalGraph : null;
+                    if (targetGraph != firstGraph)
+                    {
+                        mixedValue = true;
+                        break;
+                    }
+                }
+            }
+
+            // Only display the source graph to allow users to inspect it.
+            // If user assign a new graph at runtime, we then set the graphProperty manually to go throught the proper callbacks.
+            EditorGUI.BeginChangeCheck();
+            EditorGUI.showMixedValue = mixedValue;
+            var newGraph = EditorGUILayout.ObjectField(k_BehaviorGraphGUIContent, m_TargetGraphToDisplay, typeof(BehaviorGraph), allowSceneObjects: false);
+            EditorGUI.showMixedValue = originalMixedValue;
+            if (EditorGUI.EndChangeCheck() && newGraph != m_TargetGraphToDisplay)
+            {
+                PlaymodeGraphAssignment(newGraph as BehaviorGraph);
+            }
+        }
+
+        private void PlaymodeGraphAssignment(BehaviorGraph runtimeGraph)
+        {
+            if (m_TargetAgents.Count > 1)
+            {
+                Undo.IncrementCurrentGroup();
+                Undo.SetCurrentGroupName("Set Behavior Graph on agents");
+                var m_CurrentCommandChainGroup = Undo.GetCurrentGroup();
+
+                foreach (var target in m_TargetAgents)
+                {
+                    Undo.RegisterCompleteObjectUndo(target, $"Set Behavior Graph on {target}");
+                }
+
+                foreach (var target in m_TargetAgents)
+                {
+                    target.Graph = runtimeGraph;
+                }
+
+                Undo.CollapseUndoOperations(m_CurrentCommandChainGroup);
+            }
+            else
+            {
+                Undo.RegisterCompleteObjectUndo(m_TargetAgent, $"Set Behavior Graph on {target}");
+                m_TargetAgent.Graph = runtimeGraph;
             }
         }
 
@@ -179,17 +264,30 @@ namespace Unity.Behavior
             }
 
             var graph = m_GraphProperty.objectReferenceValue as BehaviorGraph;
-            if (graph != null && m_CurrentGraphID != graph.RootGraph.AuthoringAssetID)
+
+            // If graph already up to date, skip.
+            if (graph != null && m_CurrentGraphID == graph.RootGraph.AuthoringAssetID)
             {
-                m_CurrentGraphID = graph.RootGraph.AuthoringAssetID;
-                // If we change the graph at runtime, there is a chain of callback that need to be triggered.
-                m_TargetAgent.Graph = graph;
-                return true;
+                return false;
             }
-            else if (graph == null)
+
+            // If inspector data is out of sync with underlying agent, refresh the field.
+            // Can happen when graph is assigned from code or when the next frame the graph field
+            // is assigned from the inspector (Agent init).
+            bool wasGraphUnassigned = graph == null && m_TargetAgent.OriginalGraph != null;
+            bool wasGraphAssigned = graph != null && (m_CurrentGraphID == default || m_CurrentGraphID != graph.RootGraph.AuthoringAssetID);
+            if (wasGraphUnassigned || wasGraphAssigned)
+            {
+                RefreshAssignedGraph();
+                return false;
+            }
+
+            // if graph is assigned to null.
+            if (graph == null && m_CurrentGraphID != default)
             {
                 m_CurrentGraphID = default;
                 m_TargetAgent.Graph = null;
+                m_TargetGraphToDisplay = null;
                 return true;
             }
 
@@ -211,13 +309,27 @@ namespace Unity.Behavior
                     if (eventType == EventType.DragPerform)
                     {
                         DragAndDrop.AcceptDrag();
+                        if (authoringGraph.ContainsInvalidSerializedReferences())
+                        {
+                            return false;
+                        }
+
                         var runtimeGraph = BehaviorAuthoringGraph.GetOrCreateGraph(authoringGraph);
                         if (runtimeGraph?.RootGraph == null)
                         {
                             authoringGraph.BuildRuntimeGraph();
                         }
-                        m_GraphProperty.boxedValue = runtimeGraph;
-                        SharedGraph = runtimeGraph;
+
+                        if (Application.isPlaying && m_TargetAgent.OriginalGraph == runtimeGraph)
+                        {
+                            // Prevents redundant graph assignment in playmode.
+                            return false;
+                        }
+
+                        PlaymodeGraphAssignment(runtimeGraph);
+
+                        m_TargetAgent.Graph = runtimeGraph;
+                        RefreshAssignedGraph();
                         return true;
                     }
                 }
@@ -811,6 +923,11 @@ namespace Unity.Behavior
 
         private BlackboardVariable GetTargetVariable(BehaviorGraphAgent agent, SerializableGUID variableID)
         {
+            if (agent.Graph == null)
+            {
+                return null;
+            }
+
             // If the application is playing, use the runtime graph's blackboard.
             agent.Graph.BlackboardReference.GetVariable(variableID, out BlackboardVariable runtimeVariableInstance);
             if (Application.isPlaying && agent.m_IsInitialised)

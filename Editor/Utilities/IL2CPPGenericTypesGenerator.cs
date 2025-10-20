@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -11,7 +11,7 @@ using UnityEditor.Build.Reporting;
 using UnityEditor.UnityLinker;
 using UnityEngine;
 
-namespace Unity.Behavior 
+namespace Unity.Behavior
 {
     internal static class IL2CPPGenericTypesGenerator
     {
@@ -20,7 +20,7 @@ namespace Unity.Behavior
 
         public static readonly string ProjectPath = Path.GetDirectoryName(Application.dataPath);
         public static readonly string LibraryPath = Path.Combine(ProjectPath, "Library");
-        
+
         //[MenuItem("Behavior/Generate IL2CPP Build File")]
         public static void GenerateFile()
         {
@@ -37,11 +37,11 @@ namespace Unity.Behavior
             {
                 return;
             }
-            
+
             GraphPrefsUtility.SetString(k_PrefsKeySavePath, Path.GetDirectoryName(path), true);
             CreateAndWriteFile(path);
         }
-        
+
         public static void CreateAndWriteFile(string path)
         {
             string fileString = CreateFileString();
@@ -49,7 +49,7 @@ namespace Unity.Behavior
             {
                 outfile.WriteLine(fileString);
             }
-            
+
             AssetDatabase.Refresh();
         }
 
@@ -59,7 +59,7 @@ namespace Unity.Behavior
              * sealed class BehaviorTypes
              * {
              *     private BehaviorTypes() { }
-             * 
+             *
              *     private TypedVariableModel<int> m_TypedVariableModelint;
              *     ...
              *     private EnumLinkField<CharacterState> m_CharacterStateEnum;
@@ -67,7 +67,7 @@ namespace Unity.Behavior
              */
             StringBuilder builder = new StringBuilder();
             builder.AppendLine("using Unity.Behavior.GraphFramework;");
-            builder.AppendLine();   
+            builder.AppendLine();
             builder.AppendLine("namespace Unity.Behavior");
             builder.AppendLine("{");
             builder.AppendLine("\tsealed class BehaviorTypes");
@@ -91,7 +91,7 @@ namespace Unity.Behavior
             builder.AppendLine("}");
             return builder.ToString();
         }
-        
+
         public static string GetRealTypeName(Type t)
         {
             if (!t.IsGenericType)
@@ -118,20 +118,20 @@ namespace Unity.Behavior
         public static readonly string k_DefaultFileName = "BehaviorIL2CPPTypesLink";
         public static string k_GraphAssembly => typeof(GraphEditor).Assembly.GetName().Name;
         public static string k_BehaviorAssembly => typeof(BehaviorGraphEditor).Assembly.GetName().Name;
-        
+
         public static IEnumerable<Type> GetUserTypes()
         {
             IEnumerable<Type> nodeModelTypes = TypeCache.GetTypesDerivedFrom<NodeModel>();
-            IEnumerable<Type> runtimeNodeTypes = TypeCache.GetTypesDerivedFrom<Node>(); 
+            IEnumerable<Type> runtimeNodeTypes = TypeCache.GetTypesDerivedFrom<Node>();
             IEnumerable<Type> enumTypes = TypeCache.GetTypesWithAttribute<BlackboardEnumAttribute>();
             IEnumerable<Type> eventChannelTypes =
                 TypeCache.GetTypesWithAttribute<EventChannelDescriptionAttribute>();
-            
+
             IEnumerable<Type> allTypes = nodeModelTypes.Concat(runtimeNodeTypes).Concat(enumTypes).Concat(eventChannelTypes);
             bool IsNotPackageAssembly(string assemblyName) => !assemblyName.StartsWith(k_GraphAssembly) && !assemblyName.StartsWith(k_BehaviorAssembly);
             return allTypes.Where(type => IsNotPackageAssembly(type.Assembly.GetName().FullName));
         }
-        
+
         //[MenuItem("Behavior/Generate IL2CPP Link File")]
         public static void GenerateFile()
         {
@@ -147,21 +147,21 @@ namespace Unity.Behavior
             {
                 return;
             }
-            
+
             GraphPrefsUtility.SetString(k_PrefsKeySavePath, Path.GetDirectoryName(path), true);
             CreateAndWriteFile(path);
         }
-        
+
         public static void CreateAndWriteFile(string path)
         {
             using (StreamWriter outfile = new StreamWriter(path))
             {
                 outfile.WriteLine(CreateFileString());
             }
-            
+
             AssetDatabase.Refresh();
         }
-                
+
         private static string CreateFileString()
         {
             /* Generate this class:
@@ -176,7 +176,7 @@ namespace Unity.Behavior
             builder.AppendLine("<linker>");
             builder.AppendLine($"  <assembly fullname=\"{k_GraphAssembly}\" ignoreIfUnreferenced=\"1\"/>");
             builder.AppendLine($"  <assembly fullname=\"{k_BehaviorAssembly}\" ignoreIfUnreferenced=\"1\"/>");
-            
+
             IEnumerable<Type> types = GetUserTypes();
             IEnumerable<IGrouping<string, Type>> assemblyGroups = types.GroupBy(type => type.Assembly.GetName().Name);
             // For each assembly, write the assembly name and all the types to be preserved in the assembly.
@@ -184,16 +184,16 @@ namespace Unity.Behavior
             {
                 builder.AppendLine($"  <assembly fullname=\"{assemblyGroup.Key}\">");
                 foreach (Type preservedType in assemblyGroup)
-                {    
+                {
                     builder.AppendLine($"    <type fullname=\"{preservedType.FullName}\" preserve=\"all\"/>");
                 }
                 builder.AppendLine("  </assembly>");
             }
             builder.AppendLine("</linker>");
-            return builder.ToString(); 
+            return builder.ToString();
         }
     }
-    
+
     internal class OnBuildIL2CPPGenericTypesGenerator : BuildPlayerProcessor, IUnityLinkerProcessor
     {
         public override void PrepareForBuild(BuildPlayerContext buildPlayerContext)
@@ -202,24 +202,24 @@ namespace Unity.Behavior
             BuildTargetGroup targetGroup = BuildPipeline.GetBuildTargetGroup(buildTarget);
             NamedBuildTarget namedBuildTarget = NamedBuildTarget.FromBuildTargetGroup(targetGroup);
             bool isIL2CPPBuild = PlayerSettings.GetScriptingBackend(namedBuildTarget) == ScriptingImplementation.IL2CPP;
-            if (isIL2CPPBuild) 
+            if (isIL2CPPBuild)
             {
                 string dir = $"{IL2CPPGenericTypesGenerator.LibraryPath}/com.unity.behavior";
                 string path = $"{dir}/{IL2CPPGenericTypesGenerator.k_DefaultFileName}.cs";
 
                 CreateOutputDirectory(dir);
-                
+
                 IL2CPPGenericTypesGenerator.CreateAndWriteFile(path);
             }
         }
-        
+
         public string GenerateAdditionalLinkXmlFile(BuildReport report, UnityLinkerBuildPipelineData data)
         {
             BuildTarget buildTarget = EditorUserBuildSettings.activeBuildTarget;
             BuildTargetGroup targetGroup = BuildPipeline.GetBuildTargetGroup(buildTarget);
             NamedBuildTarget namedBuildTarget = NamedBuildTarget.FromBuildTargetGroup(targetGroup);
             bool isIL2CPPBuild = PlayerSettings.GetScriptingBackend(namedBuildTarget) == ScriptingImplementation.IL2CPP;
-            if (isIL2CPPBuild) 
+            if (isIL2CPPBuild)
             {
                 string dir = $"{IL2CPPGenericTypesGenerator.LibraryPath}/com.unity.behavior";
                 string path = $"{dir}/{GraphTypesLinkFileGenerator.k_DefaultFileName}.xml";

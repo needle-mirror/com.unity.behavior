@@ -36,7 +36,7 @@ namespace Unity.Behavior
             Variable.OnValueChanged -= OnVariableValueChange;
         }
 
-        public void OnSerialize() 
+        public void OnSerialize()
         { }
 
         public void OnDeserialize()
@@ -55,7 +55,7 @@ namespace Unity.Behavior
             {
                 return;
             }
-            
+
             m_HasVariableChanged = false;
             Variable.OnValueChanged -= OnVariableValueChange;
             Variable.OnValueChanged += OnVariableValueChange;

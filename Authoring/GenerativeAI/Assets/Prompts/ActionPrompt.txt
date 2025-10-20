@@ -30,5 +30,3 @@ After you generated the code, make sure this namespace is included in the file:
 using Action = Unity.Behavior.Action;
 If it is not included, add it.
 Remember the class does not inherit from MonoBehaviour, so you cannot use any MonoBehaviour methods.
-
-

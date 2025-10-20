@@ -10,7 +10,7 @@ namespace Unity.Behavior.Serialization.Json
 
         UnityEditor.GUID IJsonAdapter<UnityEditor.GUID>.Deserialize(in JsonDeserializationContext<UnityEditor.GUID> context)
             => UnityEditor.GUID.TryParse(context.SerializedValue.ToString(), out var value) ? value : default;
-        
+
         void IJsonAdapter<UnityEditor.GlobalObjectId>.Serialize(in JsonSerializationContext<UnityEditor.GlobalObjectId> context, UnityEditor.GlobalObjectId value)
             => context.Writer.WriteValue(value.ToString());
 

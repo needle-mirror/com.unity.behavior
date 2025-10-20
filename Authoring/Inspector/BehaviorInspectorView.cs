@@ -9,7 +9,7 @@ namespace Unity.Behavior
     internal partial class BehaviorInspectorView : InspectorView
     {
 #if !ENABLE_UXML_UI_SERIALIZATION
-        internal new class UxmlFactory : UxmlFactory<BehaviorInspectorView, UxmlTraits> {}
+        internal new class UxmlFactory : UxmlFactory<BehaviorInspectorView, UxmlTraits> { }
 #endif
         internal new BehaviorGraphNodeModel InspectedNode => base.InspectedNode as BehaviorGraphNodeModel;
 
@@ -25,7 +25,7 @@ namespace Unity.Behavior
             BehaviorGraphInspectorUI graphInspector = new BehaviorGraphInspectorUI(GraphEditor.Asset as BehaviorAuthoringGraph);
             if (GraphEditor is BehaviorGraphEditor editor)
             {
-                graphInspector.EditSubgraphStoryButton.clicked += editor.OnSubgraphRepresentationButtonClicked;   
+                graphInspector.EditSubgraphStoryButton.clicked += editor.OnSubgraphRepresentationButtonClicked;
             }
             return graphInspector;
         }

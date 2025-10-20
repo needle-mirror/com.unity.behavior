@@ -19,7 +19,7 @@ namespace Unity.Behavior.GraphFramework
                     suggestedSavePath,
                     "NewCommand",
                     "cs");
-        
+
             if (path.Length == 0)
             {
                 return;
@@ -65,14 +65,14 @@ namespace Unity.Behavior.GraphFramework
                 outfile.WriteLine("    }");
                 outfile.WriteLine("}");
             }
-        
+
             AssetDatabase.Refresh();
-        
+
             string relativePathToCommand = path.StartsWith(Application.dataPath) ? ("Assets" + path.Substring(Application.dataPath.Length)) : path;
             MonoScript commandScript = (MonoScript)AssetDatabase.LoadAssetAtPath(relativePathToCommand, typeof(MonoScript));
             AssetDatabase.OpenAsset(commandScript);
-        
-        
+
+
             string relativePathToHandler = handlerPath.StartsWith(Application.dataPath) ? ("Assets" + handlerPath.Substring(Application.dataPath.Length)) : handlerPath;
             MonoScript handlerScript = (MonoScript)AssetDatabase.LoadAssetAtPath(relativePathToHandler, typeof(MonoScript));
             AssetDatabase.OpenAsset(handlerScript);

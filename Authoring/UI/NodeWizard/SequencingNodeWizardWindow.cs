@@ -13,7 +13,7 @@ namespace Unity.Behavior
         {
             SequencingNodeWizard wizard = new SequencingNodeWizard();
             Modal modal = WizardUtils.CreateAndShowStepperModal("New Sequencing", targetView, wizard);
-   
+
             wizard.SetVariableSuggestions(variableSuggestions);
             return wizard;
         }
@@ -24,7 +24,7 @@ namespace Unity.Behavior
             Modal modal = WizardUtils.CreateAndShowStepperModal(info.Name, targetView, wizard);
             wizard.SetVariableSuggestions(variableSuggestions);
             wizard.SetupEditWizard(info, model);
-         
+
             return wizard;
         }
     }

@@ -10,13 +10,13 @@ namespace Unity.Behavior.Serialization
     {
         internal static string GetReadOnlyValueTypeErrorMessage(Type type, string propertyName)
             => $"Failed to deserialize Property=[{propertyName}] for Type=[{type.FullName}]. The property is readonly value type and can not be assigned. The property needs to be writable or ignored by serialization using [{nameof(DontSerializeAttribute)}].";
-        
+
         internal static string GetReadOnlyReferenceTypeErrorMessage(Type type, string propertyName)
             => $"Failed to deserialize Property=[{propertyName}] for Type=[{type.FullName}]. The property is readonly and the reference can not be assigned. The property needs to be writable, default constructed, or ignored by serialization using [{nameof(DontSerializeAttribute)}].";
 
         internal static string GetReadOnlyReferenceTypeWithInvalidTypeErrorMessage(Type type, string propertyName)
             => $"Failed to deserialize Property=[{propertyName}] for Type=[{type.FullName}]. The default constructed instance does not match the deserialized type. The property needs to be writable, default constructed with the correct type, or ignored by serialization using [{nameof(DontSerializeAttribute)}]";
-        
+
         /// <summary>
         /// Validates a readonly property was correctly deserialized. This can be used this to catch any errors which could fail silently.
         /// </summary>
@@ -34,7 +34,7 @@ namespace Unity.Behavior.Serialization
                 error = string.Empty;
                 return false;
             }
-            
+
             if (typeof(TValue).IsValueType)
             {
                 // The deserialized value is a `ValueType`, since this is a copy and we can not assign back this is a failure.
@@ -56,7 +56,7 @@ namespace Unity.Behavior.Serialization
 
                 return true;
             }
-            
+
             error = string.Empty;
             return false;
         }

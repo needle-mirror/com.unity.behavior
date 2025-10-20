@@ -20,7 +20,7 @@ namespace Unity.Behavior
     internal partial class BehaviorGraphEditor : GraphEditor
     {
 #if !ENABLE_UXML_UI_SERIALIZATION
-        internal new class UxmlFactory : UxmlFactory<BehaviorGraphEditor, UxmlTraits> {}
+        internal new class UxmlFactory : UxmlFactory<BehaviorGraphEditor, UxmlTraits> { }
 #endif
         private const string k_PreferencesPrefix = "Muse.Behavior";
 
@@ -36,12 +36,12 @@ namespace Unity.Behavior
 
         internal readonly Dictionary<string, VariableModel> m_RecentlyLinkedVariables = new Dictionary<string, VariableModel>();
 
-        private readonly Dictionary<BehaviorAuthoringGraph, long> m_GraphDependencies = new Dictionary<BehaviorAuthoringGraph, long>();
-        private readonly Dictionary<BehaviorBlackboardAuthoringAsset, long> m_BlackboardDependencies = new Dictionary<BehaviorBlackboardAuthoringAsset, long>();
-        
+        private readonly Dictionary<BehaviorAuthoringGraph, long> m_GraphDependencies = new();
+        private readonly Dictionary<BehaviorBlackboardAuthoringAsset, long> m_BlackboardDependencies = new();
+        private readonly Dictionary<SerializableGUID, BehaviorAuthoringGraph.NodeModelInfo> m_NodeModelInfoPerID = new();
         private readonly BehaviorToolbar m_BehaviorGraphToolbar;
         private readonly SubGraphStoryEditor m_StoryEditor;
-        private Toast m_PlaceholderNodeWarningToast; 
+        private Toast m_PlaceholderNodeWarningToast;
 
         internal event Action<int> DebugAgentSelected;
 
@@ -53,7 +53,7 @@ namespace Unity.Behavior
 
         private BehaviorGraphAgent m_SelectedAgent;
         private DebugAgentElement m_DebugElement;
-        
+
         private int m_PlaceholderNodeIndex;
         private int m_PlaceholderNodeCount;
         private readonly string[] kSearchFolders = new string[] { "Assets" };
@@ -82,7 +82,7 @@ namespace Unity.Behavior
             BehaviorGraphView.ViewState.ViewStateUpdated += OnGraphViewUpdated;
             RegisterCallback<LinkFieldLinkButtonEvent>(OnVariableLinkButton);
             RegisterCallback<FocusInEvent>(_ => IsAssetVersionUpToDate());
-            
+
             BlackboardUtils.AddCustomIconName(typeof(EventChannelBase), "event");
         }
 
@@ -105,11 +105,10 @@ namespace Unity.Behavior
         {
             BehaviorAuthoringGraph authoringGraph = asset as BehaviorAuthoringGraph;
 
-            // Before loading, check for asset blackboard and the graph owner variable.
-            asset.EnsureAssetHasBlackboard();
-            authoringGraph.EnsureCorrectModelTypes();
+            // Before loading, validate the asset to ensure it has blackboard and the graph owner variable.
+            asset.ValidateAsset();
             EnsureNewAssetHasSelfReferenceVariable(asset);
-            
+
             if (authoringGraph.Story != null)
             {
                 m_StoryEditor.SetAssetLink(authoringGraph);
@@ -122,7 +121,7 @@ namespace Unity.Behavior
                 if (behaviorInspector.InspectedNode == null)
                 {
                     // Display the default inspector if nothing has been selected.
-                    Inspector.CreateDefaultInspector();      
+                    Inspector.CreateDefaultInspector();
                 }
                 else
                 {
@@ -130,16 +129,30 @@ namespace Unity.Behavior
                 }
             }
 
+            RefreshPlaceholderNodeModelInfoCache();
+            // Force refresh all the linked views.
             DispatchOutstandingAssetCommands();
-                
+
             CacheDependentAssets();
         }
-        
+
+        private void RefreshPlaceholderNodeModelInfoCache()
+        {
+            m_NodeModelInfoPerID.Clear();
+            foreach (var nodeModelInfo in Asset.NodeModelsInfo)
+            {
+                if (nodeModelInfo.IsPlaceholder)
+                {
+                    m_NodeModelInfoPerID.Add(nodeModelInfo.RuntimeTypeID, nodeModelInfo);
+                }
+            }
+        }
+
         private void CacheDependentAssets()
         {
             m_GraphDependencies.Clear();
             m_BlackboardDependencies.Clear();
-            
+
             if (Asset == null)
             {
                 return;
@@ -161,13 +174,13 @@ namespace Unity.Behavior
                 {
                     continue;
                 }
-                
+
                 m_GraphDependencies.TryAdd(subgraphNode.SubgraphAuthoringAsset, subgraphNode.SubgraphAuthoringAsset.VersionTimestamp);
 
                 if (!subgraphNode.IsDynamic)
                 {
                     m_BlackboardDependencies.TryAdd((BehaviorBlackboardAuthoringAsset)subgraphNode.SubgraphAuthoringAsset.Blackboard, subgraphNode.SubgraphAuthoringAsset.Blackboard.VersionTimestamp);
-                    // Iterate through all Blackboards on the selected subgraph. 
+                    // Iterate through all Blackboards on the selected subgraph.
                     foreach (BehaviorBlackboardAuthoringAsset subgraphBlackboard in subgraphNode.SubgraphAuthoringAsset.m_Blackboards)
                     {
                         m_BlackboardDependencies.TryAdd(subgraphBlackboard, subgraphBlackboard.VersionTimestamp);
@@ -176,7 +189,7 @@ namespace Unity.Behavior
 
                 else if (subgraphNode.RequiredBlackboard != null)
                 {
-                    m_BlackboardDependencies.TryAdd(subgraphNode.RequiredBlackboard, subgraphNode.RequiredBlackboard.VersionTimestamp);   
+                    m_BlackboardDependencies.TryAdd(subgraphNode.RequiredBlackboard, subgraphNode.RequiredBlackboard.VersionTimestamp);
                 }
             }
         }
@@ -242,7 +255,7 @@ namespace Unity.Behavior
         /// </summary>
         private void EnsureNewAssetHasSelfReferenceVariable(GraphAsset asset)
         {
-            // If this is the first time setting up graphs in the project, store the default 
+            // If this is the first time setting up graphs in the project, store the default
             // name for the Self variable in editor preferences.
             if (panel != null && !GraphPrefsUtility.HasKey(k_PrefsKeyDefaultGraphOwnerName, IsInEditorContext))
             {
@@ -254,7 +267,7 @@ namespace Unity.Behavior
                 return;
             }
 
-            // For existing assets (non-zero timestamp), this indicates the 'Self' variable was 
+            // For existing assets (non-zero timestamp), this indicates the 'Self' variable was
             // accidentally deleted, which shouldn't happen anymore (pre 1.0.5).
             if (asset.VersionTimestamp != default)
             {
@@ -267,21 +280,21 @@ namespace Unity.Behavior
         }
 
         /// <summary>
-        /// Set the default graph owner variable name. 
+        /// Set the default graph owner variable name.
         /// </summary>
         /// <param name="graphOwnerName">The name to be used for the graph owner variable.</param>
         public void SetDefaultGraphOwnerName(string graphOwnerName)
         {
             if (string.IsNullOrEmpty(graphOwnerName))
             {
-                Debug.LogError( "Cannot set the graph owner name to null or empty string.");
+                Debug.LogError("Cannot set the graph owner name to null or empty string.");
                 return;
             }
-            
+
             GraphPrefsUtility.SetString(k_PrefsKeyDefaultGraphOwnerName, graphOwnerName, IsInEditorContext);
         }
 
-        protected override InspectorView CreateNodeInspector()  
+        protected override InspectorView CreateNodeInspector()
         {
             return new BehaviorInspectorView();
         }
@@ -318,13 +331,14 @@ namespace Unity.Behavior
         public override SearchMenuBuilder CreateBlackboardOptions()
         {
             SearchMenuBuilder builder = Util.CreateBlackboardOptions(Dispatcher, this, Asset.CommandBuffer);
-            
+
 #if UNITY_EDITOR
             BehaviorBlackboardAuthoringAsset[] blackboardAssets = Util.GetNonGraphBlackboardAssets();
             List<SearchView.Item> options = new List<SearchView.Item>();
             if (blackboardAssets.Length > 0)
             {
-                options.Add(new SearchView.Item($"Blackboards", icon: BlackboardUtils.GetScriptableObjectIcon(blackboardAssets[0]))); 
+                Texture2D blackboardIcon = BlackboardUtils.GetScriptableObjectIcon(blackboardAssets[0]);
+                options.Add(new SearchView.Item($"Blackboards", icon: BlackboardUtils.GetScriptableObjectIcon(blackboardAssets[0])));
                 foreach (BehaviorBlackboardAuthoringAsset blackboardAsset in blackboardAssets)
                 {
                     bool isAlreadyAdded = false;
@@ -334,33 +348,41 @@ namespace Unity.Behavior
                         {
                             continue;
                         }
-                    
-                        options.Add(new SearchView.Item($"Blackboards/{blackboardAsset.name}", enabled: false, icon: BlackboardUtils.GetScriptableObjectIcon(blackboardAsset)));
+
+                        options.Add(new SearchView.Item($"Blackboards/{blackboardAsset.name}", enabled: false, icon: blackboardIcon));
                         isAlreadyAdded = true;
                         break;
                     }
 
                     if (!isAlreadyAdded)
                     {
-                        options.Add(new SearchView.Item($"Blackboards/{blackboardAsset.name}",  icon: BlackboardUtils.GetScriptableObjectIcon(blackboardAsset), onSelected: () => OnAddBlackboardGroup(blackboardAsset)));   
+                        bool isAssetValid = !blackboardAsset.ContainsInvalidSerializedReferences();
+                        string assetName = blackboardAsset.name;
+                        if (!isAssetValid)
+                        {
+                            assetName = assetName.Insert(0, "(Invalid) ");
+                        }
+
+                        options.Add(new SearchView.Item($"Blackboards/{assetName}", icon: blackboardIcon, enabled: isAssetValid,
+                            onSelected: () => OnAddBlackboardGroup(blackboardAsset)));
                     }
-                }   
+                }
             }
-            
+
             foreach (SearchView.Item option in options)
             {
                 builder.Options.Add(option);
             }
 #endif
-            
+
             return builder;
         }
-        
+
         private void OnAddBlackboardGroup(BlackboardAsset asset)
         {
             Dispatcher.DispatchImmediate(new AddBlackboardAssetToGraphCommand(Asset, asset as BehaviorBlackboardAuthoringAsset, true));
         }
-        
+
         // todo move to dedicated tutorial manager
         private void OnGraphViewUpdated()
         {
@@ -380,7 +402,7 @@ namespace Unity.Behavior
 #endif
             if (agents == null)
                 return;
-            
+
             List<SearchView.Item> searchItems = new List<SearchView.Item>();
             List<BehaviorGraphAgent> matchingAgents = new List<BehaviorGraphAgent>();
             foreach (BehaviorGraphAgent agent in agents)
@@ -389,7 +411,7 @@ namespace Unity.Behavior
                 {
                     continue;
                 }
-    
+
                 List<BehaviorGraphModule> matchingModules = agent.Graph.Graphs.Where(module => module.AuthoringAssetID == Asset.AssetID).ToList();
                 int id = 1;
                 bool isEnabled = agent.isActiveAndEnabled;
@@ -404,9 +426,9 @@ namespace Unity.Behavior
                     isEnabled |= BehaviorProjectSettings.instance.AllowDisabledAgentDebugging;
 #endif
                     searchItems.Add(new SearchView.Item(
-                        path: $"{agent.name}{idString}{outdatedGraph} {enabledSuffix}", 
+                        path: $"{agent.name}{idString}{outdatedGraph} {enabledSuffix}",
                         data: (agent, module),
-                        priority: priority, 
+                        priority: priority,
                         enabled: isEnabled)
                     );
                     matchingAgents.Add(agent);
@@ -415,12 +437,12 @@ namespace Unity.Behavior
             SearchView searchView = SearchWindow.Show("Debug Agent", searchItems, OnDebugTargetSelected, m_BehaviorGraphToolbar.DebugButton, 256, 244, false, false);
             searchView.Q<VisualElement>("ReturnButton").style.display = DisplayStyle.None;
             searchView.Insert(0, m_DebugElement);
-            
+
             if (m_SelectedAgent != null)
             {
                 searchView.ListView.SetSelection(0);
             }
-            
+
             if (m_SelectedAgent == null || !matchingAgents.Contains(m_SelectedAgent))
             {
                 m_SelectedAgent = null;
@@ -448,8 +470,8 @@ namespace Unity.Behavior
         {
             if (obj.Data is (BehaviorGraphAgent agent, BehaviorGraphModule graphModule))
             {
-               SetupDebugTarget(agent);
-               BehaviorGraphView.ActiveDebugGraph = graphModule;
+                SetupDebugTarget(agent);
+                BehaviorGraphView.ActiveDebugGraph = graphModule;
             }
             else
             {
@@ -510,17 +532,17 @@ namespace Unity.Behavior
 
         public override void OnAssetSave()
         {
-            if (Asset == null) 
+            if (Asset == null)
             {
                 return;
             }
 
-            var behaviorBB = Asset.Blackboard as BehaviorBlackboardAuthoringAsset;
-            if (IsAssetVersionUpToDate() && behaviorBB.IsAssetVersionUpToDate())
+            var blackboardAsset = Asset.Blackboard as BehaviorBlackboardAuthoringAsset;
+            if (IsAssetVersionUpToDate() && blackboardAsset.IsAssetVersionUpToDate())
             {
                 return;
             }
-            
+
             OnSave?.Invoke();
             SaveSubgraphRepresentation();
             base.OnAssetSave();
@@ -587,15 +609,24 @@ namespace Unity.Behavior
 
         public override bool IsAssetVersionUpToDate()
         {
+            if (Asset == null)
+            {
+                return false;
+            }
 #if UNITY_EDITOR
+            if (EditorUtility.IsDirty(Asset))
+            {
+                return false;
+            }
+
             BehaviorGraph graph = BehaviorAuthoringGraph.GetOrCreateGraph(Asset);
-            
+
             bool assetIsOutOfDate = false;
             if (Asset.HasOutstandingChanges)
             {
                 assetIsOutOfDate = true;
             }
-            // If the graph is null, the asset has not been saved/built 
+            // If the graph is null, the asset has not been saved/built
             else if (graph == null)
             {
                 assetIsOutOfDate = true;
@@ -650,8 +681,8 @@ namespace Unity.Behavior
                 {
                     field!.SendEvent(changeEvent);
                 }
-                m_RecentlyLinkedVariables.Remove(field.FieldName); 
-                
+                m_RecentlyLinkedVariables.Remove(field.FieldName);
+
                 return;
             }
 
@@ -693,9 +724,9 @@ namespace Unity.Behavior
                             () =>
                             {
                                 OnLinkFromSearcher(variable, field);
-                                LinkSubgraph((BehaviorGraph)variable.ObjectValue, variable.Name, subgraphNode, field, variable); 
+                                LinkSubgraph((BehaviorGraph)variable.ObjectValue, variable.Name, subgraphNode, field, variable);
                             }, icon: variable.Type.GetIcon());
-                    }    
+                    }
                 }
                 else if (subgraphField.LinkVariableType == typeof(BehaviorBlackboardAuthoringAsset))
                 {
@@ -711,7 +742,7 @@ namespace Unity.Behavior
             else
             {
 #if UNITY_EDITOR
-                // this case is for creating a new enum variable without knowing the type upfront 
+                // this case is for creating a new enum variable without knowing the type upfront
                 if (variableType == typeof(Enum))
                 {
                     foreach (var enumVariableType in Util.GetEnumVariableTypes())
@@ -761,17 +792,18 @@ namespace Unity.Behavior
                         }
                     }
                 }
+
                 // Check for variables in added Blackboard groups, and display them with the Blackboard asset name first.
                 foreach (BehaviorBlackboardAuthoringAsset blackboard in Asset.m_Blackboards)
                 {
-                    foreach (VariableModel assetVariable in blackboard.Variables.Where(variableModel => field.IsAssignable(variableModel.Type) 
+                    foreach (VariableModel assetVariable in blackboard.Variables.Where(variableModel => field.IsAssignable(variableModel.Type)
                         && typeof(EventChannelBase).IsAssignableFrom(variableModel.Type) == false))
                     {
                         var targetIcon = assetVariable.Type.GetIcon();
                         if (targetIcon != null)
                         {
                             builder.AddOption($"{blackboard.name} " + BlackboardUtils.GetArrowUnicode() + $" {assetVariable.Name}",
-                                () => { OnLinkFromSearcher(assetVariable, field); }, targetIcon);   
+                                () => { OnLinkFromSearcher(assetVariable, field); }, targetIcon);
                         }
                         else
                         {
@@ -781,7 +813,7 @@ namespace Unity.Behavior
                     }
                 }
             }
-            
+
 
             builder.Title = "Link Variable";
 
@@ -798,15 +830,23 @@ namespace Unity.Behavior
                         {
                             // Only enable options that don't create cycles, but display the cyclic options as well.
                             bool wouldCreateCycle = subgraphAsset.ContainsCyclicReferenceTo(subgraphField.Model.Asset as BehaviorAuthoringGraph);
-                            
-                            builder.AddOption(subgraphAsset.name, () => LinkSubgraph(BehaviorAuthoringGraph.GetOrCreateGraph(subgraphAsset), subgraphAsset.name, subgraphNode, field),
-                                icon: Util.GetBehaviorGraphIcon(), tab: "Assets", enabled: !wouldCreateCycle);
-                        }   
+                            // Only enable options if the asset is valid.
+                            bool isValidAsset = !subgraphAsset.ContainsInvalidSerializedReferences();
+
+                            string name = subgraphAsset.name;
+                            if (!isValidAsset)
+                            {
+                                name = name.Insert(0, "(Invalid) ");
+                            }
+
+                            builder.AddOption(name, () => LinkSubgraph(BehaviorAuthoringGraph.GetOrCreateGraph(subgraphAsset), subgraphAsset.name, subgraphNode, field),
+                                icon: Util.GetBehaviorGraphIcon(), tab: "Assets", enabled: !wouldCreateCycle && isValidAsset);
+                        }
                     }
                 }
 
                 builder.AddOption("None", () => { field.SetValue(null); }, icon: null, tab: "Assets", priority: 1);
-                
+
                 if (evt.FieldType != typeof(BehaviorBlackboardAuthoringAsset) && evt.FieldType != typeof(BehaviorGraph))
                 {
                     string[] assetGUIDSArray = UnityEditor.AssetDatabase.FindAssets($"t:{evt.FieldType.Name}", kSearchFolders);
@@ -835,7 +875,7 @@ namespace Unity.Behavior
                         }
                         string filename = Path.GetFileNameWithoutExtension(assetPath);
                         builder.AddOption(filename, OnSelectAsset, tab: "Assets", icon: thumbnail);
-                    }   
+                    }
                 }
 #endif
 
@@ -865,8 +905,9 @@ namespace Unity.Behavior
                 // Link the selected variable.
                 variableModel != null ? variableModel :
                 // Or create a new variable model for the selected asset.
-                new TypedVariableModel<BehaviorGraph> { m_Value = subgraph, Name = variableName};
+                new TypedVariableModel<BehaviorGraph> { m_Value = subgraph, Name = variableName };
             OnLinkFromSearcher(variable, field);
+            field.LinkWasPressed();
 
 #if UNITY_EDITOR
             BehaviorAuthoringGraph subgraphAsset = BehaviorGraphAssetRegistry.TryGetAssetFromGraphPath(subgraph);
@@ -875,7 +916,7 @@ namespace Unity.Behavior
             {
                 return;
             }
-                        
+
             // If a graph owner variable exists in the both assets, link them.
             VariableModel assetGraphOwner = Asset.Blackboard.Variables.FirstOrDefault(variable =>
                 variable.ID == BehaviorGraph.k_GraphSelfOwnerID && variable.Type == typeof(GameObject));
@@ -911,9 +952,6 @@ namespace Unity.Behavior
                     field.SendEvent(changeEvent);
                 }
             }
-
-            Asset.SetAssetDirty();
-            IsAssetVersionUpToDate();
 
             if (field.Model is BehaviorGraphNodeModel)
             {
@@ -972,13 +1010,13 @@ namespace Unity.Behavior
         internal void SetActiveGraphToDebugAgent(int agentId)
         {
             BehaviorGraphAgent agent = GetDebugAgentInScene(agentId);
-            SetupDebugTarget(agent);            
+            SetupDebugTarget(agent);
         }
 
         private BehaviorGraphAgent GetDebugAgentInScene(int id)
         {
             if (id == 0)
-                 return null;
+                return null;
 
 #if UNITY_2022_2_OR_NEWER
             var agents = UnityEngine.Object.FindObjectsByType<BehaviorGraphAgent>(FindObjectsInactive.Include, FindObjectsSortMode.None);
@@ -997,11 +1035,23 @@ namespace Unity.Behavior
         private int GetPlaceholderNodeCount()
         {
             int count = 0;
-            foreach (var node in Asset.Nodes)
+            // Manual check instead from the asset instead of using cache
+            // This is to detect when a change was made with the editor being reloaded.
+            HashSet<SerializableGUID> placeholderGUID = new();
+            foreach (var nodeModelInfo in Asset.NodeModelsInfo)
             {
-                if (node is PlaceholderNodeModel)
+                if (nodeModelInfo.IsPlaceholder)
                 {
-                    count++;
+                    placeholderGUID.Add(nodeModelInfo.RuntimeTypeID);
+                }
+            }
+
+            foreach (var nodeModel in Asset.Nodes)
+            {
+                if (nodeModel is BehaviorGraphNodeModel graphNodeModel
+                    && placeholderGUID.Contains(graphNodeModel.NodeTypeID))
+                {
+                    ++count;
                 }
             }
 
@@ -1014,6 +1064,7 @@ namespace Unity.Behavior
             //prevent respawning the toast whenever the view is updated
             if (placeholderNodeCount == m_PlaceholderNodeCount)
             {
+                RefreshPlaceholderNodeModelInfoCache();
                 if (placeholderNodeCount > 0 && m_PlaceholderNodeWarningToast is { isShown: true } ||
                     placeholderNodeCount == 0 && m_PlaceholderNodeWarningToast is { isShown: false })
                 {
@@ -1075,21 +1126,30 @@ namespace Unity.Behavior
 
         public void PanToPlaceholderNode(int offset)
         {
-            var allPlaceholderNodeUis = BehaviorGraphView.ViewState.Nodes.Where(nodeUI => nodeUI.Model is PlaceholderNodeModel).ToList();
-          
+            var allPlaceholderNodeUis = BehaviorGraphView.ViewState.Nodes.Where(
+                (nodeUI) =>
+                {
+                    if (nodeUI.Model is BehaviorGraphNodeModel nodeModel)
+                    {
+                        return m_NodeModelInfoPerID.ContainsKey(nodeModel.NodeTypeID);
+                    }
+                    return false;
+                }
+                ).ToList();
+
             var nextIndex = (m_PlaceholderNodeIndex + offset) % allPlaceholderNodeUis.Count;
             nextIndex = nextIndex < 0 ? allPlaceholderNodeUis.Count - 1 : nextIndex;
             m_PlaceholderNodeIndex = nextIndex;
-            
+
             var targetNodeUi = allPlaceholderNodeUis[nextIndex];
             BehaviorGraphView.Background.FrameElement(targetNodeUi);
-            BehaviorGraphView.ViewState.SetSelected(new [] {targetNodeUi});
+            BehaviorGraphView.ViewState.SetSelected(new[] { targetNodeUi });
         }
-        
+
         internal void LinkVariablesFromBlackboard(BehaviorGraphNodeModel node)
         {
             NodeInfo nodeInfo = NodeRegistry.GetInfoFromTypeID(node.NodeTypeID);
-            
+
             foreach (VariableInfo nodeVariable in nodeInfo.Variables)
             {
                 Type type = nodeVariable.GetType().BaseType;
@@ -1103,14 +1163,14 @@ namespace Unity.Behavior
                 node.SetField(nodeVariable.Name, blackboardVariable, blackboardVariable.Type);
             }
         }
-        
+
         internal void LinkRecentlyLinkedFields(BehaviorGraphNodeModel node)
         {
             if (m_RecentlyLinkedVariables == null || m_RecentlyLinkedVariables.Count == 0)
             {
                 return;
             }
-            
+
             NodeInfo nodeInfo = NodeRegistry.GetInfoFromTypeID(node.NodeTypeID);
 
             foreach (VariableInfo nodeVariable in nodeInfo.Variables)
@@ -1121,7 +1181,7 @@ namespace Unity.Behavior
                 }
                 if (Asset.Blackboard.Variables.Contains(variable) && node.HasField(nodeVariable.Name, nodeVariable.Type))
                 {
-                    node.SetField(nodeVariable.Name, variable, nodeVariable.Type);   
+                    node.SetField(nodeVariable.Name, variable, nodeVariable.Type);
                 }
                 else
                 {

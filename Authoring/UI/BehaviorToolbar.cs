@@ -11,7 +11,7 @@ namespace Unity.Behavior
     internal partial class BehaviorToolbar : GraphToolbar
     {
 #if !ENABLE_UXML_UI_SERIALIZATION
-        internal new class UxmlFactory : UxmlFactory<BehaviorToolbar, UxmlTraits> {}
+        internal new class UxmlFactory : UxmlFactory<BehaviorToolbar, UxmlTraits> { }
 #endif
         internal ActionButton DebugButton;
 

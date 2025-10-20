@@ -18,11 +18,12 @@ Explore the Unity Behavior features and get started with using behavior graphs.
 
 | Topic | Description |
 | ----- | ----------- |
-| [Behavior graphs](behavior-graph.md) | Get started with understanding a behavior graph and its components. |
-| [Behavior graphs node types](node-types.md) | Understand the logic flow in a behavior graph using nodes. |
-| [Unity Behavior user interface](user-interface.md) | Understand the main window of the Unity Behavior editor. |
-| [Install Unity Behavior with the Package Manager](install-behavior.md) | Use the Package Manager to install Unity Behavior. |
-| [Create a behavior graph](create-behavior-graph.md) | Learn how to create and open a new behavior graph in Unity, add nodes, and connect them to define agent behavior. |
-| [Save and load running graph state](serialization.md) | Save and restore the state of behavior graphs. |
-| [Debug the Agent in real time during Play mode](debug.md) | Understand the workflow and how the behavior graph runs. |
-| [Troubleshooting issues with Unity Behavior](troubleshoot.md) | Use these solutions to common problems while working with behavior graphs, including debugging tips and known limitations. |
+| [Basic concepts in Unity Behavior](create-behavior.md) | Learn how to create and open a new behavior graph, add nodes, and connect them to define agent behavior. |
+| [Create with Unity Behavior](get-started.md) | Learn how to work the Unity Behavior package and import samples. |
+| [Serialization in Unity Behavior](manage.md) | Learn how Unity Behavior stores and restores graph data and Blackboard variables across the Editor and runtime using Unity’s serialization system. |
+| [Troubleshooting issues with Unity Behavior](troubleshoot.md) | Use these solutions for common problems with behavior graphs, including debugging tips and known limitations. |
+
+## Additional resources
+
+* [Introduction](behavior-features.md)
+* [How Unity Behavior compares to other Unity solutions](behavior-differ.md)

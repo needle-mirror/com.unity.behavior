@@ -178,7 +178,7 @@ namespace Unity.Behavior.Serialization.Json
                 m_Visitor.m_SerializedType = m_SerializedType;
             }
         }
-        
+
 #if UNITY_EDITOR
         static readonly string s_EmptyGlobalObjectId = new UnityEditor.GlobalObjectId().ToString();
 #endif
@@ -192,7 +192,7 @@ namespace Unity.Behavior.Serialization.Json
         SerializedReferences m_SerializedReferences;
         SerializedContainerMetadata m_Metadata;
         readonly SerializedTypeProvider m_SerializedTypeProvider;
-        
+
         bool m_HasPrimitiveOrStringGlobalAdapters;
         bool m_HasPrimitiveOrStringUserDefinedAdapters;
 
@@ -287,7 +287,7 @@ namespace Unity.Behavior.Serialization.Json
                     if (enumerator.MoveNext() && null != enumerator.Current)
                     {
                         var property = enumerator.Current;
-                
+
                         using (CreatePropertyScope(property))
                         {
                             property.Accept(this, ref container);
@@ -322,7 +322,7 @@ namespace Unity.Behavior.Serialization.Json
                 {
                     if (PropertyChecks.IsPropertyExcludedFromSerialization(property))
                         continue;
-                    
+
                     AcceptProperty(ref container, obj, property);
                 }
             }
@@ -436,48 +436,48 @@ namespace Unity.Behavior.Serialization.Json
             switch (elements.Type)
             {
                 case TokenType.Array:
-                {
-                    var arr = elements.AsArrayView();
-
-                    foreach (var element in arr)
                     {
-                        if (element.Type != TokenType.Object)
+                        var arr = elements.AsArrayView();
+
+                        foreach (var element in arr)
                         {
-                            continue;
+                            if (element.Type != TokenType.Object)
+                            {
+                                continue;
+                            }
+
+                            var obj = element.AsObjectView();
+
+                            if (obj.TryGetValue("Key", out var kView) && obj.TryGetValue("Value", out var vView))
+                            {
+                                var key = default(TKey);
+                                ReadValue(ref key, kView);
+
+                                var value = default(TValue);
+                                ReadValue(ref value, vView);
+
+                                container.Add(key, value);
+                            }
                         }
 
-                        var obj = element.AsObjectView();
+                        break;
+                    }
+                case TokenType.Object:
+                    {
+                        var obj = elements.AsObjectView();
 
-                        if (obj.TryGetValue("Key", out var kView) && obj.TryGetValue("Value", out var vView))
+                        foreach (var member in obj)
                         {
                             var key = default(TKey);
-                            ReadValue(ref key, kView);
+                            ReadValue(ref key, member.Key());
 
                             var value = default(TValue);
-                            ReadValue(ref value, vView);
+                            ReadValue(ref value, member.Value());
 
                             container.Add(key, value);
                         }
+                        break;
                     }
-
-                    break;
-                }
-                case TokenType.Object:
-                {
-                    var obj = elements.AsObjectView();
-
-                    foreach (var member in obj)
-                    {
-                        var key = default(TKey);
-                        ReadValue(ref key, member.Key());
-
-                        var value = default(TValue);
-                        ReadValue(ref value, member.Value());
-
-                        container.Add(key, value);
-                    }
-                    break;
-                }
             }
         }
 
@@ -538,12 +538,12 @@ namespace Unity.Behavior.Serialization.Json
                             m_SerializedTypeProvider.Events.Add(new DeserializationEvent(EventType.Exception, e));
                         }
                         return;
-                    
+
                     case IContravariantJsonAdapter<TValue> typedContravariant:
                         try
                         {
                             // NOTE: Boxing
-                            value = (TValue) typedContravariant.Deserialize((IJsonDeserializationContext) new JsonDeserializationContext<TValue>(this, adapters, value, view, isRoot));
+                            value = (TValue)typedContravariant.Deserialize((IJsonDeserializationContext)new JsonDeserializationContext<TValue>(this, adapters, value, view, isRoot));
                         }
                         catch (Exception e)
                         {
@@ -562,7 +562,7 @@ namespace Unity.Behavior.Serialization.Json
             if (TypeTraits<TValue>.IsLazyLoadReference && view.Type == TokenType.String)
             {
                 var json = view.AsStringView().ToString();
-                
+
                 if (json == s_EmptyGlobalObjectId) // Workaround issue where GlobalObjectId.TryParse returns false for empty GlobalObjectId
                     return;
 
@@ -577,135 +577,135 @@ namespace Unity.Behavior.Serialization.Json
                 return;
             }
 #endif
-            
+
             switch (view.Type)
             {
                 case TokenType.String:
-                {
-                    var v = view.AsStringView().ToString();
-                    TypeConversion.TryConvert(ref v, out value);
-                    break;
-                }
+                    {
+                        var v = view.AsStringView().ToString();
+                        TypeConversion.TryConvert(ref v, out value);
+                        break;
+                    }
                 case TokenType.Primitive:
-                {
-                    var p = view.AsPrimitiveView();
-
-                    if (p.IsIntegral())
                     {
-                        if (p.IsSigned())
+                        var p = view.AsPrimitiveView();
+
+                        if (p.IsIntegral())
                         {
-                            var v = p.AsInt64();
+                            if (p.IsSigned())
+                            {
+                                var v = p.AsInt64();
+                                TypeConversion.TryConvert(ref v, out value);
+                            }
+                            else
+                            {
+                                var v = p.AsUInt64();
+                                TypeConversion.TryConvert(ref v, out value);
+                            }
+                        }
+                        else if (p.IsDecimal() || p.IsInfinity() || p.IsNaN())
+                        {
+                            var v = p.AsFloat();
                             TypeConversion.TryConvert(ref v, out value);
                         }
-                        else
+                        else if (p.IsBoolean())
                         {
-                            var v = p.AsUInt64();
+                            var v = p.AsBoolean();
                             TypeConversion.TryConvert(ref v, out value);
                         }
-                    }
-                    else if (p.IsDecimal() || p.IsInfinity() || p.IsNaN())
-                    {
-                        var v = p.AsFloat();
-                        TypeConversion.TryConvert(ref v, out value);
-                    }
-                    else if (p.IsBoolean())
-                    {
-                        var v = p.AsBoolean();
-                        TypeConversion.TryConvert(ref v, out value);
-                    }
-                    else if (p.IsNull())
-                    {
-                        value = default;
-                    }
+                        else if (p.IsNull())
+                        {
+                            value = default;
+                        }
 
-                    break;
-                }
+                        break;
+                    }
                 default:
-                {
-                    var metadata = view.Type == TokenType.Object ? GetSerializedContainerMetadata(view.AsObjectView()) : default;
-
-                    m_SerializedTypeProvider.View = view;
-                    m_SerializedTypeProvider.SerializedType = isRoot ? m_SerializedType : null;
-
-                    if (TypeTraits<TValue>.IsNullable)
-                        m_SerializedTypeProvider.SerializedType = Nullable.GetUnderlyingType(typeof(TValue));
-                    
-                    if (metadata.IsSerializedReference)
                     {
-                        if (null == m_SerializedReferences)
+                        var metadata = view.Type == TokenType.Object ? GetSerializedContainerMetadata(view.AsObjectView()) : default;
+
+                        m_SerializedTypeProvider.View = view;
+                        m_SerializedTypeProvider.SerializedType = isRoot ? m_SerializedType : null;
+
+                        if (TypeTraits<TValue>.IsNullable)
+                            m_SerializedTypeProvider.SerializedType = Nullable.GetUnderlyingType(typeof(TValue));
+
+                        if (metadata.IsSerializedReference)
                         {
-                            m_SerializedTypeProvider.Events.Add(new DeserializationEvent(EventType.Exception, new Exception("Deserialization encountered a serialized object reference while running with DisableSerializedReferences.")));
+                            if (null == m_SerializedReferences)
+                            {
+                                m_SerializedTypeProvider.Events.Add(new DeserializationEvent(EventType.Exception, new Exception("Deserialization encountered a serialized object reference while running with DisableSerializedReferences.")));
+                                return;
+                            }
+
+                            value = (TValue)m_SerializedReferences.GetDeserializedReference(metadata.SerializedId);
                             return;
                         }
 
-                        value = (TValue)m_SerializedReferences.GetDeserializedReference(metadata.SerializedId);
-                        return;
-                    }
-
-                    try
-                    {
-                        DefaultTypeConstruction.Construct(ref value, m_SerializedTypeProvider);
-                    }
-                    catch (ArgumentException e)
-                    {
-                        m_SerializedTypeProvider.Events.Add(new DeserializationEvent(EventType.Exception, new ArgumentException(e.Message)));
-                        return;
-                    }
-
-                    if (metadata.HasSerializedId)
-                    {
-                        // This call is harmless to skip if we don't have serialized references.
-                        m_SerializedReferences?.AddDeserializedReference(metadata.SerializedId, value);
-                    }
-
-                    using (new SerializedContainerMetadataScope(this, metadata))
-                    using (new UnsafeViewScope(this, view))
-                    {
-                        if (TypeTraits<TValue>.IsNullable)
+                        try
                         {
-                            // Unpack Nullable<T> as T
-                            var underlyingType = Nullable.GetUnderlyingType(typeof(TValue));
-                            var underlyingValue = System.Convert.ChangeType(value, underlyingType);
-                            
-                            if (!PropertyContainer.TryAccept(this, ref underlyingValue, out var errorCode))
-                            {
-                                switch (errorCode)
-                                {
-                                    case VisitReturnCode.NullContainer:
-                                        throw new ArgumentNullException(nameof(value));
-                                    case VisitReturnCode.InvalidContainerType:
-                                        throw new InvalidContainerTypeException(value.GetType());
-                                    case VisitReturnCode.MissingPropertyBag:
-                                        throw new MissingPropertyBagException(value.GetType());
-                                    default:
-                                        throw new Exception($"Unexpected {nameof(VisitReturnCode)}=[{errorCode}]");
-                                }
-                            }
-
-                            // Repack the T as Nullable<T>
-                            value = (TValue) underlyingValue;
+                            DefaultTypeConstruction.Construct(ref value, m_SerializedTypeProvider);
                         }
-                        else
+                        catch (ArgumentException e)
                         {
-                            if (!PropertyContainer.TryAccept(this, ref value, out var errorCode))
+                            m_SerializedTypeProvider.Events.Add(new DeserializationEvent(EventType.Exception, new ArgumentException(e.Message)));
+                            return;
+                        }
+
+                        if (metadata.HasSerializedId)
+                        {
+                            // This call is harmless to skip if we don't have serialized references.
+                            m_SerializedReferences?.AddDeserializedReference(metadata.SerializedId, value);
+                        }
+
+                        using (new SerializedContainerMetadataScope(this, metadata))
+                        using (new UnsafeViewScope(this, view))
+                        {
+                            if (TypeTraits<TValue>.IsNullable)
                             {
-                                switch (errorCode)
+                                // Unpack Nullable<T> as T
+                                var underlyingType = Nullable.GetUnderlyingType(typeof(TValue));
+                                var underlyingValue = System.Convert.ChangeType(value, underlyingType);
+
+                                if (!PropertyContainer.TryAccept(this, ref underlyingValue, out var errorCode))
                                 {
-                                    case VisitReturnCode.NullContainer:
-                                        throw new ArgumentNullException(nameof(value));
-                                    case VisitReturnCode.InvalidContainerType:
-                                        throw new InvalidContainerTypeException(value.GetType());
-                                    case VisitReturnCode.MissingPropertyBag:
-                                        throw new MissingPropertyBagException(value.GetType());
-                                    default:
-                                        throw new Exception($"Unexpected {nameof(VisitReturnCode)}=[{errorCode}]");
+                                    switch (errorCode)
+                                    {
+                                        case VisitReturnCode.NullContainer:
+                                            throw new ArgumentNullException(nameof(value));
+                                        case VisitReturnCode.InvalidContainerType:
+                                            throw new InvalidContainerTypeException(value.GetType());
+                                        case VisitReturnCode.MissingPropertyBag:
+                                            throw new MissingPropertyBagException(value.GetType());
+                                        default:
+                                            throw new Exception($"Unexpected {nameof(VisitReturnCode)}=[{errorCode}]");
+                                    }
+                                }
+
+                                // Repack the T as Nullable<T>
+                                value = (TValue)underlyingValue;
+                            }
+                            else
+                            {
+                                if (!PropertyContainer.TryAccept(this, ref value, out var errorCode))
+                                {
+                                    switch (errorCode)
+                                    {
+                                        case VisitReturnCode.NullContainer:
+                                            throw new ArgumentNullException(nameof(value));
+                                        case VisitReturnCode.InvalidContainerType:
+                                            throw new InvalidContainerTypeException(value.GetType());
+                                        case VisitReturnCode.MissingPropertyBag:
+                                            throw new MissingPropertyBagException(value.GetType());
+                                        default:
+                                            throw new Exception($"Unexpected {nameof(VisitReturnCode)}=[{errorCode}]");
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    break;
-                }
+                        break;
+                    }
             }
         }
     }

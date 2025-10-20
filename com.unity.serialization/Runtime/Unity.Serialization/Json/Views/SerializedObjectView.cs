@@ -17,7 +17,7 @@ namespace Unity.Behavior.Serialization.Json
         {
             Properties.PropertyBag.Register(new SerializedObjectViewPropertyBag());
         }
-        
+
         /// <summary>
         /// Enumerates the elements of <see cref="SerializedObjectView"/>.
         /// </summary>
@@ -31,7 +31,7 @@ namespace Unity.Behavior.Serialization.Json
             {
                 m_Stream = stream;
                 m_Start = start;
-                m_Current = new Handle {Index = -1, Version = -1};
+                m_Current = new Handle { Index = -1, Version = -1 };
             }
 
             /// <summary>
@@ -76,7 +76,7 @@ namespace Unity.Behavior.Serialization.Json
             /// </summary>
             public void Reset()
             {
-                m_Current = new Handle {Index = -1, Version = -1};
+                m_Current = new Handle { Index = -1, Version = -1 };
             }
 
             /// <summary>
@@ -120,21 +120,21 @@ namespace Unity.Behavior.Serialization.Json
         /// <param name="name">The key of the value to get.</param>
         /// <exception cref="KeyNotFoundException">The key does not exist in the collection.</exception>
         public SerializedValueView this[string name] => GetValue(name);
-        
+
         /// <summary>
         /// Gets the value associated with the specified key.
         /// </summary>
         /// <param name="name">The key of the value to get.</param>
         /// <exception cref="KeyNotFoundException">The key does not exist in the collection.</exception>
         public SerializedValueView this[in FixedString32Bytes name] => GetValue(in name);
-        
+
         /// <summary>
         /// Gets the value associated with the specified key.
         /// </summary>
         /// <param name="name">The key of the value to get.</param>
         /// <exception cref="KeyNotFoundException">The key does not exist in the collection.</exception>
         public SerializedValueView this[in FixedString64Bytes name] => GetValue(in name);
-        
+
         /// <summary>
         /// Gets the value associated with the specified key.
         /// </summary>
@@ -154,7 +154,7 @@ namespace Unity.Behavior.Serialization.Json
 
             return member;
         }
-        
+
         /// <summary>
         /// Gets the member associated with the specified key.
         /// </summary>
@@ -177,7 +177,7 @@ namespace Unity.Behavior.Serialization.Json
             member = default;
             return false;
         }
-        
+
         /// <summary>
         /// Gets the value associated with the specified key.
         /// </summary>
@@ -187,7 +187,7 @@ namespace Unity.Behavior.Serialization.Json
         {
             if (!TryGetValue(name, out var value))
                 throw new KeyNotFoundException(name);
-            
+
             return value;
         }
 
@@ -223,7 +223,7 @@ namespace Unity.Behavior.Serialization.Json
         public bool TryGetValueAsString(string name, out string value)
         {
             value = default;
-            
+
             if (!TryGetValue(name, out var view))
                 return false;
 
@@ -243,7 +243,7 @@ namespace Unity.Behavior.Serialization.Json
         public bool TryGetValueAsInt64(string name, out long value)
         {
             value = default;
-            
+
             if (!TryGetValue(name, out var view))
                 return false;
 
@@ -254,7 +254,7 @@ namespace Unity.Behavior.Serialization.Json
             value = primitive.AsInt64();
             return true;
         }
-        
+
         /// <summary>
         /// Gets the value associated with the specified key as a <see cref="ulong"/>.
         /// </summary>
@@ -264,7 +264,7 @@ namespace Unity.Behavior.Serialization.Json
         public bool TryGetValueAsUInt64(string name, out ulong value)
         {
             value = default;
-            
+
             if (!TryGetValue(name, out var view))
                 return false;
 
@@ -275,7 +275,7 @@ namespace Unity.Behavior.Serialization.Json
             value = primitive.AsUInt64();
             return true;
         }
-        
+
         /// <summary>
         /// Gets the value associated with the specified key as a <see cref="float"/>.
         /// </summary>
@@ -285,7 +285,7 @@ namespace Unity.Behavior.Serialization.Json
         public bool TryGetValueAsFloat(string name, out float value)
         {
             value = default;
-            
+
             if (!TryGetValue(name, out var view))
                 return false;
 
@@ -296,7 +296,7 @@ namespace Unity.Behavior.Serialization.Json
             value = primitive.AsFloat();
             return true;
         }
-        
+
         /// <summary>
         /// Gets the value associated with the specified key as a <see cref="double"/>.
         /// </summary>
@@ -306,7 +306,7 @@ namespace Unity.Behavior.Serialization.Json
         public bool TryGetValueAsDouble(string name, out double value)
         {
             value = default;
-            
+
             if (!TryGetValue(name, out var view))
                 return false;
 
@@ -317,7 +317,7 @@ namespace Unity.Behavior.Serialization.Json
             value = primitive.AsDouble();
             return true;
         }
-        
+
         /// <summary>
         /// Gets the value associated with the specified key as a <see cref="bool"/>.
         /// </summary>
@@ -327,7 +327,7 @@ namespace Unity.Behavior.Serialization.Json
         public bool TryGetValueAsBoolean(string name, out bool value)
         {
             value = default;
-            
+
             if (!TryGetValue(name, out var view))
                 return false;
 
@@ -338,7 +338,7 @@ namespace Unity.Behavior.Serialization.Json
             value = primitive.AsBoolean();
             return true;
         }
-        
+
         /// <summary>
         /// Gets the value associated with the specified key.
         /// </summary>
@@ -349,10 +349,10 @@ namespace Unity.Behavior.Serialization.Json
         {
             if (!TryGetValue(name, out var value))
                 throw new KeyNotFoundException();
-            
+
             return value;
         }
-        
+
         /// <summary>
         /// Gets the value associated with the specified key.
         /// </summary>
@@ -376,7 +376,7 @@ namespace Unity.Behavior.Serialization.Json
             value = default;
             return false;
         }
-        
+
         /// <summary>
         /// Gets the member associated with the specified key.
         /// </summary>
@@ -387,10 +387,10 @@ namespace Unity.Behavior.Serialization.Json
         {
             if (!TryGetMember(name, out var member))
                 throw new KeyNotFoundException();
-            
+
             return member;
         }
-        
+
         /// <summary>
         /// Gets the member associated with the specified key.
         /// </summary>
@@ -414,7 +414,7 @@ namespace Unity.Behavior.Serialization.Json
             member = default;
             return false;
         }
-        
+
         /// <summary>
         /// Returns an enumerator that iterates through the <see cref="SerializedObjectView"/>.
         /// </summary>
@@ -432,14 +432,14 @@ namespace Unity.Behavior.Serialization.Json
         /// </summary>
         /// <returns>A <see cref="SerializedObjectView.Enumerator"/> for the <see cref="SerializedObjectView"/>.</returns>
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-        
+
         /// <summary>
         /// Re-interprets the specified object view to an untyped value view.
         /// </summary>
         /// <param name="view">The object view to re-interpret.</param>
         /// <returns>The untyped value view for the given object.</returns>
         public static implicit operator SerializedValueView(SerializedObjectView view) => new SerializedValueView(view.m_Stream, view.m_Handle);
-        
+
         internal UnsafeObjectView AsUnsafe() => new UnsafeObjectView(m_Stream, m_Stream->GetTokenIndex(m_Handle));
     }
 }

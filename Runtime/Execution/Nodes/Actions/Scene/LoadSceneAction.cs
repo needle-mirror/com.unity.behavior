@@ -19,7 +19,7 @@ namespace Unity.Behavior
         [SerializeReference] public BlackboardVariable<string> SceneName;
         [SerializeReference] public BlackboardVariable<LoadSceneMode> Mode;
         [Tooltip("Only applicable if LoadSceneMode is Additive. Set the loaded scene as the active scene.")]
-        [SerializeReference] public BlackboardVariable<bool> MakeActiveScene = new (false);
+        [SerializeReference] public BlackboardVariable<bool> MakeActiveScene = new(false);
 
         [CreateProperty] private bool m_PendingOperation;
         private AsyncOperation m_AsyncOperation;

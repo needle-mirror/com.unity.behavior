@@ -43,10 +43,10 @@ namespace Unity.Behavior.GraphFramework
                 }
             }
         }
-        
+
         [SerializeField, FormerlySerializedAs("IsShared")]
         private bool m_IsShared = false;
-        
+
         /// <summary>
         /// Delegate for variable shared setting changes.
         /// </summary>
@@ -56,7 +56,7 @@ namespace Unity.Behavior.GraphFramework
         /// Callback used for changes in the variable IsShared value.
         /// </summary>
         public event IsSharedChangedCallback IsSharedChanged = delegate { };
-        
+
         /// <summary>
         /// Invokes the OnIsSharedChanged callback.
         /// </summary>
@@ -75,20 +75,20 @@ namespace Unity.Behavior.GraphFramework
         /// Base method allowing variable models to be validated.
         /// </summary>
         public virtual void OnValidate() { }
-        
+
         /// <summary>
         /// Get's the hash code of the variable ID.
         /// </summary>
         /// <returns>The hash code.</returns>
         public override int GetHashCode() => ID.GetHashCode();
-        
+
         /// <summary>
         /// Compares an object to this variable model, casts to VariableModel and invokes an id and type check.
         /// </summary>
         /// <param name="other">Object to compare.</param>
         /// <returns>True if equal, false otherwise</returns>
         public override bool Equals(object other) => Equals(other as VariableModel);
-        
+
         /// <summary>
         /// Compares two VariableModels for equality of ID and Type.
         /// </summary>

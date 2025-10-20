@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Properties;
@@ -8,7 +8,7 @@ namespace Unity.Behavior.Serialization.Json
     class SerializedObjectViewPropertyBag : PropertyBag<SerializedObjectView>
     {
         static readonly Property k_Property = new Property();
-        
+
         class Property : Property<SerializedObjectView, SerializedValueView>
         {
             // ReSharper disable once InconsistentNaming
@@ -16,7 +16,7 @@ namespace Unity.Behavior.Serialization.Json
 
             /// <inheritdoc/>
             public override string Name => m_Member.Name().ToString();
-            
+
             /// <inheritdoc/>
             public override bool IsReadOnly => true;
 
@@ -32,7 +32,7 @@ namespace Unity.Behavior.Serialization.Json
         struct Enumerator : IEnumerator<IProperty<SerializedObjectView>>
         {
             SerializedObjectView.Enumerator m_Enumerator;
-            
+
             public Enumerator(SerializedObjectView.Enumerator enumerator)
                 => m_Enumerator = enumerator;
 
@@ -45,7 +45,7 @@ namespace Unity.Behavior.Serialization.Json
             public void Dispose()
                 => m_Enumerator.Dispose();
 
-            object IEnumerator.Current 
+            object IEnumerator.Current
                 => Current;
 
             public IProperty<SerializedObjectView> Current
@@ -58,12 +58,12 @@ namespace Unity.Behavior.Serialization.Json
                 }
             }
         }
-        
+
         readonly struct Enumerable : IEnumerable<IProperty<SerializedObjectView>>
         {
             readonly SerializedObjectView m_Container;
 
-            public Enumerable(SerializedObjectView container) 
+            public Enumerable(SerializedObjectView container)
                 => m_Container = container;
 
             public IEnumerator<IProperty<SerializedObjectView>> GetEnumerator()
@@ -72,7 +72,7 @@ namespace Unity.Behavior.Serialization.Json
             IEnumerator IEnumerable.GetEnumerator()
                 => new Enumerator(m_Container.GetEnumerator());
         }
-        
+
         public override PropertyCollection<SerializedObjectView> GetProperties()
             => PropertyCollection<SerializedObjectView>.Empty;
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Unity.Behavior.Serialization.Json
 {
@@ -13,51 +13,51 @@ namespace Unity.Behavior.Serialization.Json
         /// <summary>
         /// Continue reading until there are no more characters.
         /// </summary>
-        None               = 0,
+        None = 0,
 
         /// <summary>
         /// Start of an object.
         /// </summary>
-        BeginObject        = 1 << 0,
+        BeginObject = 1 << 0,
 
         /// <summary>
         /// Start of a new member.
         /// </summary>
-        ObjectKey          = 1 << 1,
+        ObjectKey = 1 << 1,
 
         /// <summary>
         /// End of an object.
         /// </summary>
-        EndObject          = 1 << 2,
+        EndObject = 1 << 2,
 
         /// <summary>
         /// Start of an array/collection.
         /// </summary>
-        BeginArray         = 1 << 3,
+        BeginArray = 1 << 3,
 
         /// <summary>
         /// End of an array/collection.
         /// </summary>
-        EndArray           = 1 << 4,
+        EndArray = 1 << 4,
 
         /// <summary>
         /// End of a string.
         /// </summary>
-        String             = 1 << 5,
+        String = 1 << 5,
 
         /// <summary>
         /// End of a primitive (number, boolean, nan, etc.).
         /// </summary>
-        Primitive          = 1 << 6,
-        
+        Primitive = 1 << 6,
+
         /// <summary>
         /// End of a comment.
         /// </summary>
-        Comment            = 1 << 7,
+        Comment = 1 << 7,
 
         /// <summary>
         /// Any node type.
         /// </summary>
-        Any                = ~0
+        Any = ~0
     }
 }

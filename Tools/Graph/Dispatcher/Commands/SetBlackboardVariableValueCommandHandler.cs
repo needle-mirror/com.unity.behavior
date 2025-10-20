@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Reflection;
 
 namespace Unity.Behavior.GraphFramework
@@ -8,7 +8,7 @@ namespace Unity.Behavior.GraphFramework
         public override bool Process(SetBlackboardVariableValueCommand command)
         {
             command.Variable.ObjectValue = command.Value;
-            
+
             Type variableType = command.Variable.GetType();
             if (variableType.IsGenericType)
             {

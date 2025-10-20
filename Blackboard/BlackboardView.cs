@@ -20,7 +20,7 @@ namespace Unity.Behavior.GraphFramework
 #endif
 
         private const string kSessionStatePrefix = "BlackboardView_ExpandedElements_";
-        
+
         public Dispatcher Dispatcher { get; internal set; }
         public BlackboardAsset Asset { get; private set; }
 
@@ -61,7 +61,7 @@ namespace Unity.Behavior.GraphFramework
             VariableListView.virtualizationMethod = CollectionVirtualizationMethod.DynamicHeight;
             RegisterCallback<AttachToPanelEvent>(OnAttachToPanelEvent);
             RegisterCallback<DetachFromPanelEvent>(OnDetachFromPanelEvent);
-            VariableListView.RegisterCallback<BlurEvent>(OnBlurEvent);            
+            VariableListView.RegisterCallback<BlurEvent>(OnBlurEvent);
 
 #if UNITY_2023_2_OR_NEWER
             VariableListView.canStartDrag += CanStartDragAndDrop;
@@ -198,6 +198,10 @@ namespace Unity.Behavior.GraphFramework
                 }
 
                 VariableModel variable = asset.Variables[i];
+                if (variable == null)
+                {
+                    return;
+                }
                 var bbvElement = CreateVariableUI(variable, listView, isEditable);
 
                 // Expand previously expanded elements
@@ -268,7 +272,7 @@ namespace Unity.Behavior.GraphFramework
                     InitializeListView();
                     break;
 
-                // UITK binding are handling updates in other cases.
+                    // UITK binding are handling updates in other cases.
             }
         }
 
@@ -277,8 +281,8 @@ namespace Unity.Behavior.GraphFramework
             m_VariableCache.Clear();
             if (Asset != null)
             {
-                m_VariableCache.AddRange(Asset.Variables.Select(variable =>
-                    new Tuple<string, Type>(variable.Name, variable.Type)));
+                m_VariableCache.AddRange(Asset.Variables.Where(variable => variable != null)
+                    .Select(variable => new Tuple<string, Type>(variable.Name, variable.Type)));
             }
         }
 

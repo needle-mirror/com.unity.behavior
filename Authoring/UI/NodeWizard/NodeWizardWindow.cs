@@ -8,7 +8,7 @@ namespace Unity.Behavior
     internal class NodeWizardWindow : ISerializationCallbackReceiver
     {
         protected bool IsInEditMode { get; set; }
-     
+
         protected NodeInfo NodeInfo;
         protected Dictionary<string, Type> VariableSuggestions;
         private List<string> m_VariableNames;
@@ -41,7 +41,7 @@ namespace Unity.Behavior
                 Type type = Type.GetType(m_VariableTypeNames[i]);
                 if (type != null)
                 {
-                    VariableSuggestions.Add(m_VariableNames[i], type);   
+                    VariableSuggestions.Add(m_VariableNames[i], type);
                 }
             }
         }

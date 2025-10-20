@@ -68,7 +68,7 @@ namespace Unity.Behavior
             {
                 return $"List<{GetStringForType(type.GetGenericArguments().First())}>";
             }
-          
+
             return type.Name;
         }
 
@@ -80,8 +80,8 @@ namespace Unity.Behavior
             return Util.NicifyVariableName(str);
 #endif
         }
-        
-        
+
+
         internal static string ToPascalCase(string text)
         {
             Regex invalidCharsRgx = new Regex("[^_a-zA-Z0-9]");
@@ -111,7 +111,7 @@ namespace Unity.Behavior
         {
             return str == null ? string.Empty : str.Replace(" ", string.Empty);
         }
-        
+
         static string GetBlackboardToVariableString(string name, Type type)
         {
             return $"{RemoveSpaces(NicifyString(name))} = BlackboardVariable.GetTypedBlackboardVariableValue<{GetStringForType(type)}>(var);";

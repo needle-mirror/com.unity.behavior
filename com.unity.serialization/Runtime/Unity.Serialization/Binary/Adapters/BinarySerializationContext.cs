@@ -1,4 +1,4 @@
-﻿using Unity.Collections.LowLevel.Unsafe;
+using Unity.Collections.LowLevel.Unsafe;
 
 namespace Unity.Behavior.Serialization.Binary
 {
@@ -21,7 +21,7 @@ namespace Unity.Behavior.Serialization.Binary
         /// Continues serialization for the current type without running any more adapters. This will perform the default behaviour.
         /// </summary>
         void ContinueVisitationWithoutAdapters();
-        
+
         /// <summary>
         /// Writes the given <paramref name="value"/> to the stream. This will run all adapters.
         /// </summary>
@@ -31,7 +31,7 @@ namespace Unity.Behavior.Serialization.Binary
     }
 
     /// <summary>
-    /// The <see cref="BinarySerializationContext{T}"/> is available from adapters. It provides access to the current adapter enumerator and allows for control of serialization for a given type. 
+    /// The <see cref="BinarySerializationContext{T}"/> is available from adapters. It provides access to the current adapter enumerator and allows for control of serialization for a given type.
     /// </summary>
     /// <typeparam name="TValue">The value type being serialized.</typeparam>
     public readonly unsafe struct BinarySerializationContext<TValue> : IBinarySerializationContext
@@ -81,7 +81,7 @@ namespace Unity.Behavior.Serialization.Binary
     public unsafe interface IBinaryDeserializationContext
     {
         /// <summary>
-        /// Gets the serialized view for value being deserialized. 
+        /// Gets the serialized view for value being deserialized.
         /// </summary>
         UnsafeAppendBuffer.Reader* Reader { get; }
 
@@ -90,7 +90,7 @@ namespace Unity.Behavior.Serialization.Binary
         /// </summary>
         /// <returns>The deserialized value.</returns>
         object ContinueVisitation();
-        
+
         /// <summary>
         /// Continues de-serialization for the current type without running any more adapters. This will perform the default behaviour.
         /// </summary>
@@ -106,7 +106,7 @@ namespace Unity.Behavior.Serialization.Binary
     }
 
     /// <summary>
-    /// The <see cref="BinaryDeserializationContext{T}"/> is available from adapters. It provides access to the current adapter enumerator and allows for control of deserialization for a given type. 
+    /// The <see cref="BinaryDeserializationContext{T}"/> is available from adapters. It provides access to the current adapter enumerator and allows for control of deserialization for a given type.
     /// </summary>
     /// <typeparam name="TValue">The value type being deserialized.</typeparam>
     public readonly unsafe struct BinaryDeserializationContext<TValue> : IBinaryDeserializationContext
@@ -157,7 +157,7 @@ namespace Unity.Behavior.Serialization.Binary
             m_Visitor.ReadValueWithoutAdapters(ref value, m_IsRoot);
             return value;
         }
-        
+
         /// <summary>
         /// Continues visitation for the current type. This will invoke the default behaviour and return the deserialized value.
         /// </summary>
@@ -169,10 +169,10 @@ namespace Unity.Behavior.Serialization.Binary
 
         /// <inheritdoc cref="IBinaryDeserializationContext.ContinueVisitation"/>
         object IBinaryDeserializationContext.ContinueVisitation() => ContinueVisitation();
-        
+
         /// <inheritdoc cref="IBinaryDeserializationContext.ContinueVisitationWithoutAdapters"/>
         object IBinaryDeserializationContext.ContinueVisitationWithoutAdapters() => ContinueVisitationWithoutAdapters();
-        
+
         /// <summary>
         /// Reads the next value in the stream as <typeparamref name="T"/> and returns it. This will run all adapters.
         /// </summary>

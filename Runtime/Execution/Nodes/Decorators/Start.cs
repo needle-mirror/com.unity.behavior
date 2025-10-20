@@ -9,16 +9,16 @@ namespace Unity.Behavior
     /// </summary>
     [Serializable, GeneratePropertyBag]
     [NodeDescription(
-        name: "On Start", 
-        description: "The root of a behaviour graph.", 
-        category: "Events", 
+        name: "On Start",
+        description: "The root of a behaviour graph.",
+        category: "Events",
         id: "jf0ecb9b9f44492eb96f0442454949ao")]
     internal partial class Start : Modifier
     {
         /// <summary>
         /// If true, the graph will restart when all nodes completes.
         /// </summary>
-        [SerializeReference] public bool Repeat;
+        [SerializeField] public bool Repeat;
         public bool AllowMultipleRepeatsPerTick = false;
 
         private int m_CurrentFrame;
@@ -32,17 +32,17 @@ namespace Unity.Behavior
             {
                 return Status.Success;
             }
-                    
+
             var status = StartNode(Child);
             if (status == Status.Failure || status == Status.Success)
             {
                 if (!Repeat)
                 {
                     return status;
-                }                
+                }
                 return Status.Running;
             }
-                
+
             return Status.Waiting;
         }
 
@@ -78,7 +78,7 @@ namespace Unity.Behavior
 
         protected override void OnSerialize()
         {
-            m_FrameDelta = Time.frameCount - m_CurrentFrame; 
+            m_FrameDelta = Time.frameCount - m_CurrentFrame;
         }
     }
 }

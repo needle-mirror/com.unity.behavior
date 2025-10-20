@@ -6,11 +6,11 @@ namespace Unity.Behavior
 {
     [Serializable, GeneratePropertyBag]
     [NodeDescription(
-        name: "Check Collisions In Radius", 
+        name: "Check Collisions In Radius",
         story: "Check [Agent] collisions in [Radius] radius",
         description: "Checks for collisions in a specified radius around the agent using OverlapSphere. " +
         "\nIf a collision is found, the collided object is stored in [CollidedObject].",
-        category: "Action/Physics", 
+        category: "Action/Physics",
         id: "a6254a477920c00f5e477c8b886b205a")]
     internal partial class CheckCollisionsInRadiusAction : Action
     {
@@ -47,7 +47,7 @@ namespace Unity.Behavior
                 }
 
                 CollidedObject.Value = hitCollider.gameObject;
-            
+
                 return Status.Success;
             }
 

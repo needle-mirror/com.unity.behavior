@@ -4,9 +4,9 @@ uid: create-custom-node
 
 # Create a custom node
 
-If you can't find the required node in the pre-defined node list of Unity Behavior, you have the option to create custom nodes. You can create custom **Action**, **Modifier**, and **Sequencing** nodes. 
+If you can't find the required node in the pre-defined node list of Unity Behavior, you have the option to create custom nodes. You can create custom **Action**, **Modifier**, and **Sequencing** nodes.
 
-This section outlines the process for creating a custom **Action** node. You can apply these instructions identically to create custom **Modifier** and **Sequencing** nodes. 
+This section outlines the process for creating a custom **Action** node. You can apply these instructions identically to create custom **Modifier** and **Sequencing** nodes.
 
 To create a custom node, perform the following steps:
 
@@ -36,13 +36,13 @@ To create a custom node, perform the following steps:
     This information will determine how the node appears on the graph and what link fields the node will have. For example, `Agent runs away from the enemy and hides behind a tree for 2 seconds`.
 
     Unity Behavior lists all the elements specified in the action on the window along with a list of data types.
-    
+
     ![Describe action](Images/describe-action.png)
 
 7. Select the appropriate variable from the list for each element.
 
     > [!NOTE]
-    > When describing the action, if you use a word that's the same as one of the **Blackboard** variables, it's automatically assigned the correct data type. For example, if the word `Target` with the `GameObject` data type is already defined on the **Blackboard** and you use it when describing the action, Unity Behavior will automatically assign the `GameObject` data type to the word `Target`.  
+    > When describing the action, if you use a word that's the same as one of the **Blackboard** variables, it's automatically assigned the correct data type. For example, if the word `Target` with the `GameObject` data type is already defined on the **Blackboard** and you use it when describing the action, Unity Behavior will automatically assign the `GameObject` data type to the word `Target`.
 
 8. Select **Create** to manually create the new custom node type.
 
@@ -54,7 +54,7 @@ To create a custom node, perform the following steps:
 
    > [!NOTE]
    > The generated C# script defines a class that inherits from the Action, Modifier, or Composite nodes, all of which extend the `Node` class. This structure allows access to APIs provided by the [Node class](https://docs.unity3d.com/Packages/com.unity.behavior@1.0/api/Unity.Behavior.Node.html) or its direct parent classes.
-   
+
 9. Select the new node to use it in the behavior graph.
 
     ![Behavior graph](Images/custom-node-create.png)

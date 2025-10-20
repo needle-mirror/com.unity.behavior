@@ -62,7 +62,7 @@ namespace Unity.Behavior
 #if ENABLE_MUSE_BEHAVIOR
                         if (!IsBranchWidgetOpen(Target))
                         {
-                            menu.AddItem("Generate branch from text", () => OnGenerateBranchFromText(Target, MousePos));   
+                            menu.AddItem("Generate branch from text", () => OnGenerateBranchFromText(Target, MousePos));
                         }
                         menu.AddSeparator();
 #endif
@@ -123,7 +123,7 @@ namespace Unity.Behavior
                 if (clickedNode != null || clickedEdge != null || Target.ViewState.Selected.Any())
                 {
                     ClickedElement = clickedNode != null ? clickedNode : clickedEdge;
-                    bool showDelete = (ClickedElement == null  && Target.ViewState.Selected.Any()) || ClickedElement.IsDeletable;
+                    bool showDelete = (ClickedElement == null && Target.ViewState.Selected.Any()) || ClickedElement.IsDeletable;
                     if (showDelete)
                     {
                         // Editor Delete menu item.
@@ -145,11 +145,9 @@ namespace Unity.Behavior
 #if UNITY_EDITOR
                     if (clickedNode.Model is BehaviorGraphNodeModel nodeModel)
                     {
-                        if (target.panel.contextType == ContextType.Editor && nodeModel is not PlaceholderNodeModel)
+                        if (target.panel.contextType == ContextType.Editor)
                         {
-                            // Even though the node is not a PlaceholderNodeModel we still need to check if we have a
-                            // valid ID because Placeholder Node UI can be made for other nodes which are missing,
-                            // this was done to avoid changing the users' assets.
+                            // Only add menu items if the node is not placeholder.
                             NodeInfo info = NodeRegistry.GetInfoFromTypeID(nodeModel.NodeTypeID);
                             if (info != null)
                             {
@@ -201,7 +199,7 @@ namespace Unity.Behavior
                 {
                     menu.Show();
                 }
-            
+
                 // Show runtime menu.
                 if (Target.panel.contextType == ContextType.Player)
                 {

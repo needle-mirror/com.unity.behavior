@@ -10,9 +10,9 @@ namespace Unity.Behavior
     /// </summary>
     [Serializable, GeneratePropertyBag]
     [NodeDescription(
-        name: "Conditional Guard", 
-        description: "Allows flow to pass only if the specified condition(s) are met.", 
-        category: "Action/Conditional", 
+        name: "Conditional Guard",
+        description: "Allows flow to pass only if the specified condition(s) are met.",
+        category: "Action/Conditional",
         id: "d6079f431e4784966a3969d414151638")]
     internal partial class ConditionalGuardAction : Action, IConditional
     {
@@ -31,10 +31,10 @@ namespace Unity.Behavior
             {
                 condition.OnStart();
             }
-            
+
             return ConditionUtils.CheckConditions(Conditions, RequiresAllConditions) ? Status.Success : Status.Failure;
         }
-        
+
         protected override void OnEnd()
         {
             base.OnEnd();

@@ -6,15 +6,15 @@ namespace Unity.Behavior.GraphFramework
 {
     internal class Port : VisualElement
     {
-        private static readonly CustomStyleProperty<string> s_PortStyleProperty = new ("--port-style");
-        private static readonly CustomStyleProperty<string> s_PortOrientationProperty = new ("--port-orientation");
-        
+        private static readonly CustomStyleProperty<string> s_PortStyleProperty = new("--port-style");
+        private static readonly CustomStyleProperty<string> s_PortOrientationProperty = new("--port-orientation");
+
         private const string k_EdgePortClassName = "EdgePort";
         private const string k_SocketPortClassName = "SocketPort";
-        
+
         private const string k_VerticalClassName = "VerticalPort";
         private const string k_HorizontalPortClassName = "HorizontalPort";
-        
+
         private const string k_InputClassName = "InputPort";
         private const string k_OutputClassName = "OutputPort";
 
@@ -44,14 +44,14 @@ namespace Unity.Behavior.GraphFramework
 
         private readonly List<Edge> m_Edges = new List<Edge>();
         public List<Edge> Edges => m_Edges;
-        
+
         public bool IsPortActive => !GetFirstAncestorOfType<NodeUI>().IsInSequence;
 
         public Port(PortModel portModel)
         {
             PortModel = portModel;
             name = portModel.Name;
-            
+
             AddToClassList("Port");
             styleSheets.Add(ResourceLoadAPI.Load<StyleSheet>("Packages/com.unity.behavior/Tools/Graph/Assets/PortStylesheet.uss"));
             ResourceLoadAPI.Load<VisualTreeAsset>("Packages/com.unity.behavior/Tools/Graph/Assets/PortLayout.uxml").CloneTree(this);

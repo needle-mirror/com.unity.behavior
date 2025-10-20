@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using Unity.AppUI.UI;
 using UnityEngine.UIElements;
@@ -13,10 +13,10 @@ namespace Unity.Behavior
     internal partial class InputFieldWithValidation : ExVisualElement, INotifyValueChanging<string>
     {
 #if !ENABLE_UXML_UI_SERIALIZATION
-        internal new class UxmlFactory : UxmlFactory<InputFieldWithValidation, UxmlTraits> {}
+        internal new class UxmlFactory : UxmlFactory<InputFieldWithValidation, UxmlTraits> { }
 #endif
         internal INotifyValueChanging<string> Field;
-        
+
         internal event System.Action OnItemValidation;
         internal delegate bool ValidationDelegate();
         internal List<ValidationDelegate> m_CustomValidationMethods = new List<ValidationDelegate>();
@@ -49,12 +49,12 @@ namespace Unity.Behavior
                     }
                 }
             }
-            
+
             if (Field is IInputElement<string> inputElement)
             {
                 inputElement.invalid = !IsValid;
             }
-            
+
             return IsValid;
         }
 
@@ -67,7 +67,7 @@ namespace Unity.Behavior
             bool isValid = InvalidIdentifierValidator.IsValidIdentifier(Field.value.Replace(" ", string.Empty));
             if (Field is VisualElement element)
             {
-                element.tooltip = isValid ? null : InvalidIdentifierValidator.k_InvalidIdentifierErrorMessage;  
+                element.tooltip = isValid ? null : InvalidIdentifierValidator.k_InvalidIdentifierErrorMessage;
             }
 
             return isValid;
@@ -77,7 +77,7 @@ namespace Unity.Behavior
         {
             if (field is VisualElement element)
             {
-                Add(element);   
+                Add(element);
             }
             Field = field;
             Field.RegisterValueChangingCallback(Validate);
@@ -114,7 +114,7 @@ namespace Unity.Behavior
     internal partial class TextFieldWithValidation : InputFieldWithValidation
     {
 #if !ENABLE_UXML_UI_SERIALIZATION
-        internal new class UxmlFactory : UxmlFactory<TextFieldWithValidation, UxmlTraits> {}
+        internal new class UxmlFactory : UxmlFactory<TextFieldWithValidation, UxmlTraits> { }
 #endif
 
         private TextField m_TextField => Field as TextField;
@@ -136,7 +136,7 @@ namespace Unity.Behavior
             m_TextField.Focus();
         }
     }
-    
+
 #if ENABLE_UXML_UI_SERIALIZATION
     [UxmlElement]
 #endif
@@ -144,9 +144,9 @@ namespace Unity.Behavior
     {
         internal WordTypeSentence Sentence;
         private TextArea m_TextArea => Field as TextArea;
-        
+
 #if !ENABLE_UXML_UI_SERIALIZATION
-        internal new class UxmlFactory : UxmlFactory<StoryFieldWithValidation, UxmlTraits> {}
+        internal new class UxmlFactory : UxmlFactory<StoryFieldWithValidation, UxmlTraits> { }
 #endif
 
         public StoryFieldWithValidation()

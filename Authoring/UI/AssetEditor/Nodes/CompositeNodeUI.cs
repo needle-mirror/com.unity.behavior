@@ -16,7 +16,7 @@ namespace Unity.Behavior
             }
 
             NodeInfo nodeInfo = NodeRegistry.GetInfoFromTypeID(behaviorGraphNodeModel.NodeTypeID);
-            InitFromNodeInfo(nodeInfo);            
+            InitFromNodeInfo(nodeInfo);
         }
     }
 }

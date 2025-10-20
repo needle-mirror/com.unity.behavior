@@ -6,7 +6,7 @@ namespace Unity.Behavior
     /// <summary>
     /// Executes all branches at the same time, stopping if one fails or succeeds.
     /// </summary>
-    [Serializable, GeneratePropertyBag]  
+    [Serializable, GeneratePropertyBag]
     [NodeDescription(
         name: "Run In Parallel Until Any Completes",
         category: "Flow/Parallel Execution",
@@ -45,11 +45,11 @@ namespace Unity.Behavior
                     return childStatus;
                 }
             }
-            
+
             return Status.Waiting;
         }
     }
-    
+
     /// <summary>
     /// Executes all branches at the same time, stopping if one succeeds.
     /// </summary>
@@ -105,10 +105,10 @@ namespace Unity.Behavior
             return failCount == Children.Count ? Status.Failure : Status.Waiting;
         }
     }
-    
+
     // Note: ParallelAllSuccess is actually ParallelAnyFailed but we can't rename it without doing a major bump or
     // forcing the user to rebuild their runtime graphs.
-    
+
     /// <summary>
     /// Executes all branches at the same time, stopping if one fails.
     /// </summary>

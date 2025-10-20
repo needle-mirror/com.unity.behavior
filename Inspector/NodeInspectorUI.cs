@@ -1,6 +1,6 @@
 using UnityEngine.UIElements;
 
-namespace Unity.Behavior.GraphFramework 
+namespace Unity.Behavior.GraphFramework
 {
     internal class NodeInspectorUI : VisualElement
     {
@@ -11,7 +11,7 @@ namespace Unity.Behavior.GraphFramework
 
             AddToClassList("NodeInspectorUI");
         }
-        
+
         public virtual void Refresh()
         {
 

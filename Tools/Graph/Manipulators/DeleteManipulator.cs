@@ -31,11 +31,11 @@ namespace Unity.Behavior.GraphFramework
                     if (element is Edge edge && edge.IsDeletable)
                     {
                         edgesToDelete.Add(new Tuple<PortModel, PortModel>(edge.Start.PortModel, edge.End.PortModel));
-                    } 
+                    }
                     else if (element is NodeUI nodeUI && nodeUI.IsDeletable)
                     {
                         nodesToDelete.Add(nodeUI.Model);
-                    } 
+                    }
                     else
                     {
                         notDeleted.Add(element);
@@ -47,7 +47,7 @@ namespace Unity.Behavior.GraphFramework
                 {
                     return;
                 }
-                Target.Dispatcher.Dispatch(new DeleteNodesAndEdgesCommand(edgesToDelete, nodesToDelete, markUndo:true));
+                Target.Dispatcher.Dispatch(new DeleteNodesAndEdgesCommand(edgesToDelete, nodesToDelete, markUndo: true));
             }
         }
     }

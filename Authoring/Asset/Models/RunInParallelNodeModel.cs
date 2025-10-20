@@ -17,7 +17,7 @@ namespace Unity.Behavior
             Default,
             UntilAnyComplete,
             UntilAnySucceed,
-            UntilAnyFail            
+            UntilAnyFail
         }
         [SerializeField]
         private ParallelMode m_Mode;
@@ -29,7 +29,7 @@ namespace Unity.Behavior
             {
                 return;
             }
-            
+
             if (nodeInfo.Type == typeof(ParallelAllComposite)) Mode = ParallelMode.Default;
             else if (nodeInfo.Type == typeof(ParallelAnySuccess)) Mode = ParallelMode.UntilAnySucceed;
             else if (nodeInfo.Type == typeof(ParallelAllSuccess)) Mode = ParallelMode.UntilAnyFail;
@@ -47,32 +47,42 @@ namespace Unity.Behavior
             UpdateNodeType();
         }
 
+        // Ensures the node model type is up to date. If not, dirty asset as runtime graph needs to rebuild.
         private void UpdateNodeType()
         {
+            Type expectedType = null;
             switch (Mode)
             {
                 case ParallelMode.Default:
-                    NodeType = typeof(ParallelAllComposite);
+                    expectedType = typeof(ParallelAllComposite);
                     break;
 
                 case ParallelMode.UntilAnySucceed:
-                    NodeType = typeof(ParallelAnySuccess);
+                    expectedType = typeof(ParallelAnySuccess);
                     break;
 
                 case ParallelMode.UntilAnyFail:
-                    NodeType = typeof(ParallelAllSuccess);
+                    expectedType = typeof(ParallelAllSuccess);
                     break;
 
                 case ParallelMode.UntilAnyComplete:
-                    NodeType = typeof(ParallelAnyComposite);
+                    expectedType = typeof(ParallelAnyComposite);
                     break;
             }
-            Type type = NodeType;
-            NodeDescriptionAttribute attribute = type.GetCustomAttribute<NodeDescriptionAttribute>();
+
+            if (NodeType != null && expectedType == NodeType.Type)
+            {
+                return;
+            }
+
+            NodeType = expectedType;
+            NodeDescriptionAttribute attribute = expectedType.GetCustomAttribute<NodeDescriptionAttribute>();
             if (attribute != null)
             {
                 NodeTypeID = attribute.GUID;
             }
+
+            Asset.SetAssetDirty(true);
         }
     }
 }

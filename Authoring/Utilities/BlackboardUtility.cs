@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Unity.Behavior
@@ -25,7 +25,7 @@ namespace Unity.Behavior
                 {
                     return true;
                 }
-                
+
                 // Queue subgraphs for checking
                 foreach (var subgraphNode in subgraph.Nodes.OfType<SubgraphNodeModel>())
                 {

@@ -111,6 +111,10 @@ You can find all sequencing nodes in the **Flow** category of the node menu. Oth
 
   Another example of a sequencing node is **Sequence**, which runs each child in sequence. It returns failure when any of the children fails and returns success when every child returns a successful status.
 
+You can stack action nodes vertically to create an implicit sequence. The nodes run from top to bottom, and the flow stops if any node fails. This stack is only a visual shortcut in the editor. At runtime, it automatically converts into a regular Sequence node. Make sure you connect the stack to the graph’s logic flow; otherwise, the flow won't run.
+
+  ![Sequence stack of actions: speak, choose target, speak, and move to target](Images/sequence-stack.png)
+
 ### Join node
 
 Join nodes merge the branches so they're run together. Join nodes can have multiple parent branches but only one child branch.

@@ -56,165 +56,165 @@ namespace Unity.Behavior.Serialization.Json
                 switch (m_PartialTokenType)
                 {
                     case JsonType.String:
-                    {
-                        var result = ReadString();
-                        if (result != k_ResultSuccess)
                         {
-                            m_PartialTokenType = JsonType.String;
-                            m_PartialTokenState = m_PartialTokenState + m_CharBufferPosition;
-                            Break(result == k_ResultEndOfStream ? JsonType.EOF : JsonType.Undefined);
-                            return;
-                        }
+                            var result = ReadString();
+                            if (result != k_ResultSuccess)
+                            {
+                                m_PartialTokenType = JsonType.String;
+                                m_PartialTokenState = m_PartialTokenState + m_CharBufferPosition;
+                                Break(result == k_ResultEndOfStream ? JsonType.EOF : JsonType.Undefined);
+                                return;
+                            }
 
-                        m_PartialTokenType = JsonType.Undefined;
-                        m_PartialTokenState = 0;
-                        m_CharBufferPosition++;
-                    }
+                            m_PartialTokenType = JsonType.Undefined;
+                            m_PartialTokenState = 0;
+                            m_CharBufferPosition++;
+                        }
                         break;
 
                     case JsonType.Number:
-                    {
-                        var state = m_PartialTokenState;
-                        var result = ReadNumber(ref state);
-
-                        if (result != k_ResultSuccess)
                         {
-                            m_PartialTokenType = JsonType.Number;
-                            m_PartialTokenState = state;
-                            Break(result == k_ResultEndOfStream ? JsonType.EOF : JsonType.Undefined);
-                            return;
-                        }
+                            var state = m_PartialTokenState;
+                            var result = ReadNumber(ref state);
 
-                        m_PartialTokenType = JsonType.Undefined;
-                        m_PartialTokenState = 0;
-                    }
+                            if (result != k_ResultSuccess)
+                            {
+                                m_PartialTokenType = JsonType.Number;
+                                m_PartialTokenState = state;
+                                Break(result == k_ResultEndOfStream ? JsonType.EOF : JsonType.Undefined);
+                                return;
+                            }
+
+                            m_PartialTokenType = JsonType.Undefined;
+                            m_PartialTokenState = 0;
+                        }
                         break;
 
                     case JsonType.True:
-                    {
-                        var result = ReadTrue(m_PartialTokenState);
-                        if (result != k_ResultSuccess)
                         {
-                            m_PartialTokenType = JsonType.True;
-                            m_PartialTokenState += m_CharBufferPosition;
-                            Break(result == k_ResultEndOfStream ? JsonType.EOF : JsonType.Undefined);
-                            return;
-                        }
+                            var result = ReadTrue(m_PartialTokenState);
+                            if (result != k_ResultSuccess)
+                            {
+                                m_PartialTokenType = JsonType.True;
+                                m_PartialTokenState += m_CharBufferPosition;
+                                Break(result == k_ResultEndOfStream ? JsonType.EOF : JsonType.Undefined);
+                                return;
+                            }
 
-                        m_PartialTokenType = JsonType.Undefined;
-                        m_PartialTokenState = 0;
-                    }
+                            m_PartialTokenType = JsonType.Undefined;
+                            m_PartialTokenState = 0;
+                        }
                         break;
 
                     case JsonType.False:
-                    {
-                        var result = ReadFalse(m_PartialTokenState);
-                        if (result != k_ResultSuccess)
                         {
-                            m_PartialTokenType = JsonType.False;
-                            m_PartialTokenState += m_CharBufferPosition;
-                            Break(result == k_ResultEndOfStream ? JsonType.EOF : JsonType.Undefined);
-                            return;
+                            var result = ReadFalse(m_PartialTokenState);
+                            if (result != k_ResultSuccess)
+                            {
+                                m_PartialTokenType = JsonType.False;
+                                m_PartialTokenState += m_CharBufferPosition;
+                                Break(result == k_ResultEndOfStream ? JsonType.EOF : JsonType.Undefined);
+                                return;
+                            }
+
+
+                            m_PartialTokenType = JsonType.Undefined;
+                            m_PartialTokenState = 0;
                         }
-
-
-                        m_PartialTokenType = JsonType.Undefined;
-                        m_PartialTokenState = 0;
-                    }
                         break;
-                    
+
                     case JsonType.NaN | JsonType.Null:
-                    {
-                        // First try reading the value as `null`
-                        var start = m_CharBufferPosition;
-                        var result = ReadNull(m_PartialTokenState);
-
-                        if (result == k_ResultSuccess)
                         {
-                            m_PartialTokenType = JsonType.Undefined;
-                            m_PartialTokenState = 0;
-                            break;
-                        }
+                            // First try reading the value as `null`
+                            var start = m_CharBufferPosition;
+                            var result = ReadNull(m_PartialTokenState);
 
-                        if (result == k_ResultEndOfStream)
-                        {
-                            // Otherwise we know it can only be `null`
-                            m_PartialTokenState += m_CharBufferPosition;
-                            m_PartialTokenType = JsonType.Null;
-                            Break(JsonType.EOF);
-                            return;
-                        }
+                            if (result == k_ResultSuccess)
+                            {
+                                m_PartialTokenType = JsonType.Undefined;
+                                m_PartialTokenState = 0;
+                                break;
+                            }
 
-                        // The value can not be `null` at this point.
-                        // Check for `nan`
-                        m_CharBufferPosition = start;
-                        result = ReadNaN(m_PartialTokenState);
-                            
-                        if (result == k_ResultSuccess)
-                        {
-                            m_PartialTokenType = JsonType.Undefined;
-                            m_PartialTokenState = 0;
-                            break;
-                        }
-                        
-                        if (result == k_ResultEndOfStream)
-                        {
-                            m_PartialTokenState += m_CharBufferPosition;
-                            m_PartialTokenType = JsonType.NaN;
-                            Break(JsonType.EOF);
-                            return;
-                        }
+                            if (result == k_ResultEndOfStream)
+                            {
+                                // Otherwise we know it can only be `null`
+                                m_PartialTokenState += m_CharBufferPosition;
+                                m_PartialTokenType = JsonType.Null;
+                                Break(JsonType.EOF);
+                                return;
+                            }
 
-                        Break(JsonType.Undefined);
-                    }
+                            // The value can not be `null` at this point.
+                            // Check for `nan`
+                            m_CharBufferPosition = start;
+                            result = ReadNaN(m_PartialTokenState);
+
+                            if (result == k_ResultSuccess)
+                            {
+                                m_PartialTokenType = JsonType.Undefined;
+                                m_PartialTokenState = 0;
+                                break;
+                            }
+
+                            if (result == k_ResultEndOfStream)
+                            {
+                                m_PartialTokenState += m_CharBufferPosition;
+                                m_PartialTokenType = JsonType.NaN;
+                                Break(JsonType.EOF);
+                                return;
+                            }
+
+                            Break(JsonType.Undefined);
+                        }
                         break;
 
                     case JsonType.Null:
-                    {
-                        var result = ReadNull(m_PartialTokenState);
-                        if (result != k_ResultSuccess)
                         {
-                            m_PartialTokenType = JsonType.Null;
-                            m_PartialTokenState += m_CharBufferPosition;
-                            Break(result == k_ResultEndOfStream ? JsonType.EOF : JsonType.Undefined);
-                            return;
-                        }
+                            var result = ReadNull(m_PartialTokenState);
+                            if (result != k_ResultSuccess)
+                            {
+                                m_PartialTokenType = JsonType.Null;
+                                m_PartialTokenState += m_CharBufferPosition;
+                                Break(result == k_ResultEndOfStream ? JsonType.EOF : JsonType.Undefined);
+                                return;
+                            }
 
-                        m_PartialTokenType = JsonType.Undefined;
-                        m_PartialTokenState = 0;
-                    }
+                            m_PartialTokenType = JsonType.Undefined;
+                            m_PartialTokenState = 0;
+                        }
                         break;
-                    
+
                     case JsonType.NaN:
-                    {
-                        var result = ReadNaN(m_PartialTokenState);
-                        if (result != k_ResultSuccess)
                         {
-                            m_PartialTokenType = JsonType.NaN;
-                            m_PartialTokenState += m_CharBufferPosition;
-                            Break(result == k_ResultEndOfStream ? JsonType.EOF : JsonType.Undefined);
-                            return;
-                        }
+                            var result = ReadNaN(m_PartialTokenState);
+                            if (result != k_ResultSuccess)
+                            {
+                                m_PartialTokenType = JsonType.NaN;
+                                m_PartialTokenState += m_CharBufferPosition;
+                                Break(result == k_ResultEndOfStream ? JsonType.EOF : JsonType.Undefined);
+                                return;
+                            }
 
-                        m_PartialTokenType = JsonType.Undefined;
-                        m_PartialTokenState = 0;
-                    }
+                            m_PartialTokenType = JsonType.Undefined;
+                            m_PartialTokenState = 0;
+                        }
                         break;
-                    
-                    case JsonType.Infinity:
-                    {
-                        var result = ReadInfinity(m_PartialTokenState);
-                        if (result != k_ResultSuccess)
-                        {
-                            m_PartialTokenType = JsonType.Infinity;
-                            m_PartialTokenState += m_CharBufferPosition;
-                            Break(result == k_ResultEndOfStream ? JsonType.EOF : JsonType.Undefined);
-                            return;
-                        }
 
-                        m_PartialTokenType = JsonType.Undefined;
-                        m_PartialTokenState = 0;
-                    }
+                    case JsonType.Infinity:
+                        {
+                            var result = ReadInfinity(m_PartialTokenState);
+                            if (result != k_ResultSuccess)
+                            {
+                                m_PartialTokenType = JsonType.Infinity;
+                                m_PartialTokenState += m_CharBufferPosition;
+                                Break(result == k_ResultEndOfStream ? JsonType.EOF : JsonType.Undefined);
+                                return;
+                            }
+
+                            m_PartialTokenType = JsonType.Undefined;
+                            m_PartialTokenState = 0;
+                        }
                         break;
                 }
 
@@ -225,89 +225,89 @@ namespace Unity.Behavior.Serialization.Json
                     switch (c)
                     {
                         case '{':
-                        {
-                            if (!IsExpected(JsonType.BeginObject))
                             {
-                                Break(JsonType.BeginObject);
-                                return;
-                            }
+                                if (!IsExpected(JsonType.BeginObject))
+                                {
+                                    Break(JsonType.BeginObject);
+                                    return;
+                                }
 
-                            m_Stack.Push(JsonType.BeginObject);
-                            m_Expected = JsonType.String | JsonType.EndObject;
-                        }
+                                m_Stack.Push(JsonType.BeginObject);
+                                m_Expected = JsonType.String | JsonType.EndObject;
+                            }
                             break;
 
                         case '[':
-                        {
-                            if (!IsExpected(JsonType.BeginArray))
                             {
-                                Break(JsonType.BeginArray);
-                                return;
-                            }
+                                if (!IsExpected(JsonType.BeginArray))
+                                {
+                                    Break(JsonType.BeginArray);
+                                    return;
+                                }
 
-                            m_Stack.Push(JsonType.BeginArray);
-                            m_Expected = JsonType.Value | JsonType.EndArray;
-                        }
+                                m_Stack.Push(JsonType.BeginArray);
+                                m_Expected = JsonType.Value | JsonType.EndArray;
+                            }
                             break;
 
                         case '}':
-                        {
-                            if (!IsExpected(JsonType.EndObject))
                             {
-                                Break(JsonType.EndObject);
-                                return;
-                            }
+                                if (!IsExpected(JsonType.EndObject))
+                                {
+                                    Break(JsonType.EndObject);
+                                    return;
+                                }
 
-                            m_Stack.Pop();
-
-                            if (m_Stack.Peek() == JsonType.String)
-                            {
                                 m_Stack.Pop();
-                            }
 
-                            switch (m_Stack.Peek())
-                            {
-                                case JsonType.BeginObject:
-                                    m_Expected = JsonType.ValueSeparator | JsonType.EndObject;
-                                    break;
-                                case JsonType.BeginArray:
-                                    m_Expected = JsonType.ValueSeparator | JsonType.EndArray;
-                                    break;
-                                default:
-                                    m_Expected = JsonType.EOF;
-                                    break;
+                                if (m_Stack.Peek() == JsonType.String)
+                                {
+                                    m_Stack.Pop();
+                                }
+
+                                switch (m_Stack.Peek())
+                                {
+                                    case JsonType.BeginObject:
+                                        m_Expected = JsonType.ValueSeparator | JsonType.EndObject;
+                                        break;
+                                    case JsonType.BeginArray:
+                                        m_Expected = JsonType.ValueSeparator | JsonType.EndArray;
+                                        break;
+                                    default:
+                                        m_Expected = JsonType.EOF;
+                                        break;
+                                }
                             }
-                        }
                             break;
 
                         case ']':
-                        {
-                            if (!IsExpected(JsonType.EndArray))
                             {
-                                Break(JsonType.EndArray);
-                                return;
-                            }
+                                if (!IsExpected(JsonType.EndArray))
+                                {
+                                    Break(JsonType.EndArray);
+                                    return;
+                                }
 
-                            m_Stack.Pop();
-
-                            if (m_Stack.Peek() == JsonType.String)
-                            {
                                 m_Stack.Pop();
-                            }
 
-                            switch (m_Stack.Peek())
-                            {
-                                case JsonType.BeginObject:
-                                    m_Expected = JsonType.ValueSeparator | JsonType.EndObject;
-                                    break;
-                                case JsonType.BeginArray:
-                                    m_Expected = JsonType.ValueSeparator | JsonType.EndArray;
-                                    break;
-                                default:
-                                    m_Expected = JsonType.EOF;
-                                    break;
+                                if (m_Stack.Peek() == JsonType.String)
+                                {
+                                    m_Stack.Pop();
+                                }
+
+                                switch (m_Stack.Peek())
+                                {
+                                    case JsonType.BeginObject:
+                                        m_Expected = JsonType.ValueSeparator | JsonType.EndObject;
+                                        break;
+                                    case JsonType.BeginArray:
+                                        m_Expected = JsonType.ValueSeparator | JsonType.EndArray;
+                                        break;
+                                    default:
+                                        m_Expected = JsonType.EOF;
+                                        break;
+                                }
                             }
-                        }
                             break;
 
                         case ' ':
@@ -316,81 +316,81 @@ namespace Unity.Behavior.Serialization.Json
                             break;
 
                         case '\n':
-                        {
-                            m_LineCount++;
-                            m_LineStart = m_CharBufferPosition;
-                        }
+                            {
+                                m_LineCount++;
+                                m_LineStart = m_CharBufferPosition;
+                            }
                             break;
 
                         case ':':
-                        {
-                            if (!IsExpected(JsonType.MemberSeparator))
                             {
-                                Break(JsonType.MemberSeparator);
-                                return;
-                            }
+                                if (!IsExpected(JsonType.MemberSeparator))
+                                {
+                                    Break(JsonType.MemberSeparator);
+                                    return;
+                                }
 
-                            m_Expected = JsonType.Value;
-                        }
+                                m_Expected = JsonType.Value;
+                            }
                             break;
 
                         case ',':
-                        {
-                            if (!IsExpected(JsonType.ValueSeparator))
                             {
-                                Break(JsonType.ValueSeparator);
-                                return;
-                            }
+                                if (!IsExpected(JsonType.ValueSeparator))
+                                {
+                                    Break(JsonType.ValueSeparator);
+                                    return;
+                                }
 
-                            switch (m_Stack.Peek())
-                            {
-                                case JsonType.BeginObject:
-                                    m_Expected = JsonType.String;
-                                    break;
-                                case JsonType.BeginArray:
-                                    m_Expected = JsonType.Value;
-                                    break;
-                                default:
-                                    m_Expected = JsonType.Undefined;
-                                    break;
+                                switch (m_Stack.Peek())
+                                {
+                                    case JsonType.BeginObject:
+                                        m_Expected = JsonType.String;
+                                        break;
+                                    case JsonType.BeginArray:
+                                        m_Expected = JsonType.Value;
+                                        break;
+                                    default:
+                                        m_Expected = JsonType.Undefined;
+                                        break;
+                                }
                             }
-                        }
                             break;
 
                         case '"':
-                        {
-                            if (!IsExpected(JsonType.String))
                             {
-                                Break(JsonType.String);
-                                return;
+                                if (!IsExpected(JsonType.String))
+                                {
+                                    Break(JsonType.String);
+                                    return;
+                                }
+
+                                var start = m_CharBufferPosition;
+
+                                m_CharBufferPosition++;
+
+                                var result = ReadString();
+
+                                if (result != k_ResultSuccess)
+                                {
+                                    m_PartialTokenType = JsonType.String;
+                                    m_PartialTokenState = m_CharBufferPosition - start;
+                                    Break(result == k_ResultEndOfStream ? JsonType.EOF : JsonType.Undefined);
+                                    return;
+                                }
                             }
-
-                            var start = m_CharBufferPosition;
-
-                            m_CharBufferPosition++;
-
-                            var result = ReadString();
-
-                            if (result != k_ResultSuccess)
-                            {
-                                m_PartialTokenType = JsonType.String;
-                                m_PartialTokenState = m_CharBufferPosition - start;
-                                Break(result == k_ResultEndOfStream ? JsonType.EOF : JsonType.Undefined);
-                                return;
-                            }
-                        }
                             break;
 
                         case '-':
-                        {
-                            if (!IsExpected(JsonType.Negative))
                             {
-                                Break(JsonType.Negative);
-                                return;
+                                if (!IsExpected(JsonType.Negative))
+                                {
+                                    Break(JsonType.Negative);
+                                    return;
+                                }
+
+                                m_Expected = JsonType.Number | JsonType.Infinity;
                             }
-                            
-                            m_Expected = JsonType.Number | JsonType.Infinity;
-                        }
                             break;
 
                         case '0':
@@ -403,168 +403,168 @@ namespace Unity.Behavior.Serialization.Json
                         case '7':
                         case '8':
                         case '9':
-                        {
-                            if (!IsExpected(JsonType.Number))
                             {
-                                Break(JsonType.Number);
-                                return;
+                                if (!IsExpected(JsonType.Number))
+                                {
+                                    Break(JsonType.Number);
+                                    return;
+                                }
+
+                                var state = 0;
+                                var result = ReadNumber(ref state);
+
+                                if (result != k_ResultSuccess)
+                                {
+                                    m_PartialTokenType = JsonType.Number;
+                                    m_PartialTokenState = state;
+                                    Break(result == k_ResultEndOfStream ? JsonType.EOF : JsonType.Undefined);
+                                    return;
+                                }
+
+                                m_CharBufferPosition--;
                             }
-
-                            var state = 0;
-                            var result = ReadNumber(ref state);
-
-                            if (result != k_ResultSuccess)
-                            {
-                                m_PartialTokenType = JsonType.Number;
-                                m_PartialTokenState = state;
-                                Break(result == k_ResultEndOfStream ? JsonType.EOF : JsonType.Undefined);
-                                return;
-                            }
-
-                            m_CharBufferPosition--;
-                        }
                             break;
 
                         case 'T':
                         case 't':
-                        {
-                            if (!IsExpected(JsonType.True))
                             {
-                                Break(JsonType.True);
-                                return;
+                                if (!IsExpected(JsonType.True))
+                                {
+                                    Break(JsonType.True);
+                                    return;
+                                }
+
+                                var start = m_CharBufferPosition;
+                                var result = ReadTrue(0);
+
+                                if (result != k_ResultSuccess)
+                                {
+                                    m_PartialTokenType = JsonType.True;
+                                    m_PartialTokenState = m_CharBufferPosition - start;
+                                    Break(result == k_ResultEndOfStream ? JsonType.EOF : JsonType.Undefined);
+                                    return;
+                                }
+
+                                m_CharBufferPosition--;
                             }
-
-                            var start = m_CharBufferPosition;
-                            var result = ReadTrue(0);
-
-                            if (result != k_ResultSuccess)
-                            {
-                                m_PartialTokenType = JsonType.True;
-                                m_PartialTokenState = m_CharBufferPosition - start;
-                                Break(result == k_ResultEndOfStream ? JsonType.EOF : JsonType.Undefined);
-                                return;
-                            }
-
-                            m_CharBufferPosition--;
-                        }
                             break;
 
                         case 'F':
                         case 'f':
-                        {
-                            if (!IsExpected(JsonType.False))
                             {
-                                Break(JsonType.False);
-                                return;
+                                if (!IsExpected(JsonType.False))
+                                {
+                                    Break(JsonType.False);
+                                    return;
+                                }
+
+                                var start = m_CharBufferPosition;
+                                var result = ReadFalse(0);
+
+                                if (result != k_ResultSuccess)
+                                {
+                                    m_PartialTokenType = JsonType.False;
+                                    m_PartialTokenState = m_CharBufferPosition - start;
+                                    Break(result == k_ResultEndOfStream ? JsonType.EOF : JsonType.Undefined);
+                                    return;
+                                }
+
+                                m_CharBufferPosition--;
                             }
-
-                            var start = m_CharBufferPosition;
-                            var result = ReadFalse(0);
-
-                            if (result != k_ResultSuccess)
-                            {
-                                m_PartialTokenType = JsonType.False;
-                                m_PartialTokenState = m_CharBufferPosition - start;
-                                Break(result == k_ResultEndOfStream ? JsonType.EOF : JsonType.Undefined);
-                                return;
-                            }
-
-                            m_CharBufferPosition--;
-                        }
                             break;
 
                         case 'N':
                         case 'n':
-                        {
-                            if (!IsExpected(JsonType.Null) && !IsExpected(JsonType.NaN))
                             {
-                                Break(JsonType.Null | JsonType.NaN);
-                                return;
-                            }
-                            
-                            // First try reading the value as `null`
-                            var start = m_CharBufferPosition;
-                            var result = ReadNull(0);
-
-                            if (result == k_ResultSuccess)
-                            {
-                                m_CharBufferPosition--;
-                                break;
-                            }
-
-                            if (result == k_ResultEndOfStream)
-                            {
-                                if (m_CharBufferPosition - start == 1)
+                                if (!IsExpected(JsonType.Null) && !IsExpected(JsonType.NaN))
                                 {
-                                    // Very special case. We only looked at the first character "n" then hit EndOfStream
-                                    // which means it could still be a `NaN` or `Null`
-                                    m_PartialTokenState = m_CharBufferPosition - start;
-                                    m_PartialTokenType = JsonType.Null | JsonType.NaN;
-                                    Break(JsonType.EOF);
+                                    Break(JsonType.Null | JsonType.NaN);
+                                    return;
                                 }
-                                else
+
+                                // First try reading the value as `null`
+                                var start = m_CharBufferPosition;
+                                var result = ReadNull(0);
+
+                                if (result == k_ResultSuccess)
                                 {
-                                    // Otherwise we know it can only be `null`
-                                    m_PartialTokenState = m_CharBufferPosition - start;
-                                    m_PartialTokenType = JsonType.Null;
-                                    Break(JsonType.EOF);
+                                    m_CharBufferPosition--;
+                                    break;
                                 }
-                                
-                                return;
-                            }
 
-                            // The value can not be `null` at this point.
-                            // Check for `nan`
-                            m_CharBufferPosition = start;
-                            result = ReadNaN(0);
-                            
-                            if (result == k_ResultSuccess)
-                            {
-                                m_CharBufferPosition--;
-                                break;
-                            }
-                            
-                            if (result == k_ResultEndOfStream)
-                            {
-                                m_PartialTokenState = m_CharBufferPosition - start;
-                                m_PartialTokenType = JsonType.NaN;
-                                Break(JsonType.EOF);
-                                return;
-                            }
+                                if (result == k_ResultEndOfStream)
+                                {
+                                    if (m_CharBufferPosition - start == 1)
+                                    {
+                                        // Very special case. We only looked at the first character "n" then hit EndOfStream
+                                        // which means it could still be a `NaN` or `Null`
+                                        m_PartialTokenState = m_CharBufferPosition - start;
+                                        m_PartialTokenType = JsonType.Null | JsonType.NaN;
+                                        Break(JsonType.EOF);
+                                    }
+                                    else
+                                    {
+                                        // Otherwise we know it can only be `null`
+                                        m_PartialTokenState = m_CharBufferPosition - start;
+                                        m_PartialTokenType = JsonType.Null;
+                                        Break(JsonType.EOF);
+                                    }
 
-                            Break(JsonType.Undefined);
-                        }
+                                    return;
+                                }
+
+                                // The value can not be `null` at this point.
+                                // Check for `nan`
+                                m_CharBufferPosition = start;
+                                result = ReadNaN(0);
+
+                                if (result == k_ResultSuccess)
+                                {
+                                    m_CharBufferPosition--;
+                                    break;
+                                }
+
+                                if (result == k_ResultEndOfStream)
+                                {
+                                    m_PartialTokenState = m_CharBufferPosition - start;
+                                    m_PartialTokenType = JsonType.NaN;
+                                    Break(JsonType.EOF);
+                                    return;
+                                }
+
+                                Break(JsonType.Undefined);
+                            }
                             break;
 
                         case 'I':
                         case 'i':
-                        {
-                            if (!IsExpected(JsonType.Infinity))
                             {
-                                Break(JsonType.Infinity);
-                                return;
+                                if (!IsExpected(JsonType.Infinity))
+                                {
+                                    Break(JsonType.Infinity);
+                                    return;
+                                }
+
+                                var start = m_CharBufferPosition;
+                                var result = ReadInfinity(0);
+
+                                if (result != k_ResultSuccess)
+                                {
+                                    m_PartialTokenType = JsonType.Infinity;
+                                    m_PartialTokenState = m_CharBufferPosition - start;
+                                    Break(result == k_ResultEndOfStream ? JsonType.EOF : JsonType.Undefined);
+                                    return;
+                                }
+
+                                m_CharBufferPosition--;
                             }
-
-                            var start = m_CharBufferPosition;
-                            var result = ReadInfinity(0);
-
-                            if (result != k_ResultSuccess)
-                            {
-                                m_PartialTokenType = JsonType.Infinity;
-                                m_PartialTokenState = m_CharBufferPosition - start;
-                                Break(result == k_ResultEndOfStream ? JsonType.EOF : JsonType.Undefined);
-                                return;
-                            }
-
-                            m_CharBufferPosition--;
-                        }
                             break;
 
                         default:
-                        {
-                            Break(JsonType.Undefined);
-                            return;
-                        }
+                            {
+                                Break(JsonType.Undefined);
+                                return;
+                            }
                     }
 
                     m_CharBufferPosition++;
@@ -589,46 +589,46 @@ namespace Unity.Behavior.Serialization.Json
                     else if (c == '"' && !m_NextStringCharIsEscaped)
                     {
                         m_NextStringCharIsEscaped = false;
-                        
+
                         switch (m_Stack.Peek())
                         {
                             case JsonType.BeginObject:
-                            {
-                                m_Stack.Push(JsonType.String);
-                                m_Expected = JsonType.MemberSeparator;
-                            }
+                                {
+                                    m_Stack.Push(JsonType.String);
+                                    m_Expected = JsonType.MemberSeparator;
+                                }
                                 break;
 
                             case JsonType.BeginArray:
-                            {
-                                m_Expected = JsonType.ValueSeparator | JsonType.EndArray;
-                            }
+                                {
+                                    m_Expected = JsonType.ValueSeparator | JsonType.EndArray;
+                                }
                                 break;
 
                             case JsonType.String:
-                            {
-                                m_Stack.Pop();
-
-                                switch (m_Stack.Peek())
                                 {
-                                    case JsonType.BeginObject:
-                                        m_Expected = JsonType.ValueSeparator | JsonType.EndObject;
-                                        break;
-                                    case JsonType.BeginArray:
-                                        m_Expected = JsonType.ValueSeparator | JsonType.EndArray;
-                                        break;
-                                    default:
-                                        m_Expected = JsonType.Undefined;
-                                        break;
+                                    m_Stack.Pop();
+
+                                    switch (m_Stack.Peek())
+                                    {
+                                        case JsonType.BeginObject:
+                                            m_Expected = JsonType.ValueSeparator | JsonType.EndObject;
+                                            break;
+                                        case JsonType.BeginArray:
+                                            m_Expected = JsonType.ValueSeparator | JsonType.EndArray;
+                                            break;
+                                        default:
+                                            m_Expected = JsonType.Undefined;
+                                            break;
+                                    }
                                 }
-                            }
                                 break;
 
                             case JsonType.Undefined:
-                            {
-                                // Special case of reading a string at the root. The assumption is this is a single string value and can not be followed by anything.
-                                m_Expected = JsonType.EOF;
-                            }
+                                {
+                                    // Special case of reading a string at the root. The assumption is this is a single string value and can not be followed by anything.
+                                    m_Expected = JsonType.EOF;
+                                }
                                 break;
                         }
 
@@ -674,56 +674,56 @@ namespace Unity.Behavior.Serialization.Json
                     {
                         case '+':
                         case '-':
-                        {
-                            if (state == kStateEPart)
                             {
-                                break;
-                            }
+                                if (state == kStateEPart)
+                                {
+                                    break;
+                                }
 
-                            if (state != kStateStart)
-                            {
-                                return k_ResultInvalidJson;
-                            }
+                                if (state != kStateStart)
+                                {
+                                    return k_ResultInvalidJson;
+                                }
 
-                            state = kStateIntegerPart;
-                        }
+                                state = kStateIntegerPart;
+                            }
                             break;
 
                         case '.':
-                        {
-                            if (state != kStateIntegerPart)
                             {
-                                return k_ResultInvalidJson;
-                            }
+                                if (state != kStateIntegerPart)
+                                {
+                                    return k_ResultInvalidJson;
+                                }
 
-                            state = kStateDecimalPart;
-                        }
+                                state = kStateDecimalPart;
+                            }
                             break;
 
                         case 'e':
                         case 'E':
-                        {
-                            if (m_PrevChar == '-' || m_PrevChar == '.' || state != kStateDecimalPart && state != kStateIntegerPart)
                             {
-                                return k_ResultInvalidJson;
-                            }
+                                if (m_PrevChar == '-' || m_PrevChar == '.' || state != kStateDecimalPart && state != kStateIntegerPart)
+                                {
+                                    return k_ResultInvalidJson;
+                                }
 
-                            state = kStateEPart;
-                        }
+                                state = kStateEPart;
+                            }
                             break;
 
                         default:
-                        {
-                            if (c < '0' || c > '9')
                             {
-                                return k_ResultInvalidJson;
-                            }
+                                if (c < '0' || c > '9')
+                                {
+                                    return k_ResultInvalidJson;
+                                }
 
-                            if (state == kStateStart)
-                            {
-                                state = kStateIntegerPart;
+                                if (state == kStateStart)
+                                {
+                                    state = kStateIntegerPart;
+                                }
                             }
-                        }
                             break;
                     }
 
@@ -764,34 +764,34 @@ namespace Unity.Behavior.Serialization.Json
 
             int ReadTrue(int start)
             {
-                var expected = stackalloc ushort[4] {'t', 'r', 'u', 'e'};
+                var expected = stackalloc ushort[4] { 't', 'r', 'u', 'e' };
                 return ReadPrimitive(expected, start, 4);
             }
 
             int ReadFalse(int start)
             {
-                var expected = stackalloc ushort[5] {'f', 'a', 'l', 's', 'e'};
+                var expected = stackalloc ushort[5] { 'f', 'a', 'l', 's', 'e' };
                 return ReadPrimitive(expected, start, 5);
             }
 
             int ReadNull(int start)
             {
-                var expected = stackalloc ushort[4] {'n', 'u', 'l', 'l'};
+                var expected = stackalloc ushort[4] { 'n', 'u', 'l', 'l' };
                 return ReadPrimitive(expected, start, 4);
             }
 
             int ReadNaN(int start)
             {
-                var expected = stackalloc ushort[3] {'n', 'a', 'n'};
+                var expected = stackalloc ushort[3] { 'n', 'a', 'n' };
                 return ReadPrimitive(expected, start, 3);
             }
-            
+
             int ReadInfinity(int start)
             {
-                var expected = stackalloc ushort[8] {'i', 'n', 'f', 'i', 'n', 'i', 't', 'y'};
+                var expected = stackalloc ushort[8] { 'i', 'n', 'f', 'i', 'n', 'i', 't', 'y' };
                 return ReadPrimitive(expected, start, 8);
             }
-            
+
             int ReadPrimitive(ushort* expected, int start, int length)
             {
                 for (var i = start; i < length && m_CharBufferPosition < CharBufferLength; i++)

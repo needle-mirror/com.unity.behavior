@@ -1,20 +1,21 @@
 using System.Collections.Generic;
+using System.IO;
 using UnityEditor;
 using UnityEngine;
 
 namespace Unity.Behavior
 {
-    internal class BehaviorAssetDeletionProcessor : AssetModificationProcessor
+    internal class BehaviorAssetModificationProcessor : AssetModificationProcessor
     {
         // If an authoring graph or blackboard asset is deleted within Unity, this will close any editor window associated with the asset.
         private static AssetDeleteResult OnWillDeleteAsset(string path, RemoveAssetOptions opt)
         {
-            if (AssetDatabase.GetMainAssetTypeAtPath(path) != typeof(BehaviorAuthoringGraph) 
+            if (AssetDatabase.GetMainAssetTypeAtPath(path) != typeof(BehaviorAuthoringGraph)
                 && AssetDatabase.GetMainAssetTypeAtPath(path) != typeof(BehaviorBlackboardAuthoringAsset))
             {
                 return AssetDeleteResult.DidNotDelete;
             }
-            
+
             // Close any matching Behavior Graph Windows.
             BehaviorAuthoringGraph graph = AssetDatabase.LoadAssetAtPath<BehaviorAuthoringGraph>(path);
             foreach (BehaviorWindow window in Resources.FindObjectsOfTypeAll<BehaviorWindow>())
@@ -34,10 +35,10 @@ namespace Unity.Behavior
                 }
             }
             UpdateBlackboardAssetDependencies(blackboardAuthoring);
-            
+
             // Update any Behavior Graph Windows which have a reference to the deleted Blackboard asset.
             blackboardAuthoring?.InvokeBlackboardDeleted();
-            
+
             // If the asset is a subgraph, we need to update the parent graph.
             if (GatherParentGraphsToRebuild(graph, out List<BehaviorAuthoringGraph> parentGraphs))
             {
@@ -45,6 +46,30 @@ namespace Unity.Behavior
             }
 
             return AssetDeleteResult.DidNotDelete;
+        }
+
+        // If a behavior asset have missing type in managed reference, a move will get rid of the data.
+        // This implemnetation makes sure this doesn't happen and warns user.
+        static AssetMoveResult OnWillMoveAsset(string sourcePath, string destination)
+        {
+            if (AssetDatabase.GetMainAssetTypeAtPath(sourcePath) != typeof(BehaviorAuthoringGraph)
+                && AssetDatabase.GetMainAssetTypeAtPath(sourcePath) != typeof(BehaviorBlackboardAuthoringAsset))
+            {
+                return AssetMoveResult.DidNotMove;
+            }
+
+            var asset = AssetDatabase.LoadAssetAtPath<BehaviorAuthoringGraph>(sourcePath);
+            if (asset != null && asset.ContainsInvalidSerializedReferences())
+            {
+                EditorUtility.DisplayDialog("Cannot Move Asset",
+                    "Moving this asset now might cause permanent data loss.\n\n" +
+                    $"The asset '{Path.GetFileNameWithoutExtension(sourcePath)}' contains missing type references that must " +
+                    $"be resolved before it can be moved or renamed.",
+                    "OK");
+                return AssetMoveResult.FailedMove;
+            }
+
+            return AssetMoveResult.DidNotMove;
         }
 
         private static void UpdateBlackboardAssetDependencies(BehaviorBlackboardAuthoringAsset blackboardAsset)
@@ -62,7 +87,7 @@ namespace Unity.Behavior
                     continue;
                 }
 
-                Debug.LogWarning($"Please review and upate the graph '{authoringGraph.name}' to ensure it functions correctly. " 
+                Debug.LogWarning($"Please review and upate the graph '{authoringGraph.name}' to ensure it functions correctly. "
                     + $"Blackboard asset '{blackboardAsset.name}' has been deleted and all associated references has be removed.", authoringGraph);
 
                 bool hasAtleastOneReference = false;
@@ -74,7 +99,7 @@ namespace Unity.Behavior
                         continue;
                     }
                     hasAtleastOneReference |= RemoveBlackboardVariableLinksFromFields(blackboardAsset, behaviorNodeModel.Fields);
-                            
+
                     if (behaviorNodeModel is IConditionalNodeModel conditionalNodeModel)
                     {
                         // Delete variable references from conditions.
@@ -84,7 +109,7 @@ namespace Unity.Behavior
                         }
                     }
                 }
-                
+
                 // We dirty the asset because we did remove the blackboard reference.
                 EditorUtility.SetDirty(authoringGraph);
 
@@ -119,7 +144,7 @@ namespace Unity.Behavior
 
             return hasMatchingField;
         }
-    
+
         private static bool GatherParentGraphsToRebuild(BehaviorAuthoringGraph graph, out List<BehaviorAuthoringGraph> graphsToRebuild)
         {
             graphsToRebuild = null;

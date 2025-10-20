@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Unity.Behavior.GraphFramework;
 using Unity.Behavior.Serialization.Json;
 using UnityEngine;

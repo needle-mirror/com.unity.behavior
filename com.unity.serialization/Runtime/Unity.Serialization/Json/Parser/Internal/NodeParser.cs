@@ -7,10 +7,10 @@ namespace Unity.Behavior.Serialization.Json
     unsafe struct UnsafeNodeParser : IDisposable
     {
         public const int IgnoreParent = -2;
-        
+
         readonly Allocator m_Label;
         readonly UnsafeJsonTokenStream* m_Stream;
-        
+
         public int TokenNextIndex;
         public int TokenParentIndex;
 
@@ -19,7 +19,7 @@ namespace Unity.Behavior.Serialization.Json
         public int NodeNextIndex;
 
         public NodeType NodeType;
-        
+
         int m_TargetNodeCount;
         NodeType m_TargetNodeType;
         int m_TargetParentIndex;
@@ -31,13 +31,13 @@ namespace Unity.Behavior.Serialization.Json
             m_Stream = stream;
             TokenNextIndex = 0;
             TokenParentIndex = -1;
-            
-            Nodes = (int*) UnsafeUtility.Malloc(sizeof(int) * batchSize, 4, m_Label);
+
+            Nodes = (int*)UnsafeUtility.Malloc(sizeof(int) * batchSize, 4, m_Label);
             NodeLength = batchSize;
             NodeNextIndex = 0;
 
             NodeType = NodeType.None;
-            
+
             m_TargetNodeCount = 0;
             m_TargetNodeType = NodeType.None;
             m_TargetParentIndex = -1;
@@ -56,7 +56,7 @@ namespace Unity.Behavior.Serialization.Json
             TokenNextIndex = 0;
             TokenParentIndex = -1;
         }
-        
+
         public void Seek(int index, int parent)
         {
             TokenNextIndex = index;
@@ -92,17 +92,17 @@ namespace Unity.Behavior.Serialization.Json
         public int StepBatch(int count, NodeType type, int parent = IgnoreParent)
         {
             NodeNextIndex = 0;
-            
+
             m_TargetNodeCount = count;
             m_TargetNodeType = type;
             m_TargetParentIndex = parent;
-            
+
             if (NodeLength < m_TargetNodeCount)
             {
                 UnsafeUtility.Free(Nodes, m_Label);
-                
+
                 NodeLength = m_TargetNodeCount;
-                Nodes = (int*) UnsafeUtility.Malloc(sizeof(int) * NodeLength, 4, m_Label);
+                Nodes = (int*)UnsafeUtility.Malloc(sizeof(int) * NodeLength, 4, m_Label);
             }
 
             for (; TokenNextIndex < m_Stream->TokenNextIndex; TokenNextIndex++)
@@ -135,48 +135,48 @@ namespace Unity.Behavior.Serialization.Json
                 {
                     case TokenType.Array:
                     case TokenType.Object:
-                    {
-                        node |= token.Type == TokenType.Array ? NodeType.BeginArray : NodeType.BeginObject;
-                        TokenParentIndex = TokenNextIndex;
-                    }
-                    break;
+                        {
+                            node |= token.Type == TokenType.Array ? NodeType.BeginArray : NodeType.BeginObject;
+                            TokenParentIndex = TokenNextIndex;
+                        }
+                        break;
 
                     case TokenType.Primitive:
                     case TokenType.String:
-                    {
-                        if (token.End != -1)
                         {
-                            node |= token.Type == TokenType.Primitive ? NodeType.Primitive : NodeType.String;
-
-                            while (token.Start == -1)
+                            if (token.End != -1)
                             {
-                                nodeIndex = token.Parent;
-                                token = m_Stream->Tokens[nodeIndex];
-                            }
+                                node |= token.Type == TokenType.Primitive ? NodeType.Primitive : NodeType.String;
 
-                            if (token.Parent == -1 || m_Stream->Tokens[token.Parent].Type == TokenType.Object)
-                            {
-                                node |= NodeType.ObjectKey;
-                                TokenParentIndex = TokenNextIndex;
+                                while (token.Start == -1)
+                                {
+                                    nodeIndex = token.Parent;
+                                    token = m_Stream->Tokens[nodeIndex];
+                                }
+
+                                if (token.Parent == -1 || m_Stream->Tokens[token.Parent].Type == TokenType.Object)
+                                {
+                                    node |= NodeType.ObjectKey;
+                                    TokenParentIndex = TokenNextIndex;
+                                }
                             }
                         }
-                    }
-                    break;
+                        break;
 
                     case TokenType.Comment:
-                    {
-                        if (token.End != -1)
                         {
-                            node |= NodeType.Comment;
-
-                            while (token.Start == -1)
+                            if (token.End != -1)
                             {
-                                nodeIndex = token.Parent;
-                                token = m_Stream->Tokens[nodeIndex];
+                                node |= NodeType.Comment;
+
+                                while (token.Start == -1)
+                                {
+                                    nodeIndex = token.Parent;
+                                    token = m_Stream->Tokens[nodeIndex];
+                                }
                             }
                         }
-                    }
-                    break;
+                        break;
                 }
 
                 if (Evaluate(node, nodeIndex))
@@ -294,15 +294,15 @@ namespace Unity.Behavior.Serialization.Json
             return node;
         }
     }
-    
+
     unsafe struct NodeParser : IDisposable
     {
         public const int IgnoreParent = UnsafeNodeParser.IgnoreParent;
-        
+
         const int k_DefaultBatchSize = 64;
 
         readonly Allocator m_Label;
-        
+
         [NativeDisableUnsafePtrRestriction] UnsafeNodeParser* m_Data;
 
         public int* Nodes => m_Data->Nodes;
@@ -320,9 +320,9 @@ namespace Unity.Behavior.Serialization.Json
         {
             if (batchSize < 1)
                 throw new ArgumentException("batchSize < 1");
-            
+
             m_Label = label;
-            m_Data = (UnsafeNodeParser*) UnsafeUtility.Malloc(sizeof(UnsafeNodeParser), UnsafeUtility.AlignOf<UnsafeNodeParser>(), label);
+            m_Data = (UnsafeNodeParser*)UnsafeUtility.Malloc(sizeof(UnsafeNodeParser), UnsafeUtility.AlignOf<UnsafeNodeParser>(), label);
             *m_Data = new UnsafeNodeParser(stream.GetUnsafePtr(), batchSize, label);
         }
 

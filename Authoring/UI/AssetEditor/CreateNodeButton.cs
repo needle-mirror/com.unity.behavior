@@ -8,7 +8,7 @@ using Unity.Behavior.GraphFramework;
 internal partial class CreateNodeButton : VisualElement
 {
 #if !ENABLE_UXML_UI_SERIALIZATION
-        internal new class UxmlFactory : UxmlFactory<CreateNodeButton, UxmlTraits> {}
+    internal new class UxmlFactory : UxmlFactory<CreateNodeButton, UxmlTraits> { }
 #endif
     public CreateNodeButton()
     {

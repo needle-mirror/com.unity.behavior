@@ -1,4 +1,4 @@
-﻿#if UNITY_EDITOR
+#if UNITY_EDITOR
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
@@ -8,7 +8,7 @@ namespace Unity.Behavior
     sealed class BehaviorSettingsProvider : SettingsProvider
     {
         private List<SettingsProvider> m_SettingsProviders = new List<SettingsProvider>();
-        
+
         public BehaviorSettingsProvider() : base("Project/Behavior", SettingsScope.Project)
         {
             m_SettingsProviders.Add(BehaviorAssetSettingsProvider.CreateCustomSettingsProvider());
@@ -23,7 +23,7 @@ namespace Unity.Behavior
                 GUILayout.Space(10);
             }
         }
-        
+
         [SettingsProvider]
         public static SettingsProvider CreateCustomSettingsProvider() => new BehaviorSettingsProvider();
     }

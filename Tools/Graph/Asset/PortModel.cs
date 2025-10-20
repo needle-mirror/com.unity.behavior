@@ -44,7 +44,7 @@ namespace Unity.Behavior.GraphFramework
         /// Data is recieved into the port.
         /// </summary>
         Input,
-        
+
         /// <summary>
         /// Data is transmistted out of a port.
         /// </summary>
@@ -57,10 +57,10 @@ namespace Unity.Behavior.GraphFramework
         public const string k_InputPortName = "InputPort";
         public const string k_OutputPortName = "OutputPort";
 
-        public static PortModel CreateDefaultInputPortModel() => new (k_InputPortName, PortDataFlowType.Input);
-        public static PortModel CreateDefaultOutputPortModel() => new (k_OutputPortName, PortDataFlowType.Output);
+        public static PortModel CreateDefaultInputPortModel() => new(k_InputPortName, PortDataFlowType.Input);
+        public static PortModel CreateDefaultOutputPortModel() => new(k_OutputPortName, PortDataFlowType.Output);
 
-        public PortModel() {}
+        public PortModel() { }
 
         public PortModel(string name, PortDataFlowType portDataFlowType)
         {
@@ -100,7 +100,7 @@ namespace Unity.Behavior.GraphFramework
         }
 
         [SerializeReference]
-        private List<PortModel> m_Connections = new ();
+        private List<PortModel> m_Connections = new();
         public List<PortModel> Connections
         {
             get => m_Connections;

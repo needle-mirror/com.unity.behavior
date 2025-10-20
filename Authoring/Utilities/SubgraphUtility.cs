@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Unity.Behavior
@@ -8,7 +8,7 @@ namespace Unity.Behavior
         internal static bool ContainsCyclicReferenceTo(this BehaviorAuthoringGraph subgraphAsset, BehaviorAuthoringGraph parentAsset)
         {
             // Null assets can't reference the parent asset.
-            if (!subgraphAsset)
+            if (subgraphAsset == null || parentAsset == null)
             {
                 return false;
             }
@@ -31,8 +31,8 @@ namespace Unity.Behavior
             bool cycleDetected = false;
             HashSet<BehaviorAuthoringGraph> visitedSubgraphs = new() { subgraphAsset };
             List<BehaviorAuthoringGraph> subgraphsToCheck = new() { subgraphAsset };
-            
-            BehaviorGraph runtimeGraphToCheck = BehaviorAuthoringGraph.GetOrCreateGraph(parentAsset);            
+
+            BehaviorGraph runtimeGraphToCheck = BehaviorAuthoringGraph.GetOrCreateGraph(parentAsset);
             while (subgraphsToCheck.Count != 0)
             {
                 var subgraph = subgraphsToCheck[0];
@@ -64,12 +64,6 @@ namespace Unity.Behavior
                 return false;
             }
 
-            // If the parent already have a dependency, early out.
-            if (parentAsset.HasSubgraphDependency(subgraphAsset))
-            {
-                return true;
-            }
-
 #if UNITY_EDITOR
             // If the target asset don't have a runtime asset, we won't find a reference.
             if (!subgraphAsset.HasRuntimeGraph)
@@ -93,7 +87,7 @@ namespace Unity.Behavior
                 // Queue subgraphs for checking
                 foreach (var subgraphNode in workingGraph.Nodes.OfType<SubgraphNodeModel>())
                 {
-                    if (workingGraph != parentAsset && subgraphNode.RuntimeSubgraph && subgraphNode.SubgraphAuthoringAsset 
+                    if (workingGraph != parentAsset && subgraphNode.RuntimeSubgraph && subgraphNode.SubgraphAuthoringAsset
                         && visitedSubgraphs.Add(subgraphNode.SubgraphAuthoringAsset))
                     {
                         graphsToCheck.Enqueue(subgraphNode.SubgraphAuthoringAsset);

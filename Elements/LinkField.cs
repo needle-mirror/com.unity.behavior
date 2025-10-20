@@ -77,11 +77,12 @@ namespace Unity.Behavior.GraphFramework
 
         internal override void SetValue(object value)
         {
-            if (value == null || LinkVariableType.IsAssignableFrom(value.GetType())) {
+            if (value == null || LinkVariableType.IsAssignableFrom(value.GetType()))
+            {
                 this.value = (TValueType)value;
             }
         }
-        
+
         internal override void SetValueWithoutNotify(object value)
         {
             SetValueWithoutNotify((TValueType)value);

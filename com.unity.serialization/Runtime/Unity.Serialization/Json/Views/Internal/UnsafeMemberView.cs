@@ -12,7 +12,7 @@ namespace Unity.Behavior.Serialization.Json.Unsafe
             m_Stream = stream;
             m_TokenIndex = tokenIndex;
         }
-        
+
         /// <summary>
         /// Returns a <see cref="UnsafeValueView"/> over the key of this member.
         /// </summary>
@@ -24,7 +24,7 @@ namespace Unity.Behavior.Serialization.Json.Unsafe
         /// </summary>
         /// <returns>A view over the value.</returns>
         public UnsafeValueView Value() => new UnsafeValueView(m_Stream, m_Stream->GetFirstChildIndex(m_TokenIndex));
-        
+
         /// <summary>
         /// Gets a readonly view of a stream.
         /// </summary>

@@ -8,9 +8,9 @@ namespace Unity.Behavior.GraphFramework
         private GraphView Target => target as GraphView;
         private Vector2 m_LastTargetPosition;
         private Vector2 m_LastMousePosition;
-        
+
         private const float k_PasteOffset = 5f;
-        
+
         protected override void RegisterCallbacksOnTarget()
         {
             Target.RegisterCallback<KeyDownEvent>(OnKeyDown);
@@ -46,7 +46,7 @@ namespace Unity.Behavior.GraphFramework
                 {
                     position = Target.WorldPosToLocal(evt.originalMousePosition);
                 }
-                
+
                 Target.Dispatcher.DispatchImmediate(new PasteNodeCommand(copyData.Nodes, position));
                 m_LastMousePosition = evt.originalMousePosition;
                 m_LastTargetPosition = position;

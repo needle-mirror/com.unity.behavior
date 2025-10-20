@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Unity.Behavior.GraphFramework;
 using Unity.AppUI.UI;
@@ -9,11 +9,11 @@ namespace UnityEngine.UIExtras
     internal class SearchWindow
     {
         static bool IsClosing = false;
-        
+
         public static SearchView ShowInPopover(string title, List<SearchView.Item> items, Action<SearchView.Item> onSelection, float width, float height, VisualElement parent, bool showIcons = true, bool closeOnSelection = true, bool sortSearchItems = true)
         {
             IsClosing = false;
-            
+
             SearchView searchView = new SearchView();
             searchView.Title = title;
             Popover popover = Popover.Build(parent, searchView);
@@ -52,7 +52,7 @@ namespace UnityEngine.UIExtras
             searchView.style.width = width;
             searchView.style.height = height;
             searchView.ShowIcons = showIcons;
-            
+
             popover.Show();
             popover.shown += (popover) =>
             {
@@ -61,11 +61,11 @@ namespace UnityEngine.UIExtras
 
             return searchView;
         }
-        
+
         public static SearchView ShowAtPosition(string title, List<SearchView.Item> items, Action<SearchView.Item> onSelection, float x, float y, float width, float height, VisualElement parent, bool showIcons = true, bool sortSearchItems = true)
         {
             IsClosing = false;
-            
+
             SearchView searchView = new SearchView();
             // Hide the SearchView element until the Popover has been shown, to avoid hierarchy visibility issues with the Popover element.
             searchView.Title = title;
@@ -81,7 +81,7 @@ namespace UnityEngine.UIExtras
             {
                 parent?.Focus();
             };
-            
+
             searchView.Items = items;
             searchView.OnSelection += (e) =>
             {
@@ -112,7 +112,7 @@ namespace UnityEngine.UIExtras
             {
                 // Display the SearchView element once the Popover has been shown.
                 searchView.style.display = DisplayStyle.Flex;
-                
+
                 popoverElement.view.schedule.Execute(searchView.FocusSearchField);
             };
             return searchView;

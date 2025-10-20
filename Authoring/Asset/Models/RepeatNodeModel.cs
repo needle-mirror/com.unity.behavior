@@ -71,36 +71,46 @@ namespace Unity.Behavior
         {
             base.OnValidate();
             UpdateNodeType();
-            
+
             IConditionalNodeModel.UpdateConditionModels(this);
         }
 
+        // Ensures the node model type is up to date. If not, dirty asset as runtime graph needs to rebuild.
         private void UpdateNodeType()
         {
+            Type expectedType = null;
             switch (Mode)
             {
                 case RepeatMode.Forever:
-                    NodeType = typeof(RepeaterModifier);
+                    expectedType = typeof(RepeaterModifier);
                     break;
 
                 case RepeatMode.UntilSuccess:
-                    NodeType = typeof(RepeatUntilSuccessModifier);
+                    expectedType = typeof(RepeatUntilSuccessModifier);
                     break;
 
                 case RepeatMode.UntilFail:
-                    NodeType = typeof(RepeatUntilFailModifier);
+                    expectedType = typeof(RepeatUntilFailModifier);
                     break;
 
                 case RepeatMode.Condition:
-                    NodeType = typeof(RepeatWhileConditionModifier);
+                    expectedType = typeof(RepeatWhileConditionModifier);
                     break;
             }
-            Type type = NodeType;
-            NodeDescriptionAttribute attribute = type.GetCustomAttribute<NodeDescriptionAttribute>();
+
+            if (NodeType != null && NodeType.Type == expectedType)
+            {
+                return;
+            }
+
+            NodeType = expectedType;
+            NodeDescriptionAttribute attribute = expectedType.GetCustomAttribute<NodeDescriptionAttribute>();
             if (attribute != null)
             {
                 NodeTypeID = attribute.GUID;
             }
+
+            Asset.SetAssetDirty(true);
         }
     }
 }

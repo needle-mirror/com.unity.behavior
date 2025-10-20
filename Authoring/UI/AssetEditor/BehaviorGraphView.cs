@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Unity.Behavior.GraphFramework;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,10 +13,13 @@ namespace Unity.Behavior
     internal partial class BehaviorGraphView : GraphView
     {
 #if !ENABLE_UXML_UI_SERIALIZATION
-        internal new class UxmlFactory : UxmlFactory<BehaviorGraphView, UxmlTraits> {}
+        internal new class UxmlFactory : UxmlFactory<BehaviorGraphView, UxmlTraits> { }
 #endif
         BehaviorAuthoringGraph m_Asset => Asset as BehaviorAuthoringGraph;
         BehaviorGraphModule m_ActiveDebugGraph;
+
+        private bool m_FrameOnOpen = false;
+
         internal BehaviorGraphModule ActiveDebugGraph
         {
             get => m_ActiveDebugGraph;
@@ -39,13 +42,13 @@ namespace Unity.Behavior
 
         // todo move to a dedicated tutorial content handler
         GraphElement m_CreateNodeTutorialText;
-        
+
         private readonly HashSet<Type> m_ExcludedTypes = new()
         {
             //typeof(PlaceholderAction)
         };
 
-        public BehaviorGraphView() 
+        public BehaviorGraphView()
         {
             AddToClassList("BehaviorGraphView");
             RegisterCallback<KeyDownEvent>(OnKeyDown);
@@ -57,7 +60,7 @@ namespace Unity.Behavior
             {
                 return;
             }
-            
+
             schedule.Execute(DelayedInitUI);
         }
 
@@ -70,7 +73,7 @@ namespace Unity.Behavior
             this.AddManipulator(new DeleteManipulator());
             this.AddManipulator(new DuplicateNodeManipulator());
             this.AddManipulator(new CopyNodeManipulator());
-            
+
             this.AddManipulator(new GraphContextMenuManipulator());
             this.AddManipulator(new PasteNodeManipulator());
         }
@@ -139,14 +142,18 @@ namespace Unity.Behavior
                 // Check if the root node has a resolved position and dimension. If not, reschedule.
                 if (float.IsNaN(rootUI.layout.center.x))
                 {
-                    schedule.Execute(DelayedInitUI); 
+                    schedule.Execute(DelayedInitUI);
                     return;
                 }
-                
-                // Frame all content on the GridBackground canvas.
-                Background.FrameAll();
+
+                if (m_FrameOnOpen)
+                {
+                    Background.FrameAll();
+                    m_FrameOnOpen = false;
+                }
+
                 Background.zoom = Mathf.Clamp(Background.zoom, Background.minZoom, Background.maxZoom);
-                
+
                 // If only the root exists, anchor the tutorial text relative to it.
                 // todo move this to a dedicated tutorial content handler
                 if (ViewState.Nodes.Count() == 1)
@@ -156,6 +163,11 @@ namespace Unity.Behavior
                     this.ViewState.ViewStateUpdated += OnViewStateUpdated;
                 }
             }
+        }
+
+        public void InitialiseGraphToFrameOnOpen()
+        {
+            m_FrameOnOpen = true;
         }
 
         private bool TryGetFirstRoot(out NodeUI nodeUI)
@@ -180,7 +192,7 @@ namespace Unity.Behavior
 
         private void OnViewStateUpdated()
         {
-            // If the tutorial text is present and an additional node has been added, remove the text. 
+            // If the tutorial text is present and an additional node has been added, remove the text.
             if (m_CreateNodeTutorialText != null && Asset.Nodes.Count > 1)
             {
                 m_CreateNodeTutorialText.RemoveFromHierarchy();
@@ -202,7 +214,7 @@ namespace Unity.Behavior
 
         private void OnKeyDown(KeyDownEvent evt)
         {
-            if (evt.keyCode == KeyCode.R && TryGetFirstRoot(out NodeUI rootUI))
+            if (evt.keyCode == KeyCode.R && !evt.actionKey && TryGetFirstRoot(out NodeUI rootUI))
             {
                 Background.FrameElement(rootUI);
                 return;
@@ -284,7 +296,7 @@ namespace Unity.Behavior
             Dispatcher.DispatchImmediate(new CreateNodeCommand(nodeInfo.ModelType, position, connectedPort, sequenceToAddTo,
                 args: new object[] { nodeInfo }));
         }
-        
+
         internal void ConnectPorts(PortModel outputPortModel, PortModel inputPortModel)
         {
             // Check for merge.
@@ -298,7 +310,7 @@ namespace Unity.Behavior
                     NodeRegistry.NodeInfos.Where(n => n.Type != null && typeof(Join).IsAssignableFrom(n.Type)).ToList(),
                     new Tuple<PortModel, PortModel>(inputPortModel, inputConnections.First()),
                     inputConnections.Append(outputPortModel),
-                    new []{ inputPortModel });
+                    new[] { inputPortModel });
                 return;
             }
 
@@ -313,7 +325,7 @@ namespace Unity.Behavior
                     "To connect to multiple nodes you must pick a valid sequencing node that's allowed to have multiple children. How would you like the branching behaviour to work?",
                     NodeRegistry.NodeInfos.Where(n => n.Type != null && typeof(Composite).IsAssignableFrom(n.Type)).ToList(),
                     new Tuple<PortModel, PortModel>(outputPortModel, outputConnections.First()),
-                    new []{ outputPortModel },
+                    new[] { outputPortModel },
                     outputConnections.Append(inputPortModel));
                 return;
             }
@@ -321,7 +333,7 @@ namespace Unity.Behavior
             // Otherwise, connect the ports.
             Asset.ConnectEdge(outputPortModel, inputPortModel);
         }
-        
+
         internal void ShowNodeInsertionPopup(string title, string description, List<NodeInfo> options, Tuple<PortModel, PortModel> connectionToBreak, IEnumerable<PortModel> inputConnections, IEnumerable<PortModel> outputConnections)
         {
             InsertNodeDialog dialog = InsertNodeDialog.GetAndShowDialog(this);
@@ -336,53 +348,64 @@ namespace Unity.Behavior
 
         public override NodeUI CreateNodeUI(NodeModel nodeModel)
         {
-            if (nodeModel is not BehaviorGraphNodeModel behaviorNodeModel || nodeModel is PlaceholderNodeModel)
+            if (nodeModel is not BehaviorGraphNodeModel behaviorNodeModel)
             {
                 return base.CreateNodeUI(nodeModel);
             }
+
             NodeInfo info = NodeRegistry.GetInfoFromTypeID(behaviorNodeModel.NodeTypeID);
             if (info != null)
             {
                 return base.CreateNodeUI(nodeModel);
             }
 
-            Debug.LogWarning($"Serialized node: \"{behaviorNodeModel.NodeType}\" is invalid. " +
-                    $"This generally happen when you rename or delete a node that was used by the graph. " +
-                    $"The faulty node has been been replaced with a placeholder node.", Asset);
-
-            PlaceholderNodeUI nodeUI = new PlaceholderNodeUI(nodeModel);
+            PlaceholderNodeUI nodeUI = new PlaceholderNodeUI(nodeModel, Asset as BehaviorAuthoringGraph);
             ViewState.InitNodeUI(nodeUI, nodeModel);
             return nodeUI;
         }
 
-        internal void ShowActionNodeWizard(Vector2 mousePosition, PlaceholderNodeModel placeholderNodeModel = null)
+        public override bool DoesNodeModelMatchWithUI(NodeModel nodeModel, NodeUI nodeUI)
+        {
+            // If a placeholder node is no longer placeholder.
+            if (nodeUI is PlaceholderNodeUI && nodeModel is BehaviorGraphNodeModel behaviorGraphNodeModel
+                && NodeRegistry.GetInfoFromTypeID(behaviorGraphNodeModel.NodeTypeID) != null)
+            {
+                return false;
+            }
+
+            return base.DoesNodeModelMatchWithUI(nodeModel, nodeUI);
+        }
+
+        internal void ShowActionNodeWizard(Vector2 mousePosition, BehaviorGraphNodeModel nodeModel = null)
         {
 #if UNITY_EDITOR
-            Dictionary<string, Type> variableSuggestions = Util.GetVariableSuggestions(Asset, placeholderNodeModel);
+            Dictionary<string, Type> variableSuggestions = Util.GetVariableSuggestions(Asset, nodeModel);
             ActionNodeWizard nodeWizard = ActionNodeWizardWindow.GetAndShowWindow(this, variableSuggestions);
-            if (placeholderNodeModel != null)
+            if (nodeModel != null && Asset is BehaviorAuthoringGraph authoringGraph
+                && authoringGraph.RuntimeNodeTypeIDToNodeModelInfo.TryGetValue(nodeModel.NodeTypeID, out var nodeModelInfo))
             {
-                nodeWizard.SetupSuggestedNodeProperties(placeholderNodeModel.Name, "Action");
-                nodeWizard.SetStoryField(placeholderNodeModel.Story);
-                nodeWizard.OnNodeTypeCreated = nodeData => OnNodeTypeCreatedFromPlaceholderNode(placeholderNodeModel.Name, nodeData, mousePosition);
+                nodeWizard.SetupSuggestedNodeProperties(nodeModelInfo.Name, "Action");
+                nodeWizard.SetStoryField(nodeModelInfo.Story);
+                nodeWizard.OnNodeTypeCreated = nodeData => OnNodeTypeCreatedFromPlaceholderNode(nodeModelInfo.Name, nodeData, mousePosition);
             }
             else
             {
                 nodeWizard.OnNodeTypeCreated = nodeData => OnNodeTypeCreatedFromWizard(nodeData, mousePosition);
-            }            
+            }
 #endif
         }
 
-        internal void ShowModifierNodeWizard(Vector2 mousePosition, PlaceholderNodeModel placeholderNodeModel = null)
+        internal void ShowModifierNodeWizard(Vector2 mousePosition, BehaviorGraphNodeModel nodeModel = null)
         {
 #if UNITY_EDITOR
-            Dictionary<string, Type> variableSuggestions = Util.GetVariableSuggestions(Asset, placeholderNodeModel);
+            Dictionary<string, Type> variableSuggestions = Util.GetVariableSuggestions(Asset, nodeModel);
             BaseNodeWizard nodeWizard = ModifierNodeWizardWindow.GetAndShowWindow(this, variableSuggestions);
-            if (placeholderNodeModel != null)
+            if (nodeModel != null && Asset is BehaviorAuthoringGraph authoringGraph
+                && authoringGraph.RuntimeNodeTypeIDToNodeModelInfo.TryGetValue(nodeModel.NodeTypeID, out var nodeModelInfo))
             {
-                nodeWizard.SetupSuggestedNodeProperties(placeholderNodeModel.Name, "Flow");
-                nodeWizard.SetStoryField(placeholderNodeModel.Story);
-                nodeWizard.OnNodeTypeCreated = nodeData => OnNodeTypeCreatedFromPlaceholderNode(placeholderNodeModel.Name, nodeData, mousePosition);
+                nodeWizard.SetupSuggestedNodeProperties(nodeModelInfo.Name, "Flow");
+                nodeWizard.SetStoryField(nodeModelInfo.Story);
+                nodeWizard.OnNodeTypeCreated = nodeData => OnNodeTypeCreatedFromPlaceholderNode(nodeModelInfo.Name, nodeData, mousePosition);
             }
             else
             {
@@ -391,17 +414,18 @@ namespace Unity.Behavior
 #endif
         }
 
-        internal void ShowSequencingNodeWizard(Vector2 mousePosition, PlaceholderNodeModel placeholderNodeModel = null)
+        internal void ShowSequencingNodeWizard(Vector2 mousePosition, BehaviorGraphNodeModel nodeModel = null)
         {
 #if UNITY_EDITOR
-            Dictionary<string, Type> variableSuggestions = Util.GetVariableSuggestions(Asset, placeholderNodeModel);
+            Dictionary<string, Type> variableSuggestions = Util.GetVariableSuggestions(Asset, nodeModel);
             SequencingNodeWizard nodeWizard = SequencingNodeWizardWindow.GetAndShowWindow(this, variableSuggestions);
-            if (placeholderNodeModel != null)
+            if (nodeModel != null && Asset is BehaviorAuthoringGraph authoringGraph
+                && authoringGraph.RuntimeNodeTypeIDToNodeModelInfo.TryGetValue(nodeModel.NodeTypeID, out var nodeModelInfo))
             {
-                nodeWizard.SetupSuggestedNodeProperties(placeholderNodeModel.Name, "Flow");
-                nodeWizard.SetStoryField(placeholderNodeModel.Story);
-                nodeWizard.SetupCustomPorts(placeholderNodeModel.NamedChildren);
-                nodeWizard.OnNodeTypeCreated = nodeData => OnNodeTypeCreatedFromPlaceholderNode(placeholderNodeModel.Name, nodeData, mousePosition);
+                nodeWizard.SetupSuggestedNodeProperties(nodeModelInfo.Name, "Flow");
+                nodeWizard.SetStoryField(nodeModelInfo.Story);
+                nodeWizard.SetupCustomPorts(nodeModelInfo.NamedChildren);
+                nodeWizard.OnNodeTypeCreated = nodeData => OnNodeTypeCreatedFromPlaceholderNode(nodeModelInfo.Name, nodeData, mousePosition);
             }
             else
             {
@@ -419,7 +443,7 @@ namespace Unity.Behavior
         private void OnNodeTypeCreatedFromPlaceholderNode(string placeholderNodeName,
             NodeGeneratorUtility.NodeData createdNodeData, Vector2 mousePosition)
         {
-            m_Asset.CommandBuffer.SerializeDeferredCommand(new SwapNodeFromSerializedTypeCommand(placeholderNodeName,  
+            m_Asset.CommandBuffer.SerializeDeferredCommand(new SwapNodeFromSerializedTypeCommand(placeholderNodeName,
                 createdNodeData.ClassName, mousePosition, true));
         }
 #endif

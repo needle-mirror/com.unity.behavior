@@ -24,7 +24,7 @@ namespace Unity.Behavior.Serialization
         {
             OldName = oldName;
         }
-        
+
         static readonly Dictionary<string, string> s_FormerlySerializedAsToCurrentName = new Dictionary<string, string>();
         static bool m_Registered;
 
@@ -34,7 +34,7 @@ namespace Unity.Behavior.Serialization
                 return;
 
             m_Registered = true;
-            
+
 #if UNITY_EDITOR
             foreach (var type in UnityEditor.TypeCache.GetTypesWithAttribute<FormerNameAttribute>())
             {
@@ -85,6 +85,6 @@ namespace Unity.Behavior.Serialization
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false)]
     internal sealed class DontSerializeAttribute : Attribute
     {
-        
+
     }
 }

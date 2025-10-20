@@ -1,4 +1,4 @@
-﻿namespace Unity.Behavior
+namespace Unity.Behavior
 {
     internal interface IParent
     {

@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 
 namespace Unity.Behavior.GraphFramework
 {
@@ -8,8 +8,8 @@ namespace Unity.Behavior.GraphFramework
         {
             // Create new sequence.
             NodeModel dropTarget = command.DropTarget;
-            var sequenceModel = (SequenceNodeModel) Asset.CreateNode(typeof(SequenceNodeModel), dropTarget.Position);
-            
+            var sequenceModel = (SequenceNodeModel)Asset.CreateNode(typeof(SequenceNodeModel), dropTarget.Position);
+
             // Connect drop target's existing connections to sequence.
             if (sequenceModel.TryDefaultInputPortModel(out PortModel sequenceInputPort) && dropTarget.TryDefaultInputPortModel(out PortModel dropTargetInputPortModel))
             {
@@ -33,7 +33,7 @@ namespace Unity.Behavior.GraphFramework
                     Asset.ConnectEdge(sequenceOutputPort, connectedPort);
                 }
             }
-            
+
             // Add drop target to sequence.
             int index = 0;
             Asset.AddNodeToSequence(dropTarget, sequenceModel, index++);
@@ -43,7 +43,7 @@ namespace Unity.Behavior.GraphFramework
             {
                 index--;
             }
-            
+
             // Add other nodes to new sequence.
             foreach (var model in command.NodesToAdd)
             {
@@ -51,7 +51,7 @@ namespace Unity.Behavior.GraphFramework
                 {
                     if (ReferenceEquals(connectedPort.NodeModel, sequenceModel) || sequenceModel.IncomingConnections.Contains(connectedPort.NodeModel.OutputPortModels.FirstOrDefault()))
                     {
-                        continue; 
+                        continue;
                     }
                     Asset.ConnectEdge(connectedPort, sequenceOutputPort);
                 }
@@ -71,13 +71,13 @@ namespace Unity.Behavior.GraphFramework
 
                 Asset.AddNodeToSequence(model, sequenceModel, index++);
             }
-            
+
             // Delete sequences
             foreach (var sequence in command.SequencesToDelete)
             {
                 Asset.DeleteNode(sequence);
             }
-            
+
             return true;
         }
     }

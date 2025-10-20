@@ -114,3 +114,18 @@
     --unity-image: url("/Packages/com.unity.behavior/Blackboard/Assets/Icons/Folder.png");
     --unity-image-tint-color: black;
 }
+
+/* Behavior asset icons (Dark) */
+.behavior-icon--graph-asset {
+    background-image: url("/Packages/com.unity.behavior/Elements/Assets/Icons/GraphAsset.png");
+    width: 16px;
+    height: 16px;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.behavior-icon--blackboard-asset {
+    background-image: url("/Packages/com.unity.behavior/Elements/Assets/Icons/BlackboardAsset.png");
+    width: 16px;
+    height: 16px;
+    -unity-background-scale-mode: scale-to-fit;
+}

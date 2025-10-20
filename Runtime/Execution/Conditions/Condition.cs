@@ -24,12 +24,12 @@ namespace Unity.Behavior
         /// OnEnd is called as a cleanup method for the Condition after it completes its logic check.
         /// </summary>
         public virtual void OnEnd() { }
-        
+
         /// <summary>
         /// The game object associated with the behavior graph.
         /// </summary>
         public GameObject GameObject => Graph.GameObject;
-        
+
         /// <summary>
         /// The BehaviorGraph containing the node instance.
         /// </summary>

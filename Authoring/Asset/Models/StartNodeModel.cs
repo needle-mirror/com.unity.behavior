@@ -18,7 +18,7 @@ namespace Unity.Behavior
         public bool Repeat = true;
         public bool AllowMultipleRepeatsPerTick = false;
         public StartNodeModel(NodeInfo nodeInfo) : base(nodeInfo) { }
-        
+
         protected StartNodeModel(StartNodeModel originalModel, BehaviorAuthoringGraph asset) : base(originalModel, asset)
         {
             Repeat = originalModel.Repeat;

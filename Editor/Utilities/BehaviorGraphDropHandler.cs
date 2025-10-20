@@ -9,7 +9,11 @@ namespace Unity.Behavior
         [InitializeOnLoadMethod]
         public static void HookUpDragAndDropHandlers()
         {
+#if UNITY_6000_3_OR_NEWER
+            DragAndDrop.AddDropHandlerV2(InspectorDropHandler);
+#else
             DragAndDrop.AddDropHandler(InspectorDropHandler);
+#endif
             DragAndDrop.AddDropHandler(HierarchyDropHandler);
         }
 

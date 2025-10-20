@@ -12,11 +12,11 @@ namespace Unity.Behavior
         {
             ModifierNodeWizard wizard = new ModifierNodeWizard();
             Modal modal = WizardUtils.CreateAndShowStepperModal("New Modifier", targetView, wizard);
-   
+
             wizard.SetVariableSuggestions(variableSuggestions);
             return wizard;
         }
-        
+
         internal static ModifierNodeWizard GetAndShowEditWindow(VisualElement targetView, NodeInfo info, Dictionary<string, Type> variableSuggestions = null)
         {
             ModifierNodeWizard wizard = new ModifierNodeWizard();

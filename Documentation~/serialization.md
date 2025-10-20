@@ -9,28 +9,28 @@ Serialization saves the state of a behavior graph and loads it back from the sam
 Unity Behavior utilizes the `com.unity.serialization` and `com.unity.properties` packages to create property bags for each node you want to serialize. A property bag is a serializable definition of another class, generated automatically either from the source code or through reflection. These property bags are updated whenever the nodes are modified. For more information, refer to [Introduction to Unity Serialization](https://docs.unity3d.com/Packages/com.unity.serialization@3.1/manual/index.html).
 
 For more information on how to access and use the Runtime Serialization sample, refer to [Runtime Serialization sample](xref:serialize-sample).
- 
+
 ## Pre-defined nodes
 
-Serialization is enabled by default in all the [predefined nodes](predefined-node.md) in Unity Behavior. These nodes save and load their state automatically without requiring additional implementation. 
+Serialization is enabled by default in all the [predefined nodes](predefined-node.md) in Unity Behavior. These nodes save and load their state automatically without requiring additional implementation.
 
 If you're using a version of Unity Behavior older than 1.0.0 that didn't support serialization, update your custom nodes to make them serializable. Follow the steps in the next section to enable serialization.
- 
+
 ## Custom nodes
 
 To save and restore the states of [custom nodes](create-custom-node.md) in Unity Behavior, you need to implement serialization. Follow these steps:
 
 1. For each custom node, make sure the node classes include the `[Serializable]` and `[Unity.Properties.GeneratePropertyBag]` attributes.
- 
-    For example, if your behavior graph uses a custom **Wait** node, check that the `WaitAction.cs` file includes the following attribute: 
+
+    For example, if your behavior graph uses a custom **Wait** node, check that the `WaitAction.cs` file includes the following attribute:
 
     ```
     [Serializable, Unity.Properties.GeneratePropertyBag]
     ```
-    
+
     The `[Serializable]` attribute indicates that the class can be serialized, while the `Unity.Properties.GeneratePropertyBag` attribute tells the serialization system to generate property bags for this class.
 
-2. Instruct the serialization system to generate property bags for all types within the assembly by adding the following attribute to the `AssemblyInfo.cs` file. 
+2. Instruct the serialization system to generate property bags for all types within the assembly by adding the following attribute to the `AssemblyInfo.cs` file.
 
     ```
     [assembly:GeneratePropertyBagsForAssembly]
@@ -48,9 +48,9 @@ To save and restore the states of [custom nodes](create-custom-node.md) in Unity
 
    > [!NOTE]
    > **Advanced use case**: If you need to serialized a non-`BlackboardVariable` field to the graph asset (like a reference to another node in the graph) and ensure it's serialized at runtime, create a property using `[CreateProperty]` and add `[DontGenerateProperty]` to the field. This method avoids runtime reflection, which can lead to performance issue.
-   
+
     For example:
-   
+
       ```
       [CreateProperty] public Node Child => m_Child;
 
@@ -66,5 +66,5 @@ To save and restore the states of [custom nodes](create-custom-node.md) in Unity
 ## Additional resources
 
 * [Runtime Serialization sample](xref:serialize-sample)
-* [Get started with Unity Behavior](get-started.md)
+* [Create with Unity Behavior](get-started.md)
 * [Debug the Agent in real time during Play mode](debug.md)

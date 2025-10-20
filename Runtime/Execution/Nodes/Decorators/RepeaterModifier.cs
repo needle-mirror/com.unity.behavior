@@ -10,7 +10,7 @@ namespace Unity.Behavior
     [Serializable, GeneratePropertyBag]
     [NodeDescription(
         name: "Repeat",
-        description: "Repeats operation of the node.", 
+        description: "Repeats operation of the node.",
         category: "Flow",
         icon: "Icons/repeater",
         id: "ae70eb7a112b4b339e1699ebc246f1c4")]
@@ -65,7 +65,7 @@ namespace Unity.Behavior
             }
             return Status.Waiting;
         }
-        
+
         protected override void OnDeserialize()
         {
             m_CurrentFrame = Time.frameCount + m_FrameDelta;
@@ -73,7 +73,7 @@ namespace Unity.Behavior
 
         protected override void OnSerialize()
         {
-            m_FrameDelta = Time.frameCount - m_CurrentFrame; 
+            m_FrameDelta = Time.frameCount - m_CurrentFrame;
         }
     }
 }

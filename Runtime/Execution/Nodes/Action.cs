@@ -18,10 +18,10 @@ namespace Unity.Behavior
             get => m_Parent;
             internal set { m_Parent = value; }
         }
-        
+
         [SerializeReference]
         internal Node m_Parent;
-        
+
         /// <inheritdoc cref="Node.AwakeParents" />
         protected internal override void AwakeParents()
         {

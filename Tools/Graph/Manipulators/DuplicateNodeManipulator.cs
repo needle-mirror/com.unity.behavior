@@ -12,7 +12,7 @@ namespace Unity.Behavior.GraphFramework
         private Vector2 m_LastMousePosition;
 
         private const float k_DuplicationOffset = 5f;
-        
+
         protected override void RegisterCallbacksOnTarget()
         {
             Target.RegisterCallback<KeyDownEvent>(OnKeyDown);

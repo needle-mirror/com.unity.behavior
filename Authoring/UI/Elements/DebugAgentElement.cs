@@ -17,16 +17,16 @@ namespace Unity.Behavior
         {
             styleSheets.Add(ResourceLoadAPI.Load<StyleSheet>("Packages/com.unity.behavior/Authoring/UI/Elements/Assets/DebugAgentElementStylesheet.uss"));
             AddToClassList("DebugAgentElement");
-            
+
             m_DebugToggle = new Toggle();
             m_DebugToggle.name = "DebugAgentToggle";
             m_DebugToggle.label = k_NoAgentSelectedText;
             m_DebugToggle.SetEnabled(false);
-            
+
             HelpText debugLabel = new HelpText("Select which GameObject you want to target for debugging");
             debugLabel.name = "DebugInfoText";
             debugLabel.style.whiteSpace = WhiteSpace.Normal;
-     
+
             Add(m_DebugToggle);
             Add(debugLabel);
         }

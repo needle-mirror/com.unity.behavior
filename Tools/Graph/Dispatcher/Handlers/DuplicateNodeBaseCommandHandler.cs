@@ -9,22 +9,23 @@ namespace Unity.Behavior.GraphFramework
     internal abstract class DuplicateNodeBaseCommandHandler<T> : CommandHandler<T> where T : DuplicateNodeCommand
     {
         internal Vector2 PastePosition;
-        
+
         public override bool Process(T command)
         {
             if (!command.NodeModels.Any())
                 return true;
-            
+
             List<NodeModel> nodeModelDuplicates = command.NodeModels.Select(Duplicate).ToList();
             AdjustPosition(nodeModelDuplicates);
-            
+
             foreach (NodeModel nodeModelDuplicate in nodeModelDuplicates)
             {
                 Asset.CreateNodePortsForNode(nodeModelDuplicate);
             }
             AddEdgeConnections(command.NodeModels, nodeModelDuplicates);
-            
-            GraphView.schedule.Execute(() => { 
+
+            GraphView.schedule.Execute(() =>
+            {
                 GraphView.ViewState.SetSelected(nodeModelDuplicates);
             });
             return true;
@@ -35,11 +36,11 @@ namespace Unity.Behavior.GraphFramework
             var relativePositions = GetRelativePositions(nodeModelDuplicates);
             for (int i = 0; i < nodeModelDuplicates.Count; i++)
             {
-                Vector2 newPosition = new Vector2((PastePosition.x + relativePositions[i].x),(PastePosition.y + relativePositions[i].y));
+                Vector2 newPosition = new Vector2((PastePosition.x + relativePositions[i].x), (PastePosition.y + relativePositions[i].y));
                 nodeModelDuplicates[i].Position = newPosition;
             }
         }
-        
+
         private List<Vector2> GetRelativePositions(List<NodeModel> nodeModelDuplicates)
         {
             var centerPosition = GraphUILayoutUtility.GetCenterPointOfNodes(nodeModelDuplicates);
@@ -52,7 +53,7 @@ namespace Unity.Behavior.GraphFramework
             }
             return relativePositions;
         }
-        
+
         private void AddEdgeConnections(List<NodeModel> originalModels, List<NodeModel> nodeModelDuplicates)
         {
             for (int i = 0; i < nodeModelDuplicates.Count; i++)
@@ -74,7 +75,7 @@ namespace Unity.Behavior.GraphFramework
                             }
                         }
 
-                        if (!originalModels.Contains(originalConnection.NodeModel) || originalConnection.IsOutputPort) 
+                        if (!originalModels.Contains(originalConnection.NodeModel) || originalConnection.IsOutputPort)
                         {
                             continue;
                         }
@@ -101,14 +102,14 @@ namespace Unity.Behavior.GraphFramework
                 {
                     throw new InvalidCastException("The duplicated sequence did not result in a sequence. This should never happen!");
                 }
-                
+
                 foreach (NodeModel nodeModelChild in sequenceNodeModel.Nodes)
                 {
                     NodeModel nodeModelChildDuplicate = InvokeDuplicationConstructor(nodeModelChild, Asset);
                     nodeModelChildDuplicate.OnDefineNode();
                     nodeModelChildDuplicate.Parents.Clear();
                     nodeModelChildDuplicate.Parents.Add(nodeModelDuplicate);
-                    
+
                     sequenceNodeModelDuplicate.Nodes.Add(nodeModelChildDuplicate);
                     Asset.Nodes.Add(nodeModelChildDuplicate);
                 }
@@ -122,9 +123,9 @@ namespace Unity.Behavior.GraphFramework
             var nodeModelType = nodeModelOriginal.GetType();
             var ctor = nodeModelType.GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null,
                 new[] { nodeModelType, asset.GetType() }, null);
-                
+
             return ctor.Invoke(new object[] { nodeModelOriginal, asset }) as NodeModel;
-            
+
             // ALTERNATIVE: using Activator, but I'm not sure about the CultureInfo argument...
             // return Activator.CreateInstance(nodeModelType, BindingFlags.Public | BindingFlags.Instance, null, new object[] { nodeModelOriginal }, CultureInfo.InvariantCulture) as NodeModel;
         }

@@ -65,7 +65,7 @@ namespace Unity.Behavior
             }
 
             GenerateNodeFile(data, path);
-            
+
             if (BehaviorProjectSettings.instance.AutoOpenNodeScriptsInExternalEditor)
             {
                 string relativePath = path.StartsWith(Application.dataPath)
@@ -143,10 +143,10 @@ namespace Unity.Behavior
             builder.AppendLine("    {");
             builder.AppendLine("    }");
             builder.AppendLine("}");
-            
+
             return builder.ToString();
         }
-         
+
         internal static bool Edit(NodeData newData, NodeInfo info, string postfix)
         {
             if (info.FilePath.Length == 0)
@@ -239,7 +239,7 @@ namespace Unity.Behavior
             string description = string.IsNullOrEmpty(data.Description) ? "" : $" description: \"{data.Description}\",";
             string category = string.IsNullOrEmpty(data.Category) ? "" : $" category: \"{data.Category}\",";
             string icon = string.IsNullOrEmpty(data.Icon) ? "" : $" icon: \"{data.Icon}\",";
-            
+
             // Find the existing node description attribute string
             const string descriptionPattern = @"\[NodeDescription\(((\n|.)*?)\)\]";
             Match match = Regex.Match(scriptText, descriptionPattern);
@@ -247,17 +247,17 @@ namespace Unity.Behavior
 
             if (match.Success)
             {
-                // Find the existing generated id 
+                // Find the existing generated id
                 string idPattern = @"(?<=id: \s*"").*?(?=\s*"")";
                 Match idMatch = Regex.Match(match.Groups[1].Value, idPattern);
                 string id = idMatch.Success ? idMatch.Value : string.Empty;
-                
+
                 string attributeString =
                     "[NodeDescription(" + name + description + story + icon + category + $" id: \"{id}\")]";
                 string newScriptText = Regex.Replace(scriptText, Regex.Escape(nodeDescription), attributeString);
                 return newScriptText;
             }
-            
+
             // If no description attribute string is found from the existing script
             return scriptText;
         }
@@ -273,7 +273,7 @@ namespace Unity.Behavior
                     {
                         continue;
                     }
-                    
+
                     Type type = variable.Type;
                     Type genericType = type.GetGenericArguments()?[0];
                     variables.Add(variable.Name, genericType);
@@ -282,7 +282,7 @@ namespace Unity.Behavior
 
             return variables;
         }
-        
+
         internal static string UpdateVariables(string scriptText, Dictionary<string, Type> oldVariables, NodeData data)
         {
             string newString = scriptText;
@@ -345,7 +345,7 @@ namespace Unity.Behavior
 
             return functionStringBuilder.ToString();
         }
-        
+
         internal static string GetClassPattern(string text, NodeData data)
         {
             string classNamePattern = $@"\w+\s+class\s+(\w+)\s*:\s*{GetNodeTypeString(data.NodeType)}\s*";

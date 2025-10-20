@@ -38,11 +38,11 @@ namespace Unity.Behavior
                 conditionModel.DefineNode();
             }
         }
-        
+
         public override void OnValidate()
         {
             base.OnValidate();
-            
+
             IConditionalNodeModel.UpdateConditionModels(this);
         }
     }

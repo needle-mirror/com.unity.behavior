@@ -31,7 +31,7 @@ namespace Unity.Behavior
                 behaviorGraphEditor.LinkRecentlyLinkedFields(behaviorGraphNodeModel);
                 behaviorGraphNodeModel.OnValidate();
             }
-            
+
             return true;
         }
     }

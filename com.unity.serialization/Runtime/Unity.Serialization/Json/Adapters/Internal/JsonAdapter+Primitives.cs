@@ -28,18 +28,18 @@ namespace Unity.Behavior.Serialization.Json
         void IJsonAdapter<float>.Serialize(in JsonSerializationContext<float> context, float value) => context.Writer.WriteValue(value);
         void IJsonAdapter<double>.Serialize(in JsonSerializationContext<double> context, double value) => context.Writer.WriteValue(value);
         void IJsonAdapter<bool>.Serialize(in JsonSerializationContext<bool> context, bool value) => context.Writer.WriteValueLiteral(value ? "true" : "false");
-        void IJsonAdapter<char>.Serialize(in JsonSerializationContext<char> context, char value) => context.Writer.WriteValue((int) value);
+        void IJsonAdapter<char>.Serialize(in JsonSerializationContext<char> context, char value) => context.Writer.WriteValue((int)value);
         void IJsonAdapter<string>.Serialize(in JsonSerializationContext<string> context, string value) => context.Writer.WriteValue(value);
-        
-        sbyte IJsonAdapter<sbyte>.Deserialize(in JsonDeserializationContext<sbyte> context) 
+
+        sbyte IJsonAdapter<sbyte>.Deserialize(in JsonDeserializationContext<sbyte> context)
             => throw new NotImplementedException($"This code should never be executed. {nameof(JsonPropertyReader)} should handle primitives in a specialized way.");
 
-        short IJsonAdapter<short>.Deserialize(in JsonDeserializationContext<short> context) 
+        short IJsonAdapter<short>.Deserialize(in JsonDeserializationContext<short> context)
             => throw new NotImplementedException($"This code should never be executed. {nameof(JsonPropertyReader)} should handle primitives in a specialized way.");
 
         int IJsonAdapter<int>.Deserialize(in JsonDeserializationContext<int> context)
             => throw new NotImplementedException($"This code should never be executed. {nameof(JsonPropertyReader)} should handle primitives in a specialized way.");
-        
+
         long IJsonAdapter<long>.Deserialize(in JsonDeserializationContext<long> context)
             => throw new NotImplementedException($"This code should never be executed. {nameof(JsonPropertyReader)} should handle primitives in a specialized way.");
 
@@ -48,13 +48,13 @@ namespace Unity.Behavior.Serialization.Json
 
         ushort IJsonAdapter<ushort>.Deserialize(in JsonDeserializationContext<ushort> context)
             => throw new NotImplementedException($"This code should never be executed. {nameof(JsonPropertyReader)} should handle primitives in a specialized way.");
-        
+
         uint IJsonAdapter<uint>.Deserialize(in JsonDeserializationContext<uint> context)
             => throw new NotImplementedException($"This code should never be executed. {nameof(JsonPropertyReader)} should handle primitives in a specialized way.");
-        
+
         ulong IJsonAdapter<ulong>.Deserialize(in JsonDeserializationContext<ulong> context)
             => throw new NotImplementedException($"This code should never be executed. {nameof(JsonPropertyReader)} should handle primitives in a specialized way.");
-        
+
         float IJsonAdapter<float>.Deserialize(in JsonDeserializationContext<float> context)
             => throw new NotImplementedException($"This code should never be executed. {nameof(JsonPropertyReader)} should handle primitives in a specialized way.");
 
@@ -66,7 +66,7 @@ namespace Unity.Behavior.Serialization.Json
 
         char IJsonAdapter<char>.Deserialize(in JsonDeserializationContext<char> context)
             => throw new NotImplementedException($"This code should never be executed. {nameof(JsonPropertyReader)} should handle primitives in a specialized way.");
-        
+
         string IJsonAdapter<string>.Deserialize(in JsonDeserializationContext<string> context)
             => throw new NotImplementedException($"This code should never be executed. {nameof(JsonPropertyReader)} should handle primitives in a specialized way.");
     }

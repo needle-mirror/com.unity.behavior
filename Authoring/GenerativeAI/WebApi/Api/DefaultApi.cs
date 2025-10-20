@@ -1803,7 +1803,7 @@ namespace Unity.Behavior.WebApi.Api
                 new Unity.Behavior.WebApi.Client.Configuration { BasePath = basePath }
             );
             this.ApiClient = new Unity.Behavior.WebApi.Client.ApiClient(this.Configuration.BasePath);
-            this.Client =  this.ApiClient;
+            this.Client = this.ApiClient;
             this.AsynchronousClient = this.ApiClient;
             this.ExceptionFactory = Unity.Behavior.WebApi.Client.Configuration.DefaultExceptionFactory;
         }

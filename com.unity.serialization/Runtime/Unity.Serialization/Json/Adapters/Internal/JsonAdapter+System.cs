@@ -26,7 +26,7 @@ namespace Unity.Behavior.Serialization.Json
 
         TimeSpan IJsonAdapter<TimeSpan>.Deserialize(in JsonDeserializationContext<TimeSpan> context)
             => TimeSpan.TryParseExact(context.SerializedValue.ToString(), "c", CultureInfo.InvariantCulture, out var value) ? value : default;
-        
+
         void IJsonAdapter<Version>.Serialize(in JsonSerializationContext<Version> context, Version value)
             => context.Writer.WriteValue(value.ToString());
 

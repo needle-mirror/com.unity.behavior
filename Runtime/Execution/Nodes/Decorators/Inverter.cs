@@ -8,9 +8,9 @@ namespace Unity.Behavior
     /// </summary>
     [Serializable, GeneratePropertyBag]
     [NodeDescription(
-        name: "Inverter", 
-        description: "Inverts the result of the child action.", 
-        icon: "Icons/inverter", 
+        name: "Inverter",
+        description: "Inverts the result of the child action.",
+        icon: "Icons/inverter",
         id: "d0d10b1d45144d1b802b9443b57b5adb")]
     internal partial class InverterModifier : Modifier
     {
@@ -21,7 +21,7 @@ namespace Unity.Behavior
             {
                 return Status.Failure;
             }
-            
+
             Status status = StartNode(Child);
             if (status == Status.Success)
                 return Status.Failure;

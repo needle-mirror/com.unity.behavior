@@ -43,7 +43,7 @@ namespace Unity.Behavior
                 if (variable.ObjectValue is IComparable)
                 {
                     return CompareValues((IComparable)variable.ObjectValue, (IComparable)comparisonValue.ObjectValue,
-                        conditionOperator);   
+                        conditionOperator);
                 }
 
                 return CompareReferences(variable.ObjectValue, comparisonValue?.ObjectValue, conditionOperator);
@@ -57,27 +57,27 @@ namespace Unity.Behavior
                     return CompareValues((IComparable)leftVar.ObjectValue, (IComparable)rightOperand,
                         conditionOperator);
                 }
-                
+
                 return CompareReferences(leftVar.ObjectValue, rightOperand, conditionOperator);
             }
-            
+
             // If right operand is a Blackboard variable but the left operand is not.
             if (leftOperand is IComparable && rightOperand is BlackboardVariable rightVar)
             {
                 if (rightVar.ObjectValue is IComparable)
                 {
-                    return CompareValues( (IComparable)leftOperand, (IComparable)rightVar.ObjectValue,
+                    return CompareValues((IComparable)leftOperand, (IComparable)rightVar.ObjectValue,
                         conditionOperator);
                 }
-                
-                return CompareReferences( leftOperand, rightVar.ObjectValue, conditionOperator);
+
+                return CompareReferences(leftOperand, rightVar.ObjectValue, conditionOperator);
             }
 
             // If neither of comparison values are Blackboard variables.
             if (leftOperand is IComparable && rightOperand is IComparable)
             {
                 return CompareValues((IComparable)leftOperand, (IComparable)rightOperand,
-                    conditionOperator);   
+                    conditionOperator);
             }
 
             return CompareReferences(leftOperand, rightOperand, conditionOperator);
@@ -88,7 +88,7 @@ namespace Unity.Behavior
             return conditionOperator switch
             {
                 ConditionOperator.Equal => left == right,
-                ConditionOperator.NotEqual => left != null ,
+                ConditionOperator.NotEqual => left != right,
                 _ => false
             };
         }
@@ -117,19 +117,19 @@ namespace Unity.Behavior
                 {
                     if (condition.IsTrue())
                     {
-                        return true;   
+                        return true;
                     }
                 }
-        
+
                 return false;
             }
-            
+
             foreach (Condition condition in conditions)
             {
                 if (!condition.IsTrue())
                     return false;
             }
-        
+
             return true;
         }
     }

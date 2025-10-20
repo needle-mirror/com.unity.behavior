@@ -16,16 +16,9 @@ namespace Unity.Behavior
 
             if (behaviorGraphNodeModel.NodeType == null)
             {
-                string nodeName = "Unknown Node";
-                if (graphAssetProcessor.Asset.RuntimeNodeTypeIDToNodeModelInfo.TryGetValue(
-                        behaviorGraphNodeModel.NodeTypeID, out var nodeModelInfo))
-                {
-                    nodeName = nodeModelInfo.Name;
-                }
-                Debug.LogError($"Node ({nodeName}) is missing its csharp file and will be skipped in the runtime asset conversion. Please check your graph ({graphAssetProcessor.Asset.name}) and replace placeholder nodes.", graphAssetProcessor.Asset);
                 return null;
             }
-            
+
             var node = Activator.CreateInstance(behaviorGraphNodeModel.NodeType) as Node;
 
             return node;
@@ -78,7 +71,7 @@ namespace Unity.Behavior
             IConditionalNodeModel conditionalNodeModel = nodeModel as IConditionalNodeModel;
 
             // Copy conditions from the node model to the node condition list.
-      
+
             node.RequiresAllConditions = conditionalNodeModel.RequiresAllConditionsTrue;
             node.Conditions ??= new List<Condition>();
             foreach (ConditionModel conditionModel in conditionalNodeModel.ConditionModels)
@@ -87,7 +80,7 @@ namespace Unity.Behavior
                 condition.Graph = graphAssetProcessor.GraphModule;
                 node.Conditions.Add(condition);
             }
-                
+
             // Set LinkField values from the condition models to the runtime condition variables.
             for (int i = 0; i < conditionalNodeModel.ConditionModels.Count; i++)
             {
@@ -104,7 +97,7 @@ namespace Unity.Behavior
                     {
                         Debug.LogError($"Unhandled variable assignment in {conditionalNodeModel.ConditionModels[i]}: Attempting to assign to field \"{fieldModel.FieldName}\" of type \"{fieldInfo.FieldType}\" a variable of type \"{variableToAssign}\"");
                     }
-                }   
+                }
             }
         }
     }

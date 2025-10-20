@@ -150,7 +150,7 @@ namespace Unity.Behavior.Serialization.Binary
                         return;
                     case IContravariantBinaryAdapter<TValue> typedContravariant:
                         // NOTE: Boxing
-                        value = (TValue) typedContravariant.Deserialize((IBinaryDeserializationContext) new BinaryDeserializationContext<TValue>(this, adapters, isRoot));
+                        value = (TValue)typedContravariant.Deserialize((IBinaryDeserializationContext)new BinaryDeserializationContext<TValue>(this, adapters, isRoot));
                         return;
                 }
             }
@@ -181,7 +181,7 @@ namespace Unity.Behavior.Serialization.Binary
                         var id = m_Stream->ReadNext<int>();
                         if (null == m_SerializedReferences)
                             throw new Exception("Deserialization encountered a serialized object reference while running with DisableSerializedReferences.");
-                        value = (TValue) m_SerializedReferences.GetDeserializedReference(id);
+                        value = (TValue)m_SerializedReferences.GetDeserializedReference(id);
                         return;
                 }
             }
@@ -213,7 +213,7 @@ namespace Unity.Behavior.Serialization.Binary
                     }
 
                     // Repack the T as Nullable<T>
-                    value = (TValue) underlyingValue;
+                    value = (TValue)underlyingValue;
                 }
                 else
                 {
@@ -231,11 +231,11 @@ namespace Unity.Behavior.Serialization.Binary
                     if (adapters.Current is IContravariantBinaryAdapter<UnityEngine.Object> unityObjectAdaper)
                     {
                         // Special path for polymorphic unity object references.
-                        value = (TValue) unityObjectAdaper.Deserialize(new BinaryDeserializationContext<TValue>(this, default, isRoot));
+                        value = (TValue)unityObjectAdaper.Deserialize(new BinaryDeserializationContext<TValue>(this, default, isRoot));
                         break;
                     }
                 }
-                
+
                 return;
             }
 

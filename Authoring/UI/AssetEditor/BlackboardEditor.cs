@@ -1,9 +1,11 @@
-using System.Collections.Generic;
 using Unity.Behavior.GraphFramework;
-using UnityEditor;
 using UnityEngine.UIElements;
-using UnityEngine.UIExtras;
 using Unity.AppUI.UI;
+#if UNITY_EDITOR
+using System.Collections.Generic;
+using UnityEditor;
+using UnityEngine.UIExtras;
+#endif
 
 namespace Unity.Behavior
 {
@@ -14,14 +16,14 @@ namespace Unity.Behavior
 
         internal BehaviorBlackboardAuthoringAsset Asset;
         private readonly BlackboardView m_Blackboard;
-        
+
         internal delegate void OnSaveCallback();
         internal OnSaveCallback OnSave;
-        
+
         public bool AutoSaveIsEnabled = true;
-        
+
         public (BehaviorAuthoringGraph, long) GraphDependency;
-        
+
         BlackboardView IDispatcherContext.BlackboardView => m_Blackboard;
         GraphEditor IDispatcherContext.GraphEditor => null;
         GraphView IDispatcherContext.GraphView => null;
@@ -47,7 +49,7 @@ namespace Unity.Behavior
             toolbar.OpenAssetButton.clicked += OnOpenAssetButtonClick;
 
             GraphPrefsUtility.PrefsPrefix = k_PreferencesPrefix;
-            
+
             Dispatcher = new Dispatcher(this);
             m_Blackboard = CreateBlackboardView();
 
@@ -64,7 +66,7 @@ namespace Unity.Behavior
 
             RegisterCommandHandlers();
             this.Q<VisualElement>("BlackboardEditorPanel").Add(m_Blackboard);
-            
+
             RegisterCallback<AttachToPanelEvent>(OnAttachToPanel);
             RegisterCallback<DetachFromPanelEvent>(OnDetachFromPanel);
         }
@@ -74,7 +76,7 @@ namespace Unity.Behavior
 #if UNITY_EDITOR
             Undo.undoRedoPerformed += OnUndoRedoPerformed;
 #endif
-            
+
 #if UNITY_EDITOR
             // Add graph icon stylesheet for the App UI panel.
             var firstAncestorOfType = GetFirstAncestorOfType<Panel>();
@@ -84,11 +86,11 @@ namespace Unity.Behavior
             }
 #endif
         }
-        
+
         private void OnDetachFromPanel(DetachFromPanelEvent evt)
         {
             BehaviorUIThemeManager.UnregisterElement(this);
-            
+
 #if UNITY_EDITOR
             var firstAncestorOfType = GetFirstAncestorOfType<Panel>();
             if (firstAncestorOfType != null)
@@ -122,14 +124,14 @@ namespace Unity.Behavior
         {
             Asset = asset;
             m_Blackboard.Load(asset);
-            
+
             // Set the asset name on the title, and get the asset icon.
             m_AssetTitle.text = Asset?.name;
             m_AssetIcon.image = BlackboardUtils.GetScriptableObjectIcon(Asset);
             m_AssetIcon.Show();
 
             DispatchOutstandingAssetCommands();
-            
+
             // Save a dependency to the graph if the blackboard is a graph blackboard.
             BehaviorAuthoringGraph graph = BehaviorGraphAssetRegistry.TryGetAssetFromGraphBlackboard(Asset);
             if (graph != null)
@@ -137,7 +139,7 @@ namespace Unity.Behavior
                 GraphDependency = (graph, graph.VersionTimestamp);
             }
         }
-        
+
         private void DispatchOutstandingAssetCommands()
         {
             if (!Asset)
@@ -154,7 +156,7 @@ namespace Unity.Behavior
             Dispatcher.RegisterHandler<RenameVariableCommand, RenameVariableCommandHandler>();
             Dispatcher.RegisterHandler<DeleteVariableCommand, DeleteVariableCommandHandler>();
             Dispatcher.RegisterHandler<SetVariableIsSharedCommand, SetVariableIsSharedCommandHandler>();
-            
+
             Dispatcher.RegisterHandler<SetBlackboardVariableValueCommand, SetBlackboardVariableValueCommandHandler>();
             Dispatcher.RegisterHandler<CreateVariableFromSerializedTypeCommand, CreateVariableFromSerializedTypeCommandHandler>();
         }
@@ -186,11 +188,14 @@ namespace Unity.Behavior
 
         public void OnAssetSave()
         {
-            Asset.BuildRuntimeBlackboard();
-            Asset.SaveAsset();
+            if (Asset != null)
+            {
+                Asset.BuildRuntimeBlackboard();
+                Asset.SaveAsset();
+            }
             OnSave?.Invoke();
         }
-        
+
         internal bool HasGraphDependencyChanged()
         {
             if (GraphDependency.Item1 == null)
@@ -199,7 +204,7 @@ namespace Unity.Behavior
             }
 
             // Check if the graph version timestamp has changed.
-            if (GraphDependency.Item1.VersionTimestamp!= GraphDependency.Item2)
+            if (GraphDependency.Item1.VersionTimestamp != GraphDependency.Item2)
             {
                 return true;
             }

@@ -4,7 +4,7 @@ namespace Unity.Behavior
     /// Interface for conditions use by Behavior nodes that need to handle custom serialization/deserialization logic.
     /// Implement this interface on condition classes that contain state which cannot be automatically
     /// serialized, or that need to pre-process data before serialization.
-    /// 
+    ///
     /// Note: These callbacks are only invoked for conditions that are part of a running node.
     /// Standard runtime registration logic should still be implemented in the Condition's OnStart/OnEnd methods.
     /// </summary>

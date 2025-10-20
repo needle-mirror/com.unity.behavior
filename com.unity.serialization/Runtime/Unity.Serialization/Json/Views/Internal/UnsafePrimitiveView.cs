@@ -27,8 +27,8 @@ namespace Unity.Behavior.Serialization.Json.Unsafe
         public bool IsInfinity()
         {
             var ptr = m_Stream->GetBufferPtr<byte>(m_TokenIndex);
-            var len = *(int*) ptr;
-            var chars = (char*) (ptr + sizeof(int));
+            var len = *(int*)ptr;
+            var chars = (char*)(ptr + sizeof(int));
             if (Convert.IsSigned(chars, len))
             {
                 chars++;
@@ -44,8 +44,8 @@ namespace Unity.Behavior.Serialization.Json.Unsafe
         public bool IsNaN()
         {
             var ptr = m_Stream->GetBufferPtr<byte>(m_TokenIndex);
-            var len = *(int*) ptr;
-            var chars = (char*) (ptr + sizeof(int));
+            var len = *(int*)ptr;
+            var chars = (char*)(ptr + sizeof(int));
             return Convert.MatchesNaN(chars, len);
         }
 
@@ -56,8 +56,8 @@ namespace Unity.Behavior.Serialization.Json.Unsafe
         public bool IsNull()
         {
             var ptr = m_Stream->GetBufferPtr<byte>(m_TokenIndex);
-            var len = *(int*) ptr;
-            var chars = (char*) (ptr + sizeof(int));
+            var len = *(int*)ptr;
+            var chars = (char*)(ptr + sizeof(int));
             return Convert.MatchesNull(chars, len);
         }
 
@@ -68,7 +68,7 @@ namespace Unity.Behavior.Serialization.Json.Unsafe
         public bool IsIntegral()
         {
             var ptr = m_Stream->GetBufferPtr<byte>(m_TokenIndex);
-            return Convert.IsIntegral((char*) (ptr + sizeof(int)), *(int*) ptr);
+            return Convert.IsIntegral((char*)(ptr + sizeof(int)), *(int*)ptr);
         }
 
         /// <summary>
@@ -78,7 +78,7 @@ namespace Unity.Behavior.Serialization.Json.Unsafe
         public bool IsDecimal()
         {
             var ptr = m_Stream->GetBufferPtr<byte>(m_TokenIndex);
-            return Convert.IsDecimal((char*) (ptr + sizeof(int)), *(int*) ptr);
+            return Convert.IsDecimal((char*)(ptr + sizeof(int)), *(int*)ptr);
         }
 
         /// <summary>
@@ -88,7 +88,7 @@ namespace Unity.Behavior.Serialization.Json.Unsafe
         public bool IsSigned()
         {
             var ptr = m_Stream->GetBufferPtr<byte>(m_TokenIndex);
-            return Convert.IsSigned((char*) (ptr + sizeof(int)), *(int*) ptr);
+            return Convert.IsSigned((char*)(ptr + sizeof(int)), *(int*)ptr);
         }
 
         /// <summary>
@@ -98,8 +98,8 @@ namespace Unity.Behavior.Serialization.Json.Unsafe
         public bool IsBoolean()
         {
             var ptr = m_Stream->GetBufferPtr<byte>(m_TokenIndex);
-            var length = *(int*) ptr;
-            var chars = (char*) (ptr + sizeof(int));
+            var length = *(int*)ptr;
+            var chars = (char*)(ptr + sizeof(int));
             return Convert.MatchesTrue(chars, length) || Convert.MatchesFalse(chars, length);
         }
 
@@ -111,7 +111,7 @@ namespace Unity.Behavior.Serialization.Json.Unsafe
         public long AsInt64()
         {
             var ptr = m_Stream->GetBufferPtr<byte>(m_TokenIndex);
-            var result = Convert.StrToInt64((char*) (ptr + sizeof(int)), *(int*) ptr, out var value);
+            var result = Convert.StrToInt64((char*)(ptr + sizeof(int)), *(int*)ptr, out var value);
             if (result != Convert.ParseError.None)
             {
                 throw new ParseErrorException($"Failed to parse Value=[{AsString()}] as Type=[{typeof(long)}] ParseError=[{result}]");
@@ -127,7 +127,7 @@ namespace Unity.Behavior.Serialization.Json.Unsafe
         public ulong AsUInt64()
         {
             var ptr = m_Stream->GetBufferPtr<byte>(m_TokenIndex);
-            var result = Convert.StrToUInt64((char*) (ptr + sizeof(int)), *(int*) ptr, out var value);
+            var result = Convert.StrToUInt64((char*)(ptr + sizeof(int)), *(int*)ptr, out var value);
             if (result != Convert.ParseError.None)
             {
                 throw new ParseErrorException($"Failed to parse Value=[{AsString()}] as Type=[{typeof(ulong)}] ParseError=[{result}]");
@@ -143,7 +143,7 @@ namespace Unity.Behavior.Serialization.Json.Unsafe
         public float AsFloat()
         {
             var ptr = m_Stream->GetBufferPtr<byte>(m_TokenIndex);
-            var result = Convert.StrToFloat32((char*) (ptr + sizeof(int)), *(int*) ptr, out var value);
+            var result = Convert.StrToFloat32((char*)(ptr + sizeof(int)), *(int*)ptr, out var value);
             if (result != Convert.ParseError.None)
             {
                 throw new ParseErrorException($"Failed to parse Value=[{AsString()}] as Type=[{typeof(float)}] ParseError=[{result}]");
@@ -171,8 +171,8 @@ namespace Unity.Behavior.Serialization.Json.Unsafe
         public bool AsBoolean()
         {
             var ptr = m_Stream->GetBufferPtr<byte>(m_TokenIndex);
-            var length = *(int*) ptr;
-            var chars = (char*) (ptr + sizeof(int));
+            var length = *(int*)ptr;
+            var chars = (char*)(ptr + sizeof(int));
 
             if (Convert.MatchesTrue(chars, length))
             {
@@ -192,7 +192,7 @@ namespace Unity.Behavior.Serialization.Json.Unsafe
         /// </summary>
         /// <returns>A <see cref="string"/> copy of the primitive.</returns>
         public string AsString() => AsStringView().ToString();
-        
+
         /// <summary>
         /// Gets a readonly view of a stream.
         /// </summary>

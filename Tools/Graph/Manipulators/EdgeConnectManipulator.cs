@@ -13,7 +13,7 @@ namespace Unity.Behavior.GraphFramework
         private Port Target => target as Port;
         private GraphView View => Target.GetFirstAncestorOfType<GraphView>();
         private NodeUI HoveredNode { get; set; }
-        private readonly HashSet<NodeUI> m_ValidConnectTargets = new ();
+        private readonly HashSet<NodeUI> m_ValidConnectTargets = new();
 
         internal EdgeConnectManipulator()
         {
@@ -42,13 +42,13 @@ namespace Unity.Behavior.GraphFramework
             {
                 return;
             }
-            
+
             // todo: not sure if this is needed, cause we should not allow port UIs without port model
             if (Target.PortModel == null)
             {
                 return;
             }
-            
+
             target.CaptureMouse();
             evt.StopImmediatePropagation();
 
@@ -60,7 +60,7 @@ namespace Unity.Behavior.GraphFramework
                 Edge.End = Target;
                 Edge.StartPosition = evt.position;
             }
-            else if(Target.PortModel.IsOutputPort)
+            else if (Target.PortModel.IsOutputPort)
             {
                 Edge.Start = Target;
                 Edge.EndPosition = evt.position;
@@ -87,7 +87,7 @@ namespace Unity.Behavior.GraphFramework
                     Edge.StartPosition = evt.position;
                     Edge.Start = null;
                 }
-                else if(Target.PortModel.IsOutputPort)
+                else if (Target.PortModel.IsOutputPort)
                 {
                     Edge.EndPosition = evt.position;
                     Edge.End = null;
@@ -122,15 +122,15 @@ namespace Unity.Behavior.GraphFramework
             // Remove temporary edge.
             Edge.RemoveFromHierarchy();
             Edge = null;
-            
-            PortDataFlowType targetSide = Target.PortModel.IsInputPort ? PortDataFlowType.Output : PortDataFlowType.Input; 
-            NodeUI nodeAtMousePosition = View.ViewState.Nodes.FirstOrDefault(node => 
+
+            PortDataFlowType targetSide = Target.PortModel.IsInputPort ? PortDataFlowType.Output : PortDataFlowType.Input;
+            NodeUI nodeAtMousePosition = View.ViewState.Nodes.FirstOrDefault(node =>
                 node.ContainsPoint(node.WorldToLocal(evt.position)) && node.GetFirstAncestorOfType<Group>() == null);
             Port portAtMousePosition = nodeAtMousePosition?.GetAllPortUIs()
-                .FirstOrDefault(port => port.IsPortActive && port.PortModel.PortDataFlowType == targetSide 
+                .FirstOrDefault(port => port.IsPortActive && port.PortModel.PortDataFlowType == targetSide
                                                           && port.ContainsPoint(port.WorldToLocal(evt.position)));
             Port portUITarget = null;
-            
+
             // If a valid port exists at the mouse position, use it.
             if (portAtMousePosition != null)
             {
@@ -141,17 +141,17 @@ namespace Unity.Behavior.GraphFramework
                     // They either come from the same node or are in the same sequence.
                     return;
                 }
-                
+
                 portUITarget = portAtMousePosition;
             }
-            // if node and not port, connect to default port 
+            // if node and not port, connect to default port
             else if (nodeAtMousePosition != null)
             {
                 portUITarget = targetSide == PortDataFlowType.Input
                     ? nodeAtMousePosition.GetFirstInputPort()
                     : nodeAtMousePosition.GetFirstOutputPort();
             }
-            
+
             // If no valid port was found or the node is already connected by an edge, show the node search.
             if (portUITarget == null || Target.PortModel.Connections.Contains(portUITarget.PortModel))
             {
@@ -164,34 +164,34 @@ namespace Unity.Behavior.GraphFramework
                 // Don't allow connections to self.
                 return;
             }
-            
+
             // Connect ports.
             PortModel outputPortModel, inputPortModel;
             if (Target.PortModel.IsInputPort)
             {
                 NodeUI outputNodeUI = portUITarget.GetFirstAncestorOfType<NodeUI>();
                 NodeUI inputNodeUI = Target.GetFirstAncestorOfType<NodeUI>();
-                
+
                 if (!AllowCycles && GraphUILayoutUtility.IsAnAncestor(outputNodeUI, inputNodeUI))
                 {
                     // Ensure graph remains acyclic by not linking nodes to their ancestors.
                     return;
                 }
-                
+
                 outputPortModel = portUITarget.PortModel;
                 inputPortModel = Target.PortModel;
-            } 
+            }
             else
             {
                 NodeUI outputNodeUI = Target.GetFirstAncestorOfType<NodeUI>();
                 NodeUI inputNodeUI = portUITarget.GetFirstAncestorOfType<NodeUI>();
-                
+
                 if (!AllowCycles && GraphUILayoutUtility.IsAnAncestor(outputNodeUI, inputNodeUI))
                 {
                     // Ensure graph remains acyclic by not linking nodes to their ancestors.
                     return;
                 }
-                
+
                 outputPortModel = Target.PortModel;
                 inputPortModel = portUITarget.PortModel;
             }
@@ -201,7 +201,7 @@ namespace Unity.Behavior.GraphFramework
                 // Do not allow manually connecting to floating ports models.
                 return;
             }
-            View.Dispatcher.DispatchImmediate(new ConnectEdgeCommand(outputPortModel,inputPortModel));
+            View.Dispatcher.DispatchImmediate(new ConnectEdgeCommand(outputPortModel, inputPortModel));
         }
 
         private void OnKeyDown(KeyDownEvent evt)
@@ -226,14 +226,14 @@ namespace Unity.Behavior.GraphFramework
 
         private Port GetPotentialPortFromNode(NodeUI node)
         {
-            return Target.PortModel.PortDataFlowType == PortDataFlowType.Input ? 
+            return Target.PortModel.PortDataFlowType == PortDataFlowType.Input ?
                 node.GetFirstOutputPort() : node.GetFirstInputPort();
         }
 
         private void PopulatePotentialConnectTargets()
         {
             m_ValidConnectTargets.Clear();
-            
+
             PortDataFlowType targetPortType = Target.PortModel.PortDataFlowType;
             foreach (NodeUI nodeUI in View.ViewState.Nodes)
             {
@@ -271,7 +271,7 @@ namespace Unity.Behavior.GraphFramework
                 }
             }
         }
-        
+
         private void HighlightTargets()
         {
             if (m_ValidConnectTargets == null)
@@ -304,7 +304,7 @@ namespace Unity.Behavior.GraphFramework
                 node.RemoveFromClassList("PotentialNodeConnect");
             }
         }
-        
+
         private void HighlightHoveredTarget(Vector2 mouseWorldPos)
         {
             if (m_ValidConnectTargets == null)
@@ -312,7 +312,7 @@ namespace Unity.Behavior.GraphFramework
                 return;
             }
 
-            if (HoveredNode != null) 
+            if (HoveredNode != null)
             {
                 if (HoveredNode.ContainsPoint(HoveredNode.WorldToLocal(mouseWorldPos)))
                 {

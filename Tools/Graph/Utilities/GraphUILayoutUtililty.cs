@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -10,11 +10,11 @@ namespace Unity.Behavior.GraphFramework
     {
         private const int k_VerticalSpacing = 50;
         private const int k_HorizontalSpacing = 30;
-        
+
         internal class NodePositionData
         {
             public readonly NodeUI Node;
-            public List<NodePositionData> Children = new ();
+            public List<NodePositionData> Children = new();
             public float X;
             public float Y;
             public readonly float Height;
@@ -34,6 +34,10 @@ namespace Unity.Behavior.GraphFramework
                 Y = nodeUI.transform.position.y;
                 Height = nodeUI.layout.height;
                 Width = nodeUI.layout.width;
+                // Fallback in case the layout didn't had time to load before this is used.
+                // Can happens when programatically generating authoring graph.
+                if (float.IsNaN(Height)) Height = k_VerticalSpacing;
+                if (float.IsNaN(Width)) Width = k_HorizontalSpacing;
                 SubgraphWidth = Width;
             }
         }
@@ -52,7 +56,7 @@ namespace Unity.Behavior.GraphFramework
             ScheduleNodeMovement(graphView, graphView.Asset, nodePositions);
         }
 
-        public static void ScheduleNodeMovement(VisualElement element, GraphAsset graphAsset, 
+        public static void ScheduleNodeMovement(VisualElement element, GraphAsset graphAsset,
             IEnumerable<KeyValuePair<NodeUI, Vector2>> nodesWithEndPositions)
         {
             // Early exit if no nodes to move
@@ -155,7 +159,7 @@ namespace Unity.Behavior.GraphFramework
                 return sortedList;
             }
 
-            Dictionary<NodeUI, Vector2> nodeStartAndEndPositions = new ();
+            Dictionary<NodeUI, Vector2> nodeStartAndEndPositions = new();
             foreach (NodeUI node in nodesToCompute)
             {
                 float nodeHeight = node.layout.height;
@@ -169,7 +173,7 @@ namespace Unity.Behavior.GraphFramework
                                              + Math.Max(0, childNodes.Count - 1) * k_HorizontalSpacing;
                 float nextXPosition = nodeCenter.x - 0.5f * totalWidthOfChildren;
                 float nextYPosition = nodeCenter.y + nodeHeight / 2 + k_VerticalSpacing;
-                
+
                 foreach (NodeUI childNodeUI in childNodes)
                 {
                     List<NodeUI> parents = childNodeUI.GetParentNodeUIs().ToList();
@@ -242,10 +246,10 @@ namespace Unity.Behavior.GraphFramework
                 }
                 return sortedList;
             }
-            List<List<NodePositionData>> nodePositionDataByDepth = new ();
-            Queue<Tuple<NodeUI, int>> nodeTraversalQueue = new ();
-            Dictionary<NodeUI, int> nodeToDepth = new ();
-            Dictionary<NodeUI, NodePositionData> nodeToPositionData = new ();
+            List<List<NodePositionData>> nodePositionDataByDepth = new();
+            Queue<Tuple<NodeUI, int>> nodeTraversalQueue = new();
+            Dictionary<NodeUI, int> nodeToDepth = new();
+            Dictionary<NodeUI, NodePositionData> nodeToPositionData = new();
 
             foreach (NodeUI rootUI in nodesToCompute)
             {
@@ -288,7 +292,7 @@ namespace Unity.Behavior.GraphFramework
                     }
                 }
 
-                // Downward -> set y; set child/parent links in virtual tree 
+                // Downward -> set y; set child/parent links in virtual tree
                 float nextY = rootUI.transform.position.y;
                 for (int horizon = 0; horizon <= maxDepth; horizon++)
                 {
@@ -390,7 +394,7 @@ namespace Unity.Behavior.GraphFramework
                     }
                 }
             }
-            
+
             // Return start position, end position data.
             return nodePositionDataByDepth.SelectMany(nodeData => nodeData)
                 .Where(nodeData => nodeData.Node != null) // filter out virtual tree nodes
@@ -400,13 +404,13 @@ namespace Unity.Behavior.GraphFramework
                     return new KeyValuePair<NodeUI, Vector2>(nodeData.Node, new Vector2(x, nodeData.Y));
                 });
         }
-        
+
         private static NodeUI FindCommonAncestorOfParents(NodeUI node, Dictionary<NodeUI, int> nodeDepths)
         {
             Queue<NodeUI> ancestorTraversalQueue = new Queue<NodeUI>();
             HashSet<NodeUI> commonAncestors = new HashSet<NodeUI>(nodeDepths.Keys);
             HashSet<NodeUI> parentAncestors = new HashSet<NodeUI>();
-            
+
             foreach (NodeUI parent in node.GetParentNodeUIs().Where(nodeDepths.ContainsKey))
             {
                 parentAncestors.Clear();
@@ -415,7 +419,7 @@ namespace Unity.Behavior.GraphFramework
                 {
                     if (parentAncestors.Contains(ancestor))
                         continue;
-                    
+
                     parentAncestors.Add(ancestor);
                     foreach (NodeUI ancestorParent in ancestor.GetParentNodeUIs().Where(nodeDepths.ContainsKey))
                     {
@@ -425,15 +429,15 @@ namespace Unity.Behavior.GraphFramework
 
                 commonAncestors.IntersectWith(parentAncestors);
             }
-            
+
             NodeUI deepestCommonAncestor = commonAncestors.Aggregate((a1, a2) => nodeDepths[a1] > nodeDepths[a2] ? a1 : a2);
             return deepestCommonAncestor;
         }
 
         private static List<NodeUI> FindRightMostPathToAncestor(NodeUI node, NodeUI ancestor, Dictionary<NodeUI, int> nodeDepths, Dictionary<NodeUI, NodePositionData> positionData)
         {
-            List<NodeUI> path = new List<NodeUI>{ node }; // start with the node
-            
+            List<NodeUI> path = new List<NodeUI> { node }; // start with the node
+
             NodeUI current = node;
             List<NodeUI> parents = current.GetParentNodeUIs().Where(nodeDepths.ContainsKey).ToList();
             while (current != ancestor && parents.Count > 0)
@@ -472,19 +476,19 @@ namespace Unity.Behavior.GraphFramework
             }
             return false;
         }
-        
+
         internal static Vector2 GetCenterPointOfNodes(List<NodeModel> nodes)
         {
             if (nodes.Count == 1)
             {
                 return nodes[0].Position;
             }
-            
+
             float minX = nodes.Min(n => n.Position.x);
             float maxX = nodes.Max(n => n.Position.x);
             float minY = nodes.Min(n => n.Position.y);
             float maxY = nodes.Max(n => n.Position.y);
-            Vector2 centerPosition = new Vector2((minX + maxX)/2, (minY+ maxY)/2);
+            Vector2 centerPosition = new Vector2((minX + maxX) / 2, (minY + maxY) / 2);
             return centerPosition;
         }
 

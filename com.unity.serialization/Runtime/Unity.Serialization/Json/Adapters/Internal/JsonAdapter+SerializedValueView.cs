@@ -1,4 +1,4 @@
-﻿namespace Unity.Behavior.Serialization.Json
+namespace Unity.Behavior.Serialization.Json
 {
     partial class JsonAdapter : IJsonAdapter<SerializedValueView>
     {
@@ -7,54 +7,54 @@
             switch (value.Type)
             {
                 case TokenType.String:
-                {
-                    context.SerializeValue(value.AsStringView().ToString());
-                    break;
-                }
-                case TokenType.Object:
-                {
-                    context.SerializeValue(value.AsObjectView());
-                    break;
-                }
-                case TokenType.Array:
-                {
-                    context.SerializeValue(value.AsArrayView());
-                    break;
-                }
-                case TokenType.Primitive:
-                {
-                    var p = value.AsPrimitiveView();
-                    
-                    if (p.IsIntegral())
                     {
-                        if (p.IsSigned())
+                        context.SerializeValue(value.AsStringView().ToString());
+                        break;
+                    }
+                case TokenType.Object:
+                    {
+                        context.SerializeValue(value.AsObjectView());
+                        break;
+                    }
+                case TokenType.Array:
+                    {
+                        context.SerializeValue(value.AsArrayView());
+                        break;
+                    }
+                case TokenType.Primitive:
+                    {
+                        var p = value.AsPrimitiveView();
+
+                        if (p.IsIntegral())
                         {
-                            context.SerializeValue(value.AsInt64());
+                            if (p.IsSigned())
+                            {
+                                context.SerializeValue(value.AsInt64());
+                            }
+                            else
+                            {
+                                context.SerializeValue(value.AsUInt64());
+                            }
+                        }
+                        else if (p.IsDecimal() || p.IsInfinity() || p.IsNaN())
+                        {
+                            context.SerializeValue(value.AsDouble());
+                        }
+                        else if (p.IsBoolean())
+                        {
+                            context.SerializeValue(value.AsBoolean());
                         }
                         else
                         {
-                            context.SerializeValue(value.AsUInt64());
+                            context.Writer.WriteNull();
                         }
+                        break;
                     }
-                    else if (p.IsDecimal() || p.IsInfinity() || p.IsNaN())
-                    {
-                        context.SerializeValue(value.AsDouble());
-                    }
-                    else if (p.IsBoolean())
-                    {
-                        context.SerializeValue(value.AsBoolean());
-                    }
-                    else
+                default:
                     {
                         context.Writer.WriteNull();
+                        break;
                     }
-                    break;
-                }
-                default:
-                {
-                    context.Writer.WriteNull();
-                    break;
-                }
             }
         }
 

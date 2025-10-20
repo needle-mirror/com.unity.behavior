@@ -14,7 +14,7 @@ namespace Unity.Behavior.Serialization.Json
 #if UNITY_EDITOR
         [UnityEditor.InitializeOnLoadMethod]
 #endif
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]  
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void RegisterPropertyBag()
         {
             if (k_Registered) return;
@@ -34,7 +34,7 @@ namespace Unity.Behavior.Serialization.Json
 #if UNITY_EDITOR
         [UnityEditor.InitializeOnLoadMethod]
 #endif
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]  
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void RegisterPropertyBag()
         {
             if (k_Registered) return;

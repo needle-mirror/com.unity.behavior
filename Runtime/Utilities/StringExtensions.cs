@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using System.Text.RegularExpressions;
 using UnityEngine;
 
@@ -15,7 +15,7 @@ namespace Unity.Behavior
             var remainingChars = input.Substring(1);
             return firstChar + remainingChars;
         }
-        
+
         internal static void CopyToClipboard(this string text)
         {
             // Uses IMGUI control.
@@ -23,7 +23,7 @@ namespace Unity.Behavior
             {
                 text = text
             };
-            
+
             textEditor.SelectAll();
             textEditor.Copy();
         }

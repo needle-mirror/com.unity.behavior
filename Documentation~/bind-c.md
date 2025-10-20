@@ -8,8 +8,8 @@ Communication between behavior graphs and C# scripts is key to creating complex 
 
 You can use two techniques to integrate these two systems:
 
-* [Direct binding to a `BehaviorGraphAgent` for instance-specific interactions](#use-c-binding-to-a-particular-instance-of-behaviorgraphagent)
-* [Event Channel assets for global event propagation](#c-binding-using-event-channel-asset)
+* [Use C# binding to a particular instance of `BehaviorGraphAgent`](#use-c-binding-to-a-particular-instance-of-behaviorgraphagent)
+* [C# binding using Event Channel asset](#c-binding-using-event-channel-asset)
 
 These methods enable GameObjects to share information and react to changes in real time.
 
@@ -30,17 +30,17 @@ private BlackboardVariable<StateExample> m_stateBBV;
 
 private void OnEnable()
 {
-    if (m_Agent.BlackboardReference.GetVariable("StateEventChannel", out m_stateEventChannelBBV))
+    if (m_Agent.GetVariable("StateEventChannel", out m_stateEventChannelBBV))
         m_stateEventChannelBBV.Value.Event += OnStateEvent;
 
-    if (m_Agent.BlackboardReference.GetVariable("StateToReact", out m_stateBBV))
+    if (m_Agent.GetVariable("StateToReact", out m_stateBBV))
         m_stateBBV.OnValueChanged += OnStateValueChanged;
 }
 
 private void OnDisable()
 {
     if (m_stateEventChannelBBV != null)
-        m_stateEventChannelBBV.OnValueChanged -= OnStateChanged;
+        m_stateEventChannelBBV.Value.Event -= OnStateEvent;
     if (m_stateBBV != null)
         m_stateBBV.OnValueChanged -= OnStateValueChanged;
 }

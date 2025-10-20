@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEditor;
-using UnityEditor.Graphs;
 using UnityEngine;
 
 namespace Unity.Behavior
@@ -13,7 +12,7 @@ namespace Unity.Behavior
     internal class RuntimeBehaviorGraphEditor : Editor
     {
         private BehaviorGraph Graph => target as BehaviorGraph;
-        private readonly Dictionary<Node, int> m_DisplayID = new ();
+        private readonly Dictionary<Node, int> m_DisplayID = new();
         private int m_LastID;
 
         /// <inheritdoc />
@@ -37,10 +36,11 @@ namespace Unity.Behavior
                 }
                 else
                 {
+                    EditorGUILayout.LabelField(string.Empty, GUI.skin.horizontalSlider);
                     EditorGUILayout.LabelField($"Subgraph: {authoringGraph?.name} [{i}]");
                 }
+
                 DisplayNode(graph.Root);
-                EditorGUILayout.LabelField(string.Empty, GUI.skin.horizontalSlider);
             }
         }
 
@@ -72,7 +72,7 @@ namespace Unity.Behavior
                     BehaviorGraphAssetRegistry.TryGetAssetFromId(runSubgraph.Subgraph.AuthoringAssetID, out var authoringGraph);
                     subgraphLabel = $"{authoringGraph?.name} [{Graph.Graphs.IndexOf(runSubgraph.Subgraph)}]";
                 }
-                
+
                 EditorGUILayout.LabelField($"{node.GetType().Name} (#{id}) : {subgraphLabel}");
             }
             else
@@ -100,5 +100,5 @@ namespace Unity.Behavior
             }
             EditorGUI.indentLevel--;
         }
-    }   
+    }
 }

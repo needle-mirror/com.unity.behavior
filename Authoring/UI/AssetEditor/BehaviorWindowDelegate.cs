@@ -3,13 +3,13 @@ namespace Unity.Behavior
     internal static class BehaviorWindowDelegate
     {
         internal delegate void ShowSaveIndicatorHandler(BehaviorAuthoringGraph asset);
-        
+
         internal delegate void OpenHandler(BehaviorAuthoringGraph itemData);
-        
-        internal static ShowSaveIndicatorHandler showSaveIndicatorHandler; 
-        
+
+        internal static ShowSaveIndicatorHandler showSaveIndicatorHandler;
+
         internal static OpenHandler openHandler;
-        
+
         public static void ShowSaveIndicator(BehaviorAuthoringGraph asset)
         {
             showSaveIndicatorHandler?.Invoke(asset);

@@ -63,7 +63,7 @@ namespace Unity.Behavior.GraphFramework
             {
                 sequence = selectedSequenceGroup.Model as SequenceNodeModel;
             }
-                
+
             Target.ShowNodeSearch(pos, insertToSequence: sequence);
         }
     }

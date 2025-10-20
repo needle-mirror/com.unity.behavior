@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.AppUI.UI;
@@ -18,14 +18,14 @@ namespace Unity.Behavior
     internal partial class StoryEditor : VisualElement
     {
 #if !ENABLE_UXML_UI_SERIALIZATION
-        internal new class UxmlFactory : UxmlFactory<StoryEditor, UxmlTraits> {}
+        internal new class UxmlFactory : UxmlFactory<StoryEditor, UxmlTraits> { }
 #endif
         private const string k_VisualTreeAssetPath = "Packages/com.unity.behavior/Authoring/UI/AssetEditor/Assets/StoryEditorLayout.uxml";
         private const string k_StyleSheetAssetPath = "Packages/com.unity.behavior/Authoring/UI/AssetEditor/Assets/StoryEditorStylesheet.uss";
 
         private const string k_StoryFieldName = "StoryField";
         private const string k_PropertiesContainerName = "PropertiesContainer";
-        
+
         protected readonly StoryFieldWithValidation StoryField;
         private List<BlackboardOption> m_SupportedTypes;
         public List<BlackboardOption> SupportedTypes
@@ -42,16 +42,16 @@ namespace Unity.Behavior
         internal List<SearchView.Item> m_SupportedTypesSearchItems;
 
         internal WordTypeSentence Sentence { get; private set; }
-        
+
         internal event System.Action OnPropertyValueChanged;
 
         public StoryEditor()
         {
             styleSheets.Add(ResourceLoadAPI.Load<StyleSheet>(k_StyleSheetAssetPath));
             ResourceLoadAPI.Load<VisualTreeAsset>(k_VisualTreeAssetPath).CloneTree(this);
-            
+
             Sentence = new WordTypeSentence();
-            
+
             StoryField = this.Q<StoryFieldWithValidation>(k_StoryFieldName);
             StoryField.Field.RegisterValueChangingCallback(OnStoryChanged);
             RefreshPropertiesUI();
@@ -74,7 +74,7 @@ namespace Unity.Behavior
         {
             var propertiesContainer = this.Q<VisualElement>(k_PropertiesContainerName);
             propertiesContainer.Clear();
-            
+
             if (!Sentence.WordTypePairs.Any())
             {
                 return;
@@ -102,7 +102,8 @@ namespace Unity.Behavior
                 actionButton.trailingIcon = "caret-down";
                 actionButton.trailingIconVariant = IconVariant.Fill;
                 actionButton.Q<Icon>("appui-actionbutton__trailing-icon").AddToClassList("appui-picker__caret");
-                actionButton.clicked += () => {
+                actionButton.clicked += () =>
+                {
                     void OnSearchItemSelected(SearchView.Item item)
                     {
                         OnPropertyDropdownValueChanged(actionButton, item);
@@ -116,7 +117,7 @@ namespace Unity.Behavior
                     var dropdownIndex = SupportedTypes.FindIndex(a => a.Type.Type == wordTypePair.Type);
                     actionButton.label = SupportedTypes[dropdownIndex].Name;
                 }
-                
+
                 propertyUI.Add(actionButton);
                 return propertyUI;
             }
@@ -142,10 +143,10 @@ namespace Unity.Behavior
             bool listIconIsSetup = false;
             bool otherIconIsSetup = false;
             bool enumIconIsSetup = false;
-         
+
             foreach (var item in SupportedTypes)
             {
-                SetupIconsCategories(item, ref basicTypesIconIsSetup, ref vectorTypesIconIsSetup, 
+                SetupIconsCategories(item, ref basicTypesIconIsSetup, ref vectorTypesIconIsSetup,
                     ref resourcesIconIsSetup, ref listIconIsSetup, ref otherIconIsSetup, ref enumIconIsSetup);
 
                 if (item.IconImage != null)
@@ -180,7 +181,7 @@ namespace Unity.Behavior
                 {
                     iconPath = "Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/d_Vector3.png";
                 }
-                    
+
                 m_SupportedTypesSearchItems.Add(new SearchView.Item("Vector Types", ResourceLoadAPI.Load<Texture2D>(iconPath), data: null));
                 vectorTypesIconIsSetup = true;
             }
@@ -191,7 +192,7 @@ namespace Unity.Behavior
                 {
                     iconPath = "Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/d_source.png";
                 }
-                    
+
                 m_SupportedTypesSearchItems.Add(new SearchView.Item("Resources", ResourceLoadAPI.Load<Texture2D>(iconPath), data: null));
                 resourcesIconIsSetup = true;
             }
@@ -202,7 +203,7 @@ namespace Unity.Behavior
                 {
                     iconPath = "Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/d_list.png";
                 }
-                    
+
                 m_SupportedTypesSearchItems.Add(new SearchView.Item("List", ResourceLoadAPI.Load<Texture2D>(iconPath), data: null));
                 listIconIsSetup = true;
             }
@@ -213,7 +214,7 @@ namespace Unity.Behavior
                 {
                     iconPath = "Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/d_others.png";
                 }
-                    
+
                 m_SupportedTypesSearchItems.Add(new SearchView.Item("Other", ResourceLoadAPI.Load<Texture2D>(iconPath), data: null));
                 otherIconIsSetup = true;
             }
@@ -224,7 +225,7 @@ namespace Unity.Behavior
                 {
                     iconPath = "Packages/com.unity.behavior/Blackboard/Assets/Icons/Variables/d_enum.png";
                 }
-                    
+
                 m_SupportedTypesSearchItems.Add(new SearchView.Item("Enumeration", ResourceLoadAPI.Load<Texture2D>(iconPath), data: null));
                 enumIconIsSetup = true;
             }

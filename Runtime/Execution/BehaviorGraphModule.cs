@@ -21,7 +21,7 @@ namespace Unity.Behavior
         public SerializableGUID AuthoringAssetID;
 
 #if UNITY_EDITOR
-        [SerializeReference,DontCreateProperty]
+        [SerializeField, DontCreateProperty]
         private BehaviorGraphDebugInfo m_DebugInfo;
         public BehaviorGraphDebugInfo DebugInfo { get => m_DebugInfo; set => m_DebugInfo = value; }
 #endif
@@ -42,9 +42,11 @@ namespace Unity.Behavior
         /// </summary>
         internal Blackboard Blackboard => BlackboardReference.Blackboard;
 
-        [CreateProperty, SerializeReference] [FormerlySerializedAs("ProcessedNodes")]
+        [CreateProperty, SerializeReference]
+        [FormerlySerializedAs("ProcessedNodes")]
         internal List<Node> m_ActiveNodes = new List<Node>(4);
-        [CreateProperty, SerializeReference] [FormerlySerializedAs("m_RunningNodes")]
+        [CreateProperty, SerializeReference]
+        [FormerlySerializedAs("m_RunningNodes")]
         private List<Node> m_NodesToTick = new List<Node>(4);
         [CreateProperty, SerializeReference]
         private Stack<Node> m_NodesToEnd = new Stack<Node>(1);
@@ -54,7 +56,8 @@ namespace Unity.Behavior
         [CreateProperty]
         private bool m_NodesChanged;
 
-        [SerializeField] [HideInInspector]
+        [SerializeField]
+        [HideInInspector]
         private long m_VersionTimestamp;
         public long VersionTimestamp
         {
@@ -438,7 +441,7 @@ namespace Unity.Behavior
 
         public void Serialize()
         {
-            HashSet<Node> candidates = new (10);
+            HashSet<Node> candidates = new(10);
             foreach (Node node in m_ActiveNodes)
             {
                 GatherActiveNodes(node, ref candidates);

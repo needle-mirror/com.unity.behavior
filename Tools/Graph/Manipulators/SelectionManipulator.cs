@@ -73,7 +73,7 @@ namespace Unity.Behavior.GraphFramework
                         {
                             parentSequence.BringToFront();
                         }
-                    }    
+                    }
                 }
 
                 // Set the timer waiting for second click
@@ -96,13 +96,13 @@ namespace Unity.Behavior.GraphFramework
             {
                 return;
             }
-            
+
             // we try selection on node first, and try edge only if node selection doesn't succeed
             if (!TryHandleSelection(nodeAt))
             {
                 TryHandleSelection(edgeAt);
             }
-            
+
             bool TryHandleSelection(GraphElement element)
             {
                 // no element => nothing to do
@@ -141,7 +141,7 @@ namespace Unity.Behavior.GraphFramework
             if (nodeAt == null && edgeAt == null)
             {
                 justSelectedElement = null;
-                Target.ViewState.DeselectAll(); 
+                Target.ViewState.DeselectAll();
                 return;
             }
 
@@ -175,7 +175,7 @@ namespace Unity.Behavior.GraphFramework
                 return true;
             }
         }
-        
+
         private static bool HasModifier(IPointerEvent evt) => evt.shiftKey || evt.ctrlKey || evt.commandKey;
 
         private void OnDoublePointerDownEvent(PointerDownEvent evt)
@@ -198,20 +198,20 @@ namespace Unity.Behavior.GraphFramework
         }
 
         private bool IsSelected(GraphElement element) => Target.ViewState.Selected.Contains(element);
-        
+
         private void Select(GraphElement elementToSelect)
         {
             Target.ViewState.AddSelected(elementToSelect);
             elementToSelect.AddToClassList("Selected");
             elementToSelect.OnSelect();
         }
-        
+
         private void SingleSelect(GraphElement element)
         {
             Target.ViewState.DeselectAll();
             Select(element);
         }
-        
+
         private void Deselect(GraphElement elementToDeselect)
         {
             Target.ViewState.RemoveSelected(elementToDeselect);

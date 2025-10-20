@@ -21,7 +21,7 @@ namespace Unity.Behavior
             {
                 subgraphNodeModel.NodeType = typeof(RunSubgraph);
             }
-            
+
             var node = Activator.CreateInstance(subgraphNodeModel.NodeType) as Node;
 
             return node;
@@ -32,7 +32,7 @@ namespace Unity.Behavior
             SubgraphNodeModel subgraphNodeModel = nodeModel as SubgraphNodeModel;
 
             subgraphNodeModel.ValidateCachedRuntimeGraph();
-            
+
             if (subgraphNodeModel.IsDynamic)
             {
                 BehaviorGraphNodeModel.FieldModel graphField = null;
@@ -56,7 +56,7 @@ namespace Unity.Behavior
                 {
                     subgraphDynamic!.RequiredBlackboard = subgraphNodeModel.RequiredBlackboard.BuildRuntimeBlackboard();
                 }
-                
+
                 subgraphDynamic!.DynamicOverrides = GetDynamicOverrides(subgraphNodeModel, graphAssetProcessor);
             }
             else
@@ -69,7 +69,7 @@ namespace Unity.Behavior
                 BehaviorAuthoringGraph subgraphAsset = subgraphNodeModel.SubgraphAuthoringAsset;
 
                 RunSubgraph runSubgraph = node as RunSubgraph;
-                GraphAssetProcessor subgraphAssetProcessor = new GraphAssetProcessor(subgraphAsset, graphAssetProcessor.Graph);
+                GraphAssetProcessor subgraphAssetProcessor = GraphAssetProcessor.CreateInstanceForNewSubgraph(subgraphAsset, graphAssetProcessor);
                 subgraphAssetProcessor.Cleanup();
                 var variableOverridesFromFields = GetVariableOverridesFromFields(graphAssetProcessor, subgraphNodeModel, subgraphAsset);
                 subgraphAssetProcessor.InitializeBlackboard(variableOverridesFromFields);
@@ -97,12 +97,12 @@ namespace Unity.Behavior
                     variableToAssign.Name = fieldModel.FieldName;
                     variableToAssign.GUID = SerializableGUID.Generate();
                 }
-                
+
                 VariableModel variableToReplace =
                     // Find a matching blackboard variable by name/type, then assign the new variable as an override.
                     subgraphAsset.Blackboard.Variables.FirstOrDefault(variable =>
                         variable.Type == variableToAssign.Type
-                        && variable.Name.Equals(fieldModel.FieldName, StringComparison.CurrentCultureIgnoreCase) 
+                        && variable.Name.Equals(fieldModel.FieldName, StringComparison.CurrentCultureIgnoreCase)
                         && variable.IsExposed);
 
                 if (variableToReplace != null)
@@ -112,7 +112,7 @@ namespace Unity.Behavior
                     {
                         continue;
                     }
-                    
+
                     variableOverrides.TryAdd(variableToReplace.ID, variableToAssign);
                     variableToReplace = null;
                 }
@@ -122,7 +122,7 @@ namespace Unity.Behavior
                 {
                     variableToReplace = blackboard.Variables.FirstOrDefault(variable =>
                         variable.Type == variableToAssign.Type
-                        && variable.Name.Equals(fieldModel.FieldName, StringComparison.CurrentCultureIgnoreCase) 
+                        && variable.Name.Equals(fieldModel.FieldName, StringComparison.CurrentCultureIgnoreCase)
                         && variable.IsExposed);
                 }
 
@@ -133,7 +133,7 @@ namespace Unity.Behavior
                     {
                         continue;
                     }
-                    
+
                     variableOverrides.TryAdd(variableToReplace.ID, variableToAssign);
                 }
             }
@@ -143,8 +143,8 @@ namespace Unity.Behavior
 
         private List<DynamicBlackboardVariableOverride> GetDynamicOverrides(SubgraphNodeModel subgraphNodeModel, GraphAssetProcessor graphAssetProcessor)
         {
-            List<DynamicBlackboardVariableOverride> dynamicOverrides = new ();
-            
+            List<DynamicBlackboardVariableOverride> dynamicOverrides = new();
+
             graphAssetProcessor.BlackboardReference.GetVariable(BehaviorGraph.k_GraphSelfOwnerID, out BlackboardVariable selfVariable);
             if (selfVariable != null)
             {
@@ -154,7 +154,7 @@ namespace Unity.Behavior
                     Variable = selfVariable,
                 });
             }
-            
+
             foreach (BehaviorGraphNodeModel.FieldModel fieldModel in subgraphNodeModel.Fields)
             {
                 if (!IsFieldVariableOverride(fieldModel))
@@ -167,13 +167,13 @@ namespace Unity.Behavior
                 {
                     continue;
                 }
-                
+
                 DynamicBlackboardVariableOverride dynamicOverride = new DynamicBlackboardVariableOverride
                 {
                     Name = fieldModel.FieldName,
                     Variable = variableToAssign
                 };
-                
+
                 dynamicOverrides.Add(dynamicOverride);
             }
 

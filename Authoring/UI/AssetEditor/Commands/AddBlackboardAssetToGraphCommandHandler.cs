@@ -10,7 +10,7 @@ namespace Unity.Behavior
             {
                 return false;
             }
-            
+
             if (!command.GraphAsset.m_Blackboards.Contains(command.blackboardAuthoringAsset))
             {
                 BehaviorBlackboardAuthoringAsset assetReference = command.blackboardAuthoringAsset;

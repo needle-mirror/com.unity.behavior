@@ -2,7 +2,7 @@
 uid: behavior-install
 ---
 
-# Install Unity Behavior with the Package Manager
+# Install Unity Behavior
 
 To install Unity Behavior using the Package Manager, perform the following steps:
 

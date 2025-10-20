@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Unity.Behavior.GraphFramework
 {
@@ -8,7 +8,7 @@ namespace Unity.Behavior.GraphFramework
         public Type VariableType { get; }
         public object[] Args { get; }
         public BaseLinkField Field { get; }
-        
+
         public CreateVariableFromLinkFieldCommand(BaseLinkField field, string name, Type variableType, params object[] args) : base(true)
         {
             Field = field;

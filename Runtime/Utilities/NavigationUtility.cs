@@ -19,7 +19,7 @@ namespace Unity.Behavior
         /// This helps eliminate animator jitter when the agent is nearly stationary or making very minor adjustments.</param>
         /// <param name="explicitSpeed">Optional explicit speed value to set (-1 means use movement speed)</param>
         /// <returns>True if animator was updated, false otherwise</returns>
-        public static bool UpdateAnimatorSpeed(Animator animator, string speedParameterName, NavMeshAgent navMeshAgent, float currentSpeed, float minSpeedThreshold = 0.1f, 
+        public static bool UpdateAnimatorSpeed(Animator animator, string speedParameterName, NavMeshAgent navMeshAgent, float currentSpeed, float minSpeedThreshold = 0.1f,
             float explicitSpeed = -1f)
         {
             if (animator == null || string.IsNullOrEmpty(speedParameterName))

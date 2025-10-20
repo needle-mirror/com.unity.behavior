@@ -8,9 +8,9 @@ namespace Unity.Behavior
     /// </summary>
     [Serializable, GeneratePropertyBag]
     [NodeDescription(
-        name: "Succeeder", 
-        description: "Forces success for the child node.", 
-        icon: "Icons/success", 
+        name: "Succeeder",
+        description: "Forces success for the child node.",
+        icon: "Icons/success",
         id: "2a2fadb041974c9a9bc85921a31f8762")]
     internal partial class SucceederModifier : Modifier
     {
@@ -19,7 +19,7 @@ namespace Unity.Behavior
         {
             if (Child == null)
             {
-                return Status.Failure; 
+                return Status.Failure;
             }
             Status childStatus = StartNode(Child);
             return SucceedIfChildIsComplete(childStatus);

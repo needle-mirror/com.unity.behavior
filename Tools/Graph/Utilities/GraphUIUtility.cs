@@ -1,4 +1,4 @@
-﻿using Unity.AppUI.UI;
+using Unity.AppUI.UI;
 using UnityEngine;
 
 namespace Unity.Behavior.GraphFramework
@@ -6,7 +6,7 @@ namespace Unity.Behavior.GraphFramework
     internal static class GraphUIUtility
     {
         private const float k_PopupWindowPadding = 25f;
-        
+
         internal static void PlacePopupAt<T>(AnchorPopup<T> popup, Vector2 position, float width, float height) where T : AnchorPopup<T>
         {
             Panel appUiPanel = popup.anchor.GetFirstAncestorOfType<Panel>();
@@ -18,6 +18,6 @@ namespace Unity.Behavior.GraphFramework
             popup.SetPlacement(PopoverPlacement.BottomLeft).
                 SetCrossOffset(Mathf.RoundToInt(offset.x)).
                 SetOffset(Mathf.RoundToInt(offset.y - anchorRect.height));
-        }   
+        }
     }
 }

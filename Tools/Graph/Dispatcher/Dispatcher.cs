@@ -15,19 +15,19 @@ namespace Unity.Behavior.GraphFramework
             m_DispatcherContext = context;
         }
 
-        public void RegisterHandler<CommandType, HandlerType>() 
+        public void RegisterHandler<CommandType, HandlerType>()
             where CommandType : Command
             where HandlerType : CommandHandler<CommandType>, new()
         {
             RegisterHandler<CommandType, HandlerType>(new HandlerType());
         }
 
-        public void RegisterHandler<CommandType, HandlerType>(HandlerType handler) 
+        public void RegisterHandler<CommandType, HandlerType>(HandlerType handler)
             where CommandType : Command
-            where HandlerType : CommandHandler<CommandType>                                                               
+            where HandlerType : CommandHandler<CommandType>
         {
             handler.DispatcherContext = m_DispatcherContext;
-            if (m_CommandTypeToHandlers.TryGetValue(typeof(CommandType), out List<BaseCommandHandler> commandHandlers)) 
+            if (m_CommandTypeToHandlers.TryGetValue(typeof(CommandType), out List<BaseCommandHandler> commandHandlers))
             {
                 commandHandlers.Add(handler);
             }
@@ -40,9 +40,9 @@ namespace Unity.Behavior.GraphFramework
 
         public void UnregisterHandler<CommandType, HandlerType>()
             where CommandType : Command
-            where HandlerType : CommandHandler<CommandType>                     
+            where HandlerType : CommandHandler<CommandType>
         {
-            if (m_CommandTypeToHandlers.TryGetValue(typeof(CommandType), out List<BaseCommandHandler> commandHandlers)) 
+            if (m_CommandTypeToHandlers.TryGetValue(typeof(CommandType), out List<BaseCommandHandler> commandHandlers))
             {
                 commandHandlers.RemoveAll(handler => handler is HandlerType);
             }
@@ -135,7 +135,7 @@ namespace Unity.Behavior.GraphFramework
                                 (m_DispatcherContext.GraphAsset ? $" ({UnityEditor.AssetDatabase.GetAssetPath(m_DispatcherContext.GraphAsset)})" : string.Empty);
             string outstandingString = setHasOutstandingChanges ? "(outstanding) " : string.Empty;
             string commandName = command.GetType().Name.Replace("Command", "") + $"{outstandingString}" + assetName;
-            
+
             // Start a new undo group only if this is the first command in a chain
             if (m_IsProcessingCommandChain == false)
             {

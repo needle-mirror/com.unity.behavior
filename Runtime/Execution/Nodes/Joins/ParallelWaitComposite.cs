@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Unity.Properties;
 
 namespace Unity.Behavior
@@ -68,7 +68,7 @@ namespace Unity.Behavior
         {
             var currentFrame = UnityEngine.Time.unscaledTimeAsDouble;
             bool isChildRunning = Child != null && Child.IsRunning;
-            if (!isChildRunning && CurrentStatus != Status.Uninitialized && m_StartCount == 0 && !HasCompletedParent()  && currentFrame != m_LastFrameTimestamp)
+            if (!isChildRunning && CurrentStatus != Status.Uninitialized && m_StartCount == 0 && !HasCompletedParent() && currentFrame != m_LastFrameTimestamp)
             {
                 m_PreviousStatus = Status.Uninitialized;
                 base.ResetStatus();

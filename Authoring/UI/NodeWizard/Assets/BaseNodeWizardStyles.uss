@@ -1,5 +1,5 @@
 .BaseNodeWizard {
-  
+
 }
 
 .Region {
@@ -8,7 +8,7 @@
 }
 
 .Region > Label {
-  
+
 }
 
 .Region TextField {
@@ -135,4 +135,3 @@ Dropdown LocalizedTextElement {
 .Invalid DropdownItem {
   color: var(--appui-destructive-100);
 }
-

@@ -8,7 +8,7 @@ namespace Unity.Behavior
     {
         [SerializeReference]
         protected BlackboardVariable<OriginalType> m_SourceVariable;
-        
+
         protected CastType m_CachedValue;
         private bool m_CallbackRegistered = false;
 
@@ -30,7 +30,7 @@ namespace Unity.Behavior
                     m_CallbackRegistered = true;
                     OnSourceValueChanged();
                 }
-                
+
                 return m_CachedValue;
             }
             set

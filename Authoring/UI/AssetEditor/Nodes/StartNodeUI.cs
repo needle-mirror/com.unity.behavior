@@ -7,8 +7,8 @@ namespace Unity.Behavior
     [NodeUI(typeof(StartNodeModel))]
     internal class StartNodeUI : BehaviorNodeUI
     {
-        private Toggle m_RepeatToggle; 
-        
+        private Toggle m_RepeatToggle;
+
         public StartNodeUI(NodeModel nodeModel) : base(nodeModel)
         {
             AddToClassList("Start");
@@ -39,7 +39,7 @@ namespace Unity.Behavior
         internal override void UpdateLinkFields()
         {
             base.UpdateLinkFields();
-            
+
             // A special case where we need to set the non-LinkField Toggle element to the updated value from the model.
             StartNodeModel startModel = Model as StartNodeModel;
             m_RepeatToggle.SetValueWithoutNotify(startModel.Repeat);

@@ -10,7 +10,7 @@ namespace Unity.Behavior
         public FloatingPortNodeUI(NodeModel nodeModel) : base(nodeModel)
         {
             AddToClassList("Modifier");
-            
+
             if (IsFloatingConditionNodePort())
             {
                 AddToClassList("Condition");
@@ -31,7 +31,7 @@ namespace Unity.Behavior
                 inputPort.pickingMode = PickingMode.Ignore;
             }
         }
-        
+
         private bool IsFloatingConditionNodePort()
         {
             return Model != null && Model.HasIncomingConnections && (Model.IncomingConnections.First().NodeModel is BranchingConditionNodeModel || Model.IncomingConnections.First().NodeModel is SwitchNodeModel);

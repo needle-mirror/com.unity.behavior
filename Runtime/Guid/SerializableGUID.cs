@@ -81,7 +81,7 @@ namespace Unity.Behavior.GraphFramework
             return (m_Value0, m_Value1);
         }
 
-        [FieldOffset(0), HideInInspector] // Hash128 causes warnings when in the debug inspector view if not hidden. 
+        [FieldOffset(0), HideInInspector] // Hash128 causes warnings when in the debug inspector view if not hidden.
         Hash128 m_Hash128;
 
         [SerializeField]

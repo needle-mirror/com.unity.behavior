@@ -18,18 +18,18 @@ namespace Unity.Behavior.GraphFramework
 #endif
 
 #if !ENABLE_UXML_UI_SERIALIZATION
-        internal new class UxmlFactory : UxmlFactory<EditableLabel, UxmlTraits> {}
+        internal new class UxmlFactory : UxmlFactory<EditableLabel, UxmlTraits> { }
 
         public new class UxmlTraits : VisualElement.UxmlTraits
         {
             private readonly UxmlStringAttributeDescription m_Text = new UxmlStringAttributeDescription
-                { name = "text" };
+            { name = "text" };
 
             private readonly UxmlBoolAttributeDescription m_Multiline = new UxmlBoolAttributeDescription
-                { name = "multiline" };
+            { name = "multiline" };
 
             private readonly UxmlBoolAttributeDescription m_Delayed = new UxmlBoolAttributeDescription
-                { name = "delayed" };
+            { name = "delayed" };
 
             public override void Init(VisualElement ve, IUxmlAttributes bag, CreationContext cc)
             {
@@ -49,10 +49,10 @@ namespace Unity.Behavior.GraphFramework
 
         /// <summary>
         /// Gets or sets the text displayed in the editable label.
-        /// IMPORTANT: Due to internal UITK limitations, setting this property will always trigger 
+        /// IMPORTANT: Due to internal UITK limitations, setting this property will always trigger
         /// change notifications because Label.text doesn't provide a SetValueWithoutNotify implementation.
         /// If you need to distinguish between programmatic changes and user input changes,
-        /// subscribe to the <see cref="UserInputTextChanged"/> event instead, which only fires 
+        /// subscribe to the <see cref="UserInputTextChanged"/> event instead, which only fires
         /// when changes come from user interactions with the field.
         /// </summary>
 #if ENABLE_UXML_UI_SERIALIZATION
@@ -67,7 +67,7 @@ namespace Unity.Behavior.GraphFramework
                 var changed = m_Label.text != value;
                 m_Label.text = value;
                 m_Field.SetValueWithoutNotify(value);
-                
+
 #if ENABLE_UXML_UI_SERIALIZATION
                 if (changed)
                     NotifyPropertyChanged(in textProperty);
@@ -86,7 +86,7 @@ namespace Unity.Behavior.GraphFramework
             {
                 var changed = m_Field.isDelayed != value;
                 m_Field.isDelayed = value;
-                
+
 #if ENABLE_UXML_UI_SERIALIZATION
                 if (changed)
                     NotifyPropertyChanged(in isDelayedProperty);
@@ -105,7 +105,7 @@ namespace Unity.Behavior.GraphFramework
             {
                 var changed = m_Field.multiline != value;
                 m_Field.multiline = value;
-                
+
 #if ENABLE_UXML_UI_SERIALIZATION
                 if (changed)
                     NotifyPropertyChanged(in multilineProperty);

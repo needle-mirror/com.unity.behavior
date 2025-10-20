@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 using Unity.Behavior.GraphFramework;
 
 namespace Unity.Behavior
 {
     /// <summary>
-    /// The ConditionAttribute contains metadata for conditions used in Behavior graphs. 
+    /// The ConditionAttribute contains metadata for conditions used in Behavior graphs.
     /// </summary>
     [AttributeUsage(AttributeTargets.Class)]
     public class ConditionAttribute : Attribute
@@ -32,12 +32,12 @@ namespace Unity.Behavior
         /// The name of the condition.
         /// </summary>
         public string Name { get; }
-        
+
         /// <summary>
         /// The description of the condition's function.
         /// </summary>
         public string Description { get; }
-        
+
         /// <summary>
         /// The condition message that describes the condition that has occured.
         /// </summary>

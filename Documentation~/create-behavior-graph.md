@@ -11,13 +11,13 @@ To create a new behavior graph, perform the following steps:
 
    ![Create behavior graph](Images/create-graph.png)
 
-   Unity Behavior can create the new asset (behavior graph) in either of the following two places: 
-   
+   Unity Behavior can create the new asset (behavior graph) in either of the following two places:
+
    * The directory you select in the **Project** window.
    * At the top level of the **Assets** - **Project** window if you use the menu.
 
 3. Enter a name for the new behavior graph.
-4. Double-click the new behavior graph to open it in the Unity Behavior editor. 
+4. Double-click the new behavior graph to open it in the Unity Behavior editor.
 
 You're now ready to implement the logic of your behavior graph.
 
@@ -31,9 +31,9 @@ Unity provides a set of pre-defined nodes. These include:
 
 * General purpose actions
 * Event-driven behavior
-* Control flow 
+* Control flow
 
-You can also create your own custom nodes to tailor the behavior of your artificial intelligence (AI) experience to your specific needs. 
+You can also create your own custom nodes to tailor the behavior of your artificial intelligence (AI) experience to your specific needs.
 
 To continue creating a behavior graph, you can do the following:
 
@@ -44,24 +44,4 @@ To continue creating a behavior graph, you can do the following:
 
 * [Use a pre-defined node](predefined-node.md)
 * [Create a custom node](create-custom-node.md)
-* [Behavior graph example](example.md)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+* [Get started with Unity Behavior](example.md)

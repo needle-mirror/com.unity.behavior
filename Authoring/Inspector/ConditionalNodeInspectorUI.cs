@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using Unity.Behavior.GraphFramework;
 using Unity.AppUI.UI;
@@ -11,9 +11,9 @@ namespace Unity.Behavior
     internal class ConditionalNodeInspectorUI : BehaviorGraphNodeInspectorUI
     {
         private string m_ConditionRequirementLabel;
-        
+
         public ConditionalNodeInspectorUI(NodeModel nodeModel) : base(nodeModel) { }
-        
+
         public override void Refresh()
         {
             NodeProperties.Clear();
@@ -31,8 +31,8 @@ namespace Unity.Behavior
             };
 
             NodeProperties.Add(new ConditionRequirementElement(m_ConditionRequirementLabel, conditionalNode));
-            NodeProperties.Add(new ConditionInspectorElement(conditionalNode));   
-            
+            NodeProperties.Add(new ConditionInspectorElement(conditionalNode));
+
             // Hide the truncate NodeUI setting on Conditional Guard actions.
             if (InspectedNode is ConditionalGuardNodeModel)
             {

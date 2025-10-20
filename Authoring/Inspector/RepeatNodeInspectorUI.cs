@@ -62,7 +62,7 @@ namespace Unity.Behavior
             RefreshConditionalFields();
             m_AllowMultipleRepeatsPerTickField.SetValueWithoutNotify(RepeatNodeModel.AllowMultipleRepeatsPerTick);
         }
-        
+
         private void OnDelayRepeatValueChanged(ChangeEvent<bool> evt)
         {
             RepeatNodeModel.Asset.MarkUndo("Toggle Repeat Node Delay Repeat To Next Tick");

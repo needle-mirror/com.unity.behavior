@@ -1,4 +1,4 @@
-﻿namespace Unity.Behavior
+namespace Unity.Behavior
 {
     /// <summary>
     /// Represents the different operators that can be used to compare values.
@@ -30,7 +30,7 @@
         /// </summary>
         LowerOrEqual
     }
-    
+
     internal enum BooleanOperator
     {
     }

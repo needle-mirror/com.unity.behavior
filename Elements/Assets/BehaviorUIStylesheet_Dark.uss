@@ -11,7 +11,7 @@
 
     /* Toolbar */
     --behavior-toolbar-background-color: #383838;
-    
+
     /* Blackboard */
     --unity-behavior-ui-blackboard-icon: --appui-foregrounds-50;
 
@@ -20,12 +20,12 @@
     --behavior-ui-hover-bg: var(--appui-color-transparent-black-100);
     --behavior-ui-border-bg: var(--appui-backgrounds-100);
     --behavior-ui-placeholder-bg: var(--appui-backgrounds-100);
-    
+
     /* Node title background colors */
     --behavior-ui-node-start-bg: var(--appui-color-green-800);
     --behavior-ui-node-modifier-bg: var(--appui-color-purple-800);
     --behavior-ui-node-condition-bg: var(--appui-color-orange-800);
-    
+
     /* Node colors */
     --graph-color-node-border: rgba(0, 0, 0, 0.5);
     --graph-color-node-background: #3F3F3F;
@@ -34,15 +34,15 @@
     /* Border colors */
     --behavior-ui-border-color: var(--appui-backgrounds-100);
     --behavior-ui-shared-variable-border: #C9B33F;
-    
+
     /* Edge colors */
     --behavior-ui-edge-color: white;
     --behavior-ui-edge-hover-color: #44C0FF;
-    
+
     /* Floating panel */
     --overlay-color-background: #383838;
     --floating-panel-title-text-color: #C4C4C4;
-    
+
     /* GraphView colors */
     --graph-color-canvas-background: #191919;
     --graph-color-canvas-grid-base: #282828;

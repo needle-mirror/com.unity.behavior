@@ -65,6 +65,26 @@ namespace Unity.Behavior
             m_EditScript = this.Q<ActionButton>("EditScript");
 
             BehaviorGraphNodeModel behaviorNodeModel = nodeModel as BehaviorGraphNodeModel;
+
+            // Handling placeholder node.
+            if (behaviorNodeModel.NodeType == null)
+            {
+                VisualElement container = new VisualElement();
+                container.name = "PlaceholderWarningContainer";
+                AppUI.UI.Icon icon = new AppUI.UI.Icon();
+                icon.name = "PlaceholderWarningIcon";
+                icon.size = AppUI.UI.IconSize.L;
+                icon.iconName = "warning";
+                container.Add(icon);
+                container.Add(new AppUI.UI.Text("Placeholder nodes will be removed or replaced with a Sequence node during execution."));
+                NodeInfo.Add(container);
+
+                var editButtonsContainer = this.Q("NodeInfo-EditButtons");
+                editButtonsContainer.AddToClassList("Hidden");
+                Refresh();
+                return;
+            }
+
             NodeInfo nodeInfo = NodeRegistry.GetInfoFromTypeID(behaviorNodeModel.NodeTypeID);
             RefreshNodeInformation(nodeInfo);
 
@@ -89,16 +109,31 @@ namespace Unity.Behavior
         public override void Refresh()
         {
             base.Refresh();
-            BehaviorGraphNodeModel behaviorNodeModel = InspectedNode as BehaviorGraphNodeModel;
-            NodeInfo nodeInfo = NodeRegistry.GetInfoFromTypeID(behaviorNodeModel.NodeTypeID);
 
+            BehaviorGraphNodeModel behaviorNodeModel = InspectedNode as BehaviorGraphNodeModel;
+            // Placeholder node handling.
+            if (behaviorNodeModel.NodeType == null)
+            {
+                if (behaviorNodeModel.Asset is BehaviorAuthoringGraph authoringGraph
+                    && authoringGraph.RuntimeNodeTypeIDToNodeModelInfo.TryGetValue(behaviorNodeModel.NodeTypeID, out var nodeModelInfo))
+                {
+                    Title = $"{nodeModelInfo.Name} (Placeholder)";
+                    Description = nodeModelInfo.Story;
+                    m_NodeTitle.EnableInClassList("Full-Width", true);
+                    m_CategoryField.AddToClassList("Hidden");
+                }
+
+                return;
+            }
+
+            NodeInfo nodeInfo = NodeRegistry.GetInfoFromTypeID(behaviorNodeModel.NodeTypeID);
             if (behaviorNodeModel.m_FieldValues.Count != 0)
             {
                 CreateFields();
             }
 
             RefreshNodeInformation(nodeInfo);
-            
+
             foreach (BaseLinkField field in this.Query<BaseLinkField>().ToList())
             {
                 // Keep the linked label prefix updated on Blackboard asset group variables.
@@ -198,7 +233,7 @@ namespace Unity.Behavior
             {
                 return null;
             }
-            
+
             VisualElement fieldContainer = new VisualElement();
             fieldContainer.AddToClassList("Inspector-FieldContainer");
             fieldContainer.Add(new Label(nicifiedFieldName));

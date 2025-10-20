@@ -5,7 +5,7 @@ internal class AddConditionToNodeCommand : Command
 {
     public NodeModel NodeModel;
     public Condition Condition;
-    
+
     public AddConditionToNodeCommand(IConditionalNodeModel nodeModel, Condition condition, bool markUndo) : base(markUndo)
     {
         NodeModel = nodeModel as NodeModel;

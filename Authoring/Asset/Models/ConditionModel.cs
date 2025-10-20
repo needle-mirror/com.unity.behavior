@@ -11,21 +11,21 @@ namespace Unity.Behavior
     {
         [SerializeField]
         public SerializableType ConditionType;
-        
+
         [SerializeField]
         public SerializableGUID ConditionTypeID;
-        
+
         [SerializeReference]
         internal BehaviorGraphNodeModel NodeModel;
-        
+
         [SerializeReference]
         internal List<BehaviorGraphNodeModel.FieldModel> m_FieldValues = new List<BehaviorGraphNodeModel.FieldModel>();
-        
+
         internal IEnumerable<BehaviorGraphNodeModel.FieldModel> Fields => m_FieldValues;
 
         [SerializeReference]
         internal BehaviorGraphNodeModel.FieldModel OperatorFieldModel;
-        
+
         public ConditionModel() { }
 
         internal ConditionModel(BehaviorGraphNodeModel nodeModel, Condition condition, ConditionInfo info)
@@ -34,10 +34,10 @@ namespace Unity.Behavior
             NodeModel = nodeModel;
             ConditionType = info.SerializableType;
             ConditionTypeID = info.TypeID;
-            
+
             DefineNode();
         }
-        
+
         public ConditionModel Copy(ConditionModel original, BehaviorGraphNodeModel model)
         {
             ConditionModel copy = new ConditionModel
@@ -46,7 +46,7 @@ namespace Unity.Behavior
                 ConditionTypeID = original.ConditionTypeID,
                 ConditionType = original.ConditionType
             };
-            
+
             foreach (BehaviorGraphNodeModel.FieldModel fieldOriginal in original.m_FieldValues)
             {
                 VariableModel linkedVariable = fieldOriginal.LinkedVariable;
@@ -55,7 +55,7 @@ namespace Unity.Behavior
                     if (model.Asset.Blackboard.Variables.All(variable => variable.ID != linkedVariable.ID))
                     {
                         // Skip links to variables that do not exist in this asset, which can occur when copying nodes between assets.
-                        continue;   
+                        continue;
                     }
                 }
                 copy.m_FieldValues.Add(fieldOriginal.Duplicate());
@@ -68,7 +68,7 @@ namespace Unity.Behavior
         {
             EnsureFieldValuesAreUpToDate();
         }
-        
+
         protected virtual void EnsureFieldValuesAreUpToDate()
         {
             ConditionInfo conditionInfo = NodeRegistry.GetConditionInfoFromTypeID(ConditionTypeID);
@@ -88,7 +88,7 @@ namespace Unity.Behavior
                 foreach (VariableInfo variable in conditionInfo.Variables)
                 {
                     Type variableType = variable.Type;
-                    Type fieldType = fieldModel.LocalValue?.GetType() ?? fieldModel.LinkedVariable?.GetType();  
+                    Type fieldType = fieldModel.LocalValue?.GetType() ?? fieldModel.LinkedVariable?.GetType();
                     if (fieldModel.FieldName == variable.Name && fieldType != null && variableType.IsAssignableFrom(fieldType))
                     {
                         foundMatch = true;
@@ -110,9 +110,9 @@ namespace Unity.Behavior
         {
             EnsureFieldValuesAreUpToDate();
         }
-        
+
         public override IVariableLink GetVariableLink(string variableName, Type type) => GetOrCreateField(variableName, type);
-        
+
         // Sets the variable associated with the field
         internal void SetField(string fieldName, VariableModel val, Type variableType)
         {
@@ -127,7 +127,7 @@ namespace Unity.Behavior
             BehaviorGraphNodeModel.FieldModel field = GetOrCreateField(fieldName, value == null ? typeof(TValue) : value.GetType());
             field.LocalValue.ObjectValue = value;
         }
-        
+
         internal bool HasField(string fieldName, Type variableType)
         {
             foreach (BehaviorGraphNodeModel.FieldModel fieldModel in m_FieldValues)
@@ -138,8 +138,8 @@ namespace Unity.Behavior
                 }
             }
             return false;
-        } 
-        
+        }
+
         internal bool RemoveField(string fieldName)
         {
             int index = -1;
@@ -158,7 +158,7 @@ namespace Unity.Behavior
             m_FieldValues.RemoveAt(index);
             return true;
         }
-        
+
         internal BehaviorGraphNodeModel.FieldModel GetOrCreateField(string fieldName, Type variableType)
         {
             foreach (BehaviorGraphNodeModel.FieldModel fieldModel in m_FieldValues)
@@ -199,7 +199,7 @@ namespace Unity.Behavior
             OperatorFieldModel.FieldName = fieldName;
             OperatorFieldModel.LocalValue ??= new BlackboardVariable<ConditionOperator> { Value = ConditionOperator.Equal };
         }
-        
+
         internal void SetOperatorValue(Enum newValue)
         {
             OperatorFieldModel.LocalValue.ObjectValue = newValue;

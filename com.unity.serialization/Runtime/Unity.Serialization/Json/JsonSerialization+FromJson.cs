@@ -19,28 +19,28 @@ namespace Unity.Behavior.Serialization.Json
         /// <see cref="EventType"/> used for errors.
         /// </summary>
         Error,
-        
+
         /// <summary>
         /// <see cref="EventType"/> used for assertions.
         /// </summary>
         Assert,
-        
+
         /// <summary>
         /// <see cref="EventType"/> used for warnings.
         /// </summary>
         Warning,
-        
+
         /// <summary>
         /// <see cref="EventType"/> used for logs.
         /// </summary>
         Log,
-        
+
         /// <summary>
         /// <see cref="EventType"/> used for exceptions.
         /// </summary>
         Exception
     }
-    
+
     /// <summary>
     /// Structure to events that occur during deserialization.
     /// </summary>
@@ -50,7 +50,7 @@ namespace Unity.Behavior.Serialization.Json
         /// The type of event.
         /// </summary>
         public readonly EventType Type;
-        
+
         /// <summary>
         /// The payload for the event.
         /// </summary>
@@ -66,11 +66,11 @@ namespace Unity.Behavior.Serialization.Json
             Type = type;
             Payload = payload;
         }
-        
+
         /// <inheritdoc/>
         public override string ToString() => Payload.ToString();
     }
-    
+
     /// <summary>
     /// Object containing the results of a deserialization. Use this to capture any errors or events.
     /// </summary>
@@ -87,26 +87,26 @@ namespace Unity.Behavior.Serialization.Json
         /// Returns any events with <see cref="EventType.Log"/> that occured during deserialization.
         /// </summary>
         public IEnumerable<DeserializationEvent> Logs => Events.Where(e => e.Type == EventType.Log);
-        
+
         /// <summary>
         /// Returns any events with <see cref="EventType.Error"/> that occured during deserialization.
         /// </summary>
         public IEnumerable<DeserializationEvent> Errors => Events.Where(e => e.Type == EventType.Error);
-        
+
         /// <summary>
         /// Returns any events with <see cref="EventType.Warning"/> that occured during deserialization.
         /// </summary>
         public IEnumerable<DeserializationEvent> Warnings => Events.Where(e => e.Type == EventType.Warning);
-        
+
         /// <summary>
         /// Returns any events with <see cref="EventType.Exception"/> that occured during deserialization.
         /// </summary>
         public IEnumerable<DeserializationEvent> Exceptions => Events.Where(e => e.Type == EventType.Exception);
-        
+
         internal DeserializationResult(List<DeserializationEvent> events) => m_Events = events;
-        
+
         /// <summary>
-        /// Rethrows any errors encountered during deserialization. 
+        /// Rethrows any errors encountered during deserialization.
         /// </summary>
         /// <remarks>
         /// If a single exception was encountered the exception is re-thrown. If multiple exceptions were encountered a <see cref="AggregateException"/> is thrown.
@@ -115,9 +115,9 @@ namespace Unity.Behavior.Serialization.Json
         {
             var exceptions = Events
                              .Where(e => e.Payload is Exception)
-                             .Select(e => (Exception) e.Payload);
-            
-            if (exceptions.Count() == 1) 
+                             .Select(e => (Exception)e.Payload);
+
+            if (exceptions.Count() == 1)
                 throw exceptions.First();
 
             throw new AggregateException(exceptions);
@@ -129,7 +129,7 @@ namespace Unity.Behavior.Serialization.Json
         /// <returns><see langword="true"/> if deserialization succeeded; otherwise, false.</returns>
         public bool DidSucceed() => !Events.Any(e => e.Type == EventType.Exception || e.Type == EventType.Error);
     }
-    
+
     internal static partial class JsonSerialization
     {
         [BurstCompile(CompileSynchronously = true)]
@@ -144,11 +144,11 @@ namespace Unity.Behavior.Serialization.Json
                 *View = view;
             }
         }
-        
+
         static SerializedObjectReaderConfiguration GetDefaultConfigurationForString(string json, JsonSerializationParameters parameters = default)
         {
             var configuration = SerializedObjectReaderConfiguration.Default;
-            
+
             configuration.UseReadAsync = false;
             configuration.ValidationType = parameters.DisableValidation ? JsonValidationType.None : parameters.Simplified ? JsonValidationType.Simple : JsonValidationType.Standard;
             configuration.BlockBufferSize = math.max(json.Length * sizeof(char), 16);
@@ -158,7 +158,7 @@ namespace Unity.Behavior.Serialization.Json
 
             return configuration;
         }
-        
+
         static SerializedObjectReaderConfiguration GetDefaultConfigurationForFile(FileInfo file, JsonSerializationParameters parameters = default)
         {
             var configuration = SerializedObjectReaderConfiguration.Default;
@@ -170,26 +170,26 @@ namespace Unity.Behavior.Serialization.Json
 
             configuration.UseReadAsync = file.Length > 512 << 10;
             configuration.ValidationType = parameters.DisableValidation ? JsonValidationType.None : parameters.Simplified ? JsonValidationType.Simple : JsonValidationType.Standard;
-            configuration.BlockBufferSize = math.min((int) file.Length, 512 << 10); // 512 kb max
-            configuration.OutputBufferSize = math.min((int) file.Length, 1024 << 10); // 1 mb max
+            configuration.BlockBufferSize = math.min((int)file.Length, 512 << 10); // 512 kb max
+            configuration.OutputBufferSize = math.min((int)file.Length, 1024 << 10); // 1 mb max
             configuration.StripStringEscapeCharacters = parameters.StringEscapeHandling;
 
             return configuration;
         }
-        
+
         static SerializedObjectReaderConfiguration GetDefaultConfigurationForStream(Stream stream, JsonSerializationParameters parameters = default)
         {
             var configuration = SerializedObjectReaderConfiguration.Default;
 
             configuration.UseReadAsync = stream.Length > 512 << 10;
             configuration.ValidationType = parameters.Simplified ? JsonValidationType.Simple : JsonValidationType.Standard;
-            configuration.BlockBufferSize = math.min((int) stream.Length, 512 << 10); // 512 kb max
-            configuration.OutputBufferSize = math.min((int) stream.Length, 1024 << 10); // 1 mb max
+            configuration.BlockBufferSize = math.min((int)stream.Length, 512 << 10); // 512 kb max
+            configuration.OutputBufferSize = math.min((int)stream.Length, 1024 << 10); // 1 mb max
             configuration.StripStringEscapeCharacters = parameters.StringEscapeHandling;
 
             return configuration;
         }
-        
+
         /// <summary>
         /// Deserializes from the specified json string and returns a new instance of <typeparamref name="T"/>.
         /// </summary>
@@ -203,10 +203,10 @@ namespace Unity.Behavior.Serialization.Json
             {
                 result.Throw();
             }
-            
+
             return container;
         }
-        
+
         /// <summary>
         /// Deserializes from the specified json string and returns a new instance of <typeparamref name="T"/>.
         /// </summary>
@@ -251,7 +251,7 @@ namespace Unity.Behavior.Serialization.Json
             {
                 throw new ArgumentNullException(nameof(json));
             }
-            
+
             unsafe
             {
                 fixed (char* ptr = json)
@@ -269,14 +269,14 @@ namespace Unity.Behavior.Serialization.Json
                         result = CreateResult(new List<DeserializationEvent> { new(EventType.Exception, e) });
                         return false;
                     }
-                    
+
                     var success = TryFromJson(view[0], ref container, out result, parameters);
                     reader.Dispose();
                     return success;
                 }
             }
         }
-        
+
         /// <summary>
         /// Deserializes from the specified path and returns a new instance of <typeparamref name="T"/>.
         /// </summary>
@@ -290,10 +290,10 @@ namespace Unity.Behavior.Serialization.Json
             {
                 result.Throw();
             }
-            
+
             return container;
         }
-        
+
         /// <summary>
         /// Deserializes from the specified path and returns a new instance of <typeparamref name="T"/>.
         /// </summary>
@@ -323,7 +323,7 @@ namespace Unity.Behavior.Serialization.Json
                 result.Throw();
             }
         }
-        
+
         /// <summary>
         /// Deserializes from the specified path in to an existing instance of <typeparamref name="T"/>.
         /// </summary>
@@ -339,7 +339,7 @@ namespace Unity.Behavior.Serialization.Json
             {
                 var view = stackalloc SerializedValueView[1];
                 new ReadJob { Reader = reader, View = view }.Run();
-                
+
                 try
                 {
                     reader.CheckAndThrowInvalidJsonException();
@@ -349,7 +349,7 @@ namespace Unity.Behavior.Serialization.Json
                     result = CreateResult(new List<DeserializationEvent> { new(EventType.Exception, e) });
                     return false;
                 }
-                
+
                 return TryFromJson(view[0], ref container, out result, parameters);
             }
         }
@@ -367,10 +367,10 @@ namespace Unity.Behavior.Serialization.Json
             {
                 result.Throw();
             }
-            
+
             return container;
         }
-        
+
         /// <summary>
         /// Deserializes from the specified stream and returns a new instance of <typeparamref name="T"/>.
         /// </summary>
@@ -385,7 +385,7 @@ namespace Unity.Behavior.Serialization.Json
             container = default;
             return TryFromJsonOverride(stream, ref container, out result);
         }
-        
+
         /// <summary>
         /// Deserializes from the specified stream in to an existing instance of <typeparamref name="T"/>.
         /// </summary>
@@ -416,7 +416,7 @@ namespace Unity.Behavior.Serialization.Json
             {
                 var view = stackalloc SerializedValueView[1];
                 new ReadJob { Reader = reader, View = view }.Run();
-                
+
                 try
                 {
                     reader.CheckAndThrowInvalidJsonException();
@@ -426,7 +426,7 @@ namespace Unity.Behavior.Serialization.Json
                     result = CreateResult(new List<DeserializationEvent> { new(EventType.Exception, e) });
                     return false;
                 }
-                
+
                 return TryFromJson(view[0], ref container, out result, parameters);
             }
         }
@@ -463,7 +463,7 @@ namespace Unity.Behavior.Serialization.Json
                 result.Throw();
             }
         }
-        
+
         /// <summary>
         /// Deserializes from the specified <see cref="SerializedValueView"/> and returns a new instance of <typeparamref name="T"/>.
         /// </summary>
@@ -477,13 +477,13 @@ namespace Unity.Behavior.Serialization.Json
         {
             var serializedReferences = default(SerializedReferences);
             var state = parameters.State ?? (parameters.RequiresThreadSafety ? new JsonSerializationState() : GetSharedState());
-            
+
             if (!parameters.DisableSerializedReferences)
                 serializedReferences = state.GetSerializedReferences();
-            
+
             var visitor = state.GetJsonPropertyReader();
             var events = state.GetDeserializationEvents();
-            
+
             visitor.SetView(view.AsUnsafe());
             visitor.SetSerializedType(parameters.SerializedType);
             visitor.SetDisableRootAdapters(parameters.DisableRootAdapters);
@@ -494,7 +494,7 @@ namespace Unity.Behavior.Serialization.Json
             visitor.SetUserData(parameters.UserData);
             visitor.SetEvents(events);
             visitor.SetSerializedReferences(serializedReferences);
-            
+
             var wrapper = new PropertyWrapper<T>(container);
             try
             {
@@ -505,14 +505,14 @@ namespace Unity.Behavior.Serialization.Json
                 events.Add(new DeserializationEvent(EventType.Exception, e));
             }
             container = wrapper.Value;
-            
+
             result = CreateResult(events);
-            
+
             if (null == parameters.State && null != serializedReferences) serializedReferences.Clear();
-            
+
             return result.DidSucceed();
         }
-        
+
         /// <summary>
         /// Deserializes from the specified SerializedValueView in to an existing instance of <typeparamref name="T"/>.
         /// </summary>

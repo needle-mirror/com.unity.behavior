@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using Unity.Behavior.GraphFramework;
 
@@ -13,7 +13,7 @@ namespace Unity.Behavior
         private const string k_MultiConditionAnyFalsePortTitle = "If Any Is False";
         private const string k_MultiConditionAnyTruePortTitle = "If Any Is True";
         private const string k_MultiConditionAllFalsePortTitle = "If All Are False";
-        
+
         public BranchingConditionNodeUI(NodeModel nodeModel) : base(nodeModel)
         {
             AddToClassList("Composite");

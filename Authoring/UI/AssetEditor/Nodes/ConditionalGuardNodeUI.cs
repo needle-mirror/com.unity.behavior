@@ -1,4 +1,4 @@
-﻿using Unity.Behavior.GraphFramework;
+using Unity.Behavior.GraphFramework;
 using UnityEngine.UIElements;
 
 namespace Unity.Behavior
@@ -11,13 +11,13 @@ namespace Unity.Behavior
             AddToClassList("Action");
             AddToClassList("Condition");
             AddToClassList("ShowNodeColor");
-            
+
             UpdateGuardConditionElement();
             CreateNodeConditionElements();
 
             NodeValueContainer.style.display = DisplayStyle.Flex;
         }
-        
+
         internal override void UpdateLinkFields()
         {
             UpdateGuardConditionElement();
@@ -29,14 +29,14 @@ namespace Unity.Behavior
             if (ConditionalNodeModel.ConditionModels.Count > 1)
             {
                 ConditionalNodeModel.ShouldTruncateNodeUI = true;
-                ConditionElementPrefix = ConditionalNodeModel.RequiresAllConditionsTrue ? "If all of" : "If any of";   
+                ConditionElementPrefix = ConditionalNodeModel.RequiresAllConditionsTrue ? "If all of" : "If any of";
             }
             else
             {
                 ConditionalNodeModel.ShouldTruncateNodeUI = false;
                 ConditionElementPrefix = "If";
             }
-            
+
             ConditionsAssignedPostfix = " Conditions are true";
         }
     }

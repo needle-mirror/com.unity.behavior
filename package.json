@@ -1,10 +1,10 @@
 {
   "name": "com.unity.behavior",
   "displayName": "Behavior",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "unity": "6000.0",
   "unityRelease": "16f1",
-  "description": "Unity Behavior is a graph-based tool to create and run behavior trees with a modular architecture.\n\n▪ Human-readable graphs flow top-to-bottom with plain-language nodes\n▪ Comprehensive library of pre-built nodes for movement, detection, and decision-making\n▪ Seamless C# integration with a familiar lifecycle model\n▪ Hierarchical design supporting reusable subgraphs\n▪ Real-time debugging visualization during Play mode\n▪ Event-driven architecture for dynamic game reactions\n\nIdeal for NPC behaviors, quest logic, environmental interactions, and game state management.\n\nA demo showcasing this package can be found in the Asset Store <a href=https://assetstore.unity.com/packages/templates/tutorials/behavior-demo-for-unity-298313>https://assetstore.unity.com/packages/templates/tutorials/behavior-demo-for-unity-298313</a>.",
+  "description": "Unity Behavior is a graph-based tool to create and run behavior trees with a modular architecture.\n\n▪ Human-readable graphs flow top-to-bottom with plain-language nodes\n▪ Comprehensive library of pre-built nodes for movement, detection, and decision-making\n▪ Seamless C# integration with a familiar lifecycle model\n▪ Hierarchical design supporting reusable subgraphs\n▪ Real-time debugging visualization during Play mode\n▪ Event-driven architecture for dynamic game reactions\n\nIdeal for NPC behaviors, quest logic, environmental interactions, and game state management.\n\nA demo showcasing this package can be found in the Asset Store https://assetstore.unity.com/packages/templates/tutorials/behavior-demo-for-unity-298313.",
   "keywords": [
     "behavior",
     "behavior tree",
@@ -15,7 +15,7 @@
     "NPCs"
   ],
   "dependencies": {
-    "com.unity.dt.app-ui": "2.0.0-pre.16",
+    "com.unity.dt.app-ui": "2.0.0",
     "com.unity.modules.unitywebrequest": "1.0.0",
     "com.unity.modules.animation": "1.0.0",
     "com.unity.modules.ai": "1.0.0",
@@ -41,15 +41,15 @@
     }
   ],
   "_upm": {
-    "changelog": "### Changed\n- Light and Dark themes overhaul. (BEHAVB-279)\n- Graph assets now generates their runtime asset on creation.\n- `Tools > Behavior > Validate All Graphs` now generates runtime asset if needed.\n\n### Fixed\n- Optimized `SwitchComposite` to cache enum values and eliminate redundant GC allocations when the underlying BlackboardVariable hasn't changed. (BEHAVB-331)\n- Fixed `WaitForAnyComposite` stuck on the first frame of playmode.\n- Fixed nested `RunSubgraph` nodes causing infinite asset reimport. (BEHAVB-333)\n- Fixed BehaviorAssetPostProcessor processing asset during domain reload.\n\n### Known Issues\n- Same Known Issues as 1.0.11"
+    "changelog": "### Added\n- Update App UI to it's 2.0.0 release version.\n- Added pre-build check that prevents compilation when BehaviorGraphs contain unresolved missing type references.\n- Added inspector editor helpbox to warn users about invalid asset state.\n- Added new `BehaviorGraph.HasSameSourceAsset` API to compare source asset of different runtime graphs instance.\n- Added version number to authoring graphs to handle serialization version update.\n- Added authoring graph asset validation for managed references and placeholder.\n- Added `Tools > Behavior > Check Assets Integrity` to identify assets with missing types or placeholder nodes.\n- Added `Edit` button to Behavior authoring assets inspectors.\n\n### Changed\n- BehaviorGraphAgent now displays the source graph asset in inspector during playmode instead of the virtual graph instance.\n- Graph and Blackboard windows will now close automatically if they detect that their assets have managed references with missing types.\n- Graph and Blackboard asset inspector editors aligned and updated to use UITK.\n- To prevent data loss, it is no longer possible to rename or move a Behavior asset with missing type in managed references.\n- Authoring graph's SubgraphInfo now store direct asset reference instead of SerializedGUID.\n- Removed redundant `RootGraph` from the Graph asset serialization.\n- Improved Behavior assets import and validation reliability.\n- Moved Behavior Authoring Graph's 'Regenerate Runtime Assets' button to context menu item.\n- Exposed `BlackboardVariable.InvokeValueChanged` allowing to manually invoke the event when modifying collection elements or reference type properties that don't call the `Value` setter.\n- Changed `BehaviorGraphAgent.Init` to clone again a new instance of the assigned graph and restart the graph execution.\n- Changed  `DefaultExecutionOrder` from `BehaviorGraphAgent` to `-50` to ensure that agents are initialized (`Awake` call) before most user-defined script wake up. If you expect your code to execute `Awake` before `BehaviorGraphAgent`, you can also use `DefaultExecutionOrder` with a value lower or equal to `-51`.\n\n### Fixed\n- Fixed BehaviorGraphAgentEditor overriding agent graph assigned from code when its original graph value is null. (BEHAVB-324)\n- Fixed use of SerializeReference attribute in the package.\n- Fixed Blackboard asset deleting serialized references with missing types.\n- Fixed Graph asset deleting node model using serialized references with missing types.\n- Fixed exception handling to prevent graph execution when managed references have missing types.\n- Screen position and zoom level are now restored on domain reload when a graph is open.\n- Fixed runtime graph asset sometimes becoming the main object instead of the authoring graph.\n- Fixed RunSubgraphDynamic stuck after changing subgraph while the node is running.\n- Fixed `ConditionUtils.CompareReferences` not comparing objects when enum is set to `NotEqual`.\n- Fixed runtime graphs not rebuilt when node types changed from external changes (e.g., from source control).\n- Fixed authoring graph accumulating obsolete node model info data.\n- Fixed placeholder node information not displaying correctly in graph inspector and editor views.\n- Fixed 'Create' button on placeholder nodes not working.\n- Fixed SubgraphNodeModel accumulating obsolete field model data.\n- Reduced StartOnEvent GC when using Queue mode.\n- Fixed clone of disabled BehaviorGraphAgent sharing the same graph instance as the original agent. (BEHAVB-341)\n- Fixed OnStart root nodes execute in creation order instead of node position in graph. (BEHAVB-347)\n- Fixed node execution order not updated when authoring graph node positions are changed, including OnStart root nodes.\n- Fixed edits to blackboard asset re-centers the graph (BEHAVB-337).\n- Fixed an issue where you had to undo twice to undo instead of once when removing or adding a subgraph from a run subgraph node.\n- Fixed an issue where the undo / redo callstack was lost when you undo certain actions.\n- Fixed dynamic subgraph's blackboard variables not invoking parent's blackboard va"
   },
   "upmCi": {
-    "footprint": "669ecf52fc9a847fe604ef44c61f39f8c8a35eba"
+    "footprint": "b3bcc38701b50d904849cdb7db1ef0abbbe30a70"
   },
   "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.behavior@1.0/manual/index.html",
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/com.unity.ai.designer-monorepo.git",
     "type": "git",
-    "revision": "59edf2392daa9bd3d3f8490400c9eb9462426f5c"
+    "revision": "80d82498a60cde70f9c02c0d11b398c3f299bd7e"
   }
 }

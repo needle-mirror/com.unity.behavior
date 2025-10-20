@@ -16,7 +16,7 @@ internal class BlackboardVariableElement : VisualElement
     public Action<SerializableGUID> OnCollapseEvent;
 
     public override VisualElement contentContainer => m_Content;
-    
+
     private VariableModel m_VariableModel;
 
     public VariableModel VariableModel
@@ -34,12 +34,12 @@ internal class BlackboardVariableElement : VisualElement
             m_NameField.SetValueWithoutNotify(value);
         }
     }
-    
+
     public Texture2D IconImage
     {
         set => m_Icon.image = value;
     }
-    
+
     public string IconName
     {
         get => m_Icon.iconName;
@@ -86,7 +86,7 @@ internal class BlackboardVariableElement : VisualElement
         m_NameField.size = Size.S;
         m_ExposedToggle = this.Q<Toggle>("ExposedToggle");
         m_SharedToggle = this.Q<Toggle>("SharedToggle");
-        
+
         RegisterCallbacks();
     }
 
@@ -102,7 +102,7 @@ internal class BlackboardVariableElement : VisualElement
 
         m_ExposedToggle.value = VariableModel.IsExposed;
         m_SharedToggle.value = VariableModel.IsShared;
-        
+
         SetSharedVariableVisualization();
     }
 
@@ -212,7 +212,7 @@ internal class BlackboardVariableElement : VisualElement
             }
             menu.AddItem("Rename", ToggleTitleFields);
             menu.AddItem("Copy GUID", OnCopyGUID);
-            
+
             menu.Show();
         }
     }
@@ -278,7 +278,7 @@ internal class BlackboardVariableElement : VisualElement
         {
             return;
         }
-        
+
         m_TitleEditing = !m_TitleEditing;
 
         if (m_TitleEditing)

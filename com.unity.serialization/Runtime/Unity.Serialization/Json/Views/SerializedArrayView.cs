@@ -10,12 +10,12 @@ namespace Unity.Behavior.Serialization.Json
     /// A view on top of the <see cref="PackedBinaryStream"/> that represents an array of values.
     /// </summary>
     internal readonly unsafe struct SerializedArrayView : ISerializedView, IList<SerializedValueView>
-    {        
+    {
         static SerializedArrayView()
         {
             Properties.PropertyBag.Register(new SerializedArrayViewPropertyBag());
         }
-        
+
         /// <summary>
         /// Enumerates the elements of <see cref="SerializedArrayView"/>.
         /// </summary>
@@ -29,7 +29,7 @@ namespace Unity.Behavior.Serialization.Json
             {
                 m_Stream = stream;
                 m_Start = start;
-                m_Current = new Handle {Index = -1, Version = -1};
+                m_Current = new Handle { Index = -1, Version = -1 };
             }
 
             /// <summary>
@@ -56,7 +56,7 @@ namespace Unity.Behavior.Serialization.Json
                 {
                     return false;
                 }
-                
+
                 var currentIndex = m_Stream->GetTokenIndex(m_Current);
                 var currentToken = m_Stream->GetToken(currentIndex);
 
@@ -64,7 +64,7 @@ namespace Unity.Behavior.Serialization.Json
                 {
                     return false;
                 }
-                
+
                 m_Current = m_Stream->GetHandle(currentIndex + currentToken.Length);
                 return true;
             }
@@ -74,7 +74,7 @@ namespace Unity.Behavior.Serialization.Json
             /// </summary>
             public void Reset()
             {
-                m_Current = new Handle {Index = -1, Version = -1};
+                m_Current = new Handle { Index = -1, Version = -1 };
             }
 
             /// <summary>
@@ -102,10 +102,10 @@ namespace Unity.Behavior.Serialization.Json
             {
             }
         }
-        
+
         [NativeDisableUnsafePtrRestriction] readonly UnsafePackedBinaryStream* m_Stream;
         readonly Handle m_Handle;
-      
+
         internal SerializedArrayView(UnsafePackedBinaryStream* stream, Handle handle)
         {
             m_Stream = stream;
@@ -131,7 +131,7 @@ namespace Unity.Behavior.Serialization.Json
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         bool ICollection<SerializedValueView>.IsReadOnly => true;
-        
+
         SerializedValueView IList<SerializedValueView>.this[int index]
         {
             get
@@ -139,7 +139,7 @@ namespace Unity.Behavior.Serialization.Json
                 using (var enumerator = GetEnumerator())
                 {
                     var i = -1;
-                    
+
                     while (enumerator.MoveNext())
                     {
                         i++;
@@ -163,23 +163,23 @@ namespace Unity.Behavior.Serialization.Json
 
                 if (token.Length <= 1)
                     return 0;
-                
+
                 var count = 0;
                 var childHandle = m_Stream->GetFirstChild(m_Handle);
 
-                for (;;)
+                for (; ; )
                 {
                     if (!m_Stream->IsValid(childHandle))
                         return count;
 
                     count++;
-                    
+
                     var childIndex = m_Stream->GetTokenIndex(childHandle);
                     var childToken = m_Stream->GetToken(childIndex);
-                    
+
                     if (childIndex + childToken.Length >= index + token.Length)
                         return count;
-                    
+
                     childHandle = m_Stream->GetHandle(childIndex + childToken.Length);
                 }
             }
@@ -190,7 +190,7 @@ namespace Unity.Behavior.Serialization.Json
         {
             if (item.m_Stream != m_Stream)
                 return false;
-            
+
             using (var enumerator = GetEnumerator())
             {
                 while (enumerator.MoveNext())
@@ -220,13 +220,13 @@ namespace Unity.Behavior.Serialization.Json
 
             if (item.m_Stream != m_Stream)
                 return index;
-            
+
             using (var enumerator = GetEnumerator())
             {
                 while (enumerator.MoveNext())
                 {
                     index++;
-                    
+
                     if (item.m_Handle.Equals(enumerator.Current.m_Handle))
                         return index;
                 }
@@ -238,11 +238,11 @@ namespace Unity.Behavior.Serialization.Json
         /// <inheritdoc cref="ICollection{T}.Clear"/>
         void ICollection<SerializedValueView>.Clear()
             => throw new NotSupportedException($"{nameof(SerializedArrayView)} is immutable");
-        
+
         /// <inheritdoc cref="IList{T}.Insert"/>
         void IList<SerializedValueView>.Insert(int index, SerializedValueView item)
             => throw new NotSupportedException($"{nameof(SerializedArrayView)} is immutable");
-        
+
         /// <inheritdoc cref="ICollection{T}.Add"/>
         void ICollection<SerializedValueView>.Add(SerializedValueView item)
             => throw new NotSupportedException($"{nameof(SerializedArrayView)} is immutable");
@@ -254,7 +254,7 @@ namespace Unity.Behavior.Serialization.Json
         /// <inheritdoc cref="IList{T}.RemoveAt"/>
         void IList<SerializedValueView>.RemoveAt(int index)
             => throw new NotSupportedException($"{nameof(SerializedArrayView)} is immutable");
-        
+
         internal UnsafeArrayView AsUnsafe() => new UnsafeArrayView(m_Stream, m_Stream->GetTokenIndex(m_Handle));
     }
 }

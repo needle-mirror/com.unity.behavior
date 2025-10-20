@@ -13,17 +13,17 @@ namespace Unity.Behavior
         public Dispatcher Dispatcher { get; internal set; }
         internal string Title { get => m_Dialog.title; set => m_Dialog.title = value; }
         internal string Description { get => m_DescriptionLabel.text; set => m_DescriptionLabel.text = value; }
-        
+
         private readonly Label m_DescriptionLabel;
         private readonly ScrollView m_ScrollView;
         private Button m_ConfirmButton;
-        
-        private readonly List<NodeOptionElement> m_MenuOptionElements = new ();
+
+        private readonly List<NodeOptionElement> m_MenuOptionElements = new();
         private NodeInfo m_SelectedOptionNodeInfo;
-        private List<NodeInfo> m_NodeOptions = new ();
+        private List<NodeInfo> m_NodeOptions = new();
         private Modal m_Modal;
         private Dialog m_Dialog;
-        
+
         internal List<NodeInfo> NodeOptions
         {
             get => m_NodeOptions;
@@ -43,7 +43,7 @@ namespace Unity.Behavior
             AddToClassList("InsertNodeDialog");
             styleSheets.Add(ResourceLoadAPI.Load<StyleSheet>("Packages/com.unity.behavior/Authoring/UI/InsertNodeDialog/Assets/InsertNodeDialogStylesheet.uss"));
             ResourceLoadAPI.Load<VisualTreeAsset>("Packages/com.unity.behavior/Authoring/UI/InsertNodeDialog/Assets/InsertNodeDialogLayout.uxml").CloneTree(this);
-            
+
             m_DescriptionLabel = this.Q<Label>("Description");
             m_ScrollView = this.Q<ScrollView>("Content");
         }
@@ -57,7 +57,7 @@ namespace Unity.Behavior
             insertNodeDialog.m_Dialog.closeButton.quiet = true;
             insertNodeDialog.m_Dialog.contentContainer.Add(insertNodeDialog);
             insertNodeDialog.CreateDialogButtons();
-            
+
             insertNodeDialog.m_Modal = Modal.Build(targetView, insertNodeDialog.m_Dialog);
             insertNodeDialog.m_Modal.Show();
 
@@ -71,18 +71,18 @@ namespace Unity.Behavior
             VisualElement buttonGroup = m_Dialog.Q<VisualElement>("appui-dialog__buttongroup");
             buttonGroup.Add(m_ConfirmButton);
             m_ConfirmButton.SetEnabled(false);
-            
+
             m_ConfirmButton.clicked += OnConfirm;
         }
-        
+
         private void OnConfirm()
         {
             m_Modal.Dismiss();
 
-            Vector2 position = (ConnectionToBreak.Item1.NodeModel.Position + ConnectionToBreak.Item2.NodeModel.Position)/2;
+            Vector2 position = (ConnectionToBreak.Item1.NodeModel.Position + ConnectionToBreak.Item2.NodeModel.Position) / 2;
             Dispatcher.Dispatch(new InsertNodeCommand(m_SelectedOptionNodeInfo, position, ConnectionToBreak, ConnectedOutputPorts, ConnectedInputPorts));
         }
-        
+
         private void RebuildOptions()
         {
             m_ConfirmButton.SetEnabled(false);

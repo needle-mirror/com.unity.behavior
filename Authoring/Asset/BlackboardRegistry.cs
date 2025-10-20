@@ -45,7 +45,7 @@ namespace Unity.Behavior
                 new BlackboardOption(typeof(AudioMixer), "Resources/Audio Mixer"),
                 new BlackboardOption(typeof(TextAsset), "Resources/Text Asset"),
                 new BlackboardOption(typeof(ParticleSystem), "Resources/Particle System"),
-              
+
                 // List Types
                 new BlackboardOption(typeof(List<GameObject>), "List/Game Object List"),
                 new BlackboardOption(typeof(List<string>), "List/String List"),
@@ -62,7 +62,8 @@ namespace Unity.Behavior
             };
         }
 
-        public static List<BlackboardOption> GetComparsionOperators() {
+        public static List<BlackboardOption> GetComparsionOperators()
+        {
             return new List<BlackboardOption>
             {
                 new BlackboardOption(typeof(ConditionOperator), "Comparsion Operators/Operator (All)"),
@@ -101,7 +102,7 @@ namespace Unity.Behavior
         {
             var options = GetDefaultBlackboardOptions();
             var enums = GetEnumVariableTypes();
-            options.Insert(0, new BlackboardOption { Type = typeof(RegularText) , Path = "Regular Text" });
+            options.Insert(0, new BlackboardOption { Type = typeof(RegularText), Path = "Regular Text" });
 
             AddCustomTypes<Behaviour>(options, "Other/MonoBehaviours");
             AddCustomTypes<ScriptableObject>(options, "Other/ScriptableObjects");
@@ -153,23 +154,23 @@ namespace Unity.Behavior
                 foreach (var type in assembly.GetTypes())
                 {
 #endif
-                if (type.IsNotPublic || !type.IsVisible || IsExcludedNamespaceOrType(type))
-                {
-                    continue;
-                }
-                string namespacePath = type.Namespace?.Replace('.', '/');
-                if (!string.IsNullOrEmpty(namespacePath))
-                {
-                    namespacePath += "/";
-                }
+                    if (type.IsNotPublic || !type.IsVisible || IsExcludedNamespaceOrType(type))
+                    {
+                        continue;
+                    }
+                    string namespacePath = type.Namespace?.Replace('.', '/');
+                    if (!string.IsNullOrEmpty(namespacePath))
+                    {
+                        namespacePath += "/";
+                    }
 
-                var icon = type.GetIcon();
-                options.Add(new BlackboardOption(type, $"{ path }{namespacePath}{ Util.NicifyVariableName(type.Name, detectAbbreviation: true) }", iconImage: icon));
-            }
+                    var icon = type.GetIcon();
+                    options.Add(new BlackboardOption(type, $"{ path }{namespacePath}{ Util.NicifyVariableName(type.Name, detectAbbreviation: true) }", iconImage: icon));
+                }
 #if !UNITY_EDITOR
             }
 #endif
-                return options;
+            return options;
         }
 
         private static readonly string[] kExcludedNamespaces =
@@ -213,7 +214,7 @@ namespace Unity.Behavior
             }
             return false;
         }
-    }    
+    }
 
     internal struct BlackboardOption
     {
@@ -236,7 +237,7 @@ namespace Unity.Behavior
             {
                 Path = Util.NicifyVariableName(type.Type.Name);
             }
-            
+
             if (string.IsNullOrEmpty(icon))
             {
                 // If no icon name is given, try to get one defined for the type from the utility.

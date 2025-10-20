@@ -111,7 +111,7 @@ namespace Unity.Behavior.Serialization.Binary
                         return;
                     case IContravariantBinaryAdapter<TValue> typedContravariant:
                         // NOTE: Boxing
-                        typedContravariant.Serialize((IBinarySerializationContext) new BinarySerializationContext<TValue>(this, adapters, value, isRoot), value);
+                        typedContravariant.Serialize((IBinarySerializationContext)new BinarySerializationContext<TValue>(this, adapters, value, isRoot), value);
                         return;
                 }
             }
@@ -182,7 +182,7 @@ namespace Unity.Behavior.Serialization.Binary
                 {
                     // Special path for polymorphic unity object references.
                     m_Stream->Add(k_TokenUnityEngineObjectReference);
-                    
+
                     var adapters = m_Adapters.GetEnumerator();
 
                     while (adapters.MoveNext())
@@ -193,7 +193,7 @@ namespace Unity.Behavior.Serialization.Binary
                             break;
                         }
                     }
-                    
+
                     return;
                 }
 

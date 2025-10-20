@@ -129,5 +129,3 @@ Label {
 .HighlightInputs .EdgeConnectPort {
     opacity: 1.0;
 }
-
-

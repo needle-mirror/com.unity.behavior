@@ -99,8 +99,8 @@
 
 #Ports-Preview {
     margin-top: 60px;
-	flex-direction: row;
-	justify-content: space-between;
+    flex-direction: row;
+    justify-content: space-between;
 }
 
 #Composite-Preview {

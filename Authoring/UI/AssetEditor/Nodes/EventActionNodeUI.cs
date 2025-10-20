@@ -6,7 +6,7 @@ namespace Unity.Behavior
     [NodeUI(typeof(EventNodeModel))]
     internal class EventActionNodeUI : BehaviorNodeUI
     {
-        
+
         public EventActionNodeUI(NodeModel nodeModel) : base(nodeModel)
         {
             AddToClassList("Action");

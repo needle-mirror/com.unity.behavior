@@ -19,29 +19,29 @@ namespace Unity.Behavior.Serialization.Json
         /// Returns true if the given state is in use by either serialization or de-serialization.
         /// </summary>
         internal bool IsLocked => (m_JsonPropertyWriter != null && m_JsonPropertyWriter.IsLocked) || (m_JsonPropertyReader != null && m_JsonPropertyReader.IsLocked);
-        
+
         /// <summary>
         /// Gets the shared <see cref="JsonPropertyWriter"/>.
         /// </summary>
         /// <returns>The <see cref="JsonPropertyWriter"/>.</returns>
         internal JsonPropertyWriter GetJsonPropertyWriter()
-        { 
-            if (null != m_JsonPropertyWriter) 
+        {
+            if (null != m_JsonPropertyWriter)
                 return m_JsonPropertyWriter.IsLocked ? new JsonPropertyWriter() : m_JsonPropertyWriter;
-            
+
             m_JsonPropertyWriter = new JsonPropertyWriter();
             return m_JsonPropertyWriter;
         }
-        
+
         /// <summary>
         /// Gets the shared <see cref="JsonPropertyReader"/>.
         /// </summary>
         /// <returns>The <see cref="JsonPropertyReader"/>.</returns>
         internal JsonPropertyReader GetJsonPropertyReader()
         {
-            if (null != m_JsonPropertyReader) 
+            if (null != m_JsonPropertyReader)
                 return m_JsonPropertyReader.IsLocked ? new JsonPropertyReader() : m_JsonPropertyReader;
-            
+
             m_JsonPropertyReader = new JsonPropertyReader();
             return m_JsonPropertyReader;
         }
@@ -52,7 +52,7 @@ namespace Unity.Behavior.Serialization.Json
         /// <returns>The <see cref="SerializedReferences"/>.</returns>
         internal SerializedReferences GetSerializedReferences()
             => m_SerializedReferences ?? (m_SerializedReferences = new SerializedReferences());
-        
+
         /// <summary>
         /// Gets the shared <see cref="SerializedReferenceVisitor"/>.
         /// </summary>
@@ -72,7 +72,7 @@ namespace Unity.Behavior.Serialization.Json
         /// </summary>
         internal void ClearSerializedReferences()
             => m_SerializedReferences?.Clear();
-        
+
         /// <summary>
         /// Clears the deserialization events state.
         /// </summary>
@@ -94,22 +94,22 @@ namespace Unity.Behavior.Serialization.Json
         }
 
         Overrides m_Overrides;
-        
+
         int m_Indent;
         bool m_StringEscapeHandling;
-        
+
         /// <summary>
         /// By default, a polymorphic root type will have it's assembly qualified type name written to the output in the "$type" field.
         /// Use this parameter to provide a known root type at both serialize and deserialize time to avoid writing this information OR
         /// if this information is missing from the json string.
         /// </summary>
         public Type SerializedType { get; set; }
-        
+
         /// <summary>
         /// By default, adapters are evaluated for root objects. Use this to change the default behaviour.
         /// </summary>
         public bool DisableRootAdapters { get; set; }
-        
+
         /// <summary>
         /// Provide a custom set of adapters for the serialization. These adapters will be evaluated first before any global or built in adapters.
         /// </summary>
@@ -117,7 +117,7 @@ namespace Unity.Behavior.Serialization.Json
         /// To register a global adapter see <see cref="JsonSerialization.AddGlobalAdapter"/>.
         /// </remarks>
         public List<IJsonAdapter> UserDefinedAdapters { get; set; }
-        
+
         /// <summary>
         /// Provide a custom set of migration adapters for the serialization. These adapters will be evaluated first before any global or built in adapters.
         /// </summary>
@@ -143,27 +143,27 @@ namespace Unity.Behavior.Serialization.Json
         /// Setting this to true will cause managed allocations for the internal visitor.
         /// </remarks>
         public bool RequiresThreadSafety { get; set; }
-        
+
         /// <summary>
         /// By default, references between objects are serialized. Use this to always write a copy of the object to the output.
         /// </summary>
         public bool DisableSerializedReferences { get; set; }
-        
+
         /// <summary>
         /// Use this parameter to write minified json.
         /// </summary>
         public bool Minified { get; set; }
-        
+
         /// <summary>
         /// Use this parameter to write simplified json.
         /// </summary>
         public bool Simplified { get; set; }
-        
+
         /// <summary>
         /// Use this parameter to disable the validation step. This can increase performance.
         /// </summary>
         public bool DisableValidation { get; set; }
-        
+
         /// <summary>
         /// The indent value to use when writing.
         /// </summary>
@@ -176,7 +176,7 @@ namespace Unity.Behavior.Serialization.Json
                 m_Indent = value;
             }
         }
-        
+
         /// <summary>
         /// If set to to true, an escape character is added before special tokens and removed upon deserialization; default value is true.
         /// </summary>
@@ -189,13 +189,13 @@ namespace Unity.Behavior.Serialization.Json
                 m_StringEscapeHandling = value;
             }
         }
-        
+
         /// <summary>
         /// Sets the state object for serialization. This can be used to share resources across multiple calls to serialize and deserialize.
         /// </summary>
         internal JsonSerializationState State { get; set; }
     }
-    
+
     /// <summary>
     /// High level API for serializing or deserializing json data from string, file or stream.
     /// </summary>
@@ -204,13 +204,13 @@ namespace Unity.Behavior.Serialization.Json
         static readonly List<IJsonAdapter> s_Adapters = new List<IJsonAdapter>();
         static readonly List<IJsonMigration> s_Migrations = new List<IJsonMigration>();
         static readonly JsonSerializationState s_SharedState = new JsonSerializationState();
-        
+
         static JsonSerializationState GetSharedState()
         {
             // The current state is in use by the current stack. We must return a new instance to avoid trashing the serialized references and deserialization events.
             if (s_SharedState.IsLocked)
                 return new JsonSerializationState();
-            
+
             s_SharedState.ClearSerializedReferences();
             s_SharedState.ClearDeserializationEvents();
             return s_SharedState;
@@ -225,12 +225,12 @@ namespace Unity.Behavior.Serialization.Json
         {
             if (s_Adapters.Contains(adapter))
                 throw new ArgumentException("IJsonAdapter has already been registered.");
-            
+
             s_Adapters.Add(adapter);
         }
-        
+
         /// <summary>
-        /// Removes the specified <see cref="IJsonAdapter"/> from the set of global adapters. 
+        /// Removes the specified <see cref="IJsonAdapter"/> from the set of global adapters.
         /// </summary>
         /// <param name="adapter">The adapter to remove.</param>
         /// <exception cref="ArgumentException">The given adapter has not been registered.</exception>
@@ -238,10 +238,10 @@ namespace Unity.Behavior.Serialization.Json
         {
             if (!s_Adapters.Contains(adapter))
                 throw new ArgumentException("IJsonAdapter has not been registered.");
-            
+
             s_Adapters.Remove(adapter);
         }
-        
+
         /// <summary>
         /// Adds the specified <see cref="IJsonMigration"/> to the set of global adapters. This is be included by default in all JsonSerialization calls.
         /// </summary>
@@ -251,12 +251,12 @@ namespace Unity.Behavior.Serialization.Json
         {
             if (s_Migrations.Contains(migration))
                 throw new ArgumentException("IJsonMigration has already been registered.");
-            
+
             s_Migrations.Add(migration);
         }
-        
+
         /// <summary>
-        /// Removes the specified <see cref="IJsonAdapter"/> from the set of global adapters. 
+        /// Removes the specified <see cref="IJsonAdapter"/> from the set of global adapters.
         /// </summary>
         /// <param name="migration">The migration to remove.</param>
         /// <exception cref="ArgumentException">The given migration has not been registered.</exception>
@@ -264,7 +264,7 @@ namespace Unity.Behavior.Serialization.Json
         {
             if (!s_Migrations.Contains(migration))
                 throw new ArgumentException("IJsonMigration has not been registered.");
-            
+
             s_Migrations.Add(migration);
         }
 
@@ -273,7 +273,7 @@ namespace Unity.Behavior.Serialization.Json
         /// </summary>
         /// <returns>The internal list of global adapters.</returns>
         static List<IJsonAdapter> GetGlobalAdapters() => s_Adapters;
-        
+
         /// <summary>
         /// Returns the currently registered set of global migration.
         /// </summary>

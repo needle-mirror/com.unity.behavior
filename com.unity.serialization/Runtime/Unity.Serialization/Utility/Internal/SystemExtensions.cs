@@ -21,7 +21,7 @@ namespace Unity.Behavior.Serialization
             return path.StartsWith(relativePath) ? path.Substring(relativePath.Length).TrimStart('/') : path;
         }
     }
-    
+
     static class StringExtensions
     {
         internal static string ToForwardSlash(this string value)

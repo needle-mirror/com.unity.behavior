@@ -10,9 +10,9 @@ namespace Unity.Behavior
         public Node CreateNodeFromModel(GraphAssetProcessor graphAssetProcessor, NodeModel nodeModel)
         {
             AbortNodeModel abortNodeModel = nodeModel as AbortNodeModel;
-            
+
             abortNodeModel.NodeType = abortNodeModel.ModelAbortType == AbortNodeModel.AbortType.Restart ? typeof(RestartModifier) : typeof(AbortModifier);
-            
+
             Node node = Activator.CreateInstance(abortNodeModel.NodeType) as Node;
 
             return node;
@@ -22,7 +22,7 @@ namespace Unity.Behavior
         {
             if (node is IConditional conditionalNode)
             {
-                DefaultNodeTransformer.ProcessNodeConditions(graphAssetProcessor, nodeModel, conditionalNode);   
+                DefaultNodeTransformer.ProcessNodeConditions(graphAssetProcessor, nodeModel, conditionalNode);
             }
         }
     }

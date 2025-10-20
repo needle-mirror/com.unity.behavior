@@ -3,7 +3,7 @@ using Unity.Behavior.GraphFramework;
 namespace Unity.Behavior
 {
     /// <summary>
-    /// The EventChannelDescriptionAttribute contains metadata for event channels used in Behavior graphs. 
+    /// The EventChannelDescriptionAttribute contains metadata for event channels used in Behavior graphs.
     /// </summary>
     [System.AttributeUsage(System.AttributeTargets.Class)]
     public class EventChannelDescriptionAttribute : System.Attribute
@@ -33,17 +33,17 @@ namespace Unity.Behavior
         /// The name of the event channel.
         /// </summary>
         public string Name { get; }
-        
+
         /// <summary>
         /// The description of the event channel's function.
         /// </summary>
         public string Description { get; }
-        
+
         /// <summary>
         /// The message that describes the event that has occured.
         /// </summary>
         public string Message { get; }
-        
+
         /// <summary>
         /// The path of the icon to be used when representing the event channel in the graph editor.
         /// </summary>

@@ -19,7 +19,7 @@ namespace Unity.Behavior
             {
                 return;
             }
-            
+
             m_NamedChildren = nodeInfo.NamedChildren ?? new List<string>();
         }
 
@@ -31,7 +31,7 @@ namespace Unity.Behavior
         protected internal override void EnsurePortsAreUpToDate()
         {
             NodeInfo nodeInfo = NodeRegistry.GetInfoFromTypeID(NodeTypeID);
-            List<PortModel> outputPortsToRemove = OutputPortModels.Where(port => 
+            List<PortModel> outputPortsToRemove = OutputPortModels.Where(port =>
                 port.Name != PortModel.k_OutputPortName && !nodeInfo.NamedChildren.Contains(port.Name)).ToList();
             foreach (PortModel port in outputPortsToRemove)
             {

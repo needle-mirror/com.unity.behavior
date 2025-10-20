@@ -38,7 +38,7 @@ namespace Unity.Behavior
 
         // Allows to recreate the instantiate request in case the node is deserialized (i.e. after a loading).
         [CreateProperty] private bool m_HasPendingRequest = false;
-        
+
         private AsyncInstantiateOperation m_AsyncOperation;
 
         protected override Status OnStart()
@@ -89,7 +89,7 @@ namespace Unity.Behavior
             }
 
             m_AsyncOperation.completed += operation =>
-            {                
+            {
                 if (m_AsyncOperation.isDone)
                 {
                     InstantiatedObject.Value = m_AsyncOperation.Result[0] as GameObject;
@@ -124,7 +124,7 @@ namespace Unity.Behavior
             {
                 return;
             }
-            
+
             m_HasPendingRequest = true;
         }
 

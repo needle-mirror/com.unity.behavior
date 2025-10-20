@@ -46,7 +46,7 @@ namespace Unity.Behavior
             m_CustomPortHelpBox = new HelpText(k_CustomPortsHelpText);
             m_CustomPortHelpBox.AddToClassList("HelpText");
             m_CustomPortsRegion.Insert(0, m_CustomPortHelpBox);
-            
+
             // Move confirm button container to last step.
             m_CustomPortsRegion.Add(this.Q<VisualElement>("ButtonContainer"));
         }
@@ -146,7 +146,7 @@ namespace Unity.Behavior
             stepper.AddStep(this.Q<VisualElement>("NameCategoryView"));
             stepper.AddStep(this.Q<VisualElement>("StoryView"), OnShowStoryStep, OnHideStoryStep);
             stepper.AddStep(m_CustomPortsRegion, OnShowStoryViewAndPorts, OnHideStoryViewAndPorts);
-            
+
             CreateButton = Stepper.ConfirmButton;
             CreateButton.SetEnabled(false);
             CreateButton.clicked += OnCreateClicked;
@@ -173,7 +173,7 @@ namespace Unity.Behavior
 
             return !m_CustomPortsRegion.IncludesDuplicates() && textFields.All(textField => textField.IsValid);
         }
-        
+
         protected override bool HasDuplicateVariables()
         {
             List<string> variableNames = m_CustomPortNames.Select(GeneratorUtils.RemoveSpaces).ToList();
@@ -245,7 +245,7 @@ namespace Unity.Behavior
 
             return previewContent;
         }
-        
+
         protected override void SetupCategoryDropdown()
         {
             base.SetupCategoryDropdown();

@@ -19,7 +19,7 @@ namespace UnityEngine.UIExtras
                 Index = index;
             }
         }
-        
+
         public static string s_matchFormatPrefix = "<b>";
         public static string s_MatchFormatSuffix = "</b>";
 
@@ -56,7 +56,7 @@ namespace UnityEngine.UIExtras
             for (int queryWordIndex = 0; queryWordIndex < queryWordsDescendingLength.Count; ++queryWordIndex)
             {
                 string queryWord = queryWordsDescendingLength[queryWordIndex];
-                
+
                 if (String.IsNullOrEmpty(queryWord))
                 {
                     continue;
@@ -72,7 +72,7 @@ namespace UnityEngine.UIExtras
                         result.Offset = occurrenceOffset.Item1;
                         result.Length = occurrenceOffset.Item2;
                         result.Index = queryWordIndex;
-                        
+
                         matches.Add(result);
                         break;
                     }
@@ -85,10 +85,10 @@ namespace UnityEngine.UIExtras
                 {
                     return a.Offset.CompareTo(b.Offset);
                 }
-                
+
                 return b.Index.CompareTo(a.Index);
             });
-            
+
             return matches;
         }
 
@@ -134,7 +134,7 @@ namespace UnityEngine.UIExtras
                 {
                     continue;
                 }
-                
+
                 int testIndex = startIndex;
                 int queryIndex = 0;
 

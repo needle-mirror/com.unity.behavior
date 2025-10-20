@@ -23,7 +23,7 @@ namespace Unity.Behavior.GraphFramework
             if (evt.keyCode == KeyCode.C && evt.modifiers is EventModifiers.Control or EventModifiers.Command)
             {
                 var nodeModelsOriginal = new List<NodeModel>();
-                foreach (var node in Target.ViewState.Selected.OfType<NodeUI>()) 
+                foreach (var node in Target.ViewState.Selected.OfType<NodeUI>())
                 {
                     if (node.Model is { IsDuplicatable: true })
                     {

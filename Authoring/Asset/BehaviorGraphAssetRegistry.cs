@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 #if UNITY_EDITOR
@@ -20,7 +20,7 @@ namespace Unity.Behavior
         private const string k_GlobalRegistryPath = "Assets/GlobalAssetRegistry";
 
         /// <summary>
-        /// Returns wether the global registry is in a valid state. When false, the registry is still being updated 
+        /// Returns wether the global registry is in a valid state. When false, the registry is still being updated
         /// and trying to retrieve value from it might result in unexpected behavior.
         /// </summary>
         public static bool IsRegistryStateValid { get; private set; } = false;
@@ -28,13 +28,13 @@ namespace Unity.Behavior
         /// <summary>
         /// All <see cref="BehaviorAuthoringGraph"/> assets referenced by the registry instance.
         /// </summary>
-        [SerializeReference]
-        public List<BehaviorAuthoringGraph> Assets = new ();
+        [SerializeField]
+        public List<BehaviorAuthoringGraph> Assets = new();
 
         private Dictionary<SerializableGUID, BehaviorAuthoringGraph> m_GuidToAsset = new Dictionary<SerializableGUID, BehaviorAuthoringGraph>();
 
         private static BehaviorGraphAssetRegistry m_GlobalRegistry;
-        
+
         /// <summary>
         /// An instance of a <see cref="BehaviorGraphAssetRegistry" /> which holds references to all known
         /// assets contained within the project.
@@ -65,7 +65,7 @@ namespace Unity.Behavior
                 m_GuidToAsset = new Dictionary<SerializableGUID, BehaviorAuthoringGraph>();
             }
             m_GlobalRegistry = this;
-            
+
             IsRegistryStateValid = false;
 #if UNITY_EDITOR
             UpdateGlobalRegistry();
@@ -119,7 +119,10 @@ namespace Unity.Behavior
             {
                 return null;
             }
-            return AssetDatabase.LoadAssetAtPath<BehaviorAuthoringGraph>(assetPath);
+            AssetLogger.CanLogMissingTypeInManagedRefErrorMessage = false;
+            var asset = AssetDatabase.LoadAssetAtPath<BehaviorAuthoringGraph>(assetPath);
+            AssetLogger.CanLogMissingTypeInManagedRefErrorMessage = true;
+            return asset;
         }
 #endif
 
@@ -134,7 +137,7 @@ namespace Unity.Behavior
             {
                 return null;
             }
-            
+
             foreach (BehaviorAuthoringGraph asset in GlobalRegistry.Assets)
             {
                 if (asset.Blackboard.AssetID == blackboard.AssetID)
@@ -177,7 +180,7 @@ namespace Unity.Behavior
         public static void UpdateGlobalRegistry()
         {
             string[] guids = AssetDatabase.FindAssets($"t:{nameof(BehaviorAuthoringGraph)}");
-            
+
             // No guids are returned during deserialization, so don't update the registry.
             if (guids.Length == 0)
             {
@@ -188,7 +191,9 @@ namespace Unity.Behavior
             foreach (string guid in guids)
             {
                 string path = AssetDatabase.GUIDToAssetPath(guid);
+                AssetLogger.CanLogMissingTypeInManagedRefErrorMessage = false;
                 BehaviorAuthoringGraph asset = AssetDatabase.LoadAssetAtPath<BehaviorAuthoringGraph>(path);
+                AssetLogger.CanLogMissingTypeInManagedRefErrorMessage = true;
                 if (asset != null && !globalRegistry.Assets.Contains(asset))
                 {
                     globalRegistry.Assets.Add(asset);

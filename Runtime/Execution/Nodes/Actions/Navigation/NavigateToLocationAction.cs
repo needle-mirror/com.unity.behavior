@@ -122,7 +122,7 @@ namespace Unity.Behavior
                 m_NavMeshAgent.stoppingDistance = DistanceThreshold;
                 m_NavMeshAgent.SetDestination(locationPosition);
             }
-            
+
             m_Animator = Agent.Value.GetComponentInChildren<Animator>();
             UpdateAnimatorSpeed(0f);
 

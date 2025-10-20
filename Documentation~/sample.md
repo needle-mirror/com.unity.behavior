@@ -8,7 +8,7 @@ Unity Behavior provides sample content to help you get started with its features
 ## Available samples
 
 Unity Behavior includes the following samples:
-   
+
 * **Unity Behavior Example**: Provides a demo scene and predefined example actions.
 
 * **Runtime Serialization**: Provides an example of how to save and restore behavior graph states during runtime.
@@ -18,17 +18,17 @@ Unity Behavior includes the following samples:
 To use the samples provided with Unity Behavior, perform the following steps:
 
 1. Open the **Package Manager** window.
-2. Select the **In Project** tab. 
+2. Select the **In Project** tab.
 3. From the package list, select the **Behavior** package.
 4. From the packages details panel, select **Samples**.
 
    The **Samples** tab lists the following samples:
-   
+
    * **Unity Behavior Example**: Provides a demo scene and predefined example actions.
 
    * **Runtime Serialization**: Demonstrates how to save and restore behavior graph states during runtime.
 
-5. Click **Import** next to the sample you want to import in your project. 
+5. Click **Import** next to the sample you want to import in your project.
 
     * **Unity Behavior Example**: Unity creates a `Unity Behavior Example` folder in the **Project** window at `Assets` > `Samples` > `Behavior` > `[Version Number]`.
 
@@ -54,7 +54,7 @@ You can examine the node structure, understand how events and actions are connec
 
 ## Use Runtime Serialization
 
-The **Runtime Serialization** sample includes example scripts and a behavior graph. 
+The **Runtime Serialization** sample includes example scripts and a behavior graph.
 
 To use the **Runtime Serialization** sample, use the scripts and behavior graph in **Project** > `Assets` > `Samples` > `Behavior` > `[Version Number]`.
 

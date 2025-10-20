@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Behavior.GraphFramework;
@@ -10,7 +10,7 @@ namespace Unity.Behavior
         internal static List<Condition> GetConditions()
         {
             IEnumerable<Type> typeList = GetConditionTypes();
-            
+
             List<Condition> conditionList = typeList.Where(t => typeof(Condition).IsAssignableFrom(t))
                 .Select(Activator.CreateInstance)
                 .Cast<Condition>()
@@ -37,7 +37,7 @@ namespace Unity.Behavior
 
         internal static ConditionInfo GetInfoForConditionType(Type type)
         {
-            ConditionAttribute attribute = (ConditionAttribute) Attribute.GetCustomAttribute(type, typeof (ConditionAttribute));
+            ConditionAttribute attribute = (ConditionAttribute)Attribute.GetCustomAttribute(type, typeof(ConditionAttribute));
 
             string conditionName;
             SerializableGUID id;
@@ -47,7 +47,7 @@ namespace Unity.Behavior
             if (attribute != null)
             {
                 conditionName = attribute.Name;
-                
+
                 id = attribute.GUID;
                 category = String.IsNullOrEmpty(attribute.Category) ? "Conditions" : attribute.Category;
                 story = attribute.Story;
@@ -62,7 +62,7 @@ namespace Unity.Behavior
                 filePath = string.Empty;
             }
 
-            return new ConditionInfo { Name = conditionName, SerializableType = new SerializableType(type), TypeID = id, Category = category, FilePath = filePath, StoryInfo = new StoryInfo { Story = story, Variables = NodeRegistry.GetNodeVariables(type), StoryVariableNames=NodeRegistry.GetStoryVariableNames(story) }};
+            return new ConditionInfo { Name = conditionName, SerializableType = new SerializableType(type), TypeID = id, Category = category, FilePath = filePath, StoryInfo = new StoryInfo { Story = story, Variables = NodeRegistry.GetNodeVariables(type), StoryVariableNames = NodeRegistry.GetStoryVariableNames(story) } };
         }
     }
 }

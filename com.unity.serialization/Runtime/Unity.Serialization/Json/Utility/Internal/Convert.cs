@@ -29,7 +29,7 @@ namespace Unity.Behavior.Serialization.Json
             var sign = 1;
             var i = 0;
 
-            if (c[i] == '+' || c[i] == '-' )
+            if (c[i] == '+' || c[i] == '-')
             {
                 if (c[i] == '-')
                 {
@@ -46,7 +46,7 @@ namespace Unity.Behavior.Serialization.Json
                     break;
                 }
 
-                if ((ulong) value > k_ULongMaxDiv10)
+                if ((ulong)value > k_ULongMaxDiv10)
                 {
                     output = 0;
                     return ParseError.Overflow;
@@ -60,14 +60,16 @@ namespace Unity.Behavior.Serialization.Json
             {
                 value = -value;
 
-                if (value > 0) {
+                if (value > 0)
+                {
                     output = 0;
                     return ParseError.Overflow;
                 }
             }
             else
             {
-                if (value < 0) {
+                if (value < 0)
+                {
                     output = 0;
                     return ParseError.Overflow;
                 }
@@ -81,7 +83,7 @@ namespace Unity.Behavior.Serialization.Json
             var value = 0UL;
             var i = 0;
 
-            if (c[i] == '+' || c[i] == '-' )
+            if (c[i] == '+' || c[i] == '-')
             {
                 if (c[i] == '-')
                 {
@@ -106,7 +108,7 @@ namespace Unity.Behavior.Serialization.Json
                 }
 
                 value *= 10;
-                var temp = value + (ulong) (c[i] - '0');
+                var temp = value + (ulong)(c[i] - '0');
 
                 if (temp < value)
                 {
@@ -133,13 +135,13 @@ namespace Unity.Behavior.Serialization.Json
                 output = float.NaN;
                 return ParseError.None;
             }
-            
+
             output = 0;
             var value = 0f;
             var sign = 1;
             var i = 0;
 
-            if (c[i] == '+' || c[i] == '-' )
+            if (c[i] == '+' || c[i] == '-')
             {
                 if (c[i] == '-')
                 {
@@ -166,7 +168,7 @@ namespace Unity.Behavior.Serialization.Json
 
                 if (significantDigits < 9)
                 {
-                    var temp = decimalMantissa * 10 + (ulong) (c[i] - '0');
+                    var temp = decimalMantissa * 10 + (ulong)(c[i] - '0');
                     if (temp > decimalMantissa)
                     {
                         ++significantDigits;
@@ -190,7 +192,7 @@ namespace Unity.Behavior.Serialization.Json
 
                     if (significantDigits < 9)
                     {
-                        var temp = decimalMantissa * 10 + (ulong) (c[i] - '0');
+                        var temp = decimalMantissa * 10 + (ulong)(c[i] - '0');
                         if (temp > decimalMantissa)
                         {
                             ++significantDigits;
@@ -208,7 +210,7 @@ namespace Unity.Behavior.Serialization.Json
             var decimalExponent = 0;
             var decimalExponentSign = 1;
 
-            if (i < len && (c[i]|32) == 'e')
+            if (i < len && (c[i] | 32) == 'e')
             {
                 ++i;
                 if (i < len)
@@ -228,7 +230,7 @@ namespace Unity.Behavior.Serialization.Json
                     ++exponentDigits;
                     decimalExponent = decimalExponent * 10 + (c[i] - '0');
                     if (decimalExponent > 38)
-                        if(decimalExponentSign == 1)
+                        if (decimalExponentSign == 1)
                             return ParseError.Overflow;
                         else
                             return ParseError.Underflow;
@@ -269,7 +271,7 @@ namespace Unity.Behavior.Serialization.Json
                 mantissa2 *= 5;
                 --exponent10;
             }
-            while(exponent10 < 0)
+            while (exponent10 < 0)
             {
                 while ((mantissa2 & 0x8000000000000000U) == 0)
                 {
@@ -288,7 +290,7 @@ namespace Unity.Behavior.Serialization.Json
                 return ParseError.Overflow;
             if (e < -127)
                 return ParseError.Underflow;
-            ufu.uintValue = (ufu.uintValue & ~(0xFFU<<23)) | ((uint)(e + 127) << 23);
+            ufu.uintValue = (ufu.uintValue & ~(0xFFU << 23)) | ((uint)(e + 127) << 23);
             output = ufu.floatValue;
             return ParseError.None;
         }
@@ -316,7 +318,7 @@ namespace Unity.Behavior.Serialization.Json
 
             for (; i < len; i++)
             {
-                if (!IsDigit(c[i]))  return false;
+                if (!IsDigit(c[i])) return false;
             }
 
             return true;
@@ -328,7 +330,7 @@ namespace Unity.Behavior.Serialization.Json
 
             var i = 0;
 
-            if (c[i] == '-'|| c[i] == '+')
+            if (c[i] == '-' || c[i] == '+')
             {
                 i++;
             }
@@ -337,7 +339,7 @@ namespace Unity.Behavior.Serialization.Json
 
             for (; i < len; i++)
             {
-                if (c[i] == '.' || (c[i]|32) == 'e')
+                if (c[i] == '.' || (c[i] | 32) == 'e')
                 {
                     isDecimal = true;
                     continue;
@@ -361,37 +363,37 @@ namespace Unity.Behavior.Serialization.Json
         {
             return c >= '0' && c <= '9';
         }
-        
+
         internal static unsafe bool MatchesNaN(char* c, int len)
         {
-            var expected = stackalloc char[3] {'n', 'a', 'n'};
+            var expected = stackalloc char[3] { 'n', 'a', 'n' };
             return Matches(c, len, expected, 3);
         }
 
         internal static unsafe bool MatchesNull(char* c, int len)
         {
-            var expected = stackalloc char[4] {'n', 'u', 'l', 'l'};
+            var expected = stackalloc char[4] { 'n', 'u', 'l', 'l' };
             return Matches(c, len, expected, 4);
         }
-        
+
         internal static unsafe bool MatchesInfinity(char* c, int len)
         {
-            var expected = stackalloc char[8] {'i', 'n', 'f', 'i', 'n', 'i', 't', 'y'};
+            var expected = stackalloc char[8] { 'i', 'n', 'f', 'i', 'n', 'i', 't', 'y' };
             return Matches(c, len, expected, 8);
         }
-        
+
         internal static unsafe bool MatchesTrue(char* c, int len)
         {
-            var expected = stackalloc char[4] {'t', 'r', 'u', 'e'};
+            var expected = stackalloc char[4] { 't', 'r', 'u', 'e' };
             return Matches(c, len, expected, 4);
         }
 
         internal static unsafe bool MatchesFalse(char* c, int len)
         {
-            var expected = stackalloc char[5] {'f', 'a', 'l', 's', 'e'};
+            var expected = stackalloc char[5] { 'f', 'a', 'l', 's', 'e' };
             return Matches(c, len, expected, 5);
         }
-        
+
         internal static unsafe bool Matches(char* inputAnyCase, int inputLen, char* expectedLowerCase, int expectedLen)
         {
             if (inputLen != expectedLen)

@@ -10,7 +10,7 @@ namespace Unity.Behavior
     internal partial class HelpText : ExVisualElement
     {
 #if !ENABLE_UXML_UI_SERIALIZATION
-        internal new class UxmlFactory : UxmlFactory<HelpText, UxmlTraits> {}
+        internal new class UxmlFactory : UxmlFactory<HelpText, UxmlTraits> { }
 #endif
         public string Text
         {

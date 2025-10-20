@@ -13,7 +13,7 @@ To create this behavior graph, follow these steps:
 1. In the **Project** view, select **Create** > **Behavior** > **Behavior Graph**.
 1. To open the behavior graph, double-click the created asset.
 1. On the **Blackboard**, select **+** to add the following variables:
-    
+
     * **Waypoints** (GameObject): Define a list of waypoints for the agent to patrol.
     * **Sight** (Float): Set the detection radius for spotting enemies.
     * **FoundObject** (GameObject): Hold detected objects.

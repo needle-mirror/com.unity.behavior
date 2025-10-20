@@ -39,7 +39,7 @@ namespace Unity.Behavior
             stepper.NextButton.clicked += () => { NameField.Value ??= NameField.PlaceholderText; };
             stepper.AddStep(this.Q<VisualElement>("NameCategoryView"));
             stepper.AddStep(this.Q<VisualElement>("StoryView"), OnShowStoryStep, OnHideStoryStep);
-                  
+
             CreateButton = Stepper.ConfirmButton;
             CreateButton.SetEnabled(false);
             CreateButton.clicked += OnCreateClicked;

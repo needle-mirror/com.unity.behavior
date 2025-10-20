@@ -18,12 +18,12 @@ namespace Unity.Behavior
     {
         [SerializeReference] public BlackboardVariable<GameObject> Agent;
         [SerializeReference] public BlackboardVariable<List<GameObject>> Waypoints;
-        [SerializeReference] public BlackboardVariable<float> Speed = new (3f);
-        [SerializeReference] public BlackboardVariable<float> WaypointWaitTime = new (1.0f);
-        [SerializeReference] public BlackboardVariable<float> DistanceThreshold = new (0.2f);
-        [SerializeReference] public BlackboardVariable<string> AnimatorSpeedParam = new ("SpeedMagnitude");
+        [SerializeReference] public BlackboardVariable<float> Speed = new(3f);
+        [SerializeReference] public BlackboardVariable<float> WaypointWaitTime = new(1.0f);
+        [SerializeReference] public BlackboardVariable<float> DistanceThreshold = new(0.2f);
+        [SerializeReference] public BlackboardVariable<string> AnimatorSpeedParam = new("SpeedMagnitude");
         [Tooltip("Should patrol restart from the latest point?")]
-        [SerializeReference] public BlackboardVariable<bool> PreserveLatestPatrolPoint = new (false);
+        [SerializeReference] public BlackboardVariable<bool> PreserveLatestPatrolPoint = new(false);
 
         private NavMeshAgent m_NavMeshAgent;
         private Animator m_Animator;
@@ -175,7 +175,7 @@ namespace Unity.Behavior
 
         private void MoveToNextWaypoint()
         {
-            m_CurrentPatrolPoint = (m_CurrentPatrolPoint + 1) % Waypoints.Value.Count;            
+            m_CurrentPatrolPoint = (m_CurrentPatrolPoint + 1) % Waypoints.Value.Count;
 
             m_CurrentTarget = Waypoints.Value[m_CurrentPatrolPoint].transform.position;
             if (m_NavMeshAgent != null)

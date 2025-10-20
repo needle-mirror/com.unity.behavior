@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Unity.Behavior.GraphFramework;
 
@@ -19,13 +19,13 @@ namespace Unity.Behavior
             {
                 field.SendEvent(changeEvent);
             }
-            
+
             Dictionary<string, VariableModel> recentlyLinkedVariables = (DispatcherContext as BehaviorGraphEditor)?.m_RecentlyLinkedVariables;
             if (recentlyLinkedVariables != null)
             {
                 recentlyLinkedVariables[field.FieldName] = variable;
             }
-            
+
             return true;
         }
     }

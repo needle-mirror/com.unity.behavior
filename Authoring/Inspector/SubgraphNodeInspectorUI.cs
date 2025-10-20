@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.AppUI.UI;
@@ -22,9 +22,8 @@ namespace Unity.Behavior
         private const string k_DynamicNodeTitle = "Run Subgraph Dynamically";
         private const string k_DefaultDescription = "Running subgraphs allows you to keep your graphs clean and to switch out functionality at runtime using dynamic subgraphs.";
         private const string k_DynamicNodeDescription = "You're going to run a subgraph dynamically. Make sure you have your subgraph implement a Blackboard asset that you can refer to in this inspector.";
-
         private readonly HashSet<SerializableGUID> m_AssignedFieldModels = new HashSet<SerializableGUID>();
-        
+
         public SubgraphNodeInspectorUI(NodeModel nodeModel) : base(nodeModel) { }
 
         public override void Refresh()
@@ -42,7 +41,7 @@ namespace Unity.Behavior
                 if (m_SubgraphField.LinkedVariable != null)
                 {
                     CreateSubgraphRepresentationToggle();
-                    CreateBlackboardFields();     
+                    CreateBlackboardFields();
                 }
             }
         }
@@ -56,15 +55,15 @@ namespace Unity.Behavior
             representationToggleElement.tooltip = "Show the subgraph representation on the node UI.";
             Toggle toggle = new Toggle();
             representationToggleElement.Add(toggle);
-            
+
             toggle.value = m_NodeModel.ShowStaticSubgraphRepresentation;
             toggle.RegisterValueChangedCallback(evt =>
             {
                 // It would be better to not set outstanding but we currently don't have a way to refresh the node UI.
-                m_NodeModel.Asset.MarkUndo("Toggle Show Subgraph Representation"); 
+                m_NodeModel.Asset.MarkUndo("Toggle Show Subgraph Representation");
                 m_NodeModel.ShowStaticSubgraphRepresentation = evt.newValue;
             });
-            
+
             NodeProperties.Add(representationToggleElement);
         }
 
@@ -80,7 +79,7 @@ namespace Unity.Behavior
             else
             {
                 // Set the description depending on if the graph is being run dynamically or not.
-                Description = m_NodeModel.IsDynamic ? k_DynamicNodeDescription : nodeInfo.Description;   
+                Description = m_NodeModel.IsDynamic ? k_DynamicNodeDescription : nodeInfo.Description;
             }
         }
 
@@ -90,16 +89,21 @@ namespace Unity.Behavior
             {
                 // Typically, we'd use CreateField() here, but we need to use a different field type for the subgraph field,
                 // which isn't supported by LinkFieldUtility.CreateForType(name, type).
-                m_SubgraphField = new BaseLinkField { 
-                    FieldName = SubgraphNodeModel.k_SubgraphFieldName, 
+                m_SubgraphField = new BaseLinkField
+                {
+                    FieldName = SubgraphNodeModel.k_SubgraphFieldName,
                     LinkVariableType = typeof(BehaviorGraph),
                     AllowAssetEmbeds = true,
                     Model = InspectedNode
                 };
-                m_SubgraphField.OnLinkChanged += _ =>
+
+                m_SubgraphField.OnLinkWasPressed += unlink =>
                 {
                     m_SubgraphField.Dispatcher.DispatchImmediate(new SetNodeVariableLinkCommand(m_NodeModel, m_SubgraphField.FieldName, m_SubgraphField.LinkVariableType, m_SubgraphField.LinkedVariable, true));
+                };
 
+                m_SubgraphField.OnLinkChanged += (variableModel, wasUndo) =>
+                {
                     m_NodeModel.OnValidate();
                     m_NodeModel.CacheRuntimeGraphId();
 
@@ -108,54 +112,61 @@ namespace Unity.Behavior
                     {
                         if (m_BlackboardAssetField != null)
                         {
-                            m_BlackboardAssetField.LinkedVariable = null;      
+                            // Don't notify as it is not a manual assignement,
+                            // but the indirect impact of the subgraph being unlinked.
+                            // Otherwise this would send a redundant command to the dispatcher.
+                            m_BlackboardAssetField.SetValueWithoutNotify(null);
                         }
                     }
                 };
-                
+
                 m_SubgraphField.AddToClassList("LinkField-Light");
                 m_SubgraphField.RegisterCallback<LinkFieldTypeChangeEvent>(_ =>
                 {
                     Refresh();
                 });
             }
-            
+
             VisualElement fieldContainer = new VisualElement();
             fieldContainer.AddToClassList("Inspector-FieldContainer");
             fieldContainer.Add(new Label(SubgraphNodeModel.k_SubgraphFieldName));
             fieldContainer.Add(m_SubgraphField);
-            
+
             NodeProperties.Add(fieldContainer);
 
             // Update the inspector LinkField value from the NodeModel LinkedVariable value.
-            m_SubgraphField.LinkedVariable = m_NodeModel.SubgraphField.LinkedVariable == null ? null : m_NodeModel.SubgraphField.LinkedVariable;
+            var subgraphFieldValue = m_NodeModel.SubgraphField.LinkedVariable == null ? null : m_NodeModel.SubgraphField.LinkedVariable;
+            if (subgraphFieldValue == null && m_BlackboardAssetField != null)
+            {
+                m_BlackboardAssetField.OnLinkChanged -= BlackboardAssetField_OnLinkChanged;
+                m_BlackboardAssetField = null;
+            }
+            // Don't notify as this is initialization.
+            m_SubgraphField.SetLinkedVariableWithoutNotify(subgraphFieldValue);
         }
-        
+
         private void CreateBlackboardAssetField()
         {
             if (m_BlackboardAssetField == null)
             {
                 // Typically, we'd use CreateField() here, but we need to use a different field type for the blackboard asset field,
                 // which isn't supported by LinkFieldUtility.CreateForType(name, type).
-                m_BlackboardAssetField = new BaseLinkField { 
-                    FieldName = SubgraphNodeModel.k_BlackboardFieldName, 
+                m_BlackboardAssetField = new BaseLinkField
+                {
+                    FieldName = SubgraphNodeModel.k_BlackboardFieldName,
                     LinkVariableType = typeof(BehaviorBlackboardAuthoringAsset),
                     AllowAssetEmbeds = true,
                     Model = InspectedNode
                 };
-                m_BlackboardAssetField.OnLinkChanged += _ =>
-                {
-                    m_BlackboardAssetField.Dispatcher.DispatchImmediate(new SetNodeVariableLinkCommand(m_NodeModel, m_BlackboardAssetField.FieldName, m_BlackboardAssetField.LinkVariableType, m_BlackboardAssetField.LinkedVariable, true));
-                    m_NodeModel.OnValidate();
-                };
+                m_BlackboardAssetField.OnLinkChanged += BlackboardAssetField_OnLinkChanged; ;
                 m_BlackboardAssetField.AddToClassList("LinkField-Light");
             }
-            
+
             VisualElement fieldContainer = new VisualElement();
             fieldContainer.AddToClassList("Inspector-FieldContainer");
             fieldContainer.Add(new Label("Blackboard"));
             fieldContainer.Add(m_BlackboardAssetField);
-            
+
             NodeProperties.Add(fieldContainer);
 
             if (m_NodeModel.BlackboardAssetField?.LinkedVariable != null)
@@ -164,6 +175,13 @@ namespace Unity.Behavior
             }
 
             CreateRequiredBlackboardAssetFields();
+        }
+
+        private void BlackboardAssetField_OnLinkChanged(VariableModel newValue, bool wasUndo)
+        {
+            m_BlackboardAssetField.Dispatcher.DispatchImmediate(new SetNodeVariableLinkCommand(m_NodeModel, m_BlackboardAssetField.FieldName,
+                        m_BlackboardAssetField.LinkVariableType, m_BlackboardAssetField.LinkedVariable, !wasUndo));
+            m_NodeModel.OnValidate();
         }
 
         private void CreateBlackboardFields()
@@ -178,18 +196,18 @@ namespace Unity.Behavior
             {
                 return;
             }
-            
+
             Divider divider = new Divider();
             divider.size = Size.S;
             divider.AddToClassList("FieldDivider");
             NodeProperties.Add(divider);
-            var subgraphNodeMode  = InspectedNode as SubgraphNodeModel;
+            var subgraphNodeMode = InspectedNode as SubgraphNodeModel;
             foreach (VariableModel variable in m_NodeModel.SubgraphAuthoringAsset.Blackboard.Variables)
             {
                 CreateAssignVariableFieldElement(variable, subgraphNodeMode.Fields, m_NodeModel.RuntimeSubgraph.BlackboardReference.Blackboard.Variables);
             }
         }
-        
+
         private void CreateRequiredBlackboardAssetFields()
         {
             m_AssignedFieldModels.Clear();
@@ -197,7 +215,7 @@ namespace Unity.Behavior
             {
                 return;
             }
-            
+
             Divider divider = new Divider();
             divider.size = Size.S;
             divider.AddToClassList("FieldDivider");
@@ -207,8 +225,8 @@ namespace Unity.Behavior
             {
                 NodeProperties.Add(new Label("Blackboard is empty"));
             }
-            
-            var subgraphNodeMode  = InspectedNode as SubgraphNodeModel;
+
+            var subgraphNodeMode = InspectedNode as SubgraphNodeModel;
             foreach (VariableModel variable in m_NodeModel.RequiredBlackboard.Variables)
             {
                 CreateAssignVariableFieldElement(variable, subgraphNodeMode.Fields, m_NodeModel.RequiredBlackboard.RuntimeBlackboardAsset.Blackboard.Variables);
@@ -224,21 +242,21 @@ namespace Unity.Behavior
             else if (variable.IsExposed)
             {
                 BaseLinkField field = CreateField(variable.Name, variable.Type);
-                
+
                 AddRightClickRevertContextManipulator(variable, field, fields, blackboardVariables);
-                
+
                 if (field.LinkedVariable != null)
                 {
                     SetOverrideText(field);
                     return;
                 }
-                
+
                 field.RegisterCallback<LinkFieldValueChangeEvent>(_ =>
                 {
                     m_NodeModel.SetVariableOverride(variable.ID, true);
                 });
-                
-                field.OnLinkChanged += _ =>
+
+                field.OnLinkChanged += (_, _) =>
                 {
                     m_NodeModel.SetVariableOverride(variable.ID, true);
                 };
@@ -261,11 +279,11 @@ namespace Unity.Behavior
             }
         }
 
-        private void AddRightClickRevertContextManipulator(VariableModel variable, BaseLinkField field, IEnumerable<BehaviorGraphNodeModel.FieldModel>  fieldModels, List<BlackboardVariable> blackboardVariables)
+        private void AddRightClickRevertContextManipulator(VariableModel variable, BaseLinkField field, IEnumerable<BehaviorGraphNodeModel.FieldModel> fieldModels, List<BlackboardVariable> blackboardVariables)
         {
             var visualElement = field.GetFirstAncestorOfType<VisualElement>();
             var label = visualElement.Q<Label>();
-            
+
             label.AddManipulator(new ContextMenuManipulator(() =>
             {
                 if (!m_NodeModel.IsVariableOverridden(variable.ID))
@@ -278,7 +296,7 @@ namespace Unity.Behavior
                 {
                     ResetVariableOverride(variable.ID, field, fieldModels, blackboardVariables);
                 });
-                menu.ShowAsContext();             
+                menu.ShowAsContext();
 #endif
 
             }));
@@ -305,13 +323,13 @@ namespace Unity.Behavior
                 {
                     continue;
                 }
-                
+
                 if (field.LinkVariableType != subgraphVariable.Type || !field.FieldName.Equals(subgraphVariable.Name,
                         StringComparison.CurrentCultureIgnoreCase))
                 {
                     continue;
                 }
-                
+
                 foreach (var fieldModel in fieldModels)
                 {
                     if (fieldModel.Type.Type == subgraphVariable.Type && fieldModel.FieldName.Equals(subgraphVariable.Name, StringComparison.CurrentCultureIgnoreCase))
@@ -337,7 +355,7 @@ namespace Unity.Behavior
             {
                 string nicifiedFieldName = Util.NicifyVariableName(field.FieldName);
                 var label = visualElement.Q<Label>();
-                label.text = string.Format("{0} (Override)", nicifiedFieldName); 
+                label.text = string.Format("{0} (Override)", nicifiedFieldName);
             }
         }
 

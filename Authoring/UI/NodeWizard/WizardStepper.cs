@@ -17,13 +17,13 @@ namespace Unity.Behavior
         internal ActionButton BackButton => this.Q<ActionButton>("appui-appbar__back-button");
 
         internal readonly ActionButton CloseButton;
-        
+
         internal readonly Button ConfirmButton;
         internal Button NextButton => this.Q<Button>("NextButton");
         internal VisualElement StepperContainer => this.Q<VisualElement>("WizardStepperContainer");
         private VisualElement Content => this.Q<VisualElement>("WizardContentContainer");
         internal readonly List<VisualElement> WizardSteps = new List<VisualElement>();
-        
+
         internal readonly VisualElement PreviewElement;
 
         private List<System.Action> m_OnShowActions = new List<System.Action>();
@@ -83,11 +83,11 @@ namespace Unity.Behavior
             AddToClassList("WizardStepper");
             styleSheets.Add(ResourceLoadAPI.Load<StyleSheet>("Packages/com.unity.behavior/Authoring/UI/NodeWizard/Assets/WizardStepperStylesheet.uss"));
             ResourceLoadAPI.Load<VisualTreeAsset>("Packages/com.unity.behavior/Authoring/UI/NodeWizard/Assets/WizardStepperLayout.uxml").CloneTree(this);
-            
+
             // Node preview styles.
             styleSheets.Add(ResourceLoadAPI.Load<StyleSheet>("Packages/com.unity.behavior/Tools/Graph/Assets/GraphNodeStylesheet.uss"));
             styleSheets.Add(ResourceLoadAPI.Load<StyleSheet>("Packages/com.unity.behavior/Authoring/UI/AssetEditor/Assets/BehaviorNodeStylesheet.uss"));
-            
+
             AddToClassList("BehaviorModal");
 
             PreviewElement = this.Q<VisualElement>("PreviewElement");
@@ -106,10 +106,10 @@ namespace Unity.Behavior
 
             NextButton.clicked += OnNextButtonClicked;
             BackButton.clicked += OnBackButtonClicked;
-            
+
             RegisterCallback<AttachToPanelEvent>(OnAttachToPanel);
         }
-        
+
         private void OnAttachToPanel(AttachToPanelEvent evt)
         {
             if (WizardSteps.Count != 0)
@@ -148,7 +148,7 @@ namespace Unity.Behavior
                 ConfirmButton.Show();
             }
         }
-        
+
         private void OnBackButtonClicked()
         {
             if (WizardSteps.Count == 0)

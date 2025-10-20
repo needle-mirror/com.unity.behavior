@@ -35,7 +35,7 @@
 }
 
 .UnityThemeDark .SearchView-Icon__Return {
-  background-image: url("/Packages/com.unity.behavior/Tools/SearchWindow/Assets/Icons/d_tab_prev.png"); 
+  background-image: url("/Packages/com.unity.behavior/Tools/SearchWindow/Assets/Icons/d_tab_prev.png");
 }
 
 .UnityThemeLight .SearchView-Icon__Return {
@@ -47,7 +47,7 @@
   padding: 0px;
   margin: 3px;
   -unity-text-align: middle-left;
-  
+
 }
 
 #ReturnButton {

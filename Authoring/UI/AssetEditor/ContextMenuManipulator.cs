@@ -6,7 +6,7 @@ namespace Unity.Behavior
     {
         private bool m_IsActive;
         private System.Action m_CallbackMethod;
-        
+
         internal ContextMenuManipulator(System.Action callbackMethod)
         {
             m_CallbackMethod = callbackMethod;

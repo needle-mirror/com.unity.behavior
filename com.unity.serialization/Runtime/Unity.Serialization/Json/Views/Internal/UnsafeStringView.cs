@@ -10,7 +10,7 @@ namespace Unity.Behavior.Serialization.Json.Unsafe
     {
         [NativeDisableUnsafePtrRestriction] readonly UnsafePackedBinaryStream* m_Stream;
         readonly int m_TokenIndex;
-        
+
         internal UnsafeStringView(UnsafePackedBinaryStream* stream, int tokenIndex)
         {
             m_Stream = stream;
@@ -37,12 +37,12 @@ namespace Unity.Behavior.Serialization.Json.Unsafe
             {
                 var ptr = m_Stream->GetBufferPtr<byte>(m_TokenIndex);
 
-                if ((uint) index > *(int*) ptr)
+                if ((uint)index > *(int*)ptr)
                 {
                     throw new IndexOutOfRangeException();
                 }
 
-                var chars = (char*) (ptr + sizeof(int));
+                var chars = (char*)(ptr + sizeof(int));
                 return chars[index];
             }
         }
@@ -58,15 +58,15 @@ namespace Unity.Behavior.Serialization.Json.Unsafe
 
             if (null == other)
             {
-                return *(int*) ptr == 0;
+                return *(int*)ptr == 0;
             }
 
-            if (other.Length != *(int*) ptr)
+            if (other.Length != *(int*)ptr)
             {
                 return false;
             }
 
-            var chars = (char*) (ptr + sizeof(int));
+            var chars = (char*)(ptr + sizeof(int));
 
             for (var i = 0; i < other.Length; i++)
             {
@@ -86,11 +86,11 @@ namespace Unity.Behavior.Serialization.Json.Unsafe
         public override unsafe string ToString()
         {
             var buffer = m_Stream->GetBufferPtr<byte>(m_TokenIndex);
-            var len = *(int*) buffer;
-            var ptr = (char*) (buffer + sizeof(int));
+            var len = *(int*)buffer;
+            var ptr = (char*)(buffer + sizeof(int));
             return new string(ptr, 0, len);
         }
-        
+
         /// <summary>
         /// Gets a readonly view of a stream.
         /// </summary>

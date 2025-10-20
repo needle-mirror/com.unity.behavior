@@ -1,9 +1,9 @@
-﻿using System;
+using System;
 
 namespace Unity.Behavior
 {
     /// <summary>
-    /// The ComparisonAttribute contains metadata for the comparison operator element used in conditions. 
+    /// The ComparisonAttribute contains metadata for the comparison operator element used in conditions.
     /// </summary>
     [AttributeUsage(AttributeTargets.Field)]
     public class ComparisonAttribute : Attribute
@@ -20,17 +20,17 @@ namespace Unity.Behavior
             Variable = variable;
             ComparisonValue = comparisonValue;
         }
-        
+
         /// <summary>
         /// The comparison type of the comparison operator.
         /// </summary>
-        public ComparisonType ComparisonType { get;  }
-        
+        public ComparisonType ComparisonType { get; }
+
         /// <summary>
         /// The variable being compared in the comparison.
         /// </summary>
         public string Variable { get; }
-        
+
         /// <summary>
         /// The comparison value that the variable is being compared to.
         /// </summary>

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Unity.Behavior.GraphFramework;
 using UnityEngine;
@@ -12,8 +12,8 @@ namespace Unity.Behavior
         internal Tuple<PortModel, PortModel> ConnectionToBreak { get; }
         internal List<PortModel> ConnectedOutputPorts { get; }
         internal List<PortModel> ConnectedInputPorts { get; }
-        
-        internal InsertNodeCommand(NodeInfo insertedNodeTypeInfo, Vector2 position,  Tuple<PortModel, PortModel> connectionToBreak, List<PortModel> connectedOutputPorts, List<PortModel> connectedInputPorts, bool markUndo=true) : base(markUndo)
+
+        internal InsertNodeCommand(NodeInfo insertedNodeTypeInfo, Vector2 position, Tuple<PortModel, PortModel> connectionToBreak, List<PortModel> connectedOutputPorts, List<PortModel> connectedInputPorts, bool markUndo = true) : base(markUndo)
         {
             InsertedNodeTypeInfo = insertedNodeTypeInfo;
             Position = position;

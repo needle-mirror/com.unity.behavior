@@ -1,4 +1,4 @@
-﻿using UnityEngine.UIElements;
+using UnityEngine.UIElements;
 using Unity.Behavior.GraphFramework;
 
 namespace UnityEngine.UIExtras

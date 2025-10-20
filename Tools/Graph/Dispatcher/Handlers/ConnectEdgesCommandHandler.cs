@@ -1,4 +1,4 @@
-﻿namespace Unity.Behavior.GraphFramework
+namespace Unity.Behavior.GraphFramework
 {
     internal class ConnectEdgesCommandHandler : CommandHandler<ConnectEdgesCommand>
     {

@@ -13,7 +13,7 @@ namespace Unity.Behavior.Serialization.Json.Unsafe
             readonly int m_Start;
             readonly int m_End;
             int m_Position;
-            
+
             internal Enumerator(UnsafePackedBinaryStream* stream, int index)
             {
                 m_Stream = stream;
@@ -21,14 +21,14 @@ namespace Unity.Behavior.Serialization.Json.Unsafe
                 m_End = index + m_Stream->GetToken(index).Length;
                 m_Position = index;
             }
-            
+
             public bool MoveNext()
             {
                 if (m_Position >= m_End)
                 {
                     throw new InvalidOperationException();
                 }
-                
+
                 var length = m_Stream->GetToken(m_Position).Length;
 
                 if (m_Position == m_Start)
@@ -41,20 +41,20 @@ namespace Unity.Behavior.Serialization.Json.Unsafe
                     m_Position = m_Stream->GetFirstChildIndex(m_Position);
                     return true;
                 }
-                
+
                 if (m_Position + length < m_End)
                 {
                     m_Position += length;
                     return true;
                 }
-                
+
                 return false;
             }
 
             object IEnumerator.Current => Current;
-            
+
             public UnsafeValueView Current => new UnsafeValueView(m_Stream, m_Position);
-            
+
             public void Reset()
             {
                 m_Position = m_Start;
@@ -62,10 +62,10 @@ namespace Unity.Behavior.Serialization.Json.Unsafe
 
             public void Dispose()
             {
-                
+
             }
         }
-        
+
         [NativeDisableUnsafePtrRestriction] readonly UnsafePackedBinaryStream* m_Stream;
         readonly int m_TokenIndex;
 
@@ -94,7 +94,7 @@ namespace Unity.Behavior.Serialization.Json.Unsafe
 
         public IEnumerator<UnsafeValueView> GetEnumerator() => new Enumerator(m_Stream, m_TokenIndex);
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-        
+
         /// <summary>
         /// Gets a readonly view of a stream.
         /// </summary>

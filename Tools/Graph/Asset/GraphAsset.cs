@@ -8,17 +8,17 @@ namespace Unity.Behavior.GraphFramework
 {
     internal class GraphAsset : ScriptableObject
     {
-        [SerializeReference] 
+        [SerializeField]
         public BlackboardAsset Blackboard;
-        
-        [SerializeField] 
+
+        [SerializeField]
         private string m_Description;
         public string Description
         {
             get => m_Description;
             set => m_Description = value;
         }
-        
+
         [SerializeReference]
         private List<NodeModel> m_Nodes = new();
         public List<NodeModel> Nodes
@@ -32,19 +32,20 @@ namespace Unity.Behavior.GraphFramework
         /// </summary>
         internal bool HasOutstandingChanges { get; set; }
 
-        [SerializeField][HideInInspector]
+        [SerializeField]
+        [HideInInspector]
         internal long m_VersionTimestamp;
         public long VersionTimestamp => m_VersionTimestamp;
-        
+
         public void MarkUndo(string description, bool hasOutstandingChange = true)
         {
 #if UNITY_EDITOR
             // For any change not registered through dispatcher, we need to manually provide additional information.
             if (hasOutstandingChange && description.Contains("(outstanding)") == false)
             {
-                description += $" (outstanding)"; 
+                description += $" (outstanding)";
             }
-            
+
             var assetPath = UnityEditor.AssetDatabase.GetAssetPath(this);
             if (description.Contains(assetPath) == false)
             {
@@ -60,7 +61,6 @@ namespace Unity.Behavior.GraphFramework
 
         public virtual void SaveAsset()
         {
-            HasOutstandingChanges = false;
 #if UNITY_EDITOR
             UnityEditor.EditorUtility.SetDirty(this);
             UnityEditor.AssetDatabase.SaveAssetIfDirty(this);
@@ -76,11 +76,11 @@ namespace Unity.Behavior.GraphFramework
 #endif
         }
 
-        public virtual void OnValidate()
+        internal virtual void ValidateAsset()
         {
-            Nodes.RemoveAll(node => node == null);
-            foreach (NodeModel node in Nodes)
+            for (int i = 0; i < Nodes.Count; i++)
             {
+                NodeModel node = Nodes[i];
                 // holdovers for supporting older graphs - remove for 1.0.0
                 if (node.Asset == null)
                 {
@@ -93,7 +93,7 @@ namespace Unity.Behavior.GraphFramework
                 node.OnValidate();
             }
 
-            Blackboard?.OnValidate();
+            Blackboard?.ValidateAsset();
         }
 
         protected virtual void OnEnable()
@@ -116,7 +116,7 @@ namespace Unity.Behavior.GraphFramework
                     if (blackboard.name != blackboardName)
                     {
                         blackboard.name = blackboardName;
-                    }   
+                    }
                 }
                 return;
             }
@@ -126,13 +126,13 @@ namespace Unity.Behavior.GraphFramework
                 Blackboard = CreateInstance<BlackboardAsset>();
                 Blackboard.name = blackboardName;
             }
-            
+
 #if UNITY_EDITOR
             if (string.IsNullOrEmpty(path))
             {
                 return;
             }
-                
+
             UnityEditor.AssetDatabase.AddObjectToAsset(Blackboard, this);
             UnityEditor.AssetDatabase.SaveAssets();
             UnityEditor.EditorUtility.SetDirty(this);
@@ -148,7 +148,7 @@ namespace Unity.Behavior.GraphFramework
             node.OnDefineNode();
             Nodes.Add(node);
 
-            // Connect the node to the specified port. 
+            // Connect the node to the specified port.
             if (connectedPort != null)
             {
                 if (connectedPort.IsInputPort && node.TryDefaultOutputPortModel(out PortModel portModelTarget))
@@ -321,7 +321,7 @@ namespace Unity.Behavior.GraphFramework
                 }
             }
 
-            // Add node to the new sequence model 
+            // Add node to the new sequence model
             if (index >= sequence.Nodes.Count)
             {
                 sequence.Nodes.Add(node);

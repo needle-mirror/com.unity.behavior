@@ -9,7 +9,7 @@ namespace Unity.Behavior
     [Serializable, GeneratePropertyBag]
     [NodeDescription(
         name: "Try In Order",
-        description: "Executes branches in order until one succeeds.", 
+        description: "Executes branches in order until one succeeds.",
         icon: "Icons/selector",
         category: "Flow",
         id: "2bdfd1f8aaec469f8df1fd3190d7466b")]

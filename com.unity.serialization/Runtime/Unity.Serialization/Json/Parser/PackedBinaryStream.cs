@@ -11,7 +11,7 @@ namespace Unity.Behavior.Serialization.Json
     internal struct Handle : IEquatable<Handle>
     {
         public static readonly Handle Null = new Handle { Index = -1, Version = -1 };
-        
+
         public int Index;
         public int Version;
 
@@ -68,9 +68,9 @@ namespace Unity.Behavior.Serialization.Json
         /// The maximum depth limit has been exceeded.
         /// </summary>
         public const int ResultStackOverflow = -4;
-        
+
         readonly Allocator m_Label;
-        
+
         public BinaryToken* Tokens;
         public HandleData* Handles;
         public int TokenCapacity;
@@ -84,17 +84,17 @@ namespace Unity.Behavior.Serialization.Json
         public UnsafePackedBinaryStream(int initialTokenCapacity, int initialBufferCapacity, Allocator label)
         {
             m_Label = label;
-            
-            Tokens = (BinaryToken*) UnsafeUtility.Malloc(sizeof(BinaryToken) * initialTokenCapacity, UnsafeUtility.AlignOf<BinaryToken>(), m_Label);
-            Handles = (HandleData*) UnsafeUtility.Malloc(sizeof(HandleData) * initialTokenCapacity, UnsafeUtility.AlignOf<HandleData>(), m_Label);
+
+            Tokens = (BinaryToken*)UnsafeUtility.Malloc(sizeof(BinaryToken) * initialTokenCapacity, UnsafeUtility.AlignOf<BinaryToken>(), m_Label);
+            Handles = (HandleData*)UnsafeUtility.Malloc(sizeof(HandleData) * initialTokenCapacity, UnsafeUtility.AlignOf<HandleData>(), m_Label);
             TokenCapacity = initialTokenCapacity;
             TokenNextIndex = 0;
             TokenParentIndex = -1;
 
-            Buffer = (byte*) UnsafeUtility.Malloc(sizeof(byte) * initialBufferCapacity, UnsafeUtility.AlignOf<byte>(), m_Label);
+            Buffer = (byte*)UnsafeUtility.Malloc(sizeof(byte) * initialBufferCapacity, UnsafeUtility.AlignOf<byte>(), m_Label);
             BufferCapacity = initialBufferCapacity;
             BufferPosition = 0;
-            
+
             for (var i = 0; i < initialTokenCapacity; i++)
             {
                 Tokens[i] = new BinaryToken
@@ -124,27 +124,27 @@ namespace Unity.Behavior.Serialization.Json
         [BurstDiscard]
         void CheckTokenRangeAndThrow(int index)
         {
-            if ((uint) index >= (uint) TokenCapacity)
+            if ((uint)index >= (uint)TokenCapacity)
                 throw new IndexOutOfRangeException();
         }
-        
+
         [BurstDiscard]
         void CheckVersionAndThrow(Handle handle, HandleData data)
         {
             if (handle.Version != data.DataVersion)
                 throw new InvalidOperationException("View is invalid. The underlying data has been released.");
         }
-        
+
         [BurstDiscard]
         void CheckBufferRangeAndThrow(int length)
         {
             if (length > BufferPosition)
                 throw new IndexOutOfRangeException();
         }
-        
+
         internal bool IsValid(Handle handle)
         {
-            if ((uint) handle.Index >= (uint) TokenCapacity)
+            if ((uint)handle.Index >= (uint)TokenCapacity)
                 return false;
 
             return Handles[handle.Index].DataVersion == handle.Version;
@@ -155,7 +155,7 @@ namespace Unity.Behavior.Serialization.Json
             CheckTokenRangeAndThrow(tokenIndex);
             return Tokens[tokenIndex];
         }
-        
+
         internal int GetTokenIndex(Handle handle)
         {
             CheckTokenRangeAndThrow(handle.Index);
@@ -163,7 +163,7 @@ namespace Unity.Behavior.Serialization.Json
             CheckVersionAndThrow(handle, data);
             return data.DataIndex;
         }
-        
+
         internal BinaryToken GetToken(Handle handle)
         {
             CheckTokenRangeAndThrow(handle.Index);
@@ -171,19 +171,19 @@ namespace Unity.Behavior.Serialization.Json
             CheckVersionAndThrow(handle, data);
             return GetToken(data.DataIndex);
         }
-        
+
         internal Handle GetHandle(int tokenIndex)
         {
             CheckTokenRangeAndThrow(tokenIndex);
             var handleData = Handles[Tokens[tokenIndex].HandleIndex];
-            return new Handle {Index = Tokens[tokenIndex].HandleIndex, Version = handleData.DataVersion};
+            return new Handle { Index = Tokens[tokenIndex].HandleIndex, Version = handleData.DataVersion };
         }
-        
+
         internal Handle GetHandle(BinaryToken token)
         {
-            return new Handle {Index = token.HandleIndex, Version = Handles[token.HandleIndex].DataVersion };
+            return new Handle { Index = token.HandleIndex, Version = Handles[token.HandleIndex].DataVersion };
         }
-        
+
         internal Handle GetFirstChild(Handle handle)
         {
             var start = GetTokenIndex(handle);
@@ -200,13 +200,13 @@ namespace Unity.Behavior.Serialization.Json
 
             return Handle.Null;
         }
-        
+
         internal int GetFirstChildIndex(int start)
         {
             if (Tokens[start].Length <= 1)
                 return start + 1;
-            
-            for (var index = start + 1;; index++)
+
+            for (var index = start + 1; ; index++)
             {
                 var token = Tokens[index];
 
@@ -222,14 +222,14 @@ namespace Unity.Behavior.Serialization.Json
             CheckBufferRangeAndThrow(Tokens[tokenIndex].Position + sizeof(T));
             return (T*)(Buffer + Tokens[tokenIndex].Position);
         }
-        
+
         internal T* GetBufferPtr<T>(Handle handle) where T : unmanaged
         {
             var position = GetToken(handle).Position;
             CheckBufferRangeAndThrow(position + sizeof(T));
-            return (T*) (Buffer + position);
+            return (T*)(Buffer + position);
         }
-        
+
         internal void EnsureTokenCapacity(int newLength)
         {
             if (newLength <= TokenCapacity)
@@ -253,10 +253,10 @@ namespace Unity.Behavior.Serialization.Json
                     DataVersion = 1
                 };
             }
-            
+
             TokenCapacity = newLength;
         }
-        
+
         internal void EnsureBufferCapacity(int length)
         {
             if (length <= BufferCapacity)
@@ -265,12 +265,12 @@ namespace Unity.Behavior.Serialization.Json
             Buffer = Resize(Buffer, BufferPosition, length, m_Label);
             BufferCapacity = length;
         }
-        
+
         public void Clear()
         {
-            for (var i=0; i<TokenNextIndex; i++)
+            for (var i = 0; i < TokenNextIndex; i++)
                 Handles[i].DataVersion++;
-            
+
             TokenNextIndex = 0;
             TokenParentIndex = -1;
             BufferPosition = 0;
@@ -279,7 +279,7 @@ namespace Unity.Behavior.Serialization.Json
         internal int DiscardCompleted()
         {
             const int kStackSize = 128;
-            
+
             var stack = stackalloc int[kStackSize];
             var sp = -1;
 
@@ -296,7 +296,7 @@ namespace Unity.Behavior.Serialization.Json
                 var partIndex = index + 1;
                 var partCount = 1;
 
-                for (;partIndex < TokenNextIndex; partIndex++)
+                for (; partIndex < TokenNextIndex; partIndex++)
                 {
                     if (Tokens[partIndex].Length == -1)
                     {
@@ -337,7 +337,7 @@ namespace Unity.Behavior.Serialization.Json
                 // Update handle pointers
                 Handles[Tokens[i].HandleIndex].DataIndex = i;
                 Handles[Tokens[index].HandleIndex].DataIndex = index;
-                
+
                 var token = Tokens[i];
 
                 var length = 0;
@@ -393,10 +393,10 @@ namespace Unity.Behavior.Serialization.Json
             TokenNextIndex = binaryTokenNextIndex;
             return ResultSuccess;
         }
-        
+
         static T* Resize<T>(T* buffer, int fromLength, int toLength, Allocator label) where T : unmanaged
         {
-            var tmp = (T*) UnsafeUtility.Malloc(toLength * sizeof(T), UnsafeUtility.AlignOf<T>(), label);
+            var tmp = (T*)UnsafeUtility.Malloc(toLength * sizeof(T), UnsafeUtility.AlignOf<T>(), label);
             UnsafeUtility.MemCpy(tmp, buffer, fromLength * sizeof(T));
             UnsafeUtility.Free(buffer, label);
             return tmp;
@@ -417,7 +417,7 @@ namespace Unity.Behavior.Serialization.Json
         readonly Allocator m_Label;
 
         [NativeDisableUnsafePtrRestriction] UnsafePackedBinaryStream* m_Data;
-        
+
         internal UnsafePackedBinaryStream* GetUnsafePtr() => m_Data;
 
         internal int TokenNextIndex => m_Data->TokenNextIndex;
@@ -428,7 +428,7 @@ namespace Unity.Behavior.Serialization.Json
         /// <param name="label">The memory allocator label to use.</param>
         public PackedBinaryStream(Allocator label) : this(k_DefaultTokenCapacity, k_DefaultBufferCapacity, label)
         {
-            
+
         }
 
         /// <summary>
@@ -440,10 +440,10 @@ namespace Unity.Behavior.Serialization.Json
         public PackedBinaryStream(int initialTokensCapacity, int initialBufferCapacity, Allocator label)
         {
             m_Label = label;
-            m_Data = (UnsafePackedBinaryStream*) UnsafeUtility.Malloc(sizeof(UnsafePackedBinaryStream), UnsafeUtility.AlignOf<UnsafePackedBinaryStream>(), m_Label);
+            m_Data = (UnsafePackedBinaryStream*)UnsafeUtility.Malloc(sizeof(UnsafePackedBinaryStream), UnsafeUtility.AlignOf<UnsafePackedBinaryStream>(), m_Label);
             *m_Data = new UnsafePackedBinaryStream(initialTokensCapacity, initialBufferCapacity, m_Label);
         }
-        
+
         /// <summary>
         /// Releases all resources used by the <see cref="PackedBinaryStream" />.
         /// </summary>
@@ -458,7 +458,7 @@ namespace Unity.Behavior.Serialization.Json
         {
             return m_Data->IsValid(handle);
         }
-        
+
         internal BinaryToken GetToken(int tokenIndex)
         {
             return m_Data->GetToken(tokenIndex);
@@ -503,7 +503,7 @@ namespace Unity.Behavior.Serialization.Json
         {
             m_Data->EnsureBufferCapacity(length);
         }
-        
+
         internal SerializedValueView GetView(int tokenIndex)
         {
             var token = m_Data->Tokens[tokenIndex];
@@ -544,7 +544,7 @@ namespace Unity.Behavior.Serialization.Json
         {
             unchecked
             {
-                return ((int) m_Label * 397) ^ unchecked((int) (long) m_Data);
+                return ((int)m_Label * 397) ^ unchecked((int)(long)m_Data);
             }
         }
     }

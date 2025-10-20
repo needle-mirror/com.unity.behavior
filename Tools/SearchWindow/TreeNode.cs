@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -12,7 +12,8 @@ namespace UnityEngine.UIExtras
 
         public T Value { get => m_Value; set { m_Value = value; } }
 
-        public ReadOnlyCollection<TreeNode<T>> Children {
+        public ReadOnlyCollection<TreeNode<T>> Children
+        {
             get { return m_Children.AsReadOnly(); }
         }
 
@@ -23,7 +24,8 @@ namespace UnityEngine.UIExtras
             m_Value = value;
         }
 
-        public TreeNode<T> this[int i] {
+        public TreeNode<T> this[int i]
+        {
             get { return m_Children[i]; }
         }
 

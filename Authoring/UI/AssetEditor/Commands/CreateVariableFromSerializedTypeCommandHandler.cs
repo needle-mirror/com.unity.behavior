@@ -20,7 +20,7 @@ namespace Unity.Behavior
                 Debug.LogError($"Type {command.VariableTypeName} not found");
                 return false;
             }
-            
+
             BlackboardView.Dispatcher.DispatchImmediate(new CreateVariableCommand($"{command.VariableTypeName}", BlackboardUtils.GetVariableModelTypeForType(type)),
                 setHasOutstandingChanges: false);
             return true;

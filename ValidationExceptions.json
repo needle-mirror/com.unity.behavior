@@ -3,12 +3,27 @@
         {
             "ValidationTest": "API Validation",
             "ExceptionMessage": "Breaking changes require a new major version.",
-            "PackageVersion": "1.0.12"
+            "PackageVersion": "1.0.13"
         },
         {
             "ValidationTest": "API Validation",
             "ExceptionMessage": "Additions require a new minor or major version.",
-            "PackageVersion": "1.0.12"
+            "PackageVersion": "1.0.13"
+        },
+        {
+          "ValidationTest": "API Validation",
+          "ExceptionMessage": "Adding the first entry in includePlatforms requires a new major version. Was:\"\" Now:\"Editor\"",
+          "PackageVersion": "1.0.13"
+        },
+        {
+          "ValidationTest": "API Validation",
+          "ExceptionMessage": "Assembly \"SerializableGUID\" no longer exists or is no longer included in build. This change requires a new major version.",
+          "PackageVersion": "1.0.13"
+        },
+        {
+          "ValidationTest": "API Validation",
+          "ExceptionMessage": "New assembly \"Unity.Behavior.SerializableGUID\" may only be added in a new minor or major version.",
+          "PackageVersion": "1.0.13"
         }
     ],
     "WarningExceptions": []

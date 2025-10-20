@@ -26,7 +26,7 @@ namespace Unity.Behavior.Serialization.Json
                 m_Collection = collection;
                 m_Index = -1;
             }
-            
+
             /// <summary>
             /// Advances the enumerator to the next element of the <see cref="SerializedMemberViewCollection"/>.
             /// </summary>
@@ -90,21 +90,21 @@ namespace Unity.Behavior.Serialization.Json
         /// <param name="name">The key of the value to get.</param>
         /// <exception cref="KeyNotFoundException">The key does not exist in the collection.</exception>
         public SerializedValueView this[string name] => GetValue(name);
-        
+
         /// <summary>
         /// Gets the value associated with the specified key.
         /// </summary>
         /// <param name="name">The key of the value to get.</param>
         /// <exception cref="KeyNotFoundException">The key does not exist in the collection.</exception>
         public SerializedValueView this[FixedString32Bytes name] => GetValue(name);
-        
+
         /// <summary>
         /// Gets the value associated with the specified key.
         /// </summary>
         /// <param name="name">The key of the value to get.</param>
         /// <exception cref="KeyNotFoundException">The key does not exist in the collection.</exception>
         public SerializedValueView this[FixedString64Bytes name] => GetValue(name);
-        
+
         /// <summary>
         /// Gets the value associated with the specified key.
         /// </summary>
@@ -121,7 +121,7 @@ namespace Unity.Behavior.Serialization.Json
         {
             if (!TryGetValue(name, out var value))
                 throw new KeyNotFoundException(name);
-                
+
             return value;
         }
 
@@ -147,7 +147,7 @@ namespace Unity.Behavior.Serialization.Json
             value = default;
             return false;
         }
-        
+
         /// <summary>
         /// Gets the value associated with the specified key.
         /// </summary>
@@ -158,10 +158,10 @@ namespace Unity.Behavior.Serialization.Json
         {
             if (!TryGetValue(name, out var value))
                 throw new KeyNotFoundException($"The Key=[\"{name}\"] could not be found in the SerializedObjectView.");
-            
+
             return value;
         }
-        
+
         /// <summary>
         /// Gets the value associated with the specified key.
         /// </summary>
@@ -194,7 +194,7 @@ namespace Unity.Behavior.Serialization.Json
         {
             m_Members.Add(view);
         }
-        
+
         /// <summary>
         /// Returns an enumerator that iterates through the <see cref="SerializedMemberViewCollection"/>.
         /// </summary>

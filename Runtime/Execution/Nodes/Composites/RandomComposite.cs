@@ -9,10 +9,10 @@ namespace Unity.Behavior
     /// </summary>
     [Serializable, GeneratePropertyBag]
     [NodeDescription(
-        name: "Random", 
-        description: "Executes a random branch.", 
-        icon: "Icons/random", 
-        category: "Flow", 
+        name: "Random",
+        description: "Executes a random branch.",
+        icon: "Icons/random",
+        category: "Flow",
         id: "3ec329cc9c414fd88aa9113e7c422f1a")]
     internal partial class RandomComposite : Composite
     {
@@ -27,7 +27,7 @@ namespace Unity.Behavior
                 var status = StartNode(Children[m_RandomIndex]);
                 if (status == Status.Success || status == Status.Failure)
                     return status;
-                
+
                 return Status.Waiting;
             }
 
@@ -40,7 +40,7 @@ namespace Unity.Behavior
             var status = Children[m_RandomIndex].CurrentStatus;
             if (status == Status.Success || status == Status.Failure)
                 return status;
-            
+
             return Status.Waiting;
         }
     }

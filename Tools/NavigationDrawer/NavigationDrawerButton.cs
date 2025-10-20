@@ -1,4 +1,4 @@
-﻿using UnityEngine.UIElements;
+using UnityEngine.UIElements;
 using Unity.Behavior.GraphFramework;
 #if ENABLE_UXML_UI_SERIALIZATION
 using Unity.Properties;
@@ -28,33 +28,33 @@ namespace UnityEngine.UIExtras
         [CreateProperty]
         [UxmlAttribute("text")]
 #endif
-        public string Text 
+        public string Text
         {
             get => m_Label.text;
             set
             {
                 var changed = m_Label.text != value;
                 m_Label.text = value;
-                
+
 #if ENABLE_UXML_UI_SERIALIZATION
                 if (changed)
                     NotifyPropertyChanged(textProperty);
 #endif
             }
         }
-        
+
 #if ENABLE_UXML_UI_SERIALIZATION
         [CreateProperty]
         [UxmlAttribute("icon")]
 #endif
-        internal string IconPath 
+        internal string IconPath
         {
             get => m_IconPath;
             set
             {
                 var changed = m_IconPath != value;
                 SetIcon(value);
-                    
+
 #if ENABLE_UXML_UI_SERIALIZATION
                 if (changed)
                     NotifyPropertyChanged(iconProperty);

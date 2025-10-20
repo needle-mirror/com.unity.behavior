@@ -2,12 +2,12 @@
 uid: example
 ---
 
-# Behavior graph example
+# Get started with Unity Behavior
 
 This section provides an example to illustrate how to create a behavior graph. The scenario involves an agent (GameObject) that randomly makes a choice between two actions, showcasing different functionalities of behavior graph. The agent has the following two options:
 
 * Think about what to do and wait for 5 s.
-* Talk to itself and search for a random target (GameObject) that talks or calls out a message for the agent. Consequently, the agent selects that target and moves towards it. 
+* Talk to itself and search for a random target (GameObject) that talks or calls out a message for the agent. Consequently, the agent selects that target and moves towards it.
 
 This example illustrates the implementation of decision-making processes and action sequences within behavior graphs.
 
@@ -71,7 +71,7 @@ Now create two branches that the agent can execute at random. In the first branc
 
 1. Create a **Talk** node, as described in the previous procedure.
 
-   (Right-click > **Add** > **Action** > **Talk**). 
+   (Right-click > **Add** > **Action** > **Talk**).
 2. Select the link icon in the **Agent** field of the action node to link it with a variable on the **Blackboard** and select `Self`.
 3. Type `I'll think about it!` in the field beside **Self says**.
 4. To add a **Wait** node, right-click any empty space of the Unity Behavior graph editor and select **Add**.
@@ -84,10 +84,10 @@ Now create two branches that the agent can execute at random. In the first branc
 
 ## Second branch
 
-1. Create a **Talk** node using the same steps from the first procedure. 
+1. Create a **Talk** node using the same steps from the first procedure.
 
-   (Right-click > **Add** > **Action** > **Talk**). 
-2. Select the link icon in the **Agent** field of the action node to link it with a variable on the **Blackboard** and select `Self`. 
+   (Right-click > **Add** > **Action** > **Talk**).
+2. Select the link icon in the **Agent** field of the action node to link it with a variable on the **Blackboard** and select `Self`.
 3. Type `I'll go to a random target!` in the field beside **Self says**.
 4. To assign a target to a random object, right-click any empty space of the Unity Behavior graph editor and select **Add**.
 5. Select **Action** > **Set Random Target**.
@@ -104,9 +104,9 @@ Now create two branches that the agent can execute at random. In the first branc
    > [!NOTE]
    > If you're creating your own scene (rather than using the `SampleScene` included with the Unity Behavior sample), be sure to tag some of your GameObjects with the `Targets` value. To do this, use the **Tag** drop-down menu in the Unity Editor's **Inspector** window (not Unity Behavior editor's **Inspector** window). For more information on creating and assigning tags, refer to [Tags](https://docs.unity3d.com/Manual/Tags.html).
 
-7. Create another **Talk** node (Right-click > **Add** > **Action** > **Talk**) and link the **Agent** field to the `Target` variable. 
+7. Create another **Talk** node (Right-click > **Add** > **Action** > **Talk**) and link the **Agent** field to the `Target` variable.
 8. Type `Pick me! Pick me!!` in the field beside **Target says** field.
-9. Add a **Move to Target** node to move the agent to the target. To do this, right-click an empty area of the Unity Behavior graph and select **Add** > **Action** > **Move** > **Move To Target**. 
+9. Add a **Move to Target** node to move the agent to the target. To do this, right-click an empty area of the Unity Behavior graph and select **Add** > **Action** > **Move** > **Move To Target**.
 
      Unity Behavior adds the **Move To Target** node to the graph.
 10. Link the **Agent** field to the `Self` variable. To do this, select the link icon in the **Agent** field and select `Self`.
@@ -115,13 +115,13 @@ Now create two branches that the agent can execute at random. In the first branc
 13. Move the group so it's near the bottom right of the **Random** node.
 14. Join this group to the **Random** node created in step 12 of the first procedure.
 
-You have successfully created the sample behavior graph. 
+You have successfully created the sample behavior graph.
 
 ## Test your behavior graph in a scene
 
 Now that your behavior graph is complete, you can observe it in Play mode.
 
-1. If you haven't installed the Unity Behavior sample, install it by referring to [Install Unity Behavior with the Package Manager](install-behavior.md#samples).
+1. If you haven't installed the Unity Behavior sample, install it by referring to [Install Unity Behavior](install-behavior.md#samples).
 
 2. From the **Project** window, drag `SampleScene` from `Assets/Samples/Behavior/[Version_Number]/Unity Behavior Example` to the **Hierarchy** window.
 
@@ -133,11 +133,11 @@ Because your behavior graph has multiple branches that run randomly, you can pla
 
 ## Update variables in real time
 
-In Unity Behavior, the `C#` code updates most variables, such as `Agent` and `Target`. However, if you're testing a feature or iterating on a variable, you need to change their values in real time. For example, when debugging in Play mode, you might need to increase an agent's speed in real time. 
+In Unity Behavior, the `C#` code updates most variables, such as `Agent` and `Target`. However, if you're testing a feature or iterating on a variable, you need to change their values in real time. For example, when debugging in Play mode, you might need to increase an agent's speed in real time.
 
 To update the variables available on the **Blackboard** in real time, perform the following steps:
 
-1. Click the **Hierarchy** window of the Unity Editor. 
+1. Click the **Hierarchy** window of the Unity Editor.
 2. Select **SampleScene** > **Agent**.
 3. In the **Inspector** window of the Unity Editor, scroll down to the **Behavior Graph Agent (Script)** section.
 
@@ -147,7 +147,7 @@ To update the variables available on the **Blackboard** in real time, perform th
 
    * `Self`
    * `Target`
-   * `Speed` 
+   * `Speed`
 
 4. Select a different GameObject or input a new value.
 
@@ -155,7 +155,7 @@ To update the variables available on the **Blackboard** in real time, perform th
 
    ![Override variable on the Inspector window](Images/override.png)
 
-5. To change the value of the variable to the original one, right-click the variable and select **Revert Variable**. 
+5. To change the value of the variable to the original one, right-click the variable and select **Revert Variable**.
 
    ![The Revert Variable option allows you to change the value of the variable](Images/revert.png)
 

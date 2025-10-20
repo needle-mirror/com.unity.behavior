@@ -1,4 +1,4 @@
-﻿using Unity.Properties;
+using Unity.Properties;
 using UnityEngine;
 
 namespace Unity.Behavior

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Unity.Properties;
 using UnityEngine;
 
@@ -32,6 +32,6 @@ namespace Unity.Behavior
 
         public StartOnEventModel(NodeInfo nodeInfo) : base(nodeInfo) { }
 
-        protected StartOnEventModel(StartOnEventModel original, BehaviorAuthoringGraph asset)  : base(original, asset)  { }
+        protected StartOnEventModel(StartOnEventModel original, BehaviorAuthoringGraph asset) : base(original, asset) { }
     }
 }

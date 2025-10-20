@@ -1,4 +1,4 @@
-﻿#if UNITY_EDITOR
+#if UNITY_EDITOR
 using System;
 using Unity.Behavior.GraphFramework;
 using System.Collections.Generic;
@@ -9,7 +9,7 @@ using UnityEngine;
 namespace Unity.Behavior
 {
     internal static class ConditionGeneratorUtility
-    {        
+    {
         internal class ConditionData
         {
             internal string Name { get; set; }
@@ -18,7 +18,7 @@ namespace Unity.Behavior
             internal string Category { get; set; }
             internal Dictionary<string, Type> Variables { get; set; }
         }
-        
+
         internal static bool CreateConditionAsset(ConditionData data)
         {
             string fileName = GeneratorUtils.ToPascalCase(data.Name);

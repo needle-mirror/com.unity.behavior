@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.UIElements;
@@ -14,7 +15,7 @@ namespace Unity.Behavior.GraphFramework
     internal partial class GraphView : VisualElement
     {
 #if !ENABLE_UXML_UI_SERIALIZATION
-        internal new class UxmlFactory : UxmlFactory<GraphView, UxmlTraits> {}
+        internal new class UxmlFactory : UxmlFactory<GraphView, UxmlTraits> { }
 
         public new class UxmlTraits : VisualElement.UxmlTraits
         {
@@ -24,9 +25,12 @@ namespace Unity.Behavior.GraphFramework
             }
         }
 #endif
-
         private const string k_VisualTreeAssetPath = "Packages/com.unity.behavior/Tools/Graph/Assets/GraphViewLayout.uxml";
         private const string k_StyleSheetAssetPath = "Packages/com.unity.behavior/Tools/Graph/Assets/GraphViewStyles.uss";
+
+        private const string k_LastSavedZoomLevel = "lastSavedZoomLevel";
+        private const string k_LastScrollOffset_X = "lastScrollOffsetX";
+        private const string k_LastScrollOffset_Y = "lastScrollOffsetY";
 
         public GraphAsset Asset { get; private set; }
         public GraphViewState ViewState { get; private set; }
@@ -41,6 +45,10 @@ namespace Unity.Behavior.GraphFramework
 
         private const float k_CanvasMinZoom = 0.1f;
         private const float k_CanvasMaxZoom = 1.25f;
+
+        private string m_LastSavedZoomLevel;
+        private string m_LastScrollOffsetX;
+        private string m_LastScrollOffsetY;
 
         public GraphView()
         {
@@ -64,6 +72,8 @@ namespace Unity.Behavior.GraphFramework
             Background.minZoom = k_CanvasMinZoom;
             Background.maxZoom = k_CanvasMaxZoom;
             Background.dampingEffectDuration = 0;
+            Background.scrollOffsetChanged += OnScrollOffsetChanged;
+            Background.zoomChanged += ZoomChanged;
 
             schedule.Execute(CreateManipulators);
             schedule.Execute(RefreshFromAsset);
@@ -73,6 +83,16 @@ namespace Unity.Behavior.GraphFramework
         {
             Reset();
             Asset = asset;
+
+            if (Asset != null)
+            {
+                m_LastSavedZoomLevel = k_LastSavedZoomLevel + Asset.name;
+                m_LastScrollOffsetX = k_LastScrollOffset_X + Asset.name;
+                m_LastScrollOffsetY = k_LastScrollOffset_Y + Asset.name;
+
+                Background.zoom = SessionState.GetFloat(m_LastSavedZoomLevel, Background.zoom);
+                Background.scrollOffset = new Vector2(SessionState.GetFloat(m_LastScrollOffsetX, Background.scrollOffset.x), SessionState.GetFloat(m_LastScrollOffsetY, Background.scrollOffset.y));
+            }
 
             ViewState.Asset = asset;
             ViewState.RefreshFromAsset(false);
@@ -151,7 +171,27 @@ namespace Unity.Behavior.GraphFramework
             m_ElementsParent.Clear();
         }
 
-        protected virtual void OnInitAsset(GraphAsset asset) { }
+        private void ZoomChanged()
+        {
+#if UNITY_EDITOR
+            if (m_LastSavedZoomLevel != null)
+            {
+                SessionState.SetFloat(m_LastSavedZoomLevel, Background.zoom);
+            }
+#endif
+        }
+
+        private void OnScrollOffsetChanged()
+        {
+            if (m_LastSavedZoomLevel != null)
+            {
+                SessionState.SetFloat(m_LastScrollOffsetX, Background.scrollOffset.x);
+                SessionState.SetFloat(m_LastScrollOffsetY, Background.scrollOffset.y);
+            }
+        }
+
+        protected virtual void OnInitAsset(GraphAsset asset)
+        { }
 
         protected internal virtual void RefreshFromAsset()
         {
@@ -220,6 +260,11 @@ namespace Unity.Behavior.GraphFramework
             ViewState.InitNodeUI(nodeUI, nodeModel);
             return nodeUI;
         }
+
+        public virtual bool DoesNodeModelMatchWithUI(NodeModel nodeModel, NodeUI nodeUI)
+        {
+            return true;
+        }
     }
 
     // A class to hold data for the state of the view.
@@ -232,6 +277,7 @@ namespace Unity.Behavior.GraphFramework
 
         // UI elements
         public IEnumerable<NodeUI> Nodes => m_Nodes;
+
         private readonly List<NodeUI> m_Nodes = new();
         public IEnumerable<Edge> Edges => m_Edges;
         private readonly List<Edge> m_Edges = new();
@@ -240,11 +286,13 @@ namespace Unity.Behavior.GraphFramework
 
         // Lookups tables
         internal readonly Dictionary<SerializableGUID, NodeUI> m_NodeUILookupByID = new();
-        private readonly Dictionary<SerializableGUID, NodeModel> m_NodeLookupByID = new ();
+
+        private readonly Dictionary<SerializableGUID, NodeModel> m_NodeLookupByID = new();
         private readonly Dictionary<PortModel, List<Edge>> m_PortToEdges = new();
 
         // Cached query containers for updating the view state.
         private readonly Dictionary<(SerializableGUID, SerializableGUID), Tuple<PortModel, PortModel>> m_EdgesInAsset = new();
+
         private readonly Dictionary<(SerializableGUID, SerializableGUID), Edge> m_EdgeUIs = new();
         private readonly HashSet<SerializableGUID> m_AssetNodeIDs = new();
         private readonly List<NodeUI> m_NodeUIsToDelete = new();
@@ -279,8 +327,6 @@ namespace Unity.Behavior.GraphFramework
             // Step 1: Update lookup tables and references
             BuildNodeModelLookup();
             BuildNodeUILookup(isDragging);
-            RebuildEdgeMappings();
-            UpdateEdgeReferences();
 
             // Step 2: Node update (deletion, refresh and creation)
             RemoveDeletedNodes();
@@ -288,12 +334,13 @@ namespace Unity.Behavior.GraphFramework
             CreateMissingNodes();
 
             // Step 3: Edges update (deletions and creations)
+            RebuildEdgeMappings();
+            UpdateEdgeReferences();
             RemoveDeletedEdges();
             CreateMissingEdges();
 
             // Step 4: Sequences update
             UpdateSequences();
-
             ViewStateUpdated?.Invoke();
 
             // To keep for future performance profiling.
@@ -387,9 +434,8 @@ namespace Unity.Behavior.GraphFramework
                 return nodeUI;
             }
 
-            return null;
+            return null; //
         }
-
 
         #region Node Management
         private void BuildNodeModelLookup()
@@ -436,7 +482,8 @@ namespace Unity.Behavior.GraphFramework
 
             foreach (NodeUI nodeUI in Nodes)
             {
-                if (!m_NodeLookupByID.ContainsKey(nodeUI.Model.ID))
+                if (!m_NodeLookupByID.ContainsKey(nodeUI.Model.ID)
+                    || !GraphView.DoesNodeModelMatchWithUI(nodeUI.Model, nodeUI))
                 {
                     m_NodeUIsToDelete.Add(nodeUI);
                 }
@@ -468,7 +515,9 @@ namespace Unity.Behavior.GraphFramework
 
             // Remove the UI from remaining graph data containers.
             m_Nodes.Remove(nodeUI);
-            m_NodeLookupByID.Remove(nodeUI.Model.ID);
+            var nodeID = nodeUI.Model.ID;
+            m_NodeLookupByID.Remove(nodeID);
+            m_NodeUILookupByID.Remove(nodeID);
             nodeUI.GetAllPortUIs().ForEach(DeletePortUI); // Delete ports and connected edges.
             nodeUI.RemoveFromHierarchy();
         }
@@ -490,10 +539,18 @@ namespace Unity.Behavior.GraphFramework
 
         private void UpdateExistingNodes(IReadOnlyList<NodeUI> nodesToRefresh, bool isDragging)
         {
+            int originalNodeCount = Asset.Nodes.Count;
             foreach (NodeUI nodeUI in nodesToRefresh)
             {
                 UpdateNodeSequencingIfNeeded(nodeUI);
                 nodeUI.Refresh(isDragging);
+            }
+
+            // If a node refresh affected the existing nodes (e.g. floating nodes), rebuild the lookup.
+            if (originalNodeCount != Asset.Nodes.Count)
+            {
+                BuildNodeModelLookup();
+                RemoveDeletedNodes();
             }
         }
 
@@ -518,8 +575,7 @@ namespace Unity.Behavior.GraphFramework
             {
                 if (!m_NodeUILookupByID.ContainsKey(node.ID))
                 {
-                    NodeUI newNodeUI = GraphView.CreateNodeUI(node);
-                    m_NodeUILookupByID[node.ID] = newNodeUI;
+                    GraphView.CreateNodeUI(node);
                 }
             }
         }
@@ -616,7 +672,7 @@ namespace Unity.Behavior.GraphFramework
                 }
             }
         }
-        
+
         private void CreateEdgeUI(PortModel startPort, PortModel endPort)
         {
             Assert.IsTrue(startPort.IsInputPort != endPort.IsInputPort, "Cannot connect ports of the same type.");

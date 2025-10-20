@@ -9,7 +9,7 @@ namespace Unity.Behavior
             PortModel outputPortModel = command.SourcePort.IsOutputPort ? command.SourcePort : command.TargetPort;
             PortModel inputPortModel = command.SourcePort.IsInputPort ? command.SourcePort : command.TargetPort;
             BehaviorGraphView graphView = GraphView as BehaviorGraphView;
-            
+
             graphView!.ConnectPorts(outputPortModel, inputPortModel);
             return true;
         }

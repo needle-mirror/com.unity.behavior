@@ -10,6 +10,7 @@ namespace Unity.Behavior
     {
         [SerializeField]
         private BehaviorAuthoringGraph m_Asset;
+
         internal BehaviorAuthoringGraph Asset
         {
             get => m_Asset;
@@ -26,6 +27,7 @@ namespace Unity.Behavior
 
         [SerializeField]
         private int m_DebugAgentId;
+
         internal BehaviorGraphEditor m_Editor;
         private Panel m_AppUIPanel;
         private long m_PreviousVersionTimestamp = 0;
@@ -51,6 +53,11 @@ namespace Unity.Behavior
 
             if (m_Asset != null)
             {
+                if (!IsAssetValid(m_Asset))
+                {
+                    return;
+                }
+
                 m_Editor.Load(m_Asset);
                 m_PreviousVersionTimestamp = m_Asset.VersionTimestamp;
             }
@@ -70,7 +77,7 @@ namespace Unity.Behavior
         private void OnDisable()
         {
             // No need to save here as the editor will always call OnLostFocus before OnDisable is called.
-            // This is also true for window that are not currently open as they would had to loose focus 
+            // This is also true for window that are not currently open as they would had to loose focus
             // to not be selected
             EditorApplication.playModeStateChanged -= OnEditorStateChange;
             m_Editor.DebugAgentSelected -= SetDebugAgent;
@@ -87,7 +94,7 @@ namespace Unity.Behavior
             }
             m_AppUIPanel.forceUseTooltipSystem = (change == PlayModeStateChange.EnteredPlayMode);
         }
-        
+
         private void SetDebugAgent(int agentID)
         {
             m_DebugAgentId = agentID;
@@ -125,12 +132,22 @@ namespace Unity.Behavior
                 return;
             }
 
+            if (!IsAssetValid(m_Asset))
+            {
+                return;
+            }
+
             SetWindowTitleFromAsset();
             UpdateGraphEditor();
         }
 
         private void OnLostFocus()
         {
+            if (!IsAssetValid(m_Asset))
+            {
+                return;
+            }
+
             AutoSaveIfEnabledInEditor();
         }
 
@@ -140,15 +157,15 @@ namespace Unity.Behavior
             {
                 return;
             }
-            
+
             if (m_PreviousVersionTimestamp == 0 && m_Asset != null)
             {
                 m_PreviousVersionTimestamp = m_Asset.VersionTimestamp;
             }
 
             // Reload the editor if any graph or blackboard assets which the graph is depending on has changed.
-            if (m_Editor.HasBlackboardDependencyChanged() || 
-                m_Editor.HasGraphDependencyChanged() || 
+            if (m_Editor.HasBlackboardDependencyChanged() ||
+                m_Editor.HasGraphDependencyChanged() ||
                 (m_Asset != null && m_Asset.VersionTimestamp != m_PreviousVersionTimestamp))
             {
                 m_Editor.Load(Asset);
@@ -174,6 +191,23 @@ namespace Unity.Behavior
             }
         }
 
+        private void AutoSaveIfEnabledInEditor()
+        {
+            // If the authoring graph have been deleted outside of Unity, close the window.
+            if (!EditorUtility.IsPersistent(m_Asset))
+            {
+                Close();
+                return;
+            }
+
+            if (m_Editor is { AutoSaveIsEnabled: true })
+            {
+                m_Editor.OnAssetSave();
+            }
+
+            m_PreviousVersionTimestamp = m_Asset.VersionTimestamp;
+        }
+
         internal static void ShowSaveIndicator(BehaviorAuthoringGraph asset)
         {
             BehaviorWindow[] windows = Resources.FindObjectsOfTypeAll<BehaviorWindow>();
@@ -189,6 +223,12 @@ namespace Unity.Behavior
 
         internal static void Open(BehaviorAuthoringGraph asset)
         {
+            if (!IsAssetValid(asset))
+            {
+                ErrorMessages.LogSerializedReferenceWindowError(asset);
+                return;
+            }
+
             BehaviorWindow[] windows = Resources.FindObjectsOfTypeAll<BehaviorWindow>();
             foreach (BehaviorWindow window in windows)
             {
@@ -212,23 +252,8 @@ namespace Unity.Behavior
             newWindow.m_Editor.IsAssetVersionUpToDate();
             newWindow.Show();
             newWindow.Focus();
-        }
 
-        private void AutoSaveIfEnabledInEditor()
-        {
-            // If the authoring graph have been deleted outside of Unity, close the window.
-            if (!EditorUtility.IsPersistent(m_Asset))
-            {
-                Close();
-                return;
-            }
-
-            if (m_Editor is { AutoSaveIsEnabled: true })
-            {
-                m_Editor.OnAssetSave();
-            }
-            
-            m_PreviousVersionTimestamp = m_Asset.VersionTimestamp;
+            newWindow.m_Editor.BehaviorGraphView?.InitialiseGraphToFrameOnOpen();
         }
 
         [InitializeOnLoadMethod]
@@ -236,6 +261,31 @@ namespace Unity.Behavior
         {
             BehaviorWindowDelegate.openHandler = Open;
             BehaviorWindowDelegate.showSaveIndicatorHandler = ShowSaveIndicator;
+            AssemblyReloadEvents.afterAssemblyReload += CheckAssetValidityAfterAssemblyReload;
+        }
+
+        private static void CheckAssetValidityAfterAssemblyReload()
+        {
+            BehaviorWindow[] windows = Resources.FindObjectsOfTypeAll<BehaviorWindow>();
+            foreach (BehaviorWindow window in windows)
+            {
+                var asset = window.Asset;
+                if (!IsAssetValid(asset))
+                {
+                    ErrorMessages.DisplayWindowClosingDialog(asset);
+                    window.Close();
+                }
+            }
+        }
+
+        private static bool IsAssetValid(BehaviorAuthoringGraph asset)
+        {
+            if (asset == null || asset.ContainsInvalidSerializedReferences())
+            {
+                return false;
+            }
+
+            return true;
         }
     }
 }

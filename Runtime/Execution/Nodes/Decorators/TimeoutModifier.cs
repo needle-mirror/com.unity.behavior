@@ -6,9 +6,9 @@ namespace Unity.Behavior
 {
     [Serializable, GeneratePropertyBag]
     [NodeDescription(
-        name: "Time Out", 
-        description: "Terminates the execution of its branch after a specified number of seconds.", 
-        story: "Time out after [Duration] seconds", 
+        name: "Time Out",
+        description: "Terminates the execution of its branch after a specified number of seconds.",
+        story: "Time out after [Duration] seconds",
         category: "Flow",
         id: "a6394ca78d6f93415c22fb52c9d5577c")]
     internal partial class TimeOutModifier : Modifier

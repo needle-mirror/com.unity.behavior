@@ -16,19 +16,19 @@ namespace Unity.Behavior.Serialization.Binary
         {
             var state = parameters.State ?? (parameters.RequiresThreadSafety ? new BinarySerializationState() : GetSharedState());
             var visitor = state.GetBinaryPropertyReader();
-            
+
             visitor.SetStream(stream);
             visitor.SetSerializedType(parameters.SerializedType);
             visitor.SetDisableRootAdapters(parameters.DisableRootAdapters);
             visitor.SetGlobalAdapters(GetGlobalAdapters());
             visitor.SetUserDefinedAdapters(parameters.UserDefinedAdapters);
             visitor.SetSerializedReferences(parameters.DisableSerializedReferences ? default : state.GetSerializedReferences());
-            
+
             var container = new PropertyWrapper<T>(default);
             using (visitor.Lock()) PropertyContainer.Accept(visitor, ref container);
-            
+
             if (null == parameters.State && !parameters.DisableSerializedReferences) state.GetSerializedReferences().Clear();
-            
+
             return container.Value;
         }
     }

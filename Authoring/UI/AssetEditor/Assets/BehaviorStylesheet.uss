@@ -20,11 +20,11 @@ BehaviorGraphEditor {
     --thickness: 2; /* Line thickness */
     --line-spacing: 16; /* 12px of spacing between each lines' center point */
     --line-color: var(--graph-color-canvas-grid-base);
-    
+
     --thick-lines: 0; /* Every N lines the line is thicker (use 0 to disable) */
     --thick-line-thickness: 2; /* line or point thickness for thicker ones */
     --thick-line-color: var(--graph-color-canvas-grid);
-    
+
     --next-grid-scale-factor: 4; /* 0 to disable, N to get the next grid N times bigger than the previous one */
 }
 
@@ -147,5 +147,3 @@ BehaviorGraphView {
     border-top-left-radius: 8px;
     border-top-right-radius: 8px;
 }
-
-

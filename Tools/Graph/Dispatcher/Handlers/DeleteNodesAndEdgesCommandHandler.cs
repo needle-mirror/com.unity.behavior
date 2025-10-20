@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Unity.Behavior.GraphFramework
 {
@@ -21,7 +21,7 @@ namespace Unity.Behavior.GraphFramework
                     Asset.DeleteNode(node);
                 }
             }
-            
+
             return true;
         }
 

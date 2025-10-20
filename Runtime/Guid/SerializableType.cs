@@ -17,7 +17,7 @@ namespace Unity.Behavior.GraphFramework
         }
 
         private SerializableType() { }
-        
+
         public SerializableType(Type type)
         {
             m_Type = type;

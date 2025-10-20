@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Unity.Behavior.GraphFramework;
 using Unity.AppUI.UI;
@@ -33,7 +33,7 @@ namespace Unity.Behavior
         private void InitNodeProperties()
         {
             NodeProperties.Clear();
-            
+
             NodeProperties.Add(CreateTypeSelectionElement());
             NodeProperties.Add(CreateConditionRequirementElement());
             NodeProperties.Add(new ConditionInspectorElement(m_NodeModel));
@@ -63,12 +63,12 @@ namespace Unity.Behavior
 
             return typeDropdownContainer;
         }
-        
+
         private VisualElement CreateConditionRequirementElement()
         {
             VisualElement conditionRequirementDropdown = new VisualElement();
             conditionRequirementDropdown.AddToClassList("DropdownPropertyElement");
-            Label label = new Label();   
+            Label label = new Label();
             label.text = m_NodeModel.ModelAbortType == AbortNodeModel.AbortType.Abort ? "Aborts if" : "Restarts if";
             label.tooltip = "Select if your node should abort if any condition is met or if all conditions must return true.";
             conditionRequirementDropdown.Add(label);
@@ -80,7 +80,7 @@ namespace Unity.Behavior
             };
             m_ConditionRequirementDropdown.bindItem = (item, i) => item.label = types[i];
             m_ConditionRequirementDropdown.sourceItems = types;
-            m_ConditionRequirementDropdown.selectedIndex = m_NodeModel.RequiresAllConditionsTrue? 1 : 0;
+            m_ConditionRequirementDropdown.selectedIndex = m_NodeModel.RequiresAllConditionsTrue ? 1 : 0;
             conditionRequirementDropdown.Add(m_ConditionRequirementDropdown);
 
             m_ConditionRequirementDropdown.RegisterValueChangedCallback(evt =>

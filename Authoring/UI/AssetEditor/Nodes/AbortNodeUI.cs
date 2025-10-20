@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using Unity.Behavior.GraphFramework;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -22,7 +22,7 @@ namespace Unity.Behavior
         {
             if (m_AbortNodeModel.ConditionModels.Count > 1)
             {
-                Title = !m_AbortNodeModel.RequiresAllConditionsTrue ? $"{m_AbortNodeModel.ModelAbortType.ToString()} If Any Are True" : $"{m_AbortNodeModel.ModelAbortType.ToString()} If All Are True";   
+                Title = !m_AbortNodeModel.RequiresAllConditionsTrue ? $"{m_AbortNodeModel.ModelAbortType.ToString()} If Any Are True" : $"{m_AbortNodeModel.ModelAbortType.ToString()} If All Are True";
             }
             else
             {

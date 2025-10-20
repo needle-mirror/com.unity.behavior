@@ -1,7 +1,8 @@
 using System;
-using UnityEngine;
-using Unity.Properties;
 using System.Collections.Generic;
+using Unity.Properties;
+using UnityEngine;
+using UnityEngine.Pool;
 
 namespace Unity.Behavior
 {
@@ -107,8 +108,22 @@ namespace Unity.Behavior
                 ChannelVariable.OnValueChanged -= RegisterListener;
             }
 
-            // Usually this would happen for node in subgraph.
-            m_MessageQueue.Clear();
+            // Release active message back to the pool
+            if (m_ActiveMessage != null)
+            {
+                QueuedMessagePool.Release(m_ActiveMessage);
+                m_ActiveMessage = null;
+            }
+
+            // Release all queued messages back to the pool
+            while (m_MessageQueue.Count > 0)
+            {
+                var message = m_MessageQueue.Dequeue();
+                if (message != null)
+                {
+                    QueuedMessagePool.Release(message);
+                }
+            }
         }
 
         protected override void OnSerialize()
@@ -129,20 +144,35 @@ namespace Unity.Behavior
                 ChannelVariable.OnValueChanged += RegisterListener;
             }
 
-            // Restore queue
-            m_MessageQueue.Clear();
-            if (m_SerializedQueue != null)
+            // Clear any existing messages in the queue and release them back to the pool
+            while (m_MessageQueue.Count > 0)
             {
-                foreach (var message in m_SerializedQueue)
+                var message = m_MessageQueue.Dequeue();
+                if (message != null)
                 {
-                    if (message != null)
-                    {
-                        m_MessageQueue.Enqueue(message);
-                    }
+                    QueuedMessagePool.Release(message);
                 }
-
-                m_SerializedQueue = null;
             }
+
+            if (m_SerializedQueue == null)
+            {
+                return;
+            }
+
+            // Restore queue from serialized data
+            foreach (var serializedMessage in m_SerializedQueue)
+            {
+                if (serializedMessage != null)
+                {
+                    // Get a new message from the pool with the correct array size
+                    int variableCount = serializedMessage.VariableValues?.Length ?? 0;
+                    var message = QueuedMessagePool.Get(variableCount);
+                    message.Copy(variableCount, serializedMessage);
+                    m_MessageQueue.Enqueue(message);
+                }
+            }
+
+            m_SerializedQueue = null;
         }
 
         private void OnMessageReceived()
@@ -246,8 +276,10 @@ namespace Unity.Behavior
         // Captures the current variable values for queueing and revert active value if any.
         private QueuedMessage CaptureCurrentVariableValues()
         {
-            QueuedMessage message = new QueuedMessage(MessageVariables.Length);
+            // Get a QueuedMessage from the specialized pool with the correct array size
+            QueuedMessage message = QueuedMessagePool.Get(MessageVariables.Length);
 
+            // Copy current variable values
             for (int i = 0; i < MessageVariables.Length; i++)
             {
                 if (MessageVariables[i] != null)
@@ -276,7 +308,13 @@ namespace Unity.Behavior
         {
             if (m_MessageQueue.Count == 0)
                 return;
-            
+
+            // Release previous active message if it exists
+            if (m_ActiveMessage != null)
+            {
+                QueuedMessagePool.Release(m_ActiveMessage);
+            }
+
             m_ActiveMessage = m_MessageQueue.Dequeue();
 
             // Restore variable values from the queued message
@@ -292,6 +330,64 @@ namespace Unity.Behavior
             ProcessMessage();
         }
 
+        /// <summary>
+        /// Static pool manager for QueuedMessage objects with specialized pools for each array size (up to 4).
+        /// Get rid of GC allocations when reusing QueuedMessage objects with different array sizes.
+        /// </summary>
+        private static class QueuedMessagePool
+        {
+            private const int k_MaxVariableCount = 4;
+            private static readonly ObjectPool<QueuedMessage>[] s_Pools;
+
+            static QueuedMessagePool()
+            {
+                s_Pools = new ObjectPool<QueuedMessage>[k_MaxVariableCount + 1];
+
+                for (int i = 0; i <= k_MaxVariableCount; i++)
+                {
+                    int variableCount = i; // Capture for lambda
+                    s_Pools[i] = new ObjectPool<QueuedMessage>(
+                        createFunc: () => new QueuedMessage(variableCount),
+                        actionOnGet: (msg) => msg.Reset(),
+                        actionOnRelease: null,
+                        actionOnDestroy: null,
+                        collectionCheck: true,
+                        defaultCapacity: 10,
+                        maxSize: 124
+                    );
+                }
+            }
+
+            /// <summary>
+            /// Get a QueuedMessage instance with the specified variable count.
+            /// </summary>
+            /// <param name="variableCount">Number of variables (up to k_MaxVariableCount)</param>
+            /// <returns>A pooled QueuedMessage instance with the correct array size</returns>
+            public static QueuedMessage Get(int variableCount)
+            {
+                variableCount = Mathf.Clamp(variableCount, 0, k_MaxVariableCount);
+                return s_Pools[variableCount].Get();
+            }
+
+            /// <summary>
+            /// Release a QueuedMessage back to its appropriate pool based on array size.
+            /// </summary>
+            /// <param name="message">The message to release</param>
+            public static void Release(QueuedMessage message)
+            {
+                if (message == null || message.VariableValues == null)
+                {
+                    return;
+                }
+
+                int variableCount = message.VariableValues.Length;
+                if (variableCount >= 0 && variableCount <= k_MaxVariableCount)
+                {
+                    s_Pools[variableCount].Release(message);
+                }
+            }
+        }
+
         [System.Serializable]
         private class QueuedMessage
         {
@@ -300,8 +396,26 @@ namespace Unity.Behavior
             public QueuedMessage() { }
 
             public QueuedMessage(int variableCount)
-            { 
+            {
                 VariableValues = new object[variableCount];
+            }
+
+            public void Copy(int variableCount, QueuedMessage other)
+            {
+                // Copy values from serialized message
+                for (int i = 0; i < variableCount; i++)
+                {
+                    VariableValues[i] = other.VariableValues[i];
+                }
+            }
+
+            // Reset the QueuedMessage for reuse - QueuedMessagePool.
+            public void Reset()
+            {
+                if (VariableValues != null)
+                {
+                    Array.Clear(VariableValues, 0, VariableValues.Length);
+                }
             }
         }
     }

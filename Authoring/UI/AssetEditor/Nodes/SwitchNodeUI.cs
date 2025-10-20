@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Unity.Behavior.GraphFramework;
 using UnityEngine.UIElements;
 
@@ -9,7 +9,7 @@ namespace Unity.Behavior
     {
         private readonly LinkField<Enum, RuntimeEnumField> m_EnumLinkField;
         private VariableModel m_LastAssignedEnumVariable;
-        
+
         public SwitchNodeUI(NodeModel nodeModel) : base(nodeModel)
         {
             styleSheets.Add(ResourceLoadAPI.Load<StyleSheet>("Packages/com.unity.behavior/Authoring/UI/AssetEditor/Assets/SwitchNodeStyles.uss"));
@@ -17,7 +17,7 @@ namespace Unity.Behavior
             AddToClassList("TwoLineNode");
 
             Title = "Switch";
-            
+
             m_EnumLinkField = new BehaviorLinkField<Enum, RuntimeEnumField>()
             {
                 style =
@@ -28,11 +28,11 @@ namespace Unity.Behavior
                 FieldName = "EnumVariable",
                 Model = nodeModel
             };
-            
+
             m_EnumLinkField.RegisterCallback<LinkFieldTypeChangeEvent>(evt =>
             {
                 Model.RemoveOutputPortModels();
-                
+
                 if (evt.FieldType is { IsEnum: true })
                 {
                     foreach (var member in Enum.GetNames(evt.FieldType))
@@ -44,14 +44,11 @@ namespace Unity.Behavior
                 }
             });
 
-            m_EnumLinkField.OnLinkChanged += (newLink =>
+            m_EnumLinkField.OnLinkChanged += ((newLink, wasUndo) =>
             {
-                m_EnumLinkField.Dispatcher.DispatchImmediate(new SetNodeVariableLinkCommand(Model, m_EnumLinkField.FieldName, m_EnumLinkField.LinkVariableType, m_EnumLinkField.LinkedVariable, true));
-                if (newLink == null)
-                {
-                    Model.RemoveOutputPortModels();
-                    RefreshOutputPortUIs();
-                }
+                m_EnumLinkField.Dispatcher.DispatchImmediate(new SetNodeVariableLinkCommand(Model, m_EnumLinkField.FieldName,
+                    m_EnumLinkField.LinkVariableType, m_EnumLinkField.LinkedVariable, !wasUndo));
+                RefreshOutputPortUIs();
             });
             m_EnumLinkField.Q<RuntimeEnumField>().label = "Choose an Enum";
 
@@ -85,12 +82,17 @@ namespace Unity.Behavior
                 GraphUILayoutUtility.ScheduleNodeMovement(this, Model.Asset, nodePositions);
             });
         }
-        
+
         private void RefreshOutputPortUIs()
         {
+            if (m_EnumLinkField?.LinkedVariable == null)
+            {
+                Model.RemoveOutputPortModels();
+            }
+
             // Clear output port UIs.
             OutputPortsContainer.Clear();
-            
+
             // Create new port UIs.
             foreach (PortModel portModel in Model.OutputPortModels)
             {
@@ -100,7 +102,7 @@ namespace Unity.Behavior
                     throw new Exception(
                         $"The port UI created for {portModel.Name} does not contain a element of type {nameof(Port)}, which is required.");
                 }
-                
+
                 OutputPortsContainer.Add(portUIContainer);
             }
         }

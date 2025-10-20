@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Properties;
@@ -8,7 +8,7 @@ namespace Unity.Behavior
     [Serializable, GeneratePropertyBag]
     [NodeDescription(
         name: "Switch",
-        description: "Branches off based on enum value.", 
+        description: "Branches off based on enum value.",
         icon: "Icons/Sequence",
         category: "Flow/Conditional",
         id: "ef072beedcccd16ac0cd3cb5295fe4cd")]

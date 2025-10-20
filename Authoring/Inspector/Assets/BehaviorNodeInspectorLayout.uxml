@@ -16,5 +16,5 @@
     </ui:VisualElement>
     <appui:Divider size="S"/>
     <ui:VisualElement name="InspectedProperties"/>
-    
+
 </ui:UXML>

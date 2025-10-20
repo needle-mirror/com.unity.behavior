@@ -132,7 +132,7 @@ namespace Unity.Behavior
         /// </summary>
         /// <param name="value0">The first parameter value provided when the event is raised.</param>
         public delegate void EventHandlerDelegate(T0 value0);
-        
+
         /// <summary>
         /// Occurs when the event channel raises an event.
         /// </summary>

@@ -31,21 +31,21 @@ namespace Unity.Behavior
         internal const string k_ActionCategoryName = "Action";
         internal const string k_FlowCategoryName = "Flow";
         private const string k_EventCategoryName = "Events";
-        
+
         private readonly List<INotifyValueChanging<string>> m_RequiredFields = new ();
         internal Button CreateButton;
 
         internal const string k_TypeNameErrorText = "Variable can not share name with the asset. Try renaming either the name or a variable.";
         private const string k_DuplicateVariablesErrorText = "Variable names need to be unique, try renaming a word with a variable set to it.";
-        
+
 
         protected TextFieldWithValidation NameField { get; }
         protected TextField CategoryField { get; }
         protected Dropdown CategoryDropdown { get; }
-        
+
         protected internal StoryEditor StoryEditor { get; }
         protected StoryFieldWithValidation StoryField { get; }
-        
+
         protected VisualElement PreviewRegion { get; }
 
         internal WordTypeSentence Sentence { get; set; }
@@ -57,7 +57,7 @@ namespace Unity.Behavior
 
         internal delegate void OnNodeTypeCreatedCallback(NodeGeneratorUtility.NodeData nodeData);
         internal OnNodeTypeCreatedCallback OnNodeTypeCreated;
-        
+
         internal delegate void OnConditionTypeCreatedCallback(ConditionGeneratorUtility.ConditionData conditionData);
         internal OnConditionTypeCreatedCallback OnConditionTypeCreated;
         protected BaseNodeWizard()
@@ -76,14 +76,14 @@ namespace Unity.Behavior
             CategoryDropdown = this.Q<Dropdown>(k_CategoryDropdownName);
 
             StoryEditor = this.Q<StoryEditor>();
-            
+
             // Refresh node preview and validate when properties are changed in the story editor.
             StoryEditor.OnPropertyValueChanged += () =>
             {
                 RefreshNodePreviewUI();
                 Validate();
             };
-            
+
             StoryField = this.Q<StoryFieldWithValidation>(k_StoryFieldName);
             StoryField.RegisterValueChangingCallback(OnStoryFieldChanged);
             Sentence = StoryEditor.Sentence;
@@ -94,9 +94,9 @@ namespace Unity.Behavior
             PreviewRegion.AddToClassList("Region");
             VisualElement nodePreviewContainer = new VisualElement();
             nodePreviewContainer.name = "NodeContainer";
-            
+
             SetupStoryFieldCustomValidations();
-            
+
             RegisterCallback<AttachToPanelEvent>(OnWizardAttachedToPanel);
         }
 
@@ -115,7 +115,7 @@ namespace Unity.Behavior
         protected abstract void SetHelpTexts();
 
         internal abstract void SetupWizardStepperModal(WizardStepper stepper, Modal modal);
-        
+
         /// <summary>
         /// Handler for when the 'Create' button is clicked
         /// </summary>
@@ -143,7 +143,7 @@ namespace Unity.Behavior
         protected virtual void OnValidate() { }
 
         /// <summary>
-        /// Use to add custom validation logic to your wizard.  
+        /// Use to add custom validation logic to your wizard.
         /// </summary>
         /// <returns>'true' if the validation succeeds, 'false' otherwise.</returns>
         protected virtual bool IsValid() => true;
@@ -195,7 +195,7 @@ namespace Unity.Behavior
         }
 
         protected abstract VisualElement CreatePreviewUI(VisualElement visualElement);
-        
+
         protected void OnShowStoryStep()
         {
             Stepper.PreviewElement.Show();
@@ -262,7 +262,7 @@ namespace Unity.Behavior
             HelpText helpBox = this.Q<HelpText>(helpBoxName);
             if (helpBox != null)
             {
-                helpBox.Text = helpText;   
+                helpBox.Text = helpText;
             }
         }
 
@@ -327,11 +327,11 @@ namespace Unity.Behavior
                         ClearDuplicateFieldHighlights();
                         return true;
                     }
-                    
+
                     HighlightDuplicateFields();
                     StoryField.tooltip = k_DuplicateVariablesErrorText;
                     return false;
-                });   
+                });
             }
         }
 
@@ -360,7 +360,7 @@ namespace Unity.Behavior
             {
                 fields[duplicate.Index].AddToClassList("Invalid");
             }
-            
+
             // Remove the class from of the property fields that are not duplicates.
             for (int i = 0; i < fields.Count; i++)
             {
@@ -370,7 +370,7 @@ namespace Unity.Behavior
                 }
             }
         }
-        
+
         protected virtual void SetupCategoryDropdown()
         {
             List<string> categories = NodeRegistry.Instance.NodeCategories.ToList();
@@ -382,8 +382,8 @@ namespace Unity.Behavior
             CategoryDropdown.bindItem = (item, i) => item.label = categories[i];
             CategoryDropdown.sourceItems = categories;
             CategoryDropdown.SetValueWithoutNotify(new []{ 1 });
-            
-            CategoryDropdown.RegisterValueChangedCallback( evt =>  {    
+
+            CategoryDropdown.RegisterValueChangedCallback( evt =>  {
                 if (evt.newValue.Last() == 0)
                 {
                     if (CategoryField.value == null)
@@ -407,7 +407,7 @@ namespace Unity.Behavior
                 categoryList.Add(categoryName);
             }
         }
-        
+
         internal void FillPropertiesFromInfo(NodeInfo info)
         {
             var indexes = new List<int>();
@@ -469,12 +469,12 @@ namespace Unity.Behavior
         {
             return EditorUtility.DisplayDialog("Variables missing or mismatch in type", "Variables are missing or the type of a variable has changed, which may cause compilation errors on the generated node script. Are you sure you want to confirm your changes?", "Yes", "No");
         }
-        
+
         internal void SetVariableSuggestions(Dictionary<string, Type> variableSuggestions)
         {
             Sentence.AddSuggestions(variableSuggestions);
         }
-        
+
         internal void SetStoryField(string story)
         {
             story = story.Replace("[", string.Empty).Replace("]", string.Empty);
@@ -488,7 +488,7 @@ namespace Unity.Behavior
             {
                 CategoryDropdown.SetValueWithoutNotify(new []{ CategoryDropdown.sourceItems.IndexOf(defaultCategory) });
                 return;
-            } 
+            }
             CategoryDropdown.SetValueWithoutNotify(new []{ CategoryDropdown.sourceItems.IndexOf(nodeInfo.Category) });
         }
 

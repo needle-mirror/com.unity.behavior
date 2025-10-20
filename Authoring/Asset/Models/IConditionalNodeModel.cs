@@ -17,7 +17,7 @@ namespace Unity.Behavior
                 ConditionModels.Remove(conditionModel);
             }
         }
-        
+
         public static List<ConditionModel> GetConditionModelCopies(IConditionalNodeModel originalModel, BehaviorGraphNodeModel newModel)
         {
             List<ConditionModel> copyModels = new List<ConditionModel>();
@@ -46,8 +46,8 @@ namespace Unity.Behavior
                     conditionModel.ConditionType = info.Type;
                 }
             }
-            
-            // Validate and update existing condition models. 
+
+            // Validate and update existing condition models.
             foreach (ConditionModel conditionModel in node.ConditionModels)
             {
                 conditionModel.Validate();

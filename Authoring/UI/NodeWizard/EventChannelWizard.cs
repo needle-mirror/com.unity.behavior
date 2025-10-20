@@ -19,10 +19,10 @@ namespace Unity.Behavior
         {
             // If the user has not applied a value to the name field, use the placeholder value when moving forward in the stepper.
             NameField.PlaceholderText = "New Event Channel";
-            
+
             NameField.RegisterValueChangingCallback(OnNameChanged);
             AddToRequiredFields(StoryField.Field);
-            
+
             StoryField.m_CustomValidationMethods.Add(() =>
             {
                 if (!IsValid())
@@ -57,7 +57,7 @@ namespace Unity.Behavior
         protected override VisualElement CreatePreviewUI(VisualElement nodeElement)
         {
             nodeElement.AddToClassList("Action");
-            
+
             var message = Sentence.ToString();
             Type[] messageFieldTypes = Sentence.WordTypeParameters.Select(p => p.Type).ToArray();
 
@@ -91,7 +91,7 @@ namespace Unity.Behavior
             Stepper.AddStep(this.Q<VisualElement>("StoryView"), OnShowStoryStep, OnHideStoryStep);
 
             Stepper.StepperContainer.style.width = k_WizardWidth;
-            
+
             CreateButton = Stepper.ConfirmButton;
             CreateButton.SetEnabled(false);
             CreateButton.clicked += OnCreateClicked;
@@ -118,7 +118,7 @@ namespace Unity.Behavior
         {
             return Sentence.WordTypeParameters.Count() <= k_MaxParameters;
         }
-        
+
         protected override void SetupCategoryDropdown()
         {
             base.SetupCategoryDropdown();

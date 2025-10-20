@@ -15,10 +15,10 @@ namespace Unity.Behavior.GraphFramework
         public SerializableGUID ID = SerializableGUID.Generate();
 
         [SerializeReference]
-        internal List<NodeModel> Parents = new ();
+        internal List<NodeModel> Parents = new();
 
         [SerializeReference]
-        internal List<PortModel> PortModels = new ();
+        internal List<PortModel> PortModels = new();
 
         public IEnumerable<PortModel> AllPortModels => PortModels;
         public IEnumerable<PortModel> InputPortModels => PortModels.Where(p => p.IsInputPort);
@@ -168,8 +168,8 @@ namespace Unity.Behavior.GraphFramework
         }
 
         // this is only needed for
-        // - BehaviorAuthoringGraph.UpdateNodeModel() 
-        // - GraphAssetProcessor.CreateNode() to convert an implicit sequence to an explicit one, but there is a "to do" there anyway to review if this code is actually working as expected 
+        // - BehaviorAuthoringGraph.UpdateNodeModel()
+        // - GraphAssetProcessor.CreateNode() to convert an implicit sequence to an explicit one, but there is a "to do" there anyway to review if this code is actually working as expected
         // I would prefer not to allow updating the complete list of port models via API at once, source of bugs (e.g., if the new collection does not contain default ports but the model requires them, what should be done?)
         // should be removed once these two use cases don't need it anymore
         public void SetPortModels(IEnumerable<PortModel> nodeAllPortModels)
@@ -185,7 +185,7 @@ namespace Unity.Behavior.GraphFramework
             {
                 var portModelConnections = GetPortModelConnectionsIgnoreNull(portModel, portModel.NodeModel);
                 portModel.Connections = portModelConnections;
-                
+
                 for (var index = 0; index < portModel.Connections.Count; index++)
                 {
                     var connection = portModel.Connections[index];
@@ -225,7 +225,7 @@ namespace Unity.Behavior.GraphFramework
 
         public bool Equals(NodeModel model)
         {
-            if (!ShallowEquals(this,model))
+            if (!ShallowEquals(this, model))
                 return false;
 
             // Check connections one edge from the node.

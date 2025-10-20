@@ -40,7 +40,7 @@ namespace Unity.Behavior.WebApi.Model
         public ResponseGetConversationV1MuseConversationConversationIdGet(ClientConversation actualInstance)
         {
             this.IsNullable = false;
-            this.SchemaType= "anyOf";
+            this.SchemaType = "anyOf";
             this.ActualInstance = actualInstance ?? throw new ArgumentException("Invalid instance found. Must not be null.");
         }
 
@@ -52,7 +52,7 @@ namespace Unity.Behavior.WebApi.Model
         public ResponseGetConversationV1MuseConversationConversationIdGet(ErrorResponse actualInstance)
         {
             this.IsNullable = false;
-            this.SchemaType= "anyOf";
+            this.SchemaType = "anyOf";
             this.ActualInstance = actualInstance ?? throw new ArgumentException("Invalid instance found. Must not be null.");
         }
 
@@ -197,7 +197,7 @@ namespace Unity.Behavior.WebApi.Model
         /// <returns>The object converted from the JSON string</returns>
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
-            switch(reader.TokenType)
+            switch (reader.TokenType)
             {
                 case JsonToken.StartObject:
                     return ResponseGetConversationV1MuseConversationConversationIdGet.FromJson(JObject.Load(reader).ToString(Formatting.None));

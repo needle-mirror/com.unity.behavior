@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Unity.Behavior.GraphFramework;
@@ -27,9 +27,9 @@ namespace Unity.Behavior
 
             if (field != null)
             {
-                field.OnLinkChanged += _ =>
+                field.OnLinkChanged += (_, wasUndo) =>
                 {
-                    field.Dispatcher.DispatchImmediate(new SetNodeVariableLinkCommand(field.Model as NodeModel, field.FieldName, field.LinkVariableType, field.LinkedVariable, true));
+                    field.Dispatcher.DispatchImmediate(new SetNodeVariableLinkCommand(field.Model as NodeModel, field.FieldName, field.LinkVariableType, field.LinkedVariable, !wasUndo));
                 };
                 field.RegisterCallback<LinkFieldValueChangeEvent>(evt =>
                 {
@@ -43,9 +43,9 @@ namespace Unity.Behavior
         internal static BaseLinkField CreateConditionLinkField(string label, Type type, ConditionModel condition)
         {
             BaseLinkField field = CreateForType(label, type);
-            field.OnLinkChanged += _ =>
+            field.OnLinkChanged += (_, wasUndo) =>
             {
-                field.Dispatcher.DispatchImmediate(new SetConditionVariableLinkCommand(condition, field.FieldName, field.LinkVariableType, field.LinkedVariable, true));
+                field.Dispatcher.DispatchImmediate(new SetConditionVariableLinkCommand(condition, field.FieldName, field.LinkVariableType, field.LinkedVariable, !wasUndo));
             };
             field.RegisterCallback<LinkFieldValueChangeEvent>(evt =>
             {
@@ -62,7 +62,7 @@ namespace Unity.Behavior
             {
                 return new BaseLinkField();
             }
-            
+
             if (typeof(BlackboardVariable).IsAssignableFrom(type))
             {
                 type = type.GetProperty("Value").PropertyType;
@@ -151,12 +151,12 @@ namespace Unity.Behavior
                 field.AllowAssetEmbeds = true;
                 return field;
             }
-            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>)) 
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
             {
                 Type listType = type.GetGenericArguments()[0];
                 return CreateFieldForListType(listType, label);
             }
-            
+
 #endif
             return null;
         }
@@ -170,10 +170,10 @@ namespace Unity.Behavior
             listField.label = Util.NicifyVariableName(label).Replace("  ", " ");
             return field;
         }
-        
+
         private static BaseLinkField CreateFieldForListType(Type itemType, string label)
         {
-            MethodInfo method = typeof(LinkFieldUtility).GetMethod(nameof(CreateFieldForListTypeGeneric), 
+            MethodInfo method = typeof(LinkFieldUtility).GetMethod(nameof(CreateFieldForListTypeGeneric),
                 BindingFlags.Static | BindingFlags.Instance | BindingFlags.NonPublic);
             MethodInfo specialized = method.MakeGenericMethod(itemType);
             return specialized.Invoke(null, new object[] { label }) as BaseLinkField;

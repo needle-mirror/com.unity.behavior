@@ -7,7 +7,7 @@ namespace Unity.Behavior
     internal class BehaviorGraphDebugInfo : ScriptableObject, ISerializationCallbackReceiver
     {
         private HashSet<SerializableGUID> m_CodeBreakPoints = new HashSet<SerializableGUID>();
-        
+
         [SerializeField]
         [HideInInspector]
         private List<SerializableGUID> m_CodeBreakPointsList = new List<SerializableGUID>();

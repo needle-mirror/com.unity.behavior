@@ -2,9 +2,9 @@
 uid: serialize-work
 ---
 
-# How behavior graph works 
+# How behavior graph works
 
-The `Agent.graph` defines the core behavior logic for each capsule agent in the sample. 
+The `Agent.graph` defines the core behavior logic for each capsule agent in the sample.
 
 Use this section to do the following:
 
@@ -26,14 +26,14 @@ To open the behavior graph, double-click `Agent.graph`. This opens the Unity Beh
 
 | Variable | Description |
 | -------- | ----------- |
-| **Self** | Reference to the agent’s own GameObject (automatically assigned). | 
+| **Self** | Reference to the agent’s own GameObject (automatically assigned). |
 | **Target Position** | A `Vector3` position the agent navigates to. |
 | **ActiveWeapon** | The currently held weapon. |
 | **WeaponPrefab** | Reference to the weapon prefab to instantiate. |
 
 ## Behavior graph flow
 
-The flow of the graph determines how the agent behaves over time. 
+The flow of the graph determines how the agent behaves over time.
 
 In `Agent.graph`, the logic flow is as follows:
 

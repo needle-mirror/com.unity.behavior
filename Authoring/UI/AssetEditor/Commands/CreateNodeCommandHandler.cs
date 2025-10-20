@@ -1,4 +1,4 @@
-﻿using Unity.Behavior.GraphFramework;
+using Unity.Behavior.GraphFramework;
 
 namespace Unity.Behavior
 {
@@ -29,7 +29,7 @@ namespace Unity.Behavior
                 GraphView.ViewState.ViewStateUpdated -= AlignNewNode;
             }
             GraphView.ViewState.ViewStateUpdated += AlignNewNode;
-            
+
 
             if (command.ConnectedPort == null)
             {

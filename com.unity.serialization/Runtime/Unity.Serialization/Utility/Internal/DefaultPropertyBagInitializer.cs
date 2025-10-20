@@ -1,4 +1,4 @@
-﻿using Unity.Properties;
+using Unity.Properties;
 using Unity.Behavior.Serialization.Json;
 using UnityEngine;
 
@@ -12,7 +12,7 @@ namespace Unity.Behavior.Serialization
         {
             PropertyBag.Register(new Json.SerializedObjectViewPropertyBag());
             PropertyBag.Register(new Json.SerializedArrayViewPropertyBag());
-            
+
             UnsafeSerializedObjectReader.CreateBurstDelegates();
         }
     }

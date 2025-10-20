@@ -3,11 +3,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using UnityEngine;
+using UnityEngine.Assertions;
+
 #if UNITY_EDITOR
 using UnityEditor.Callbacks;
 #endif
-using UnityEngine;
-using UnityEngine.Assertions;
 
 namespace Unity.Behavior
 {
@@ -144,14 +145,48 @@ namespace Unity.Behavior
             return null;
         }
 
-        internal GraphAssetProcessor(BehaviorAuthoringGraph graphAsset, BehaviorGraph graph)
+        private GraphAssetProcessor(BehaviorAuthoringGraph graphAsset, BehaviorGraph graph)
         {
             m_Asset = graphAsset;
             m_Graph = graph;
+            m_Graph.CompiledWithPlaceholderNode = false;
+        }
 
-            // m_GraphModule is going to replace the Graph.RootGraph and be set as the first element of Graph.Graphs.
-            m_GraphModule = new BehaviorGraphModule { AuthoringAssetID = graphAsset.AssetID };
-            m_Graph?.Graphs.Add(m_GraphModule);
+        internal static GraphAssetProcessor CreateInstanceForRebuild(BehaviorAuthoringGraph graphAsset, BehaviorGraph runtimeGraph)
+        {
+            var processor = new GraphAssetProcessor(graphAsset, runtimeGraph);
+
+            if (processor.m_Graph.Graphs.Count == 0)
+            {
+                processor.m_GraphModule = new BehaviorGraphModule { AuthoringAssetID = graphAsset.AssetID };
+            }
+            else
+            {
+                // If existing runtime graph, keep the ref.
+                processor.m_GraphModule = processor.m_Graph.Graphs[0];
+                processor.m_GraphModule.AuthoringAssetID = graphAsset.AssetID;
+                processor.m_Graph.Graphs.Clear();
+            }
+
+            processor.m_Graph?.Graphs.Add(processor.m_GraphModule);
+
+            return processor;
+        }
+
+        internal static GraphAssetProcessor CreateInstanceForNewSubgraph(BehaviorAuthoringGraph graphAsset, GraphAssetProcessor assetProcessor)
+        {
+            var processor = new GraphAssetProcessor(graphAsset, assetProcessor.Graph);
+
+            processor.m_GraphModule = new BehaviorGraphModule
+            {
+                AuthoringAssetID = graphAsset.AssetID,
+#if UNITY_EDITOR
+                DebugInfo = assetProcessor.Asset.DebugInfo, // Set debug asset from parent.
+#endif
+            };
+
+            processor.m_Graph?.Graphs.Add(processor.m_GraphModule);
+            return processor;
         }
 
         internal void ProcessGraph()
@@ -167,11 +202,9 @@ namespace Unity.Behavior
 
             Cleanup();
             InitializeBlackboard();
-
-            m_Graph.RootGraph = BuildGraph();
-#if UNITY_EDITOR
-            m_Graph.m_DebugInfo = m_Asset.GetOrCreateGraphDebugInfo(m_Asset);
-#endif
+            AssetLogger.Reset();
+            BuildGraph();
+            AssetLogger.LogResults(m_Graph, "stripped out placeholder nodes");
         }
 
         internal BehaviorGraphModule BuildGraph()
@@ -193,7 +226,7 @@ namespace Unity.Behavior
             {
                 var parallelRoot = new ParallelAllComposite { Graph = m_GraphModule };
 
-                // Iterating backwards to maintain StartOnEvent model's order.
+                // Iterates backwards to maintain StartOnEvent model's order.
                 for (var index = 0; index < m_Asset.Roots.Count; index++)
                 {
                     var root = m_Asset.Roots[index];
@@ -243,6 +276,10 @@ namespace Unity.Behavior
             m_VariableModelToVariable.Clear();
             foreach (var blackboardVariable in BlackboardReference.Blackboard.Variables)
             {
+                if (blackboardVariable == null)
+                {
+                    continue;
+                }
                 m_VariableModelToVariable.Add(blackboardVariable.GUID, blackboardVariable);
             }
             if (variableOverrides != null)
@@ -356,11 +393,6 @@ namespace Unity.Behavior
 
         internal Node GetOrCreateNode(NodeModel nodeModel)
         {
-            if (nodeModel is PlaceholderNodeModel placeholderNodeModel)
-            {
-                Debug.LogWarning($"Placeholder Node ({placeholderNodeModel.Name}) will be skipped in the runtime asset conversion. Please check your graph ({Graph.name}) and replace placeholder nodes.");
-                return null;
-            }
             if (m_NodeModelToNode.TryGetValue(nodeModel, out Node existingNode))
             {
                 return existingNode;
@@ -375,8 +407,19 @@ namespace Unity.Behavior
             Node node = nodeTransformer.CreateNodeFromModel(this, nodeModel);
             if (node == null)
             {
+                string nodeName = "Unknown";
+                if (nodeModel is BehaviorGraphNodeModel behaviorGraphNodeModel
+                    && Asset.RuntimeNodeTypeIDToNodeModelInfo.TryGetValue(
+                        behaviorGraphNodeModel.NodeTypeID, out var nodeModelInfo))
+                {
+                    nodeName = nodeModelInfo.Name;
+                }
+
+                AssetLogger.RecordPlaceholderStripping(Asset, nodeModel);
+                m_Graph.CompiledWithPlaceholderNode = true;
                 return null;
             }
+
             node.ID = nodeModel.ID;
             node.Graph = m_GraphModule;
             m_NodeModelToNode.Add(nodeModel, node);
@@ -451,9 +494,12 @@ namespace Unity.Behavior
                 return false;
             }
 
-            if (nodeModel is PlaceholderNodeModel placeholderNodeModel)
+            // Placeholder handling.
+            if (behaviorNodeModel.NodeType == null)
             {
-                Debug.LogWarning($"Placeholder Node ({placeholderNodeModel.Name}) will be turned into a Sequence node for the runtime asset. Please check your graph ({Graph.name}) and replace placeholder nodes.");
+                m_Graph.CompiledWithPlaceholderNode = true;
+                AssetLogger.RecordPlaceholderStripping(Asset, nodeModel);
+                return true;
             }
 
             NodeInfo nodeInfo = NodeRegistry.GetInfoFromTypeID(behaviorNodeModel.NodeTypeID);

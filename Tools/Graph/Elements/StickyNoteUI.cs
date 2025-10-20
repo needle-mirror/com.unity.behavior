@@ -12,7 +12,7 @@ namespace Unity.Behavior.GraphFramework
         private const int k_UndoCharThreshold = 15;
 
         public new StickyNoteModel Model { get => base.Model as StickyNoteModel; }
-        
+
         private EditableLabel m_EditableLabel;
         private string m_LastUndoText;
         private long m_LastMarkTime;
@@ -27,7 +27,7 @@ namespace Unity.Behavior.GraphFramework
             m_EditableLabel.UserInputTextChanged += OnValueChanged;
             m_EditableLabel.RegisterCallback<InputEvent>(OnTextValueChanged);
             m_EditableLabel.Text = Model.Text;
-            
+
             m_LastUndoText = Model.Text;
             m_LastMarkTime = Environment.TickCount;
         }
@@ -64,7 +64,7 @@ namespace Unity.Behavior.GraphFramework
             }
 
             // character treshold
-            if (!shouldMarkUndo && Math.Abs(newText.Length - m_LastUndoText.Length) > k_UndoCharThreshold) 
+            if (!shouldMarkUndo && Math.Abs(newText.Length - m_LastUndoText.Length) > k_UndoCharThreshold)
             {
                 shouldMarkUndo = true;
                 m_LastUndoText = newText;

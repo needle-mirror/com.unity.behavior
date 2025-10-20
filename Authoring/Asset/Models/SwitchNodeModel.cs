@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Behavior.GraphFramework;
@@ -22,7 +22,7 @@ namespace Unity.Behavior
                 AddPortModel(new PortModel(outputPortModel.Name, PortDataFlowType.Output) { IsFloating = true });
             }
         }
-        
+
         protected internal override void EnsurePortsAreUpToDate()
         {
             foreach (FieldModel field in Fields)

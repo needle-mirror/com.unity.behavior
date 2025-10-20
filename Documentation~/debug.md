@@ -8,9 +8,9 @@ To monitor how your behavior graph runs, debug the agent in real time during Pla
 
 Perform the following steps:
 
-1. Select **Debug** on the behavior graph editor's toolbar. 
+1. Select **Debug** on the behavior graph editor's toolbar.
 
-    The **Debug** menu lists all the agents in the current behavior graph that have the `Agent` component assigned. 
+    The **Debug** menu lists all the agents in the current behavior graph that have the `Agent` component assigned.
 
 2. Select the relevant agent to enable debugging.
 

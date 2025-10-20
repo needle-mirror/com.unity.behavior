@@ -35,26 +35,26 @@ namespace Unity.Behavior.Serialization.Json
             return $"Type=[{Type}] Range=[{Start}..{End}] Parent=[{Parent}]";
         }
     }
-    
+
     unsafe struct UnsafeJsonTokenStream : IDisposable
     {
         /// <summary>
         /// Special start value to signify this is a partial token continuation.
         /// </summary>
         public const int PartialTokenStart = -1;
-        
+
         /// <summary>
         /// Special end value to signify there is another part to follow.
         /// </summary>
         public const int PartialTokenEnd = -1;
-        
+
         /// <summary>
         /// The default depth limit for discarding completed tokens.
         /// </summary>
         public const int DefaultDiscardDepthLimit = 128;
-        
+
         readonly Allocator m_Label;
-        
+
         public Token* Tokens;
         public int TokenCapacity;
         public int TokenNextIndex;
@@ -64,13 +64,13 @@ namespace Unity.Behavior.Serialization.Json
         public UnsafeJsonTokenStream(int initialTokenCapacity, Allocator label)
         {
             m_Label = label;
-            Tokens = (Token*) UnsafeUtility.Malloc(initialTokenCapacity * sizeof(Token), 4, label);
-            Discard = (int*) UnsafeUtility.Malloc(initialTokenCapacity * sizeof(int), 4, label);
+            Tokens = (Token*)UnsafeUtility.Malloc(initialTokenCapacity * sizeof(Token), 4, label);
+            Discard = (int*)UnsafeUtility.Malloc(initialTokenCapacity * sizeof(int), 4, label);
             TokenCapacity = initialTokenCapacity;
             TokenNextIndex = 0;
             TokenParentIndex = -1;
         }
-        
+
         public void Dispose()
         {
             UnsafeUtility.Free(Tokens, m_Label);
@@ -92,7 +92,7 @@ namespace Unity.Behavior.Serialization.Json
             TokenNextIndex = 0;
             TokenParentIndex = -1;
         }
-        
+
         public int DiscardCompleted(int depth = DefaultDiscardDepthLimit)
         {
             if (TokenNextIndex == 0)
@@ -103,7 +103,7 @@ namespace Unity.Behavior.Serialization.Json
 
             var index = TokenNextIndex - 1;
 
-            for (;;)
+            for (; ; )
             {
                 if (index == -1)
                 {
@@ -180,7 +180,7 @@ namespace Unity.Behavior.Serialization.Json
                 Tokens[i] = token;
                 Discard[index] = i;
             }
-            
+
             return 0;
         }
 
@@ -196,7 +196,7 @@ namespace Unity.Behavior.Serialization.Json
     unsafe struct JsonTokenStream : IDisposable
     {
         const int k_DefaultBufferSize = 1024;
-        
+
         readonly Allocator m_Allocator;
         [NativeDisableUnsafePtrRestriction] UnsafeJsonTokenStream* m_Data;
 
@@ -209,9 +209,9 @@ namespace Unity.Behavior.Serialization.Json
 
         public JsonTokenStream(Allocator allocator) : this(k_DefaultBufferSize, allocator)
         {
-            
+
         }
-        
+
         public JsonTokenStream(int initialLength, Allocator allocator)
         {
             m_Allocator = allocator;

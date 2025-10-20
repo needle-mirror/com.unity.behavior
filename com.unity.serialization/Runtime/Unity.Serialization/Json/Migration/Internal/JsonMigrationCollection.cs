@@ -10,7 +10,7 @@ namespace Unity.Behavior.Serialization.Json
         public List<IJsonMigration> Global;
         public List<IJsonMigration> UserDefined;
         public object UserData;
-        
+
         public bool TryGetSerializedVersion<TValue>(out int version)
         {
             var migration = GetMigrationForType<TValue>(out version);
@@ -18,9 +18,9 @@ namespace Unity.Behavior.Serialization.Json
             if (null == migration)
                 return false;
 
-            if (version > 0) 
+            if (version > 0)
                 return true;
-            
+
             Debug.LogError($"An error occured while serializing Type=[{typeof(TValue)}] using IJsonMigration=[{migration.GetType()}]. Serialized version must be greater than 0.");
             return false;
         }
@@ -36,7 +36,7 @@ namespace Unity.Behavior.Serialization.Json
             }
 
             var serializedVersion = 0;
-            
+
             if (view.TryGetValue(JsonPropertyVisitor.k_SerializedVersionKey, out var serializedVersionView))
             {
                 if (serializedVersionView.Type != TokenType.Primitive)
@@ -63,12 +63,12 @@ namespace Unity.Behavior.Serialization.Json
                     value = typed.Migrate(context);
                     break;
                 case IContravariantJsonMigration<TValue> typedContravariant:
-                    value = (TValue) typedContravariant.Migrate(context);
+                    value = (TValue)typedContravariant.Migrate(context);
                     break;
                 default:
                     throw new Exception("An internal error has occured.");
             }
-            
+
             return true;
         }
 
@@ -81,17 +81,17 @@ namespace Unity.Behavior.Serialization.Json
                     if (adapter is IJsonMigration<TValue> typed)
                     {
                         version = typed.Version;
-                        return typed; 
+                        return typed;
                     }
-                    
+
                     if (adapter is IContravariantJsonMigration<TValue> typedContravariant)
                     {
                         version = typedContravariant.Version;
-                        return typedContravariant; 
+                        return typedContravariant;
                     }
                 }
             }
-            
+
             if (null != Global && Global.Count > 0)
             {
                 foreach (var adapter in Global)
@@ -99,13 +99,13 @@ namespace Unity.Behavior.Serialization.Json
                     if (adapter is IJsonMigration<TValue> typed)
                     {
                         version = typed.Version;
-                        return typed; 
+                        return typed;
                     }
-                    
+
                     if (adapter is IContravariantJsonMigration<TValue> typedContravariant)
                     {
                         version = typedContravariant.Version;
-                        return typedContravariant; 
+                        return typedContravariant;
                     }
                 }
             }

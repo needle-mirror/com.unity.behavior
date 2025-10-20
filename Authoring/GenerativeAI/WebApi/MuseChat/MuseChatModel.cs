@@ -1,4 +1,4 @@
-﻿#if ENABLE_MUSE_BEHAVIOR
+#if ENABLE_MUSE_BEHAVIOR
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -45,10 +45,10 @@ namespace Unity.Behavior.GenerativeAI
             );
 
             var api = new DefaultApi(CreateConfig());
-            
+
             var request = api.CompletionV1MuseCompletionPostAsync(options, CancellationToken.None);
             var progress = 0.0f;
-            
+
             //this is the only way to get the conversation id from the response
             api.ApiClient.OnResponseIntercepted += (webRequest, path, ops, config, o) =>
             {

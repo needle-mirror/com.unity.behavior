@@ -29,7 +29,7 @@ namespace Unity.Behavior.GraphFramework
         {
             m_Menu.AddItem(new GUIContent(text), true, () => { callback(); });
         }
-        
+
         private void AddItemDisabledEditor(string text)
         {
             m_Menu.AddDisabledItem(new GUIContent(text));
@@ -67,7 +67,7 @@ namespace Unity.Behavior.GraphFramework
         }
 
         Popup<ListView> m_Popup;
-        private readonly List<(string entry, OnMenuCallback callback)> m_MenuData = new ();
+        private readonly List<(string entry, OnMenuCallback callback)> m_MenuData = new();
 
         public void AddItemCheckmarked(string text, OnMenuCallback callback)
         {
@@ -92,7 +92,7 @@ namespace Unity.Behavior.GraphFramework
 #endif
             m_MenuData.Add((text, callback));
         }
-        
+
         public void AddDisabledItem(string text)
         {
 #if UNITY_EDITOR
@@ -134,7 +134,7 @@ namespace Unity.Behavior.GraphFramework
                 if (element is not Label label)
                 {
                     return;
-                    
+
                 }
                 label.text = m_MenuData[index].entry;
                 label.RegisterCallback<MouseDownEvent>(HandleMouseSelection);
@@ -145,12 +145,12 @@ namespace Unity.Behavior.GraphFramework
                 element.UnregisterCallback<MouseDownEvent>(HandleMouseSelection);
                 element.userData = null;
             };
-            
+
             m_Popup.Root.RefreshItems();
             m_Popup.Root.style.backgroundColor = new Color(0.2470588f, 0.2470588f, 0.2470588f);
             m_Popup.Root.style.fontSize = 12;
             m_Popup.Root.style.unityTextAlign = TextAnchor.MiddleLeft;
-            
+
 #if UNITY_2022_2_OR_NEWER
             m_Popup.Root.itemsChosen += OnItemsChosen;
 #else
@@ -169,11 +169,11 @@ namespace Unity.Behavior.GraphFramework
             {
                 return;
             }
-            
+
             callback?.Invoke();
             evt.StopPropagation();
             m_Popup.Close();
-        } 
+        }
 
         private void OnItemsChosen(IEnumerable<object> obj)
         {

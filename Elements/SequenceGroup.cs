@@ -27,7 +27,7 @@ namespace Unity.Behavior.GraphFramework
             {
                 return;
             }
-            
+
             bool mouseEnteredChild = typeof(NodeUI).IsAssignableFrom(evt.target.GetType()) && evt.target != this;
             if (mouseEnteredChild)
             {
@@ -42,7 +42,7 @@ namespace Unity.Behavior.GraphFramework
             {
                 return;
             }
-            
+
             bool mouseLeftChild = typeof(NodeUI).IsAssignableFrom(evt.target.GetType()) && evt.target != this;
             if (mouseLeftChild)
             {
@@ -58,7 +58,7 @@ namespace Unity.Behavior.GraphFramework
             {
                 return;
             }
-            
+
             // TODO: Darren
             // This happening all the time when updating anything with UI in general.. is still causing spikes in other places..
             // How to do this only when necessary?

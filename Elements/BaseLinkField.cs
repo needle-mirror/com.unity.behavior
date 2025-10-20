@@ -30,14 +30,14 @@ namespace Unity.Behavior.GraphFramework
                 m_LinkedLabelPrefix = value;
                 if (m_LinkedVariable != null)
                 {
-                    SetLinkVisuals(m_LinkedVariable);   
+                    SetLinkVisuals(m_LinkedVariable);
                 }
             }
         }
 
         private readonly Icon m_LinkButton;
         private readonly Icon m_UnlinkButton;
-        
+
         /// <summary>
         /// Label describing the link field.
         /// </summary>
@@ -51,7 +51,7 @@ namespace Unity.Behavior.GraphFramework
         private VariableModel m_LinkedVariable;
         private VisualElement m_FieldContainer;
         private Label m_NameLabel;
-        
+
         /// <summary>
         /// Field container element.
         /// </summary>
@@ -78,8 +78,11 @@ namespace Unity.Behavior.GraphFramework
             set => m_NameLabel.text = value;
         }
 
-        internal delegate void LinkChangedCallback(VariableModel newValue);
+        internal delegate void LinkChangedCallback(VariableModel newValue, bool wasUndo);
         internal event LinkChangedCallback OnLinkChanged;
+
+        internal delegate void WasLinkPressedCallback(bool unlink);
+        internal event WasLinkPressedCallback OnLinkWasPressed;
 
         internal string FieldName
         {
@@ -97,14 +100,17 @@ namespace Unity.Behavior.GraphFramework
             set
             {
                 if (m_LinkedVariable == value)
+                {
                     return;
+                }
 
                 m_LinkedVariable = value;
                 SetLinkVisuals(value);
-                OnLinkChanged?.Invoke(value);
+
+                OnLinkChanged?.Invoke(value, m_GraphEditor.UndoRedoDirty);
                 if (value != null)
                 {
-                    value.IsSharedChanged += () => { SetLinkVisuals(value); };   
+                    value.IsSharedChanged += () => { SetLinkVisuals(value); };
                 }
             }
         }
@@ -113,7 +119,7 @@ namespace Unity.Behavior.GraphFramework
         {
             styleSheets.Add(ResourceLoadAPI.Load<StyleSheet>("Packages/com.unity.behavior/Elements/Assets/LinkFieldStyles.uss"));
             AddToClassList("LinkField");
-            
+
             m_LinkFieldContainer = new VisualElement();
             m_LinkFieldContainer.AddToClassList("LinkFieldContainer");
 
@@ -135,7 +141,7 @@ namespace Unity.Behavior.GraphFramework
             LinkedLabel.AddToClassList("LinkedLabel");
             m_LinkedLabelContainer.Add(LinkedLabel);
             m_LinkFieldContainer.Add(m_LinkedLabelContainer);
-            
+
             Add(m_LinkFieldContainer);
 
             VisualElement linkButtonContainer = new VisualElement();
@@ -145,19 +151,17 @@ namespace Unity.Behavior.GraphFramework
             m_LinkButton = new Icon();
             m_LinkButton.iconName = "Link";
             m_LinkButton.image = ResourceLoadAPI.Load<Texture2D>("Packages/com.unity.behavior/Blackboard/Assets/Icons/link.png");
-            
-#if UNITY_EDITOR
+
             if (!EditorGUIUtility.isProSkin)
             {
                 m_LinkButton.tintColor = new Color(0.33f, 0.33f, 0.33f); // new Color(85, 85, 85);
             }
-#endif
-          
+
             m_LinkButton.pickingMode = PickingMode.Position;
             m_LinkButton.AddToClassList("LinkButton");
             m_LinkButton.AddManipulator(new Pressable(OnLinkButton));
             linkButtonContainer.Add(m_LinkButton);
-            
+
             VisualElement fieldSpacer = new VisualElement();
             fieldSpacer.name = "FieldSpacer";
             fieldSpacer.AddToClassList("LinkButtonSpacer");
@@ -198,7 +202,12 @@ namespace Unity.Behavior.GraphFramework
         internal virtual void OnDragEnter(VariableModel variable) { }
         internal virtual void OnDragExit() { }
 
-#if UNITY_EDITOR
+        internal void SetLinkedVariableWithoutNotify(VariableModel variableModel)
+        {
+            m_LinkedVariable = variableModel;
+            SetLinkVisuals(variableModel);
+        }
+
         private void OnDragEnterEvent(DragEnterEvent evt)
         {
             VariableModel variableModel = UnityEditor.DragAndDrop.GetGenericData("VariableModel") as VariableModel;
@@ -263,7 +272,6 @@ namespace Unity.Behavior.GraphFramework
                 SetLinkVisuals(LinkedVariable);
             }
         }
-#endif
 
         internal virtual void SetLinkWithoutNotify(VariableModel blackboardVariable)
         {
@@ -286,20 +294,21 @@ namespace Unity.Behavior.GraphFramework
 
             AddToClassList("Linked");
             EnableInClassList("SharedVariable", variable.IsShared);
-            
+
             if (!string.IsNullOrEmpty(LinkedLabelPrefix))
             {
-                LinkedLabel.text = LinkedLabelPrefix + variable.Name; 
+                LinkedLabel.text = LinkedLabelPrefix + variable.Name;
             }
             else
             {
-                LinkedLabel.text = variable.Name;   
+                LinkedLabel.text = variable.Name;
             }
         }
 
         private void OnUnlinkButton()
         {
             LinkedVariable = null;
+            OnLinkWasPressed?.Invoke(true);
             using (LinkFieldLinkButtonEvent evt = LinkFieldLinkButtonEvent.GetPooled(this, null))
             {
                 SendEvent(evt);
@@ -312,6 +321,11 @@ namespace Unity.Behavior.GraphFramework
             {
                 SendEvent(evt);
             }
+        }
+
+        internal void LinkWasPressed()
+        {
+            OnLinkWasPressed?.Invoke(false);
         }
 
         private void OnAttachToPanel(AttachToPanelEvent evt)
@@ -345,7 +359,7 @@ namespace Unity.Behavior.GraphFramework
                 }
                 else
                 {
-                    LinkedLabel.text = evt.Variable.Name;   
+                    LinkedLabel.text = evt.Variable.Name;
                 }
             }
         }
@@ -362,7 +376,7 @@ namespace Unity.Behavior.GraphFramework
         }
 
         internal virtual void SetValue(object value) { }
-        
+
         internal virtual void SetValueWithoutNotify(object value) { }
     }
 }

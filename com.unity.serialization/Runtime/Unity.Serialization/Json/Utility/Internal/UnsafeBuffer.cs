@@ -4,7 +4,7 @@ namespace Unity.Behavior.Serialization
 {
     readonly unsafe struct UnsafeBuffer<T> where T : unmanaged
     {
-        [NativeDisableUnsafePtrRestriction] 
+        [NativeDisableUnsafePtrRestriction]
         public readonly T* Buffer;
         public readonly int Length;
 

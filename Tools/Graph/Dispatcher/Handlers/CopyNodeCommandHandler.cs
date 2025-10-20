@@ -11,7 +11,7 @@ namespace Unity.Behavior.GraphFramework
         {
             if (!command.NodeModels.Any())
             {
-                return true;   
+                return true;
             }
 
             NodeCopyData copyData = new NodeCopyData { Nodes = command.NodeModels };

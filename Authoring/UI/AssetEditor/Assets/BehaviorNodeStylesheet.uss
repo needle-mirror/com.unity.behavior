@@ -319,7 +319,7 @@ JoinNodeUI .InputPort:hover #Port-Icon  {
     color: var(--behavior-ui-placeholder-text-color);
 }
 
-.Placeholder #NodeContentContainer 
+.Placeholder #NodeContentContainer
 {
     background-color: var(--behavior-ui-placeholder-bg);
 }

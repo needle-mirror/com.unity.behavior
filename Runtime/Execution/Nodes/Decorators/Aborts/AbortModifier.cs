@@ -11,10 +11,10 @@ namespace Unity.Behavior
     [Serializable, GeneratePropertyBag]
     [NodeDescription(
         name: "Abort",
-        description: "Aborts branch when assigned conditions are true.", 
+        description: "Aborts branch when assigned conditions are true.",
         category: "Flow/Abort",
         id: "f3c6242eed224ca2955906276c0497b6")]
-    internal partial class AbortModifier : Modifier, IConditional 
+    internal partial class AbortModifier : Modifier, IConditional
     {
         [SerializeReference]
         protected List<Condition> m_Conditions = new List<Condition>();
@@ -27,12 +27,12 @@ namespace Unity.Behavior
         protected override Status OnStart()
         {
             base.OnStart();
-            
+
             if (Child == null)
             {
                 return Status.Failure;
             }
-            
+
             foreach (Condition condition in Conditions)
             {
                 condition.OnStart();
@@ -55,13 +55,13 @@ namespace Unity.Behavior
 
         protected override Status OnUpdate()
         {
-            // Check the child status 
+            // Check the child status
             Status status = Child.CurrentStatus;
             if (status == Status.Success)
                 return Status.Success;
             if (status == Status.Failure)
                 return Status.Failure;
-            
+
             // Otherwise, check the conditions and if the branch should be aborted
             if (Conditions.Count == 0)
             {

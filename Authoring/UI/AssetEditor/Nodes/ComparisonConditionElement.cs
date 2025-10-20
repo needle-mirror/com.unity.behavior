@@ -1,4 +1,4 @@
-﻿using Unity.Behavior.GraphFramework;
+using Unity.Behavior.GraphFramework;
 using UnityEngine.UIElements;
 using System;
 using System.Collections.Generic;
@@ -7,7 +7,7 @@ using System.Reflection;
 using Unity.AppUI.UI;
 
 namespace Unity.Behavior
-{    
+{
     internal class ComparisonConditionElement : VisualElement
     {
         internal readonly ConditionModel ConditionModel;
@@ -16,7 +16,7 @@ namespace Unity.Behavior
 
         internal Dropdown OperationDropdownField;
         private Label m_CompareRelationLabel;
-        
+
         private readonly Dictionary<string, ConditionOperator> m_AllOperatorMapping = new()
         {
             { "Equal", ConditionOperator.Equal },
@@ -26,7 +26,7 @@ namespace Unity.Behavior
             { "Greater / Equal", ConditionOperator.GreaterOrEqual },
             { "Lower / Equal", ConditionOperator.LowerOrEqual },
         };
-        
+
         private readonly Dictionary<string, ConditionOperator> m_BooleanOperatorMapping = new()
         {
             { "Equal", ConditionOperator.Equal },
@@ -38,8 +38,8 @@ namespace Unity.Behavior
             AddToClassList("Behavior-Reflection");
             ConditionModel = conditionModel;
             ComparisonType = comparisonType;
-            
-                    
+
+
             // Get the attribute attached to the condition operator field on the type, if there is one.
             Attribute = TryGetAttribute();
 
@@ -54,15 +54,15 @@ namespace Unity.Behavior
             {
                 ConditionModel.CreateOperatorField(fieldName);
             }
-            
+
             // Create the dropdown field.
             SetupDropdownElement(GetChoicesFromComparisonType());
         }
 
         private ComparisonAttribute TryGetAttribute()
         {
-            Type type =ConditionModel.ConditionType;
-            
+            Type type = ConditionModel.ConditionType;
+
             FieldInfo[] fields = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             foreach (FieldInfo field in fields)
             {
@@ -125,7 +125,7 @@ namespace Unity.Behavior
                 {
                     index = choices.IndexOf(choice);
                     var mappingValue = GetOperatorMappingValueFromKey(choice);
-                    RefreshCompareRelationLabel((Enum)mappingValue);   
+                    RefreshCompareRelationLabel((Enum)mappingValue);
                 }
             }
 
@@ -144,16 +144,16 @@ namespace Unity.Behavior
                 RefreshCompareRelationLabel((Enum)GetOperatorMappingValueFromKey("Equal"));
                 ConditionModel.SetOperatorValue((Enum)GetOperatorMappingValueFromKey("Equal"));
             }
-            
-            OperationDropdownField.RegisterValueChangedCallback( evt =>
-            {
-                string key = choices[evt.newValue.First()];
-                var newEnumValue = (Enum)GetOperatorMappingValueFromKey(key);
-                ConditionModel.SetOperatorValue(newEnumValue);
-                RefreshCompareRelationLabel(newEnumValue);
-                ConditionModel.Asset.SetAssetDirty();
-            });
-            
+
+            OperationDropdownField.RegisterValueChangedCallback(evt =>
+           {
+               string key = choices[evt.newValue.First()];
+               var newEnumValue = (Enum)GetOperatorMappingValueFromKey(key);
+               ConditionModel.SetOperatorValue(newEnumValue);
+               RefreshCompareRelationLabel(newEnumValue);
+               ConditionModel.Asset.SetAssetDirty();
+           });
+
             Add(OperationDropdownField);
             Add(m_CompareRelationLabel);
         }
@@ -212,7 +212,7 @@ namespace Unity.Behavior
                     choices = m_BooleanOperatorMapping.Keys.ToList();
                 }
             }
-            
+
             SetupDropdownElement(choices);
             OperationDropdownField.SetEnabled(variableField.LinkedVariable != null);
         }

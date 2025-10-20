@@ -23,7 +23,7 @@ SequenceGroup > #SelectionBorder > #NodeContentContainer {
 #GroupButton {
     width: 18px;
     height: 18px;
-    background-image: url('/Packages/com.unity.behavior/Authoring/UI/NodeWizard/Assets/Icons/baseline_more_horiz_white_24dp.png');
+    background-image: url("/Packages/com.unity.behavior/Tools/Graph/Assets/Icons/baseline_more_horiz_white_24dp.png");
     align-self: center;
 }
 

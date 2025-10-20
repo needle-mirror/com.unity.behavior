@@ -45,7 +45,7 @@ namespace Unity.Behavior
         {
             float normalizedProgress = Mathf.Min(m_Progress / Duration.Value, 1f);
             Transform.Value.rotation = Quaternion.Lerp(m_StartRotation, m_EndRotation, normalizedProgress);
-            m_Progress += Time.deltaTime; 
+            m_Progress += Time.deltaTime;
 
             return normalizedProgress == 1 ? Status.Success : Status.Running;
         }

@@ -20,7 +20,7 @@ internal partial class WaitFramesAction : Action
 
     protected override Status OnStart()
     {
-        int currentFrame = Time.frameCount; 
+        int currentFrame = Time.frameCount;
         m_FrameTarget = currentFrame + Mathf.Max(0, NumFrames.Value);
         if (currentFrame >= m_FrameTarget)
         {
@@ -38,7 +38,7 @@ internal partial class WaitFramesAction : Action
         }
         return Status.Running;
     }
-    
+
     protected override void OnSerialize()
     {
         m_FramesRemaining = m_FrameTarget - Time.frameCount;
@@ -49,4 +49,3 @@ internal partial class WaitFramesAction : Action
         m_FrameTarget = Time.frameCount + m_FramesRemaining;
     }
 }
-

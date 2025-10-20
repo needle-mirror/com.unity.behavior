@@ -174,7 +174,7 @@ namespace Unity.Behavior.Serialization.Binary
                     stream->Add(UnsafeUtility.As<TValue, double>(ref value));
                     return;
                 case TypeCode.Boolean:
-                    stream->Add(UnsafeUtility.As<TValue, bool>(ref value) ? (byte) 1 : (byte) 0);
+                    stream->Add(UnsafeUtility.As<TValue, bool>(ref value) ? (byte)1 : (byte)0);
                     return;
                 case TypeCode.Char:
                     stream->Add(UnsafeUtility.As<TValue, char>(ref value));
@@ -192,40 +192,40 @@ namespace Unity.Behavior.Serialization.Binary
             switch (Type.GetTypeCode(type))
             {
                 case TypeCode.SByte:
-                    stream->Add((sbyte) value);
+                    stream->Add((sbyte)value);
                     return;
                 case TypeCode.Int16:
-                    stream->Add((short) value);
+                    stream->Add((short)value);
                     return;
                 case TypeCode.Int32:
-                    stream->Add((int) value);
+                    stream->Add((int)value);
                     return;
                 case TypeCode.Int64:
-                    stream->Add((long) value);
+                    stream->Add((long)value);
                     return;
                 case TypeCode.Byte:
-                    stream->Add((byte) value);
+                    stream->Add((byte)value);
                     return;
                 case TypeCode.UInt16:
-                    stream->Add((ushort) value);
+                    stream->Add((ushort)value);
                     return;
                 case TypeCode.UInt32:
-                    stream->Add((uint) value);
+                    stream->Add((uint)value);
                     return;
                 case TypeCode.UInt64:
-                    stream->Add((ulong) value);
+                    stream->Add((ulong)value);
                     return;
                 case TypeCode.Single:
-                    stream->Add((float) value);
+                    stream->Add((float)value);
                     return;
                 case TypeCode.Double:
-                    stream->Add((double) value);
+                    stream->Add((double)value);
                     return;
                 case TypeCode.Boolean:
-                    stream->Add((bool) value ? (byte) 1 : (byte) 0);
+                    stream->Add((bool)value ? (byte)1 : (byte)0);
                     return;
                 case TypeCode.Char:
-                    stream->Add((char) value);
+                    stream->Add((char)value);
                     return;
                 case TypeCode.String:
                     stream->AddNBC(value as string);
@@ -290,7 +290,7 @@ namespace Unity.Behavior.Serialization.Binary
                     return;
                 case TypeCode.String:
                     stream->ReadNextNBC(out string stringValue);
-                    value = (TValue) (object) stringValue;
+                    value = (TValue)(object)stringValue;
                     return;
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -302,82 +302,82 @@ namespace Unity.Behavior.Serialization.Binary
             switch (Type.GetTypeCode(type))
             {
                 case TypeCode.SByte:
-                {
-                    var v = stream->ReadNext<sbyte>();
-                    TypeConversion.TryConvert(ref v, out value);
-                }
+                    {
+                        var v = stream->ReadNext<sbyte>();
+                        TypeConversion.TryConvert(ref v, out value);
+                    }
                     return;
                 case TypeCode.Int16:
-                {
-                    var v = stream->ReadNext<short>();
-                    TypeConversion.TryConvert(ref v, out value);
-                }
+                    {
+                        var v = stream->ReadNext<short>();
+                        TypeConversion.TryConvert(ref v, out value);
+                    }
                     return;
                 case TypeCode.Int32:
-                {
-                    var v = stream->ReadNext<int>();
-                    TypeConversion.TryConvert(ref v, out value);
-                }
+                    {
+                        var v = stream->ReadNext<int>();
+                        TypeConversion.TryConvert(ref v, out value);
+                    }
                     return;
                 case TypeCode.Int64:
-                {
-                    var v = stream->ReadNext<long>();
-                    TypeConversion.TryConvert(ref v, out value);
-                }
+                    {
+                        var v = stream->ReadNext<long>();
+                        TypeConversion.TryConvert(ref v, out value);
+                    }
                     return;
                 case TypeCode.Byte:
-                {
-                    var v = stream->ReadNext<byte>();
-                    TypeConversion.TryConvert(ref v, out value);
-                }
+                    {
+                        var v = stream->ReadNext<byte>();
+                        TypeConversion.TryConvert(ref v, out value);
+                    }
                     return;
                 case TypeCode.UInt16:
-                {
-                    var v = stream->ReadNext<ushort>();
-                    TypeConversion.TryConvert(ref v, out value);
-                }
+                    {
+                        var v = stream->ReadNext<ushort>();
+                        TypeConversion.TryConvert(ref v, out value);
+                    }
                     return;
                 case TypeCode.UInt32:
-                {
-                    var v = stream->ReadNext<uint>();
-                    TypeConversion.TryConvert(ref v, out value);
-                }
+                    {
+                        var v = stream->ReadNext<uint>();
+                        TypeConversion.TryConvert(ref v, out value);
+                    }
                     return;
                 case TypeCode.UInt64:
-                {
-                    var v = stream->ReadNext<ulong>();
-                    TypeConversion.TryConvert(ref v, out value);
-                }
+                    {
+                        var v = stream->ReadNext<ulong>();
+                        TypeConversion.TryConvert(ref v, out value);
+                    }
                     return;
                 case TypeCode.Single:
-                {
-                    var v = stream->ReadNext<float>();
-                    TypeConversion.TryConvert(ref v, out value);
-                }
+                    {
+                        var v = stream->ReadNext<float>();
+                        TypeConversion.TryConvert(ref v, out value);
+                    }
                     return;
                 case TypeCode.Double:
-                {
-                    var v = stream->ReadNext<double>();
-                    TypeConversion.TryConvert(ref v, out value);
-                }
+                    {
+                        var v = stream->ReadNext<double>();
+                        TypeConversion.TryConvert(ref v, out value);
+                    }
                     return;
                 case TypeCode.Boolean:
-                {
-                    var v = stream->ReadNext<byte>() == 1;
-                    TypeConversion.TryConvert(ref v, out value);
-                }
+                    {
+                        var v = stream->ReadNext<byte>() == 1;
+                        TypeConversion.TryConvert(ref v, out value);
+                    }
                     return;
                 case TypeCode.Char:
-                {
-                    var v = stream->ReadNext<char>();
-                    TypeConversion.TryConvert(ref v, out value);
-                }
+                    {
+                        var v = stream->ReadNext<char>();
+                        TypeConversion.TryConvert(ref v, out value);
+                    }
                     return;
                 case TypeCode.String:
-                {
-                    stream->ReadNextNBC(out var v);
-                    TypeConversion.TryConvert(ref v, out value);
-                }
+                    {
+                        stream->ReadNextNBC(out var v);
+                        TypeConversion.TryConvert(ref v, out value);
+                    }
                     return;
                 default:
                     throw new ArgumentOutOfRangeException();

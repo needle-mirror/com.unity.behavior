@@ -37,7 +37,7 @@ namespace Unity.Behavior.GraphFramework
             }
             else
             {
-                searchItem = new SearchView.Item(path, icon, onOptionSelected, description, enabled, onSelected: null, priority);   
+                searchItem = new SearchView.Item(path, icon, onOptionSelected, description, enabled, onSelected: null, priority);
             }
             if (string.IsNullOrEmpty(tab))
             {
@@ -63,7 +63,7 @@ namespace Unity.Behavior.GraphFramework
             {
                 searchItem = new SearchView.Item(path, icon: icon, onSelected: onSelected, description: description, enabled: enabled, priority: priority);
             }
-            
+
             if (string.IsNullOrEmpty(tab))
             {
                 m_Options.Add(searchItem);
@@ -101,7 +101,7 @@ namespace Unity.Behavior.GraphFramework
     {
         public delegate void OnOptionSelectedWithParams(Params @params);
 
-        public void Add(string path, OnOptionSelectedWithParams onOptionSelected, Texture2D icon=null, string description=null, bool enabled=true, int priority = 0)
+        public void Add(string path, OnOptionSelectedWithParams onOptionSelected, Texture2D icon = null, string description = null, bool enabled = true, int priority = 0)
         {
             Options.Add(new SearchView.Item(path, icon, onOptionSelected, description, enabled, onSelected: null, priority));
         }

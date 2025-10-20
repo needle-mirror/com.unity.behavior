@@ -6,7 +6,8 @@ namespace Unity.Behavior
 {
     internal class BehaviorNodeUI : NodeUI
     {
-        public override NodeModel Model {
+        public override NodeModel Model
+        {
             get => base.Model;
             set
             {
@@ -15,7 +16,7 @@ namespace Unity.Behavior
             }
         }
 
-        public BehaviorNodeUI(NodeModel nodeModel) : base(nodeModel) 
+        public BehaviorNodeUI(NodeModel nodeModel) : base(nodeModel)
         {
             styleSheets.Add(ResourceLoadAPI.Load<StyleSheet>("Packages/com.unity.behavior/Authoring/UI/AssetEditor/Assets/BehaviorNodeStylesheet.uss"));
             VisualElement badges = new VisualElement() { name = "Badges" };
@@ -46,7 +47,7 @@ namespace Unity.Behavior
                 NodeValueContainer.Add(reflectionElement);
             }
             reflectionElement.CreateFields(nodeInfo);
-            reflectionElement.Node = Model as BehaviorGraphNodeModel; // Sets the linkfield visuals 
+            reflectionElement.Node = Model as BehaviorGraphNodeModel; // Sets the linkfield visuals
 
             Title = nodeInfo.Name;
             if (reflectionElement.IsTwoLineElement)
@@ -63,7 +64,7 @@ namespace Unity.Behavior
         public override void Refresh(bool isDragging)
         {
             base.Refresh(isDragging);
-            
+
             var model = Model as BehaviorGraphNodeModel;
             foreach (BaseLinkField field in GetLinkFields())
             {
@@ -84,7 +85,7 @@ namespace Unity.Behavior
                         break;
                     }
                 }
-                
+
                 // Keep the linked label prefix updated on Blackboard asset group variables.
                 Util.UpdateLinkFieldBlackboardPrefixes(field);
             }

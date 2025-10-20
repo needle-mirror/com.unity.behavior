@@ -10,6 +10,7 @@ namespace Unity.Behavior
     {
         [SerializeField]
         private BehaviorBlackboardAuthoringAsset m_Asset;
+
         internal BehaviorBlackboardAuthoringAsset Asset
         {
             get => m_Asset;
@@ -23,7 +24,7 @@ namespace Unity.Behavior
                 titleContent.text = m_Asset.name + " (Blackboard)";
             }
         }
-        
+
         [SerializeField]
         private int m_DebugAgentId;
 
@@ -45,17 +46,22 @@ namespace Unity.Behavior
 
             Editor = new BlackboardEditor();
             m_AppUIPanel = WindowUtils.CreateAndGetAppUIPanel(Editor, rootVisualElement);
-            
+
             rootVisualElement.RegisterCallback<GeometryChangedEvent>(OnGeometryChanged);
-            
+
             if (m_Asset != null)
             {
+                if (!IsAssetValid(m_Asset))
+                {
+                    return;
+                }
+
                 Editor.Load(m_Asset);
                 m_PreviousVersionTimestamp = m_Asset.VersionTimestamp;
             }
 
             SetWindowTitleFromAsset();
-            
+
             EditorApplication.playModeStateChanged += OnEditorStateChange;
             Editor.OnSave += base.SaveChanges;
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
@@ -82,14 +88,14 @@ namespace Unity.Behavior
                 AutoSaveIfEnabledInEditor();
             }
         }
-        
+
         private void OnPlayModeStateChanged(PlayModeStateChange change)
         {
             if (m_AppUIPanel == null)
             {
                 return;
             }
-            
+
             m_AppUIPanel.forceUseTooltipSystem = (change == PlayModeStateChange.EnteredPlayMode);
         }
 
@@ -115,25 +121,36 @@ namespace Unity.Behavior
                 titleContent.text = m_Asset.name + " (Blackboard)";
             }
         }
-        
+
         internal void OnFocus()
         {
             // If the Blackboard asset is deleted outside of Unity, this will close the window when focused.
             if (!ReferenceEquals(m_Asset, null) && !EditorUtility.IsPersistent(m_Asset))
             {
                 Close();
+                return;
+            }
+
+            if (!IsAssetValid(m_Asset))
+            {
+                return;
             }
 
             SetWindowTitleFromAsset();
             UpdateBlackboardEditor();
         }
-        
+
         private void OnLostFocus()
         {
+            if (!IsAssetValid(m_Asset))
+            {
+                return;
+            }
+
             AutoSaveIfEnabledInEditor();
             UpdateBlackboardEditor();
         }
-        
+
         private void UpdateBlackboardEditor()
         {
             if (Editor == null)
@@ -142,18 +159,12 @@ namespace Unity.Behavior
             }
 
             // Reload the editor if any graph or blackboard assets which the graph is depending on has changed.
-            if ((Editor.GraphDependency.Item1 != null && Editor.HasGraphDependencyChanged()) 
+            if ((Editor.GraphDependency.Item1 != null && Editor.HasGraphDependencyChanged())
                 || (m_Asset != null && m_Asset.VersionTimestamp != m_PreviousVersionTimestamp))
             {
                 Editor.Load(Asset);
                 m_PreviousVersionTimestamp = m_Asset.VersionTimestamp;
             }
-        }
-        
-        [InitializeOnLoadMethod]
-        private static void RegisterWindowDelegates()
-        {
-            BlackboardWindowDelegate.openHandler = Open;
         }
 
         private void AutoSaveIfEnabledInEditor()
@@ -163,18 +174,28 @@ namespace Unity.Behavior
                 Editor.OnAssetSave();
             }
         }
+
         internal static void Open(BehaviorBlackboardAuthoringAsset asset)
         {
+            if (!IsAssetValid(asset))
+            {
+                ErrorMessages.LogSerializedReferenceWindowError(asset);
+                return;
+            }
+
             BlackboardWindow[] windows = Resources.FindObjectsOfTypeAll<BlackboardWindow>();
             foreach (BlackboardWindow window in windows)
             {
-                if (window.Asset != asset)
+                if (window.Asset == asset)
                 {
-                    continue;
+                    window.Show();
+                    window.Focus();
+                    return;
                 }
+            }
 
-                window.Show();
-                window.Focus();
+            if (!IsAssetValid(asset))
+            {
                 return;
             }
 
@@ -189,6 +210,39 @@ namespace Unity.Behavior
             newWindow.Asset = asset;
             newWindow.Show();
             newWindow.Focus();
+        }
+
+        [InitializeOnLoadMethod]
+        private static void RegisterWindowDelegates()
+        {
+            BlackboardWindowDelegate.openHandler = Open;
+            AssemblyReloadEvents.afterAssemblyReload += CheckAssetValidityAfterAssemblyReload;
+        }
+
+        private static void CheckAssetValidityAfterAssemblyReload()
+        {
+            BlackboardWindow[] windows = Resources.FindObjectsOfTypeAll<BlackboardWindow>();
+            foreach (BlackboardWindow window in windows)
+            {
+                var asset = window.Asset;
+                if (!IsAssetValid(asset))
+                {
+                    ErrorMessages.LogSerializedReferenceWindowError(asset);
+                    ErrorMessages.DisplayWindowClosingDialog(asset);
+                    window.Close();
+                }
+            }
+        }
+
+        // Checks if the asset has no missing serialize reference.
+        private static bool IsAssetValid(BehaviorBlackboardAuthoringAsset asset)
+        {
+            if (asset == null || asset.ContainsInvalidSerializedReferences())
+            {
+                return false;
+            }
+
+            return true;
         }
     }
 }

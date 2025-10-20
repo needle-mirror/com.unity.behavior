@@ -4,7 +4,7 @@ uid: assets
 
 # Work with behavior graph assets
 
-In Unity, behavior graphs use two distinct but related asset types: `BehaviorAuthoringGraph` and `BehaviorGraph`. 
+In Unity, behavior graphs use two distinct but related asset types: `BehaviorAuthoringGraph` and `BehaviorGraph`.
 
 The separation of these assets is intentional to optimize performance and maintain the necessary editor functionality.
 
@@ -27,7 +27,7 @@ The key features of the `BehaviorAuthoringGraph` asset type are as follows:
 
 ### `BehaviorGraph`
 
-The key features of the `BehaviorGraph` asset type are as follow: 
+The key features of the `BehaviorGraph` asset type are as follow:
 
 * The runtime representation of your behavior graph.
 * Optimized for performance by the removal of editor-specific data.
@@ -47,7 +47,7 @@ If a field requires `BehaviorGraph`, you can't directly assign `BehaviorAuthorin
 To assign a `BehaviorGraph` to a field, follow these steps:
 
 1. Locate the `BehaviorAuthoringGraph` in the **Project** window.
-1. Select the arrow next to the asset to expand it. 
+1. Select the arrow next to the asset to expand it.
 1. Find and assign the nested `BehaviorGraph` subasset.
 
 ## Best practices

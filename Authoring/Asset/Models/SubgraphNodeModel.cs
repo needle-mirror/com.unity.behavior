@@ -1,6 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Unity.Behavior.GraphFramework;
 using UnityEngine;
 
@@ -12,27 +13,17 @@ namespace Unity.Behavior
         internal const string k_SubgraphFieldName = "Subgraph";
         internal const string k_BlackboardFieldName = "Blackboard";
 
-        [SerializeField] private List<SerializableGUID> m_OveriddenblackboardVariableGuids = new (); 
-        
+        [SerializeField] private List<SerializableGUID> m_OveriddenblackboardVariableGuids = new();
+        [SerializeField] private SerializableGUID m_SubgraphAssetId; // To remove in future version in favor of hard ref.
+        [SerializeField] private BehaviorAuthoringGraph m_SubgraphAuthoringAsset;
+        [SerializeField] private bool m_IsDynamic;
+
         public override bool IsSequenceable => true;
 
-        [SerializeField] private SerializableGUID m_SubgraphAssetId;
+        public bool IsDynamic => m_IsDynamic;
 
-        public bool IsDynamic
-        {
-            get
-            {
-                UpdateIsDynamic();
-                return m_IsDynamic;
-            }
-            private set => m_IsDynamic = value;
-        }
-
-        [SerializeField]
-        private bool m_IsDynamic;
-        
         public BehaviorGraph RuntimeSubgraph => GetLinkedSubgraph();
-        
+
         public bool ShowStaticSubgraphRepresentation
         {
             get => m_ShowStaticSubgraphRepresentation;
@@ -53,28 +44,28 @@ namespace Unity.Behavior
             return null;
         }
 
-        public BehaviorAuthoringGraph SubgraphAuthoringAsset => GetAsset();
-        
+        public BehaviorAuthoringGraph SubgraphAuthoringAsset => GetAuthoringAssetFromRuntimeGraph();
+
         public BehaviorBlackboardAuthoringAsset RequiredBlackboard => GetBlackboardAsset();
 
         internal FieldModel SubgraphField => Fields.FirstOrDefault(field => field.FieldName == k_SubgraphFieldName);
         internal FieldModel BlackboardAssetField => Fields.FirstOrDefault(field => field.FieldName == k_BlackboardFieldName);
 
         [SerializeReference]
-        internal List<FieldModel> m_StoryFields = new ();
+        internal List<FieldModel> m_StoryFields = new();
 
         public SubgraphNodeModel(NodeInfo nodeInfo) : base(nodeInfo) { }
-        
+
         protected SubgraphNodeModel(SubgraphNodeModel nodeModelOriginal, BehaviorAuthoringGraph asset) : base(nodeModelOriginal, asset)
         {
             ShowStaticSubgraphRepresentation = nodeModelOriginal.ShowStaticSubgraphRepresentation;
-            
+
             GetOrCreateField(k_SubgraphFieldName, typeof(BehaviorGraph));
             if (nodeModelOriginal.RuntimeSubgraph != null)
             {
                 SubgraphField.LinkedVariable = nodeModelOriginal.SubgraphField.LinkedVariable;
             }
-            
+
             GetOrCreateField(k_BlackboardFieldName, typeof(BehaviorBlackboardAuthoringAsset));
             if (nodeModelOriginal.RequiredBlackboard != null)
             {
@@ -89,18 +80,18 @@ namespace Unity.Behavior
                 m_OveriddenblackboardVariableGuids.Remove(variableGuid);
                 return;
             }
-            
+
             if (!m_OveriddenblackboardVariableGuids.Contains(variableGuid))
             {
                 m_OveriddenblackboardVariableGuids.Add(variableGuid);
             }
         }
-        
+
         public bool IsVariableOverridden(SerializableGUID variableGuid)
         {
             return m_OveriddenblackboardVariableGuids.Contains(variableGuid);
         }
-        
+
         public void ClearOverriddenVariables()
         {
             m_OveriddenblackboardVariableGuids.Clear();
@@ -113,8 +104,8 @@ namespace Unity.Behavior
             GetOrCreateField(k_BlackboardFieldName, typeof(BehaviorBlackboardAuthoringAsset));
             UpdateIsDynamic();
         }
-        
-        private BehaviorAuthoringGraph GetAsset()
+
+        private BehaviorAuthoringGraph GetAuthoringAssetFromRuntimeGraph()
         {
             if (SubgraphField.LinkedVariable == null)
             {
@@ -122,6 +113,12 @@ namespace Unity.Behavior
             }
 
 #if UNITY_EDITOR
+            // Virtual instance are not valid candidate for authoring model.
+            if (!UnityEditor.EditorUtility.IsPersistent(RuntimeSubgraph))
+            {
+                return null;
+            }
+
             BehaviorAuthoringGraph asset = BehaviorGraphAssetRegistry.TryGetAssetFromGraphPath(RuntimeSubgraph);
 #else
             BehaviorAuthoringGraph asset = null;
@@ -129,7 +126,7 @@ namespace Unity.Behavior
 
             return asset;
         }
-        
+
         private BehaviorBlackboardAuthoringAsset GetBlackboardAsset()
         {
             if (BlackboardAssetField?.LinkedVariable != null)
@@ -138,11 +135,6 @@ namespace Unity.Behavior
             }
 
             return null;
-        }
-
-        private BehaviorAuthoringGraph GetAssetFromID(SerializableGUID assetID)
-        {
-            return BehaviorGraphAssetRegistry.GlobalRegistry.Assets.FirstOrDefault(asset => asset.AssetID == assetID);
         }
 
         protected override void EnsureFieldValuesAreUpToDate()
@@ -156,12 +148,12 @@ namespace Unity.Behavior
             {
                 GetOrCreateField(k_BlackboardFieldName, typeof(BehaviorBlackboardAuthoringAsset));
             }
-            
+
             if (SubgraphField?.LinkedVariable == null)
             {
                 // No subgraph is assigned, so remove variable fields and set the node back to static.
                 ClearFields();
-                IsDynamic = false;
+                m_IsDynamic = false;
                 return;
             }
 
@@ -196,10 +188,25 @@ namespace Unity.Behavior
 
         private void EnsureVariableFieldsAreUpToDate()
         {
+            HashSet<FieldModel> deprecatedFields = null;
             if (IsDynamic)
             {
                 if (RequiredBlackboard != null)
                 {
+                    foreach (var fieldModel in m_FieldValues)
+                    {
+                        if (fieldModel.FieldName == k_SubgraphFieldName || fieldModel.FieldName == k_BlackboardFieldName)
+                        {
+                            continue;
+                        }
+
+                        if (IsFieldModelOutdated(fieldModel, RequiredBlackboard))
+                        {
+                            deprecatedFields ??= new HashSet<FieldModel>();
+                            deprecatedFields.Add(fieldModel);
+                        }
+                    }
+
                     foreach (VariableModel variable in RequiredBlackboard.Variables)
                     {
                         RemoveFieldIfShared(variable);
@@ -208,6 +215,21 @@ namespace Unity.Behavior
             }
             else if (SubgraphAuthoringAsset != null)
             {
+                foreach (var fieldModel in m_FieldValues)
+                {
+                    if (fieldModel.FieldName == k_SubgraphFieldName || fieldModel.FieldName == k_BlackboardFieldName)
+                    {
+                        continue;
+                    }
+
+                    if (IsFieldModelOutdated(fieldModel, SubgraphAuthoringAsset.Blackboard)
+                        && SubgraphAuthoringAsset.m_Blackboards.All(blackboard =>
+                            IsFieldModelOutdated(fieldModel, blackboard)))
+                    {
+                        deprecatedFields ??= new HashSet<FieldModel>();
+                        deprecatedFields.Add(fieldModel);
+                    }
+                }
                 foreach (VariableModel variable in SubgraphAuthoringAsset.Blackboard.Variables)
                 {
                     RemoveFieldIfShared(variable);
@@ -220,6 +242,21 @@ namespace Unity.Behavior
                         RemoveFieldIfShared(variable);
                     }
                 }
+            }
+
+            if (deprecatedFields != null)
+            {
+                foreach (var deprecatedField in deprecatedFields)
+                {
+                    m_FieldValues.Remove(deprecatedField);
+                }
+                Asset?.SetAssetDirty(false);
+            }
+
+            bool IsFieldModelOutdated(FieldModel fieldModel, BlackboardAsset asset)
+            {
+                return asset.Variables.Find(model =>
+                            model.Name == fieldModel.FieldName && fieldModel.Type.Equals(model.Type)) == null;
             }
         }
 
@@ -279,7 +316,7 @@ namespace Unity.Behavior
                 }
             }
 
-            UpdateIsDynamic();
+            UpdateNodeType();
         }
 
 #if UNITY_EDITOR
@@ -306,46 +343,72 @@ namespace Unity.Behavior
 
         public void ValidateCachedRuntimeGraph()
         {
-            if (SubgraphAuthoringAsset == null)
+#if UNITY_EDITOR
+            if (m_SubgraphAssetId != default)
+            {
+                string path = UnityEditor.AssetDatabase.GUIDToAssetPath(m_SubgraphAssetId.ToString());
+                if (!string.IsNullOrEmpty(path))
+                {
+                    BehaviorAuthoringGraph result = UnityEditor.AssetDatabase.LoadAssetAtPath<BehaviorAuthoringGraph>(path);
+                    if (result != null)
+                    {
+                        m_SubgraphAuthoringAsset = result;
+                        m_SubgraphAssetId = default;
+                        Asset?.SetAssetDirty(false);
+                    }
+                }
+                else
+                {
+                    // This typically occurs when a subgraph with the corresponding ID is missing from the project during
+                    // graph import. Log a warning for the user to verify that all RunSubgraph nodes are properly configured.
+                    Debug.LogWarning(
+                        $"Failed to locate Behavior subgraph with ID '{m_SubgraphAssetId}'. " +
+                        $"Please verify the RunSubgraph node(s) integrity in this asset.\n", this.Asset);
+                }
+            }
+#endif
+
+            // If no linked value (reset node)
+            if (SubgraphField.LinkedVariable == null)
             {
                 m_ShowStaticSubgraphRepresentation = false;
                 m_IsDynamic = false;
                 return;
             }
+            else
+            {
+                UpdateIsDynamic();
+            }
 
-            if (SubgraphAuthoringAsset == null && m_SubgraphAssetId != new SerializableGUID() 
-                && SubgraphField.LinkedVariable != null)
+            // For RunSubgraph (Static):
+            // If linked runtime graph isn't linking to a valid authoring graph anymore,
+            // retrieve the up to date runtime graph.
+            if (GetAuthoringAssetFromRuntimeGraph() == null && m_SubgraphAuthoringAsset != null)
             {
 #if UNITY_EDITOR
                 // At this stage, the target subgraph was deleted or moved. We try to resolve the missing dependency.
-                string path = UnityEditor.AssetDatabase.GUIDToAssetPath(m_SubgraphAssetId.ToString());
+                string path = UnityEditor.AssetDatabase.GUIDToAssetPath(m_SubgraphAuthoringAsset.ToString());
 
-                if (!string.IsNullOrEmpty(path))
-                {
-                    BehaviorAuthoringGraph result = UnityEditor.AssetDatabase.LoadAssetAtPath<BehaviorAuthoringGraph>(path);
-                    // Retrieve the runtime graph, but in case it was deleted, rebuild it.
-                    var runtimeGraph = result.BuildRuntimeGraph(forceRebuild: false); 
-                    SubgraphField.LinkedVariable.ObjectValue = runtimeGraph;
+                // Retrieve the runtime graph, but in case it was deleted, rebuild it.
+                SubgraphField.LinkedVariable.ObjectValue = m_SubgraphAuthoringAsset.BuildRuntimeGraph(forceRebuild: false);
 
-                    // In case we the target subgraph was rebuild, save now to force rebuild the parent graph.
-                    UnityEditor.AssetDatabase.SaveAssetIfDirty(result); 
-                }
+                // In case we the target subgraph was rebuild, save now to force rebuild the parent graph.
+                UnityEditor.AssetDatabase.SaveAssetIfDirty(m_SubgraphAuthoringAsset);
 #endif
             }
         }
+
         public void CacheRuntimeGraphId()
         {
             BehaviorAuthoringGraph cachedGraph = SubgraphAuthoringAsset;
             ClearOverriddenVariables();
             if (cachedGraph == null)
             {
-                m_SubgraphAssetId = new SerializableGUID();
+                m_SubgraphAuthoringAsset = default;
             }
             else
             {
-#if UNITY_EDITOR
-                m_SubgraphAssetId = new SerializableGUID(UnityEditor.AssetDatabase.AssetPathToGUID(UnityEditor.AssetDatabase.GetAssetPath(cachedGraph)));
-#endif
+                m_SubgraphAuthoringAsset = cachedGraph;
             }
 
 #if UNITY_EDITOR
@@ -361,22 +424,55 @@ namespace Unity.Behavior
             if (SubgraphField.LinkedVariable == null)
             {
                 // If nothing is linked to the field, the node is static by default.
-                IsDynamic = false;
+                m_IsDynamic = false;
+                return;
             }
-            
-            bool assetIsBlackboardVariable = false;
-            if (Asset != null)
+
+            // Workaround for legacy graph edge-cases.
+            if (Asset == null)
             {
-                foreach (VariableModel variable in Asset.Blackboard.Variables)
+                return;
+            }
+
+            // Ensure that node is linked to a BBV for Dynamic to be valid.
+            bool isExpectedDynamic = false;
+            foreach (VariableModel variable in Asset.Blackboard.Variables)
+            {
+                if (variable == SubgraphField.LinkedVariable)
                 {
-                    if (variable == SubgraphField.LinkedVariable)
-                    {
-                        assetIsBlackboardVariable = true;
-                    }
+                    isExpectedDynamic = true;
+                    break;
                 }
             }
 
-            IsDynamic = assetIsBlackboardVariable;
+            if (m_IsDynamic != isExpectedDynamic)
+            {
+                // Mismatched detected - need rebuild.
+                m_IsDynamic = isExpectedDynamic;
+                Asset.SetAssetDirty(true);
+            }
+        }
+
+        // This would usually be handled in SubgraphNodeTransformer.
+        // However, because assets can be edited from outside the editor (e.g. source control),
+        // the node model also needs a way to resolve itself when the asset ValidateAsset is called.
+        private void UpdateNodeType()
+        {
+            var expectedType = IsDynamic ? typeof(RunSubgraphDynamic) : typeof(RunSubgraph);
+
+            if (NodeType != null && NodeType.Type == expectedType)
+            {
+                return;
+            }
+
+            NodeType = expectedType;
+            NodeDescriptionAttribute attribute = expectedType.GetCustomAttribute<NodeDescriptionAttribute>();
+            if (attribute != null)
+            {
+                NodeTypeID = attribute.GUID;
+            }
+
+            Asset.SetAssetDirty(true);
         }
     }
 }

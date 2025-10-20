@@ -17,5 +17,5 @@
             <appui:TextField name="GraphDescription-Field" placeholder="Description of the graph"/>
         </ui:VisualElement>
     </ui:VisualElement>
-    
+
 </ui:UXML>

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.AppUI.UI;
@@ -32,7 +32,7 @@ namespace UnityEngine.UIExtras
                 set;
             }
             public bool Enabled { get; }
-            
+
             public int Priority { get; }
 
             public Item(string path, Texture2D icon = null, object data = null, string description = null, bool enabled = true, Action onSelected = null, int priority = 0)
@@ -74,13 +74,13 @@ namespace UnityEngine.UIExtras
             public string Name { get; set; }
             public List<Item> Items { get; set; }
         }
-        private readonly List<TabInfo> m_Tabs = new List<TabInfo>();        
+        private readonly List<TabInfo> m_Tabs = new List<TabInfo>();
         private List<Item> m_Items;
         private TreeNode<Item> m_RootNode;
         private TreeNode<Item> m_CurrentNode;
         private TreeNode<Item> m_SearchNode;
-        private Stack<TreeNode<Item>> m_NavigationStack = new ();
-        
+        private Stack<TreeNode<Item>> m_NavigationStack = new();
+
         public List<Item> Items
         {
             get => m_Items;
@@ -98,7 +98,7 @@ namespace UnityEngine.UIExtras
                 }
                 SortItems(m_RootNode);
                 m_NavigationStack.Clear();
-                SetCurrentSelectionNode(m_RootNode);                
+                SetCurrentSelectionNode(m_RootNode);
             }
         }
 
@@ -120,7 +120,7 @@ namespace UnityEngine.UIExtras
             }
         }
 
-        public bool AutoSortItems {  get; set; }
+        public bool AutoSortItems { get; set; }
         private bool IsCurrentNodeSearchNode => m_SearchNode != null && m_CurrentNode == m_SearchNode;
 
         private void SortItems(TreeNode<Item> node)
@@ -132,14 +132,14 @@ namespace UnityEngine.UIExtras
 
             node.Sort((TreeNode<Item> a, TreeNode<Item> b) =>
             {
-                // First, check if the items can be sorted by given priority value. 
+                // First, check if the items can be sorted by given priority value.
                 int priorityComparison = b.Value.Priority.CompareTo(a.Value.Priority);
                 if (priorityComparison != 0 || !AutoSortItems)
                 {
                     return priorityComparison;
                 }
 
-                // Try sorting by item subcategory amount. 
+                // Try sorting by item subcategory amount.
                 if (a.ChildCount != 0 && b.ChildCount == 0)
                 {
                     return -1;
@@ -148,7 +148,7 @@ namespace UnityEngine.UIExtras
                 {
                     return 1;
                 }
-                
+
                 // Try sorting by item name.
                 return a.Value.Name.CompareTo(b.Value.Name);
             });
@@ -173,7 +173,7 @@ namespace UnityEngine.UIExtras
                 m_ReturnButton.Q<Label>().text = m_CurrentNode == null ? value : m_CurrentNode.Value.Name;
             }
         }
-        
+
         public bool ShowIcons
         {
             get => !ClassListContains("SearchView_NoIcons");
@@ -182,22 +182,22 @@ namespace UnityEngine.UIExtras
                 if (value)
                 {
                     RemoveFromClassList("SearchView_NoIcons");
-                } 
+                }
                 else if (!ClassListContains("SearchView_NoIcons"))
                 {
                     AddToClassList("SearchView_NoIcons");
                 }
             }
         }
-        
+
         public event Action<Item> OnSelection;
 
-        public SelectionType SelectionType 
-        { 
-            get => m_ListView.selectionType; 
-            set => m_ListView.selectionType = value; 
+        public SelectionType SelectionType
+        {
+            get => m_ListView.selectionType;
+            set => m_ListView.selectionType = value;
         }
-        
+
         public SearchView()
         {
             AddToClassList("SearchView");
@@ -230,7 +230,7 @@ namespace UnityEngine.UIExtras
                 if (IsCurrentNodeSearchNode)
                 {
                     string path = m_CurrentNode[index].Value.Path;
-                    
+
                     searchViewItem.SecondaryLabelTooltip = path;
 
                     string unformattedName = path.Split('/').Last();
@@ -239,7 +239,7 @@ namespace UnityEngine.UIExtras
                     const string kOtherPathString = "Other";
                     const string kMonoBehaviourPathString = "Other/MonoBehaviours";
                     pathWithoutName = pathWithoutName.Replace(kMonoBehaviourPathString, "").Replace(kOtherPathString, "");
-                    
+
                     if (string.IsNullOrEmpty(pathWithoutName))
                     {
                         searchViewItem.SecondaryLabel = "";
@@ -260,7 +260,7 @@ namespace UnityEngine.UIExtras
 
                 searchViewItem.UnregisterCallback<PointerUpEvent>(HandlePointerSelection);
             };
-            
+
             m_ListView.RegisterCallback<FocusEvent>(evt =>
             {
                 if (evt.currentTarget is not ListView lv)
@@ -273,7 +273,7 @@ namespace UnityEngine.UIExtras
                     lv.SetSelection(0);
                 }
             });
-            
+
             RegisterCallback<PointerDownEvent>(evt => evt.StopImmediatePropagation());
 
             m_ActionGroup.style.display = DisplayStyle.None;
@@ -305,7 +305,7 @@ namespace UnityEngine.UIExtras
 
 #if UNITY_2022_2_OR_NEWER
             m_ListView.itemsChosen += ItemsChosenHandler;
-#else 
+#else
             m_ListView.onItemsChosen += ItemsChosenHandler;
 #endif
 
@@ -360,7 +360,7 @@ namespace UnityEngine.UIExtras
                 case KeyCode.Return:
                     if (selectedItem != null)
                     {
-                        
+
                         evt.StopImmediatePropagation();
                         OnItemChosen(selectedItem);
                     }
@@ -386,7 +386,8 @@ namespace UnityEngine.UIExtras
             if (string.IsNullOrEmpty(m_SearchField.value))
             {
                 m_SearchField.placeholder = "Filter";
-            } else
+            }
+            else
             {
                 m_SearchField.placeholder = "";
             }
@@ -399,7 +400,7 @@ namespace UnityEngine.UIExtras
                 {
                     OnNavigationReturn();
                 }
-                
+
                 return;
             }
 
@@ -407,23 +408,23 @@ namespace UnityEngine.UIExtras
             {
                 m_NavigationStack.Push(m_CurrentNode);
             }
-            
+
             var searchResultNodes = Filter(changeEvent.newValue);
-            
+
             m_SearchNode = new TreeNode<Item>(new Item("Search"));
             m_SearchNode.m_Children = searchResultNodes;
             m_SearchNode.Parent = m_CurrentNode;
             SetCurrentSelectionNode(m_SearchNode);
         }
-        
+
         private List<TreeNode<Item>> Filter(string filter)
         {
             List<(TreeNode<Item>, List<SearchUtil.Match>)> searchResults = new List<(TreeNode<Item>, List<SearchUtil.Match>)>();
-            
+
             List<string> searchWords = filter.Split(' ').ToList();
             searchWords.RemoveAll(x => string.IsNullOrEmpty(x));
-            
-            m_RootNode?.Traverse(delegate(TreeNode<Item> itemNode)
+
+            m_RootNode?.Traverse(delegate (TreeNode<Item> itemNode)
             {
                 Item item = itemNode.Value;
                 itemNode.Value = item;
@@ -436,7 +437,7 @@ namespace UnityEngine.UIExtras
                 {
                     return;
                 }
-                
+
                 List<SearchUtil.Match> matchOffsets = SearchUtil.DoesSourceContainSearchWholeWords(filter, itemNode.Value.Name);
 
                 if (matchOffsets?.Count == searchWords.Count)
@@ -444,13 +445,13 @@ namespace UnityEngine.UIExtras
                     item.FormattedName = SearchUtil.FormatSearchResult(itemNode.Value.Name, matchOffsets);
                     searchResults.Add((itemNode, matchOffsets));
                 }
-                
+
                 itemNode.Value = item;
             });
 
             searchResults.Sort((a, b) =>
             {
-                // First, check if the items can be sorted by given priority value. 
+                // First, check if the items can be sorted by given priority value.
                 int priorityComparison = b.Item1.Value.Priority.CompareTo(a.Item1.Value.Priority);
                 if (priorityComparison != 0 || !AutoSortItems)
                 {
@@ -463,7 +464,7 @@ namespace UnityEngine.UIExtras
                 }
 
                 int indexCompare = 0;
-                
+
                 // Sort by match offsets and then parameter index.
                 for (int matchIdx = 0; matchIdx < Math.Min(a.Item2.Count, b.Item2.Count); ++matchIdx)
                 {
@@ -474,27 +475,27 @@ namespace UnityEngine.UIExtras
                         indexCompare = offsetCompare;
                         break;
                     }
-                    
+
                     indexCompare = a.Item2[matchIdx].Index.CompareTo(b.Item2[matchIdx].Index);
 
                     if (indexCompare != 0)
                         break;
                 }
-                
+
                 if (indexCompare != 0)
                     return indexCompare;
-                
+
                 // Try sorting by item name.
                 return a.Item1.Value.Name.CompareTo(b.Item1.Value.Name);
             });
-            
+
             List<TreeNode<Item>> searchResultNodes = new List<TreeNode<Item>>();
 
             foreach (var result in searchResults)
             {
                 searchResultNodes.Add(result.Item1);
             }
-            
+
             return searchResultNodes;
         }
 
@@ -521,7 +522,7 @@ namespace UnityEngine.UIExtras
             {
                 ResetFormattedNames();
             }
-            
+
             m_CurrentNode = node;
             m_ListView.itemsSource = m_CurrentNode.Children;
             m_ListView.Rebuild();
@@ -537,7 +538,7 @@ namespace UnityEngine.UIExtras
                 m_ReturnButton.SetEnabled(true);
                 m_ReturnIcon.style.visibility = Visibility.Visible;
             }
-            
+
             EnableInClassList("SearchView_ShowSecondaryLabel", IsCurrentNodeSearchNode);
         }
 
@@ -572,7 +573,7 @@ namespace UnityEngine.UIExtras
             {
                 return;
             }
-            
+
             string[] pathParts = item.Path.Split('/');
             TreeNode<Item> treeNodeParent = m_RootNode;
             string currentPath = string.Empty;
@@ -621,7 +622,7 @@ namespace UnityEngine.UIExtras
 
         private void ResetFormattedNames()
         {
-            m_RootNode?.Traverse(delegate(TreeNode<Item> itemNode)
+            m_RootNode?.Traverse(delegate (TreeNode<Item> itemNode)
             {
                 ResetFormattedName(itemNode);
             });

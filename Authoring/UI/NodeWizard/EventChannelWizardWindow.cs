@@ -13,7 +13,7 @@ namespace Unity.Behavior
         {
             EventChannelWizard wizard = new EventChannelWizard();
             Modal modal = WizardUtils.CreateAndShowStepperModal("New Event Channel", targetView, wizard);
-   
+
             wizard.SetVariableSuggestions(variableSuggestions);
             return wizard;
         }

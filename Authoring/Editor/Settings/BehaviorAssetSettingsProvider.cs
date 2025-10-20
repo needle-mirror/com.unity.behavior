@@ -1,4 +1,4 @@
-﻿#if UNITY_EDITOR
+#if UNITY_EDITOR
 using Unity.Behavior.GraphFramework;
 using UnityEditor;
 using UnityEngine;
@@ -7,8 +7,8 @@ namespace Unity.Behavior
 {
     sealed class BehaviorAssetSettingsProvider : SettingsProvider
     {
-        private const string k_PrefsKeyGraphOwnerName = "DefaultGraphOwnerName"; 
-        
+        private const string k_PrefsKeyGraphOwnerName = "DefaultGraphOwnerName";
+
         public BehaviorAssetSettingsProvider() : base("Project/Behavior/Asset Settings", SettingsScope.Project) { }
 
         public override void OnGUI(string search)
@@ -26,11 +26,14 @@ namespace Unity.Behavior
                 GraphPrefsUtility.SetString(k_PrefsKeyGraphOwnerName, graphOwnerName, true);
             }
 
-
-            //EditorGUILayout.PropertyField(behaviorProjectSettingsSO.FindProperty("m_Namespace"));
+            EditorGUILayout.PropertyField(behaviorProjectSettingsSO.FindProperty("m_AutoOpenNodeScriptsInExternalEditor"), new GUIContent("Auto-Open Node Scripts in External Editor"));
 
             EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Debug", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(behaviorProjectSettingsSO.FindProperty("m_AllowDisabledAgentDebugging"));
 
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Scripts Generation", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(behaviorProjectSettingsSO.FindProperty("m_AutoSaveLastSaveLocation"));
             EditorGUILayout.PropertyField(behaviorProjectSettingsSO.FindProperty("m_UseSeparateSaveFolders"));
             EditorGUI.BeginDisabledGroup(settings.AutoSaveLastSaveLocation);
@@ -48,9 +51,16 @@ namespace Unity.Behavior
             EditorGUILayout.PropertyField(behaviorProjectSettingsSO.FindProperty("m_SaveFolderEventChannels"));
             EditorGUI.EndDisabledGroup();
             EditorGUI.EndDisabledGroup();
-            
-            EditorGUILayout.PropertyField(behaviorProjectSettingsSO.FindProperty("m_AutoOpenNodeScriptsInExternalEditor"), new GUIContent("Auto-Open Node Scripts in External Editor"));
-            EditorGUILayout.PropertyField(behaviorProjectSettingsSO.FindProperty("m_AllowDisabledAgentDebugging"));
+
+            EditorGUILayout.Space();
+
+            EditorGUILayout.LabelField("Build Settings", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(
+                behaviorProjectSettingsSO.FindProperty("m_IgnoreMissingManagedReferencesInBuild"),
+                new GUIContent("Ignore Missing Managed References in Build",
+                    "When enabled, missing managed reference types will only log warnings instead of preventing the build. " +
+                    "Use this if you know the affected assets won't be used at runtime.")
+            );
 
             behaviorProjectSettingsSO.ApplyModifiedProperties();
         }

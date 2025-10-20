@@ -15,7 +15,7 @@ namespace Unity.Behavior
     internal class ActionNodeWizard : BaseNodeWizard
     {
         NodeInfo m_Info;
-        
+
         private TextArea m_GenAiDescriptionField;
         private Button m_GenerateWithAiButton;
         private Button m_CreateWithAiButton;
@@ -27,9 +27,11 @@ namespace Unity.Behavior
             NameField.PlaceholderText = "New Action";
             AddToRequiredFields(StoryField.Field);
         }
-        
+
         internal void SetupGenAiButton()
         {
+#if ENABLE_MUSE_BEHAVIOR
+
             m_GenerateWithAiButton = new Button
             {
                 title = "Use Generative AI"
@@ -43,8 +45,10 @@ namespace Unity.Behavior
                 m_GenerateWithAiButton.tooltip = MuseUtility.k_UserCallToAction;
             }
             m_GenerateWithAiButton.SetEnabled(MuseBehaviorUtilities.IsSessionUsable);
+
             Stepper.NextButton.clicked += ToggleGenAIButtonVisibility;
             Stepper.BackButton.clicked += ToggleGenAIButtonVisibility;
+#endif
         }
 
         private void OnSessionStatusChanged(bool isUsable)
@@ -67,7 +71,7 @@ namespace Unity.Behavior
             {
                 m_GenerateWithAiButton.Hide();
             }
-            
+
             // Remove Generative AI element from steps when going back from it, and display creation option buttons again.
             if (Stepper.ContainsStep(m_GenAiRegion))
             {
@@ -86,7 +90,7 @@ namespace Unity.Behavior
             var genAiLayout = ResourceLoadAPI.Load<VisualTreeAsset>("Packages/com.unity.behavior/Authoring/GenerativeAI/Assets/GenAiWizardLayout.uxml").CloneTree();
             genAiLayout.styleSheets.Add(ResourceLoadAPI.Load<StyleSheet>("Packages/com.unity.behavior/Authoring/UI/NodeWizard/Assets/BaseNodeWizardStyles.uss"));
             fieldRegion.Add(genAiLayout);
-            
+
             m_GenAiDescriptionField = genAiLayout.Q<TextArea>("GenAiDescriptionField");
             m_GenAiDescriptionField.RegisterValueChangingCallback(_ => Validate());
 
@@ -103,6 +107,7 @@ namespace Unity.Behavior
 
         private void DisplayGenerateWithAILayout()
         {
+#if ENABLE_MUSE_BEHAVIOR
             if (!MuseBehaviorUtilities.IsSessionUsable)
             {
                 MuseBehaviorUtilities.OpenMuseDropdown();
@@ -112,6 +117,7 @@ namespace Unity.Behavior
             Stepper.OnNextButtonClicked();
             Stepper.ConfirmButton.Hide();
             m_GenerateWithAiButton.Hide();
+#endif
         }
 
         protected override void SetHelpTexts()
@@ -139,8 +145,10 @@ namespace Unity.Behavior
             // Validate Generative AI buttons if the Generative AI step is used.
             if (m_GenAiRegion != null)
             {
+#if ENABLE_MUSE_BEHAVIOR
                 MuseBehaviorUtilities.RegisterSessionStatusChangedCallback(_ => EnableGenerateWithAiButton());
                 m_GenerateWithAiButton?.SetEnabled(IsAllowedToCreate());
+#endif
                 m_CreateWithAiButton.SetEnabled(IsAllowedToCreate() && !string.IsNullOrEmpty(m_GenAiDescriptionField?.value));
             }
         }
@@ -157,7 +165,7 @@ namespace Unity.Behavior
             Stepper.NextButton.clicked += () => { NameField.Value ??= NameField.PlaceholderText; };
             Stepper.AddStep(this.Q<VisualElement>("NameCategoryView"), OnShowNameCategoryStep);
             Stepper.AddStep(this.Q<VisualElement>("StoryView"), OnShowStoryStep, OnHideStoryStep);
-            
+
             CreateButton = Stepper.ConfirmButton;
             CreateButton.SetEnabled(false);
             CreateButton.clicked += OnCreateClicked;
@@ -219,17 +227,17 @@ namespace Unity.Behavior
                 {
                     output = output.Insert(0,"using Action = Unity.Behavior.Action;\n");
                 }
-                
+
                 string date = System.DateTime.Now.ToString("yyyy-MM-dd");
                 string legalHeader = $"// {date} AI-Tag\n" +
                                   "// This was created with assistance from Muse, a Unity Artificial Intelligence product.\n";
                 output = output.Insert(0,legalHeader);
 
-                // A problem started popping up when we switch backend LLM which is causing markdown tags to appear 
+                // A problem started popping up when we switch backend LLM which is causing markdown tags to appear
                 // when they should not. This line sanitizes the output to remove them. This should stop some failures
                 // when the AI does not generate the expected output
                 output = SanitizeOutput(output);
-                
+
                 using (StreamWriter outfile = new StreamWriter(path))
                 {
                     outfile.Write(output);
@@ -255,7 +263,7 @@ namespace Unity.Behavior
         string SanitizeOutput(string output)
         {
             StringBuilder sb = new();
-            
+
             using (StringReader reader = new(output))
             {
                 string line;

@@ -38,7 +38,7 @@ namespace Unity.Behavior.GraphFramework
             MousePos = evt.position;
             NodeUI clickedNode = Target.NodeAt(MousePos);
             Edge clickedEdge = Target.EdgeAt(MousePos);
-            
+
             ContextMenu menu = new ContextMenu(Target);
             if (clickedNode == null && clickedEdge == null)
             {
@@ -60,7 +60,7 @@ namespace Unity.Behavior.GraphFramework
 
         private void OnDelete()
         {
-            if (ClickedElement == null || Target.ViewState.Selected.Contains(ClickedElement)) 
+            if (ClickedElement == null || Target.ViewState.Selected.Contains(ClickedElement))
             {
                 DeleteSelected();
             }
@@ -72,7 +72,7 @@ namespace Unity.Behavior.GraphFramework
                     NodeUI end = edge.End.GetFirstAncestorOfType<NodeUI>();
                     PortModel startPort = start.Model.FindPortModelByName(edge.Start.name);
                     PortModel endPort = end.Model.FindPortModelByName(edge.End.name);
-                    
+
                     Target.Dispatcher.DispatchImmediate(new DeleteEdgeCommand(startPort, endPort, false));
                 }
                 else if (ClickedElement is NodeUI node && node.Model != null)
@@ -95,18 +95,18 @@ namespace Unity.Behavior.GraphFramework
                 if (element is Edge edge && edge.IsDeletable)
                 {
                     edgesToDelete.Add(new Tuple<PortModel, PortModel>(edge.Start.PortModel, edge.End.PortModel));
-                } 
+                }
                 else if (element is NodeUI nodeUI && nodeUI.IsDeletable)
                 {
                     nodesToDelete.Add(nodeUI.Model);
-                } 
+                }
                 else
                 {
                     notDeleted.Add(element);
                 }
             }
             Target.ViewState.SetSelected(notDeleted);
-            Target.Dispatcher.Dispatch(new DeleteNodesAndEdgesCommand(edgesToDelete, nodesToDelete, markUndo:true));
+            Target.Dispatcher.Dispatch(new DeleteNodesAndEdgesCommand(edgesToDelete, nodesToDelete, markUndo: true));
         }
     }
 }

@@ -10,7 +10,7 @@ namespace Unity.Behavior
     /// </summary>
     [Serializable, GeneratePropertyBag]
     [NodeDescription(
-        name: "Repeat While", 
+        name: "Repeat While",
         description: "Repeats the flow underneath as long as the specified condition(s) are true.",
         category: "Flow",
         hideInSearch: true,
@@ -45,7 +45,7 @@ namespace Unity.Behavior
             }
             m_CurrentFrame = Time.frameCount;
 
-            // Early out in case the condition is already filled and prevent DoWhile condition. 
+            // Early out in case the condition is already filled and prevent DoWhile condition.
             foreach (Condition condition in Conditions)
             {
                 condition.OnStart();
@@ -85,7 +85,7 @@ namespace Unity.Behavior
             EndNode(Child);
             return StartNode(Child);
         }
-        
+
         protected override void OnEnd()
         {
             base.OnEnd();
@@ -95,7 +95,7 @@ namespace Unity.Behavior
                 condition.OnEnd();
             }
         }
-        
+
         protected override void OnDeserialize()
         {
             m_CurrentFrame = Time.frameCount + m_FrameDelta;
@@ -103,7 +103,7 @@ namespace Unity.Behavior
 
         protected override void OnSerialize()
         {
-            m_FrameDelta = Time.frameCount - m_CurrentFrame; 
+            m_FrameDelta = Time.frameCount - m_CurrentFrame;
         }
     }
 }

@@ -106,5 +106,3 @@ Button {
 .NewBranchModal #PromptTextField {
     flex-grow: 0;
 }
-
-

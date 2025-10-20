@@ -21,5 +21,5 @@ To install Muse Common, follow these steps:
 
 ## Additional resources
 
- * [Install Unity Behavior with the Package Manager](install-behavior.md)
+ * [Install Unity Behavior](install-behavior.md)
  * [Create a behavior graph](create-behavior-graph.md)

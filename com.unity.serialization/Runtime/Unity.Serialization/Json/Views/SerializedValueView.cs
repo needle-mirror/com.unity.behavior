@@ -44,7 +44,7 @@ namespace Unity.Behavior.Serialization.Json
         /// <exception cref="InvalidOperationException">The view does not represent an object type.</exception>
         /// <exception cref="KeyNotFoundException">The key does not exist in the collection.</exception>
         public SerializedValueView this[in FixedString32Bytes name] => GetValue(name);
-        
+
         /// <summary>
         /// Gets the value associated with the specified key.
         /// </summary>
@@ -52,7 +52,7 @@ namespace Unity.Behavior.Serialization.Json
         /// <exception cref="InvalidOperationException">The view does not represent an object type.</exception>
         /// <exception cref="KeyNotFoundException">The key does not exist in the collection.</exception>
         public SerializedValueView this[in FixedString64Bytes name] => GetValue(name);
-        
+
         /// <summary>
         /// Gets the value associated with the specified key.
         /// </summary>
@@ -60,7 +60,7 @@ namespace Unity.Behavior.Serialization.Json
         /// <exception cref="InvalidOperationException">The view does not represent an object type.</exception>
         /// <exception cref="KeyNotFoundException">The key does not exist in the collection.</exception>
         public SerializedValueView this[in FixedString128Bytes name] => GetValue(name);
-        
+
         /// <summary>
         /// Gets the value associated with the specified key.
         /// </summary>
@@ -70,7 +70,7 @@ namespace Unity.Behavior.Serialization.Json
         {
             if (!TryGetValue(name, out var value))
                 throw new KeyNotFoundException(name);
-            
+
             return value;
         }
 
@@ -82,13 +82,13 @@ namespace Unity.Behavior.Serialization.Json
         /// <returns>true if the <see cref="SerializedObjectView"/> contains an element with the specified key; otherwise, false.</returns>
         public bool TryGetValue(in string name, out SerializedValueView value)
         {
-            if (Type == TokenType.Object) 
+            if (Type == TokenType.Object)
                 return AsObjectView().TryGetValue(name, out value);
-            
+
             value = default;
             return false;
         }
-        
+
         /// <summary>
         /// Gets the value associated with the specified key.
         /// </summary>
@@ -99,7 +99,7 @@ namespace Unity.Behavior.Serialization.Json
         {
             if (!TryGetValue(name, out var value))
                 throw new KeyNotFoundException();
-            
+
             return value;
         }
 
@@ -112,13 +112,13 @@ namespace Unity.Behavior.Serialization.Json
         /// <returns>true if the <see cref="SerializedObjectView"/> contains an element with the specified key; otherwise, false.</returns>
         public bool TryGetValue<T>(in T name, out SerializedValueView value) where T : unmanaged, INativeList<byte>, IUTF8Bytes
         {
-            if (Type == TokenType.Object) 
+            if (Type == TokenType.Object)
                 return AsObjectView().TryGetValue(name, out value);
-            
+
             value = default;
             return false;
         }
-        
+
         /// <summary>
         /// Returns true if the value represents a member.
         /// </summary>
@@ -215,14 +215,14 @@ namespace Unity.Behavior.Serialization.Json
         {
             return AsPrimitiveView().AsInt64();
         }
-        
+
         /// <summary>
         /// Reinterprets the value as a int.
         /// </summary>
         /// <returns>The value as an int.</returns>
         public int AsInt32()
         {
-            return (int) AsPrimitiveView().AsInt64();
+            return (int)AsPrimitiveView().AsInt64();
         }
 
         /// <summary>
@@ -251,7 +251,7 @@ namespace Unity.Behavior.Serialization.Json
         {
             return AsPrimitiveView().AsDouble();
         }
-        
+
         /// <summary>
         /// Reinterprets the value as a bool.
         /// </summary>
@@ -277,7 +277,7 @@ namespace Unity.Behavior.Serialization.Json
         {
             return AsStringView().ToString();
         }
-        
+
         /// <summary>
         /// Returns the value as a string.
         /// </summary>
@@ -287,7 +287,7 @@ namespace Unity.Behavior.Serialization.Json
         {
             return AsStringView().AsFixedString<T>();
         }
-        
+
         /// <summary>
         /// Returns the value as a string.
         /// </summary>
@@ -297,7 +297,7 @@ namespace Unity.Behavior.Serialization.Json
         {
             return AsStringView().AsNativeText(allocator);
         }
-        
+
         /// <summary>
         /// Returns the value as a string.
         /// </summary>
@@ -307,7 +307,7 @@ namespace Unity.Behavior.Serialization.Json
         {
             return AsStringView().AsUnsafeText(allocator);
         }
-        
+
         internal UnsafeValueView AsUnsafe() => new UnsafeValueView(m_Stream, m_Stream->GetTokenIndex(m_Handle));
     }
 }

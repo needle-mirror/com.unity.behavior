@@ -4,7 +4,7 @@ using Unity.Behavior.GraphFramework;
 namespace Unity.Behavior
 {
     /// <summary>
-    /// The NodeDescriptionAttribute contains metadata for nodes used in Behavior graphs. 
+    /// The NodeDescriptionAttribute contains metadata for nodes used in Behavior graphs.
     /// </summary>
     [System.AttributeUsage(System.AttributeTargets.Class)]
     public class NodeDescriptionAttribute : System.Attribute
@@ -36,17 +36,17 @@ namespace Unity.Behavior
         /// The name of the node.
         /// </summary>
         internal string Name { get; }
-        
+
         /// <summary>
         /// The description of the node's function.
         /// </summary>
         internal string Description { get; }
-        
+
         /// <summary>
         /// The story summarizing what occurs when the node executes.
         /// </summary>
         internal string Story { get; }
-        
+
         /// <summary>
         /// The path of the icon to be used when representing the node in the graph editor.
         /// </summary>

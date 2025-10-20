@@ -34,9 +34,9 @@ namespace Unity.Behavior
 
             foreach (VariableModel variable in command.blackboardAuthoringAsset.Variables)
             {
-                DispatcherContext.Root.SendEvent(VariableDeletedEvent.GetPooled(DispatcherContext.Root, variable));    
+                DispatcherContext.Root.SendEvent(VariableDeletedEvent.GetPooled(DispatcherContext.Root, variable));
             }
-            
+
             graphBlackboardView.RequestBlackboardReferenceAssetsViewRefresh();
             graphBlackboardView.InitializeListView();
 

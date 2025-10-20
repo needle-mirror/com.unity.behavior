@@ -47,7 +47,7 @@ namespace Unity.Behavior
         {
             base.OnValidate();
             UpdateNodeType();
-            
+
             IConditionalNodeModel.UpdateConditionModels(this);
         }
 
@@ -60,15 +60,23 @@ namespace Unity.Behavior
             }
         }
 
+        // Ensures the node model type is up to date. If not, dirty asset as runtime graph needs to rebuild.
         private void UpdateNodeType()
         {
-            NodeType = ModelAbortType == AbortType.Abort ? typeof(AbortModifier) : typeof(RestartModifier);
-            Type type = NodeType;
-            NodeDescriptionAttribute attribute = type.GetCustomAttribute<NodeDescriptionAttribute>();
+            Type expectedType = ModelAbortType == AbortType.Abort ? typeof(AbortModifier) : typeof(RestartModifier);
+            if (NodeType != null && NodeType.Type == expectedType)
+            {
+                return;
+            }
+
+            NodeType = expectedType;
+            NodeDescriptionAttribute attribute = expectedType.GetCustomAttribute<NodeDescriptionAttribute>();
             if (attribute != null)
             {
                 NodeTypeID = attribute.GUID;
             }
+
+            Asset.SetAssetDirty(true);
         }
     }
 }

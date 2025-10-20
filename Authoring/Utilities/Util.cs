@@ -3,16 +3,15 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-#if !UNITY_EDITOR
-using System.Reflection;
-#endif
-using Unity.AppUI.UI;
 using Unity.Behavior.GraphFramework;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Unity.AppUI.UI;
 
 #if UNITY_EDITOR
 using UnityEditor;
+#else
+using System.Reflection;
 #endif
 
 namespace Unity.Behavior
@@ -121,7 +120,7 @@ namespace Unity.Behavior
             return assets;
         }
 #endif
-        
+
 #if UNITY_EDITOR
         public static BehaviorBlackboardAuthoringAsset[] GetNonGraphBlackboardAssets()
         {
@@ -145,8 +144,8 @@ namespace Unity.Behavior
             return blackboardAssets.ToArray();
         }
 #endif
-        
-        public static Dictionary<string, Type> GetVariableSuggestions(GraphAsset asset, PlaceholderNodeModel placeholderNodeModel = null)
+
+        public static Dictionary<string, Type> GetVariableSuggestions(GraphAsset asset, BehaviorGraphNodeModel nodeModel = null)
         {
             Dictionary<string, Type> variables = new Dictionary<string, Type>();
             List<Type> supportedTypes = GetSupportedTypes().ToList();
@@ -155,13 +154,21 @@ namespace Unity.Behavior
                 variables[variableModel.Name.ToLower()] = variableModel.Type;
             }
 
-            if (placeholderNodeModel?.Variables != null)
+            if (nodeModel == null)
             {
-                foreach (VariableInfo variable in placeholderNodeModel.Variables)
+                return variables;
+            }
+
+            if (asset is BehaviorAuthoringGraph authoringGraph)
+            {
+                if (authoringGraph.RuntimeNodeTypeIDToNodeModelInfo.TryGetValue(nodeModel.NodeTypeID, out var nodeModelInfo))
                 {
-                    if (variable.Type != null)
+                    foreach (VariableInfo variable in nodeModelInfo.Variables)
                     {
-                        variables[variable.Name.ToLower()] = variable.Type;
+                        if (variable.Type != null)
+                        {
+                            variables[variable.Name.ToLower()] = variable.Type;
+                        }
                     }
                 }
             }
@@ -238,8 +245,8 @@ namespace Unity.Behavior
             bool statsWithDataPath = path.StartsWith(Application.dataPath);
             if (statsWithDataPath)
             {
-                if (path.Length == Application.dataPath.Length) {
-
+                if (path.Length == Application.dataPath.Length)
+                {
                     return "";
                 }
                 path = path.Remove(0, Application.dataPath.Length + 1);
@@ -280,9 +287,9 @@ namespace Unity.Behavior
 
             void CreateVariableFromMenuAction(string variableTypeName, Type type)
             {
-                dispatcher.DispatchImmediate(new CreateVariableCommand(variableTypeName, BlackboardUtils.GetVariableModelTypeForType(type)), setHasOutstandingChanges: false);
+                dispatcher.DispatchImmediate(new CreateVariableCommand(variableTypeName, BlackboardUtils.GetVariableModelTypeForType(type)), setHasOutstandingChanges: true);
             }
-            
+
             // Assign top menu option icons separately
             builder.Add("Basic Types", iconName: "float");
             builder.Add("List", iconName: "list-object");
@@ -304,14 +311,14 @@ namespace Unity.Behavior
             }
 
             // Enums menu
-            builder.Add("Enumeration", iconName: "enum" );
+            builder.Add("Enumeration", iconName: "enum");
 #if UNITY_EDITOR
             builder.Add($"Enumeration/Create new enum type...", onSelected: () => OnCreateNewEnum(referenceView, buffer), priority: 1);
 #endif
             foreach (Type enumType in GetEnumVariableTypes())
             {
-                builder.Add($"Enumeration/{enumType.Name}", iconName: "enum", onSelected: () => 
-                    dispatcher.DispatchImmediate(new CreateVariableCommand(enumType.Name, BlackboardUtils.GetVariableModelTypeForType(enumType)), setHasOutstandingChanges: false));
+                builder.Add($"Enumeration/{enumType.Name}", iconName: "enum", onSelected: () =>
+                    dispatcher.DispatchImmediate(new CreateVariableCommand(enumType.Name, BlackboardUtils.GetVariableModelTypeForType(enumType)), setHasOutstandingChanges: true));
             }
 
             // Event channels menu
@@ -321,8 +328,8 @@ namespace Unity.Behavior
 #endif
             foreach (EventChannelUtility.EventChannelInfo channelInfo in EventChannelUtility.GetEventChannelTypes())
             {
-                builder.Add($"Events/{channelInfo.Name}", iconName: "event", onSelected: () => 
-                    dispatcher.DispatchImmediate(new CreateVariableCommand(channelInfo.Name, channelInfo.VariableModelType), setHasOutstandingChanges: false));
+                builder.Add($"Events/{channelInfo.Name}", iconName: "event", onSelected: () =>
+                    dispatcher.DispatchImmediate(new CreateVariableCommand(channelInfo.Name, channelInfo.VariableModelType), setHasOutstandingChanges: true));
             }
 
             builder.DefaultTabName = "Common";
@@ -338,7 +345,7 @@ namespace Unity.Behavior
 
             return builder;
         }
-        
+
         private static void OnCreateNewEventChannel(VisualElement target, SerializableCommandBuffer buffer)
         {
 #if UNITY_EDITOR
@@ -356,11 +363,13 @@ namespace Unity.Behavior
 #endif
         }
 
-#if UNITY_EDITOR 
+#if UNITY_EDITOR
+
         private static void OnEventChannelTypeCreated(EventChannelGeneratorUtility.EventChannelData eventChannelData, SerializableCommandBuffer buffer)
         {
             buffer.SerializeDeferredCommand(new CreateVariableFromSerializedTypeCommand(eventChannelData.ClassName, true));
         }
+
 #endif
 
         private static void OnCreateNewEnum(VisualElement target, SerializableCommandBuffer buffer)
@@ -383,12 +392,12 @@ namespace Unity.Behavior
             modal.Show();
 #endif
         }
-        
+
         public static void UpdateLinkFieldBlackboardPrefixes(BaseLinkField linkField)
         {
             if (linkField.Model != null && linkField.Model.Asset != null)
             {
-                linkField.LinkedLabelPrefix = GetBlackboardVariablePrefix(linkField.Model.Asset, linkField.LinkedVariable);   
+                linkField.LinkedLabelPrefix = GetBlackboardVariablePrefix(linkField.Model.Asset, linkField.LinkedVariable);
             }
         }
 

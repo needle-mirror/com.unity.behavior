@@ -24,20 +24,11 @@ namespace Unity.Behavior
 
             //search for all placeholder nodes that have the same name and replace them with the new node
             var nodesToReplaces = new List<NodeModel>();
-            foreach (var nodeModel in Asset.Nodes)
-            {
-                if (nodeModel is PlaceholderNodeModel placeholderActionNodeModel &&
-                    placeholderActionNodeModel.Name == command.PlaceholderNodeName)
-                {
-                    nodesToReplaces.Add(nodeModel);
-                }
-            }
-
             foreach (var nodeToReplace in nodesToReplaces)
             {
                 var newNodeModel = Asset.CreateNode(newNodeInfo.ModelType, nodeToReplace.Position, null,
                     args: new object[] { newNodeInfo }) as BehaviorGraphNodeModel;
-                
+
                 // Connect default LinkField variables to fields.
                 if (DispatcherContext is BehaviorGraphEditor behaviorGraphEditor)
                 {
@@ -45,7 +36,7 @@ namespace Unity.Behavior
                     behaviorGraphEditor.LinkRecentlyLinkedFields(newNodeModel);
                     newNodeModel.OnValidate();
                 }
-                
+
                 if (IsInSequence(nodeToReplace, out SequenceNodeModel sequenceNodeModel))
                 {
                     var index = sequenceNodeModel.Nodes.IndexOf(nodeToReplace);
@@ -95,7 +86,7 @@ namespace Unity.Behavior
 
             return true;
         }
-        
+
         private bool IsInSequence(NodeModel nodeModel, out SequenceNodeModel sequenceNodeModel)
         {
             sequenceNodeModel = null;

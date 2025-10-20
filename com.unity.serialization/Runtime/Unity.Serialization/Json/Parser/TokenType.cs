@@ -1,4 +1,4 @@
-﻿namespace Unity.Behavior.Serialization.Json
+namespace Unity.Behavior.Serialization.Json
 {
     /// <summary>
     /// The <see cref="TokenType"/> is used to describe the high level structure of a data tree.
@@ -34,7 +34,7 @@
         /// Holds a reference to characters that represent any value that does not fit into the above categories.
         /// </summary>
         Primitive,
-        
+
         /// <summary>
         /// The token holds a reference to all characters of a comment block.
         /// </summary>

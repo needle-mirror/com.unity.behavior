@@ -4,7 +4,7 @@ uid: serialize-run
 
 # Set up and run the sample
 
-The **Runtime Serialization** sample shows how to save and load the full state of behavior agents at runtime. 
+The **Runtime Serialization** sample shows how to save and load the full state of behavior agents at runtime.
 
 Use this section to do the following:
 
@@ -20,7 +20,7 @@ To use the **Runtime Serialization** sample, follow these steps:
 1. Open the **Package Manager** window.
 1. Select **In Project** > **Behavior** > **Samples**.
 1. Select **Import** next to the **Runtime Serialization** sample.
-1. To locate the sample components, go to **Project** > **Assets**> **Sample** > **Behavior** > **[version-number]** > **Runtime Serialization**. 
+1. To locate the sample components, go to **Project** > **Assets**> **Sample** > **Behavior** > **[version-number]** > **Runtime Serialization**.
 
 The **Runtime Serialization** folder contains the following components:
 
@@ -38,10 +38,10 @@ The **Runtime Serialization** sample shows how to save and restore agent state a
 
 To run the `Serialization.unity` scene, follow these steps:
 
-1. Double-click the `Serialization.unity` scene to open it. 
+1. Double-click the `Serialization.unity` scene to open it.
 1. Enter Play mode.
 
-   The scene shows 15 capsule agents that move around wielding swords. 
+   The scene shows 15 capsule agents that move around wielding swords.
 
 1. Select **Save** to serialize the current state of all the agents.
 1. Select **Load** to restore that state at any time, even after you exit and re-enter Play mode.

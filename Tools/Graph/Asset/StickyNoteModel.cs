@@ -10,8 +10,8 @@ namespace Unity.Behavior.GraphFramework
         public override bool HasDefaultInputPort => false;
         public override bool HasDefaultOutputPort => false;
 
-        public StickyNoteModel() {}
-        
+        public StickyNoteModel() { }
+
         protected StickyNoteModel(StickyNoteModel nodeModelOriginal, GraphAsset asset) : base(nodeModelOriginal, asset)
         {
             Text = nodeModelOriginal.Text;

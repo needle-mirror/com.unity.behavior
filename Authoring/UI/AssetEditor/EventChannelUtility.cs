@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -14,7 +14,7 @@ namespace Unity.Behavior
             internal string Name;
             internal string Category;
             internal Type VariableModelType;
-            
+
             internal string Path => string.IsNullOrEmpty(Category) ? Name : $"{Category}/{Name}";
         }
 
@@ -31,7 +31,7 @@ namespace Unity.Behavior
         }
 
         internal static IEnumerable<EventChannelInfo> GetEventChannelTypes()
-        {   
+        {
             foreach (var type in AppDomain.CurrentDomain.GetAssemblies().SelectMany(assembly => assembly.GetTypes()))
             {
                 if (!IsEventChannelType(type, out Type eventChannelModelType) || type.IsGenericType || type.IsAbstract || type.IsNestedPrivate)
@@ -39,8 +39,8 @@ namespace Unity.Behavior
                     continue;
                 }
 
-                var attribute = (EventChannelDescriptionAttribute) Attribute.GetCustomAttribute(type, typeof (EventChannelDescriptionAttribute));
-                
+                var attribute = (EventChannelDescriptionAttribute)Attribute.GetCustomAttribute(type, typeof(EventChannelDescriptionAttribute));
+
                 string channelName;
                 string category;
                 if (attribute != null)

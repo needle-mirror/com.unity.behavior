@@ -14,7 +14,7 @@ namespace Unity.Behavior.Serialization
         /// <param name="message">The message for the exception.</param>
         public SerializationException(string message) : base(message)
         {
-            
+
         }
     }
 }

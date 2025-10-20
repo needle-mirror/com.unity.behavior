@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -23,10 +23,11 @@ namespace Unity.Behavior.GenerativeAI
     {
         private static readonly List<Type> s_ExcludedCompositeTypes = new()
         {
-            typeof(ParallelAllSuccess), typeof(ParallelAnyComposite),
+            typeof(ParallelAllSuccess),
+            typeof(ParallelAnyComposite),
             typeof(ParallelAnySuccess)
         };
-        
+
         public static List<NodeModel> GenerateNodes(GraphAsset asset, Vector2 position, string response,
             List<NodeInfo> nodeInfos)
         {
@@ -67,22 +68,7 @@ namespace Unity.Behavior.GenerativeAI
                 // If the node is not found in the registry, create a placeholder node.
                 if (nodeInfo == null)
                 {
-                    var placeholderNodeModel =
-                        asset.CreateNode(typeof(PlaceholderNodeModel), position, port, args: new object[]
-                            {
-                                null
-                            })
-                            as PlaceholderNodeModel;
-                    placeholderNodeModel.Name = AddSpaceToName(node.name);
-                    placeholderNodeModel.Story = node.description;
-                    if (node.variables != null)
-                    {
-                        foreach (var variable in node.variables)
-                        {
-                            placeholderNodeModel.Variables.Add(new VariableInfo { Name = variable });
-                        }
-                    }
-                    behaviorGraphNodeModel = placeholderNodeModel;
+                    // Placeholder UI will handle this case.
                 }
                 else
                 {
@@ -110,9 +96,9 @@ namespace Unity.Behavior.GenerativeAI
                 {
                     // Check consecutive actions & conditions to determine if a sequence group should be created.
                     int j = 0;
-                    bool canCreateSequenceGroup = HasConsecutiveActions(node.nodes, out int actionCount) 
-                                                  && (typeof(SequenceComposite).IsAssignableFrom(behaviorGraphNodeModel.NodeType) 
-                                                  || typeof(Modifier).IsAssignableFrom(behaviorGraphNodeModel.NodeType)) 
+                    bool canCreateSequenceGroup = HasConsecutiveActions(node.nodes, out int actionCount)
+                                                  && (typeof(SequenceComposite).IsAssignableFrom(behaviorGraphNodeModel.NodeType)
+                                                  || typeof(Modifier).IsAssignableFrom(behaviorGraphNodeModel.NodeType))
                                                   && node.nodes.Length > 1
                                                   && actionCount > 1;
                     if (canCreateSequenceGroup)
@@ -126,11 +112,11 @@ namespace Unity.Behavior.GenerativeAI
                     {
                         var child = node.nodes[i];
                         CreateNodesRecursively(child, behaviorGraphNodeModel, j);
-                        
+
                         // Only increment if the parent has more than one output port.
                         if (behaviorGraphNodeModel.OutputPortModels.Count() > 1)
                             j++;
-                        
+
                         // Break sequence if the last consecutive action is reached.
                         if (i == actionCount - 1)
                             BreakSequence();
@@ -145,7 +131,7 @@ namespace Unity.Behavior.GenerativeAI
                     for (int i = 0; i < node.nodes.Length; i++)
                     {
                         var child = node.nodes[i];
-                        if (i >= 1) // safety a non-composite node can only have one child. 
+                        if (i >= 1) // safety a non-composite node can only have one child.
                         {
                             CreateNodesRecursively(child, null, 0);
                         }
@@ -167,7 +153,7 @@ namespace Unity.Behavior.GenerativeAI
                         {
                             return false;
                         }
-                        
+
                         // If the info was null, it's a placeholder action node.
                         // Otherwise, it's a known action node type.
                         actionCount++;

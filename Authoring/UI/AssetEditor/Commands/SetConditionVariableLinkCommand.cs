@@ -9,7 +9,7 @@ namespace Unity.Behavior
         public string VariableName;
         public Type LinkVariableType;
         public VariableModel Link;
-        
+
         public SetConditionVariableLinkCommand(ConditionModel condition, string variableName, Type linkVariableType, VariableModel link, bool markUndo) : base(markUndo)
         {
             Condition = condition;

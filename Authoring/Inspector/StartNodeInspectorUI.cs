@@ -38,7 +38,7 @@ namespace Unity.Behavior
             startModel.Asset.MarkUndo("Toggle Start Node Repeat");
             startModel.Repeat = evt.newValue;
         }
-        
+
         private void OnDelayRepeatValueChanged(ChangeEvent<bool> evt)
         {
             StartNodeModel startModel = InspectedNode as StartNodeModel;

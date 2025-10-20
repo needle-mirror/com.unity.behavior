@@ -57,18 +57,6 @@ namespace Unity.Behavior
             CreateMetadata();
         }
 
-        internal void ValidateVariables()
-        {
-            for (int i = m_Variables.Count - 1; i >= 0; i--)
-            {
-                BlackboardVariable variable = m_Variables[i];
-                if (variable == null)
-                {
-                    m_Variables.RemoveAt(i);
-                }
-            }
-        }
-
         internal void ReplaceBlackboardVariable(SerializableGUID guid, BlackboardVariable newVariable)
         {
             if (m_VariablesMap.TryGetValue(guid, out BlackboardVariable oldVariable))

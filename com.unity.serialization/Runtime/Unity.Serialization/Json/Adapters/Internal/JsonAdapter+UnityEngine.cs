@@ -13,7 +13,7 @@ namespace Unity.Behavior.Serialization.Json
             var id = UnityEditor.GlobalObjectId.GetGlobalObjectIdSlow(value).ToString();
             context.Writer.WriteValue(id);
 #else
-           context.Writer.WriteNull();
+            context.Writer.WriteNull();
 #endif
         }
 
@@ -46,7 +46,7 @@ namespace Unity.Behavior.Serialization.Json
 #endif
             return null;
         }
-    
+
 #if UNITY_EDITOR
         static readonly string s_EmptyGuid = Guid.Empty.ToString();
 
@@ -56,7 +56,7 @@ namespace Unity.Behavior.Serialization.Json
             public UnityObject o;
 #pragma warning restore 649
         }
-        
+
         public static UnityObject FromObjectHandle(SerializedObjectView objectView)
         {
             var container = new Container();
@@ -79,7 +79,7 @@ namespace Unity.Behavior.Serialization.Json
                         writer.WriteKeyValue("type", type);
                     }
                 }
-                
+
                 var json = writer.ToString();
                 UnityEditor.EditorJsonUtility.FromJsonOverwrite(json, container);
                 return container.o;

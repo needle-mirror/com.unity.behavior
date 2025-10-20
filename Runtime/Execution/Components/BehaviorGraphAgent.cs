@@ -33,16 +33,17 @@ namespace Unity.Behavior
     /// // Basic usage - assign graph and configure at runtime
     /// agent.Graph = myBehaviorGraph;  // Graph will auto-initialize next Update
     /// agent.SetVariableValue("Destination", targetPosition);
-    /// 
+    ///
     /// // Template pattern - configure, then instantiate multiple agents
     /// templateAgent.Graph = sharedGraph;
     /// templateAgent.SetVariableValue("Speed", defaultSpeed);  // Sets override
-    /// 
+    ///
     /// var newAgent = Instantiate(templateAgent);
     /// newAgent.Init();  // Explicitly initialize
     /// newAgent.SetVariableValue("PatrolPoints", uniquePatrolPoints);  // Per-instance value
     /// </code>
     /// </example>
+    [DefaultExecutionOrder(-50)]
     [AddComponentMenu("AI/Behavior Agent")]
 #if NETCODE_FOR_GAMEOBJECTS
     public class BehaviorGraphAgent : NetworkBehaviour, ISerializationCallbackReceiver
@@ -50,7 +51,7 @@ namespace Unity.Behavior
     public class BehaviorGraphAgent : MonoBehaviour, ISerializationCallbackReceiver
 #endif
     {
-        [SerializeReference] private BehaviorGraph m_Graph;
+        [SerializeField] private BehaviorGraph m_Graph;
 
         /// <summary>
         /// <para>The graph of behaviours to be executed by the agent.</para>
@@ -59,7 +60,7 @@ namespace Unity.Behavior
         /// <para>- You don't have to manually call Init() or Start() when setting this property</para>
         ///
         /// <para><b>About blackboard variable:</b></para>
-        /// <para>- Calling SetVariableValue() before the agent is initialized (after setting Graph but before the next Update) 
+        /// <para>- Calling SetVariableValue() before the agent is initialized (after setting Graph but before the next Update)
         /// will set blackboard overrides at the agent level, visible in the inspector</para>
         /// <para>- Calling SetVariableValue() after the agent is initialized will modify the individual instance variables</para>
         /// <para>- This makes it possible to set default values that apply to all instances, or customize individual agent behaviors</para>
@@ -69,7 +70,7 @@ namespace Unity.Behavior
         /// // Assign graph and set default value before initialization
         /// agent.Graph = myGraph;
         /// agent.SetVariableValue("Destination", new Vector3(10, 0, 10)); // Sets agent-level override
-        /// 
+        ///
         /// // After automatic initialization in Update, or manual Init():
         /// agent.SetVariableValue("PatrolPoints", customPatrolPoints); // Sets instance-specific value
         /// </code>
@@ -82,26 +83,41 @@ namespace Unity.Behavior
                 m_Graph = value;
                 m_IsInitialised = false;
                 m_IsStarted = false;
-
-#if UNITY_TEST_FRAMEWORK
-                m_InitialisedFromAssetProcessor = false;
+#if UNITY_EDITOR
+                if (value == null || UnityEditor.EditorUtility.IsPersistent(value))
+                {
+                    // If the graph is a persistent asset, we store it as the original graph.
+                    // This can happens when a graph is assigned during playmode from the inspector.
+                    m_OriginalGraph = value;
+                }
 #endif
-                
                 OnAssignBehaviorGraph();
             }
         }
 
         /// <summary>
-        /// The blackboard associated with the agent's graph.
+        /// The blackboard associated with the agent's graph. Returns null and log a warning if accessed before the agent is initialized.
         /// </summary>
-        public BlackboardReference BlackboardReference => m_Graph ? m_Graph.BlackboardReference : null;
+        public BlackboardReference BlackboardReference
+        {
+            get
+            {
+                if (Application.isPlaying && !m_IsInitialised)
+                {
+                    Debug.LogWarning($"Failed to get {nameof(BlackboardReference)}. Agent is not yet initialized.", this);
+                    return null;
+                }
+
+                return m_Graph ? m_Graph.BlackboardReference : null;
+            }
+        }
 
         /// <summary>
         /// UnityEngine.Object references, serialized separately from other variable types.
         /// </summary>
         [SerializeReference, HideInInspector]
-        internal List<BlackboardVariable> m_BlackboardVariableOverridesList = new ();
-        internal Dictionary<SerializableGUID, BlackboardVariable> m_BlackboardOverrides = new ();
+        internal List<BlackboardVariable> m_BlackboardVariableOverridesList = new();
+        internal Dictionary<SerializableGUID, BlackboardVariable> m_BlackboardOverrides = new();
 
 #if UNITY_EDITOR
         /// <summary>
@@ -112,18 +128,21 @@ namespace Unity.Behavior
         /// <summary>
         ///  Backup of the first graph assigned to the agent, used by ReinitializeAndRestartGraph.
         /// </summary>
+        [SerializeField, HideInInspector] // set as serialized field to support undo.
         private BehaviorGraph m_OriginalGraph;
+        /// <summary>
+        /// Graph to show in the inspector pointing toward the original graph.
+        /// </summary>
+        internal BehaviorGraph OriginalGraph => m_OriginalGraph;
 #endif
 
-        [SerializeField][HideInInspector] 
+        [SerializeField]
+        [HideInInspector]
         internal bool m_IsInitialised = false;
 
-        [SerializeField][HideInInspector]
+        [SerializeField]
+        [HideInInspector]
         internal bool m_IsStarted = false;
-
-#if UNITY_TEST_FRAMEWORK
-        internal bool m_InitialisedFromAssetProcessor = false;
-#endif
 
 #if NETCODE_FOR_GAMEOBJECTS
         public bool NetcodeRunOnlyOnOwner = false;
@@ -137,7 +156,6 @@ namespace Unity.Behavior
         }
 #endif
 
-
         private void Awake()
         {
             Init();
@@ -145,8 +163,14 @@ namespace Unity.Behavior
 
         private void OnAssignBehaviorGraph()
         {
+#if UNITY_EDITOR
+            if (UnityEditor.SerializationUtility.HasManagedReferencesWithMissingTypes(m_Graph))
+            {
+                return;
+            }
+#endif
             // If the graph or blackboard are null, we can't sync the overrides, so return.
-            if (m_Graph == null || m_Graph.BlackboardReference?.Blackboard == null)
+            if (m_Graph == null || m_Graph.BlackboardReference == null || m_Graph.BlackboardReference.Blackboard == null)
             {
                 m_BlackboardOverrides.Clear();
                 m_BlackboardVariableOverridesList.Clear();
@@ -159,13 +183,15 @@ namespace Unity.Behavior
         internal void SynchronizeOverridesWithBlackboard()
         {
             RemoveOverridesWithNoMatchInBlackboard();
-            UpdateBlackboardOverridesToMatchBlackboard(); 
+            UpdateBlackboardOverridesToMatchBlackboard();
             CreateOrUpdateSelfOverride();
             ApplySelfOverrideToBlackboard();
         }
 
         private void CreateOrUpdateSelfOverride()
         {
+            Debug.Assert(m_Graph.BlackboardReference != null);
+
             SerializableGUID graphOwnerID = BehaviorGraph.k_GraphSelfOwnerID;
             if (m_BlackboardOverrides.TryGetValue(graphOwnerID, out BlackboardVariable ownerVariableOverride))
             {
@@ -176,12 +202,12 @@ namespace Unity.Behavior
                 // An override already exists, so set its value to this GameObject.
                 ownerVariableOverride.ObjectValue = gameObject;
                 // Set the blackboard owner variable value to this GameObject.
-                if (BlackboardReference.GetVariable(graphOwnerID, out BlackboardVariable ownerVariable))
+                if (m_Graph.BlackboardReference.GetVariable(graphOwnerID, out BlackboardVariable ownerVariable))
                 {
                     ownerVariable.ObjectValue = ownerVariableOverride.ObjectValue;
                 }
             }
-            else if (BlackboardReference.GetVariable(graphOwnerID, out BlackboardVariable ownerVariable))
+            else if (m_Graph.BlackboardReference.GetVariable(graphOwnerID, out BlackboardVariable ownerVariable))
             {
                 // No override exists, but a blackboard variable for the graph owner exists, so add an override.
                 m_BlackboardOverrides.Add(graphOwnerID, new BlackboardVariable<GameObject>(gameObject)
@@ -267,7 +293,8 @@ namespace Unity.Behavior
         /// <para>- Called automatically in Awake() if a graph is assigned in the Inspector</para>
         /// <para>- Called automatically in the next Update() after setting the Graph property</para>
         /// <para>- Can be called manually to explicitly control the initialization timing</para>
-        /// <para>- If the agent is already initialized, this method only reassigns the GameObject to graph modules</para>
+        /// <para>- If the agent is already initialized, this method will clone again a new instance of the assigned graph
+        /// and restart the graph execution</para>
         ///
         /// <para><b>About blackboard variable:</b></para>
         /// <para>- SetVariableValue() calls made before Init() set agent-level overrides</para>
@@ -279,7 +306,7 @@ namespace Unity.Behavior
         /// // Pattern for pre-configuring agents before instantiation:
         /// templateAgent.Graph = sharedGraph;
         /// templateAgent.SetVariableValue("BaseSpeed", 5f);  // Sets default override
-        /// 
+        ///
         /// // After spawning from template (or calling Init explicitly):
         /// agent.Init();
         /// agent.SetVariableValue("TargetPosition", GetRandomPosition());  // Sets instance variable
@@ -287,6 +314,14 @@ namespace Unity.Behavior
         /// </example>
         public void Init()
         {
+#if UNITY_EDITOR
+            if (UnityEditor.SerializationUtility.HasManagedReferencesWithMissingTypes(m_Graph))
+            {
+                Debug.LogError($"The assigned graph \"{m_Graph.name}\" has missing types. Please fix the graph before initializing the agent.", this);
+                m_Graph = null;
+                return;
+            }
+#endif
             if (m_Graph == null)
             {
                 return;
@@ -297,12 +332,6 @@ namespace Unity.Behavior
                 Debug.LogError($"Root of the graph \"{m_Graph.name}\" is null. Validate the graph once before assigning it from code. " +
                     $"Open the graph once or assign it from the inspector.", this);
                 m_Graph = null;
-                return;
-            }
-
-            if (m_IsInitialised)
-            {
-                m_Graph.AssignGameObjectToGraphModules(gameObject);
                 return;
             }
 
@@ -325,7 +354,7 @@ namespace Unity.Behavior
         /// As blackboard variables are instantiated per agent instance on initialization,
         /// this function will return false in edit mode.
         /// </summary>
-        /// <param name="variableName">The name of the variable</param> 
+        /// <param name="variableName">The name of the variable</param>
         /// <param name="variable">The blackboard variable matching the name and value type</param>
         /// <typeparam name="TValue">The type of value stored by the variable</typeparam>
         /// <returns>Returns true if a variable matching the name and type is found. Returns false otherwise (or if in edit mode).</returns>
@@ -359,7 +388,7 @@ namespace Unity.Behavior
         /// As blackboard variables are instantiated per agent instance on initialization,
         /// this function will return false in edit mode.
         /// </summary>
-        /// <param name="variableName">The name of the variable</param> 
+        /// <param name="variableName">The name of the variable</param>
         /// <param name="variable">Contains the value associated with the specified name, if the named variable is found;
         /// otherwise, the default value is assigned.</param>
         /// <returns>Returns true if a variable matching the name and type is found. Returns false otherwise (or if in edit mode).</returns>
@@ -462,7 +491,7 @@ namespace Unity.Behavior
             {
                 return TryGetBlackboardVariableGUIDOverride(variableName, out id);
             }
-            
+
             if (m_Graph.RootGraph.GetVariableID(variableName, out id))
             {
                 return true;
@@ -527,7 +556,7 @@ namespace Unity.Behavior
             }
             return false;
         }
-        
+
         /// <summary>
         /// Serializes the associated BehaviorGraph to data of TSerializedFormat type.
         /// </summary>
@@ -536,7 +565,7 @@ namespace Unity.Behavior
         /// <typeparam name="TSerializedFormat">Type of serialized output.</typeparam>
         /// <returns>Serialized data.</returns>
         public TSerializedFormat Serialize<TSerializedFormat>(
-            RuntimeSerializationUtility.IBehaviorSerializer<TSerializedFormat> serializer, 
+            RuntimeSerializationUtility.IBehaviorSerializer<TSerializedFormat> serializer,
             RuntimeSerializationUtility.IUnityObjectResolver<string> resolver)
         {
             if (m_Graph == null)
@@ -544,7 +573,7 @@ namespace Unity.Behavior
                 Debug.LogError("Can't serialize the agent because no graph has been assigned. Please assign a graph before serializing.");
                 return default;
             }
-            
+
             m_Graph.SerializeGraphModules();
             var serializedFormat = serializer.Serialize(m_Graph, resolver);
             return serializedFormat;
@@ -612,7 +641,7 @@ namespace Unity.Behavior
                 }
             }
 
-            BlackboardReference.Blackboard.CreateMetadata();
+            m_Graph.BlackboardReference.Blackboard.CreateMetadata();
         }
 
         /// <summary>
@@ -723,7 +752,7 @@ namespace Unity.Behavior
 #if NETCODE_FOR_GAMEOBJECTS
             if (!IsOwner && NetcodeRunOnlyOnOwner) return;
 #endif
-            
+
             if (!m_IsInitialised)
             {
                 Init();
@@ -765,8 +794,8 @@ namespace Unity.Behavior
                     gameObjectBlackboardVariable.Value = gameObject;
                 }
 
-                if (BlackboardReference != null &&
-                    BlackboardReference.GetVariable(varOverride.Key, out BlackboardVariable var))
+                if (m_Graph != null && m_Graph.BlackboardReference != null &&
+                    m_Graph.BlackboardReference.GetVariable(varOverride.Key, out BlackboardVariable var))
                 {
                     var.ObjectValue = varOverride.Value.ObjectValue;
                 }
@@ -846,7 +875,7 @@ namespace Unity.Behavior
                 return false;
             }
 
-            // At this point, the variable either don't exist or is not overriden yet. 
+            // At this point, the variable either don't exist or is not overriden yet.
             // We check for the source blackboard and override it if needed.
             if (!m_Graph.BlackboardReference.GetVariable<TValue>(variableName, out var candidate))
             {
@@ -884,7 +913,7 @@ namespace Unity.Behavior
                 return false;
             }
 
-            // At this point, the variable either don't exist or is not overriden yet. 
+            // At this point, the variable either don't exist or is not overriden yet.
             // We check for the source blackboard and override it if needed.
             if (!m_Graph.BlackboardReference.GetVariable<TValue>(guid, out var candidate))
             {
@@ -930,7 +959,6 @@ namespace Unity.Behavior
         [UnityEngine.ContextMenu("Reinitialize And Restart Graph", false)]
         private void ReinitializeAndRestartGraph()
         {
-            m_IsInitialised = false;
             Graph = m_OriginalGraph;
             Restart();
             OnRuntimeDeserializationEvent?.Invoke();

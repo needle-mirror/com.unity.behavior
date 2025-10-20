@@ -4,10 +4,8 @@ using System.Linq;
 using Unity.Behavior.GraphFramework;
 using UnityEngine;
 
-#if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.Callbacks;
-#endif
 
 namespace Unity.Behavior
 {
@@ -16,14 +14,30 @@ namespace Unity.Behavior
     /// graph.
     /// </summary>
     [Serializable]
-#if UNITY_EDITOR
     [CreateAssetMenu(fileName = "Behavior Graph", menuName = "Behavior/Behavior Graph")]
-#endif
     internal class BehaviorAuthoringGraph : GraphAsset, ISerializationCallbackReceiver
+        , ISerializationValidator
     {
-#if UNITY_EDITOR
-        [SerializeReference]
+        /* Serialization version control for asset compatibility.
+         *
+         * Version history:
+         * 0: Initial/legacy format
+         * 1: Schema updates:
+         *    - Added IsPlaceholder and RuntimeTypeString properties to NodeModelInfo
+         *    - Converted SubgraphGraphInfo to use direct asset reference instead of GUID
+         *    - Removed redundant RootGraph property
+         */
+        private const int kLatestSerializationVersion = 1;
+        // Consumed on asset reimport to clean runtime graph from unavailable node type.
+        // Do not handle missing type wrapped by BlackboardVariable inside of a node.
+        private static HashSet<string> s_GraphPathToValidate = new();
+        private static bool s_IsValidatingPlaceholderGraphAsset = false;
+
+        [SerializeField] private int m_SerializedVersion = 0;
+
+        [SerializeField]
         private BehaviorGraphDebugInfo m_DebugInfo;
+
         public BehaviorGraphDebugInfo DebugInfo
         {
             get
@@ -36,9 +50,11 @@ namespace Unity.Behavior
             }
         }
 
-        [SerializeReference] private BehaviorGraph m_RuntimeGraph;
+        [SerializeField] private BehaviorGraph m_RuntimeGraph;
         public bool HasRuntimeGraph => m_RuntimeGraph != null && m_RuntimeGraph.RootGraph != null;
-#endif
+        internal BehaviorGraph RuntimeGraph => m_RuntimeGraph;
+        internal IReadOnlyList<BehaviorBlackboardAuthoringAsset> BlackboardReferences => m_Blackboards;
+        internal IReadOnlyList<SubgraphGraphInfo> SubgraphsInfo => m_SubgraphsInfo;
 
         [SerializeField]
         public SerializableGUID AssetID = SerializableGUID.Generate();
@@ -48,10 +64,17 @@ namespace Unity.Behavior
 
         [NonSerialized]
         private List<NodeModel> m_RootNodes = new List<NodeModel>();
+
         public List<NodeModel> Roots
         {
             get
             {
+                // Early out if no need to regenerate.
+                if (m_RootNodes.Count > 0 && m_LastRootGraphGenerationTimestamp == m_VersionTimestamp)
+                {
+                    return m_RootNodes;
+                }
+
                 m_RootNodes.Clear();
                 for (var i = 0; i < Nodes.Count; i++)
                 {
@@ -61,12 +84,22 @@ namespace Unity.Behavior
                     }
                 }
 
+                // Sort StartOnEvent by their position (leftmost is first).
+                m_RootNodes.Sort((node1, node2) =>
+                {
+                    float x1 = node1.Position.x;
+                    float x2 = node2.Position.x;
+                    return Comparer<float>.Default.Compare(x1, x2);
+                });
+
+                m_LastRootGraphGenerationTimestamp = m_VersionTimestamp;
                 return m_RootNodes;
             }
         }
 
         [SerializeField]
-        private List<NodeModelInfo> m_NodeModelsInfo;
+        private List<NodeModelInfo> m_NodeModelsInfo = new();
+
         public IReadOnlyList<NodeModelInfo> NodeModelsInfo => m_NodeModelsInfo;
 
         private Dictionary<SerializableGUID, NodeModelInfo> m_RuntimeNodeTypeIDToNodeModelInfo;
@@ -75,81 +108,176 @@ namespace Unity.Behavior
         [SerializeField]
         internal List<BehaviorBlackboardAuthoringAsset> m_Blackboards = new List<BehaviorBlackboardAuthoringAsset>();
 
-        [SerializeReference] private BehaviorBlackboardAuthoringAsset m_MainBlackboardAuthoringAsset;
+        [SerializeField] private BehaviorBlackboardAuthoringAsset m_MainBlackboardAuthoringAsset;
 
         [Serializable]
-        public struct NodeModelInfo
+        public class NodeModelInfo : IEquatable<NodeModelInfo>
         {
             public string Name;
             public string Story;
+            public string RuntimeTypeString;
             public SerializableGUID RuntimeTypeID;
             public List<VariableInfo> Variables;
             public List<string> NamedChildren;
+            public bool IsPlaceholder;
+
+            public NodeModelInfo() { }
+
+            // Shallow copy constructor.
+            public NodeModelInfo(NodeModelInfo other)
+            {
+                Name = other.Name;
+                Story = other.Story;
+                RuntimeTypeID = other.RuntimeTypeID;
+                Variables = other.Variables;
+                NamedChildren = other.NamedChildren;
+                IsPlaceholder = other.IsPlaceholder;
+            }
+
+            public bool Equals(NodeModelInfo other)
+            {
+                return string.Equals(Name, other.Name) &&
+                       string.Equals(Story, other.Story) &&
+                       RuntimeTypeID == other.RuntimeTypeID &&
+                       RuntimeTypeString == other.RuntimeTypeString &&
+                       IsPlaceholder == other.IsPlaceholder &&
+                       ListsEqual(Variables, other.Variables) &&
+                       ListsEqual(NamedChildren, other.NamedChildren);
+            }
+
+            private static bool ListsEqual<T>(List<T> list1, List<T> list2)
+            {
+                if (ReferenceEquals(list1, list2)) return true;
+                if (list1 == null || list2 == null) return false;
+                if (list1.Count != list2.Count) return false;
+
+                foreach (var item in list2)
+                {
+                    if (!list1.Contains(item))
+                        return false;
+                }
+                return true;
+            }
         }
 
         [SerializeField]
         private SerializableCommandBuffer m_CommandBuffer = new SerializableCommandBuffer();
+
         public SerializableCommandBuffer CommandBuffer => m_CommandBuffer;
 
         [System.Serializable]
-        public struct SubgraphGraphInfo
+        public class SubgraphGraphInfo
         {
-            public SerializableGUID AssetID;
+            public BehaviorAuthoringGraph Asset;
             public long Timestamp;
         }
 
         [SerializeField]
         private List<SubgraphGraphInfo> m_SubgraphsInfo = new();
 
+        [SerializeField]
+        private bool m_BlackboardMissingManagedRef = false;
+        [SerializeField]
+        private bool m_GraphMissingManagedRef = false;
+        [SerializeField]
+        private bool m_HasMissingTypeInManagedRef = false;
         private long m_LastSerializedTimestamp;
-
-        private void Awake()
-        {
-#if UNITY_EDITOR
-            string guid = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(GetInstanceID()));
-            AssetID = new SerializableGUID(guid);
-            EnsureAuthoringRuntimeGraphIsUpToDate();
-#endif
-            BehaviorGraphAssetRegistry.Add(this);
-        }
+        private long m_LastRootGraphGenerationTimestamp = 0;
 
         protected override void OnEnable()
         {
-            base.OnEnable();
-            ValidateAssetNames(validateMainAsset: true);
+            // When object is first loaded in memory, set the last version timestamp (transient).
+            m_LastSerializedTimestamp = VersionTimestamp;
+
+            if (!EditorApplication.isCompiling)
+            {
+                if (ContainsInvalidSerializedReferences())
+                {
+                    SetAssetDirty(false);
+                    m_HasMissingTypeInManagedRef = true;
+                    return;
+                }
+                else if (EditorUtility.IsPersistent(this) && m_HasMissingTypeInManagedRef)
+                {
+                    s_GraphPathToValidate.Add(AssetDatabase.GetAssetPath(this));
+                    m_HasMissingTypeInManagedRef = false;
+                }
+            }
+
+            ValidateAssetNames();
+
+            // Force update to catch up serialization version.
+            if (m_SerializedVersion != kLatestSerializationVersion)
+            {
+                EditorApplication.delayCall += DelayedForceReimport;
+                // Note that each function added to EditorApplication.delayCall is only executed once after it is added.
+            }
         }
 
-        /// <inheritdoc cref="OnValidate" />
-        public override void OnValidate()
+        private void OnValidate()
         {
-#if UNITY_EDITOR
-            EnsureAuthoringRuntimeGraphIsUpToDate();
-#endif
+            if (EditorApplication.isCompiling || !EditorUtility.IsPersistent(this))
+            {
+                return;
+            }
+
+            ValidateSerializeReferenceTypeAndPlaceholder();
+        }
+
+        private void DelayedForceReimport()
+        {
+            if (!EditorUtility.IsPersistent(this) || m_SerializedVersion == kLatestSerializationVersion)
+            {
+                return;
+            }
+
+            AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(this), ImportAssetOptions.ForceUpdate);
+        }
+
+        internal override void ValidateAsset()
+        {
+            // We can't validate if asset isn't written on the disk or have missing type from serialized data.
+            if (!EditorUtility.IsPersistent(this))
+            {
+                return;
+            }
+
+            if (m_SerializedVersion != kLatestSerializationVersion)
+            {
+                m_SerializedVersion = kLatestSerializationVersion;
+                HasOutstandingChanges = true;
+            }
+
+            ValidateSerializeReferenceTypeAndPlaceholder();
+
+            if (ContainsInvalidSerializedReferences())
+            {
+                return;
+            }
+
+            EnsureAssetHasBlackboard();
+            EnsureAuthoringDataIsUpToDate();
+            BehaviorGraphAssetRegistry.Add(this);
+            EnsureCorrectModelTypes();
             EnsureAtLeastOneRoot();
             EnsureStoryVariablesExist();
             EnsureAssetReferenceOnConditions();
             EnsureBlackboardsAreUpToDate();
             EnsureSubgraphsDependencyAreUpToDate();
 
-            base.OnValidate();
+            base.ValidateAsset();
         }
 
         public void AddOrUpdateDependency(BehaviorAuthoringGraph graph)
         {
-            int index = m_SubgraphsInfo.FindIndex((info) => info.AssetID == graph.AssetID);
-            var newData = new SubgraphGraphInfo()
+            var subgraphInfo = m_SubgraphsInfo.Find((info) => info.Asset == graph);
+            if (subgraphInfo == null)
             {
-                AssetID = graph.AssetID,
-                Timestamp = graph.m_VersionTimestamp,
-            };
-
-            if (index == -1)
-            {
-                m_SubgraphsInfo.Add(newData);
+                m_SubgraphsInfo.Add(new() { Asset = graph, Timestamp = graph.m_VersionTimestamp });
             }
-            else if (m_SubgraphsInfo[index].Timestamp != newData.Timestamp)
+            else if (subgraphInfo.Timestamp != graph.m_VersionTimestamp)
             {
-                m_SubgraphsInfo[index] = newData;
+                subgraphInfo.Timestamp = graph.m_VersionTimestamp;
             }
             else
             {
@@ -161,7 +289,7 @@ namespace Unity.Behavior
 
         public void RemoveDependency(BehaviorAuthoringGraph graph)
         {
-            int index = m_SubgraphsInfo.FindIndex((info) => info.AssetID == graph.AssetID);
+            int index = m_SubgraphsInfo.FindIndex((info) => info.Asset == graph);
             if (index != -1)
             {
                 m_SubgraphsInfo.RemoveAt(index);
@@ -171,34 +299,22 @@ namespace Unity.Behavior
 
         public bool IsDependencyUpToDate(BehaviorAuthoringGraph graph)
         {
-            int index = m_SubgraphsInfo.FindIndex((info) => info.AssetID == graph.AssetID);
-            if (index == -1 || HasOutstandingChanges) // if the graph don't have dependency, or if it has pending outstanding changes.
-            {
-                return false;
-            }
-
-            return m_SubgraphsInfo[index].Timestamp == graph.m_VersionTimestamp;
+            var subgraphInfo = m_SubgraphsInfo.Find((info) => info.Asset == graph);
+            return subgraphInfo != null && subgraphInfo.Timestamp == graph.m_VersionTimestamp;
         }
 
         public bool HasSubgraphDependency(BehaviorAuthoringGraph graph)
         {
-            return m_SubgraphsInfo.Any((info) => info.AssetID == graph.AssetID);
+            return m_SubgraphsInfo.Any((info) => info.Asset == graph);
         }
 
         private void EnsureSubgraphsDependencyAreUpToDate()
         {
-            if (BehaviorGraphAssetRegistry.IsRegistryStateValid == false)
-            {
-                // If the registry is still collecting the asset, we might get false positive case of subgraph dependency lose.
-                return;
-            }
-
             bool hasChanged = false;
             for (int i = m_SubgraphsInfo.Count - 1; i >= 0; i--)
             {
                 SubgraphGraphInfo subgraphInfo = m_SubgraphsInfo[i];
-                if (!BehaviorGraphAssetRegistry.TryGetAssetFromId(subgraphInfo.AssetID, out var asset)
-                    || !this.ContainsStaticSubgraphReferenceTo(asset))
+                if (!this.ContainsStaticSubgraphReferenceTo(subgraphInfo.Asset))
                 {
 #if BEHAVIOR_DEBUG_ASSET_IMPORT
                     Debug.Log("Removing an invalid subgraph dependency", this);
@@ -210,7 +326,7 @@ namespace Unity.Behavior
                 }
 
                 // If the asset dependency is no longer up to date, we also need to rebuild the graph.
-                hasChanged |= !IsDependencyUpToDate(asset);
+                hasChanged |= !IsDependencyUpToDate(subgraphInfo.Asset);
             }
 
             if (hasChanged)
@@ -220,23 +336,31 @@ namespace Unity.Behavior
             }
         }
 
-        private void ValidateAssetNames(bool validateMainAsset)
+        private void RefreshSubgraphDependencies()
         {
-#if UNITY_EDITOR
-            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            foreach (var subgraphInfo in m_SubgraphsInfo)
+            {
+                AddOrUpdateDependency(subgraphInfo.Asset);
+            }
+        }
+
+        private void ValidateAssetNames()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode || !EditorUtility.IsPersistent(this))
             {
                 return;
             }
 
             string assetPath = AssetDatabase.GetAssetPath(this);
+            if (string.IsNullOrEmpty(assetPath))
+            {
+                return;
+            }
+
             string assetPathName = System.IO.Path.GetFileNameWithoutExtension(assetPath);
             if (name != assetPathName)
             {
                 name = assetPathName;
-                if (!string.IsNullOrEmpty(assetPath))
-                {
-                    AssetDatabase.SetMainObject(this, assetPath);
-                }
             }
 
             if (m_DebugInfo != null && m_DebugInfo.name != $"{name} Debug Info")
@@ -256,7 +380,12 @@ namespace Unity.Behavior
                     m_MainBlackboardAuthoringAsset.RuntimeBlackboardAsset.name = $"{name} Blackboard";
                 }
             }
-#endif
+
+            if (!AssetDatabase.IsMainAsset(this))
+            {
+                // Ensures that the authoring asset is always the main asset.
+                AssetDatabase.SetMainObject(this, assetPath);
+            }
         }
 
         private void EnsureBlackboardsAreUpToDate()
@@ -271,14 +400,13 @@ namespace Unity.Behavior
                 else
                 {
                     ValidateBlackboardAssetName(blackboard);
-                    blackboard.OnValidate();
+                    blackboard.ValidateAsset();
                 }
             }
         }
 
         private void ValidateBlackboardAssetName(BehaviorBlackboardAuthoringAsset blackboard)
         {
-#if UNITY_EDITOR
             if (AssetDatabase.GetAssetPath(blackboard) != AssetDatabase.GetAssetPath(this))
             {
                 return;
@@ -288,7 +416,6 @@ namespace Unity.Behavior
             {
                 blackboard.name = $"{name} + Blackboard";
             }
-#endif
         }
 
         private void EnsureAtLeastOneRoot()
@@ -307,10 +434,11 @@ namespace Unity.Behavior
             for (int i = Nodes.Count - 1; i >= 0; i--)
             {
                 NodeModel nodeModel = Nodes[i];
-                if (nodeModel is not BehaviorGraphNodeModel node || nodeModel is PlaceholderNodeModel)
+                if (nodeModel is not BehaviorGraphNodeModel node)
                 {
                     continue;
                 }
+
                 NodeInfo info = NodeRegistry.GetInfoFromTypeID(node.NodeTypeID);
                 if (info == null)
                 {
@@ -320,77 +448,6 @@ namespace Unity.Behavior
                 else if (node.NodeType.text != info.Type.AssemblyQualifiedName)
                 {
                     node.NodeType = info.Type;
-                }
-            }
-        }
-
-        private void ReplaceNodeWithPlaceholder(BehaviorGraphNodeModel nodeModel)
-        {
-            if (RuntimeNodeTypeIDToNodeModelInfo.TryGetValue(nodeModel.NodeTypeID, out NodeModelInfo modelInfo) == false)
-            {
-                modelInfo = new NodeModelInfo();
-                modelInfo.Name = "Missing Node";
-                modelInfo.Story = "Missing Node";
-            }
-            modelInfo.RuntimeTypeID = nodeModel.NodeTypeID;
-            PlaceholderNodeModel placeholderNodeModel = new PlaceholderNodeModel(modelInfo);
-            if (typeof(CompositeNodeModel).IsAssignableFrom(nodeModel.GetType()))
-            {
-                placeholderNodeModel.PlaceholderType = PlaceholderNodeModel.PlaceholderNodeType.Composite;
-            }
-            else if (typeof(ModifierNodeModel).IsAssignableFrom(nodeModel.GetType()))
-            {
-                placeholderNodeModel.PlaceholderType = PlaceholderNodeModel.PlaceholderNodeType.Modifier;
-            }
-            else
-            {
-                placeholderNodeModel.PlaceholderType = PlaceholderNodeModel.PlaceholderNodeType.Action;
-            }
-            placeholderNodeModel.m_FieldValues = nodeModel.m_FieldValues;
-            ReplaceNode(nodeModel, placeholderNodeModel);
-        }
-
-        private void ReplaceNode(BehaviorGraphNodeModel oldNodeModel, BehaviorGraphNodeModel newNodeModel)
-        {
-            newNodeModel.ID = oldNodeModel.ID;
-            newNodeModel.Position = oldNodeModel.Position;
-            newNodeModel.Asset = oldNodeModel.Asset;
-
-            int nodeIndex = Nodes.FindIndex(node => node == oldNodeModel);
-            if (nodeIndex != -1)
-            {
-                Nodes[nodeIndex] = newNodeModel;
-            }
-
-            foreach (NodeModel parent in oldNodeModel.Parents)
-            {
-                if (parent is SequenceNodeModel sequence)
-                {
-                    int childIndex = sequence.Nodes.FindIndex(node => node == oldNodeModel);
-                    if (childIndex != -1)
-                    {
-                        sequence.Nodes[childIndex] = newNodeModel;
-                    }
-                }
-                newNodeModel.Parents.Add(parent);
-            }
-
-            newNodeModel.PortModels.Clear();
-            foreach (PortModel portModel in oldNodeModel.AllPortModels)
-            {
-                portModel.NodeModel = newNodeModel;
-                newNodeModel.PortModels.Add(portModel);
-
-                if (portModel.IsFloating)
-                {
-                    foreach (var connection in portModel.Connections)
-                    {
-                        if (connection.NodeModel is FloatingPortNodeModel floatingPortNodeModel)
-                        {
-                            // Added years ago. Need to investigate if there is something to finish here.
-                            // Otherwise it is deadcode that needs to be removed.
-                        }
-                    }
                 }
             }
         }
@@ -436,9 +493,8 @@ namespace Unity.Behavior
             }
         }
 
-#if UNITY_EDITOR
         [OnOpenAsset(1)]
-        public static bool step1(int instanceID, int line)
+        public static bool OpenAsset(int instanceID, int line)
         {
             BehaviorAuthoringGraph asset = EditorUtility.InstanceIDToObject(instanceID) as BehaviorAuthoringGraph;
             if (asset == null)
@@ -460,45 +516,25 @@ namespace Unity.Behavior
             BehaviorWindowDelegate.Open(asset);
             return true; // we did not handle the open
         }
-#endif
+
 
         public static BehaviorGraph GetOrCreateGraph(BehaviorAuthoringGraph assetObject)
         {
-#if !UNITY_EDITOR
-            return CreateInstance<BehaviorGraph>();
-#else
             string assetPath = AssetDatabase.GetAssetPath(assetObject);
             if (!EditorUtility.IsPersistent(assetObject) || string.IsNullOrEmpty(assetPath))
             {
                 return null;
             }
 
-            BehaviorGraph graph = AssetDatabase.LoadAllAssetsAtPath(assetPath)
-                .FirstOrDefault(asset => asset is BehaviorGraph) as BehaviorGraph;
-            if (graph != null)
+            if (!assetObject.HasRuntimeGraph)
             {
-                if (graph != assetObject.m_RuntimeGraph)
-                {
-                    assetObject.m_RuntimeGraph = graph;
-                    assetObject.OnValidate();
-                    AssetDatabase.SaveAssetIfDirty(assetObject);
-                }
-
-                return graph;
+                assetObject.EnsureAuthoringDataIsUpToDate();
             }
 
-            graph = CreateInstance<BehaviorGraph>();
-            graph.name = assetObject.name;
-            assetObject.m_RuntimeGraph = graph;
-            AssetDatabase.AddObjectToAsset(graph, assetObject);
-            assetObject.OnValidate(); // Can probably be remove in the future. 
-            AssetDatabase.SaveAssetIfDirty(assetObject);
-            return graph;
-#endif
+            return assetObject.m_RuntimeGraph;
         }
 
-#if UNITY_EDITOR
-        public BehaviorGraphDebugInfo GetOrCreateGraphDebugInfo(BehaviorAuthoringGraph assetObject)
+        public static BehaviorGraphDebugInfo GetOrCreateGraphDebugInfo(BehaviorAuthoringGraph assetObject)
         {
             string assetPath = AssetDatabase.GetAssetPath(assetObject);
             if (!EditorUtility.IsPersistent(assetObject) || string.IsNullOrEmpty(assetPath))
@@ -509,18 +545,21 @@ namespace Unity.Behavior
             BehaviorGraph graph = GetOrCreateGraph(assetObject);
             string graphPath = AssetDatabase.GetAssetPath(graph);
             BehaviorGraphDebugInfo debugInfo = AssetDatabase.LoadAssetAtPath<BehaviorGraphDebugInfo>(graphPath);
-            if (!debugInfo)
+            if (debugInfo == null)
             {
                 debugInfo = CreateInstance<BehaviorGraphDebugInfo>();
                 debugInfo.name = assetObject.name + " Debug Info";
                 AssetDatabase.AddObjectToAsset(debugInfo, graph);
-                EditorUtility.SetDirty(assetObject);
-                AssetDatabase.SaveAssetIfDirty(assetObject);
+                assetObject.SetAssetDirty(false);
             }
-            assetObject.m_DebugInfo = debugInfo;
+            else if (assetObject.DebugInfo != debugInfo)
+            {
+                assetObject.m_DebugInfo = debugInfo;
+                assetObject.SetAssetDirty(false);
+            }
+
             return debugInfo;
         }
-#endif
 
         /// <inheritdoc cref="OnBeforeSerialize"/>
         public void OnBeforeSerialize()
@@ -542,49 +581,160 @@ namespace Unity.Behavior
 
         private void CreateNodeModelsInfoCache()
         {
-            var oldNodeModelsInfos = m_NodeModelsInfo;
+            AssetLogger.Reset();
+            var oldNodeModelsInfos = new List<NodeModelInfo>(m_NodeModelsInfo);
+            m_NodeModelsInfo.Clear();
             m_RuntimeNodeTypeIDToNodeModelInfo ??= new Dictionary<SerializableGUID, NodeModelInfo>();
-            m_NodeModelsInfo = new List<NodeModelInfo>();
             m_RuntimeNodeTypeIDToNodeModelInfo.Clear();
+
             foreach (NodeModel node in Nodes)
             {
                 if (node is not BehaviorGraphNodeModel behaviorNode)
                 {
                     continue;
                 }
+
                 NodeInfo nodeInfo = NodeRegistry.GetInfoFromTypeID(behaviorNode.NodeTypeID);
-                if (nodeInfo == null || m_RuntimeNodeTypeIDToNodeModelInfo.ContainsKey(nodeInfo.TypeID))
+                if (nodeInfo == null || m_RuntimeNodeTypeIDToNodeModelInfo.ContainsKey(behaviorNode.NodeTypeID))
+                {
+                    // Add previously saved node model infos for placeholder if they're missing in the current collection.
+                    CreatePlaceholderNodeIfNeeded(behaviorNode);
+                    continue;
+                }
+
+                if (CheckManagedReferenceForPlaceholderNode(behaviorNode, nodeInfo))
                 {
                     continue;
                 }
-                NodeModelInfo nodeModelInfo = new NodeModelInfo
+
+                CreateNode(nodeInfo);
+            }
+
+            // If changed found, override serialized data.
+            if (m_NodeModelsInfo.Count != oldNodeModelsInfos.Count)
+            {
+                DirtyAndLogResult();
+            }
+            else
+            {
+                foreach (NodeModelInfo nodeModelInfo in m_NodeModelsInfo)
                 {
+                    // If any entry is different, then update the last serialized timestamp.
+                    if (!oldNodeModelsInfos.Contains(nodeModelInfo))
+                    {
+                        DirtyAndLogResult();
+                        break;
+                    }
+                }
+            }
+
+            void DirtyAndLogResult()
+            {
+                SetAssetDirty(false);
+                AssetLogger.LogResults(this, "automatically updated nodes with missing type references");
+            }
+
+            void CreateNode(NodeInfo nodeInfo)
+            {
+                var nodeModelInfo = new NodeModelInfo()
+                {
+                    IsPlaceholder = false,
                     Name = nodeInfo.Name,
                     Story = nodeInfo.Story,
+                    RuntimeTypeString = nodeInfo.SerializableType.ToString(),
                     RuntimeTypeID = nodeInfo.TypeID,
                     Variables = nodeInfo.Variables.Select(variable => new VariableInfo
                     {
                         Name = variable.Name,
-                        Type = (typeof(BlackboardVariable).IsAssignableFrom(variable.Type.Type) && variable.Type.Type.IsGenericType) ? variable.Type.Type.GenericTypeArguments[0] : variable.Type
+                        Type = (typeof(BlackboardVariable).IsAssignableFrom(variable.Type.Type) && variable.Type.Type.IsGenericType)
+                            ? variable.Type.Type.GenericTypeArguments[0] : variable.Type
                     }).ToList(),
                     NamedChildren = nodeInfo.NamedChildren
                 };
                 m_RuntimeNodeTypeIDToNodeModelInfo[nodeInfo.TypeID] = nodeModelInfo;
                 m_NodeModelsInfo.Add(nodeModelInfo);
+
+                var oldNodeModelInfo = oldNodeModelsInfos.Find(node => node.RuntimeTypeID == nodeModelInfo.RuntimeTypeID);
+                if (oldNodeModelInfo != null && oldNodeModelInfo.IsPlaceholder)
+                {
+                    AssetLogger.RecordNodeResolution(nodeModelInfo.Name, nodeModelInfo.RuntimeTypeString);
+                }
             }
 
-            // Add previously saved node model infos if they're missing in the current collection.
-            if (oldNodeModelsInfos != null)
+            void CreatePlaceholderNodeIfNeeded(BehaviorGraphNodeModel behaviorNode)
             {
-                foreach (NodeModelInfo nodeInfo in oldNodeModelsInfos)
+                foreach (NodeModelInfo oldNodeModelInfo in oldNodeModelsInfos)
                 {
-                    if (m_RuntimeNodeTypeIDToNodeModelInfo.ContainsKey(nodeInfo.RuntimeTypeID))
+                    var nodeTypeID = oldNodeModelInfo.RuntimeTypeID;
+                    if (nodeTypeID == behaviorNode.NodeTypeID && !m_RuntimeNodeTypeIDToNodeModelInfo.ContainsKey(nodeTypeID))
+                    {
+                        var newNodeModelInfo = new NodeModelInfo(oldNodeModelInfo);
+                        newNodeModelInfo.IsPlaceholder = true;
+                        newNodeModelInfo.RuntimeTypeString = oldNodeModelInfo.RuntimeTypeString;
+                        m_RuntimeNodeTypeIDToNodeModelInfo.Add(nodeTypeID, newNodeModelInfo);
+                        m_NodeModelsInfo.Add(newNodeModelInfo);
+
+                        // Only log if new placeholder with previously existing type - skip legacy node model.
+                        if (oldNodeModelInfo.IsPlaceholder == false && !string.IsNullOrEmpty(oldNodeModelInfo.RuntimeTypeString))
+                        {
+                            AssetLogger.RecordNodeAsPlaceholder(newNodeModelInfo.Name, oldNodeModelInfo.RuntimeTypeString);
+                        }
+                        break;
+                    }
+                }
+            }
+
+            bool CheckManagedReferenceForPlaceholderNode(BehaviorGraphNodeModel behaviorNode, NodeInfo newModelInfo)
+            {
+                foreach (NodeModelInfo oldModelInfo in oldNodeModelsInfos)
+                {
+                    if (oldModelInfo.RuntimeTypeID != newModelInfo.TypeID)
                     {
                         continue;
                     }
-                    m_RuntimeNodeTypeIDToNodeModelInfo.Add(nodeInfo.RuntimeTypeID, nodeInfo);
-                    m_NodeModelsInfo.Add(nodeInfo);
+
+                    // If the NodeDescription id is the same, but the type was migrated,
+                    // create placeholder node to force runtime graph rebuild.
+                    var newTypeString = newModelInfo.SerializableType.ToString();
+                    var oldTypeString = oldModelInfo.RuntimeTypeString;
+                    if (!string.IsNullOrEmpty(oldTypeString) && oldTypeString != newTypeString)
+                    {
+                        var newNodeModelInfo = new NodeModelInfo(oldModelInfo);
+                        newNodeModelInfo.IsPlaceholder = true;
+                        newNodeModelInfo.RuntimeTypeString = newTypeString;
+                        m_RuntimeNodeTypeIDToNodeModelInfo.Add(newModelInfo.TypeID, newNodeModelInfo);
+                        m_NodeModelsInfo.Add(newNodeModelInfo);
+
+                        AssetLogger.RecordNodeMigration(newNodeModelInfo.Name, oldTypeString, newTypeString);
+                        return true;
+                    }
                 }
+
+                return false;
+            }
+        }
+
+        private void CheckNodeModelInfoForPlaceholder()
+        {
+            AssetLogger.Reset();
+            bool foundPlaceholder = false;
+
+            foreach (var nodeModelInfo in m_NodeModelsInfo)
+            {
+                NodeInfo latestNodeInfo = NodeRegistry.GetInfoFromTypeID(nodeModelInfo.RuntimeTypeID);
+
+                if (latestNodeInfo == null)
+                {
+                    foundPlaceholder = true;
+                    nodeModelInfo.IsPlaceholder = true;
+                    AssetLogger.RecordNodeAsPlaceholder(nodeModelInfo.Name, nodeModelInfo.RuntimeTypeString);
+                }
+            }
+
+            if (foundPlaceholder)
+            {
+                SetAssetDirty(false);
+                AssetLogger.LogResults(this, "automatically updated node(s) with missing type references");
             }
         }
 
@@ -607,7 +757,6 @@ namespace Unity.Behavior
         internal override void EnsureAssetHasBlackboard()
         {
             string blackboardName = name + " Blackboard";
-#if UNITY_EDITOR
             string path = AssetDatabase.GetAssetPath(this);
             BlackboardAsset existingBlackboard = AssetDatabase.LoadAllAssetsAtPath(path).FirstOrDefault(asset => asset is BlackboardAsset) as BlackboardAsset;
             BehaviorBlackboardAuthoringAsset blackboardAuthoring = existingBlackboard as BehaviorBlackboardAuthoringAsset;
@@ -655,7 +804,6 @@ namespace Unity.Behavior
             AssetDatabase.AddObjectToAsset(Blackboard, this);
             blackboardAuthoring.BuildRuntimeBlackboard();
             AssetDatabase.SaveAssetIfDirty(this);
-#endif
         }
 
         public override string ToString() => name;
@@ -673,26 +821,35 @@ namespace Unity.Behavior
         /// <returns>The up-to-date BehaviorGraph.</returns>
         public BehaviorGraph BuildRuntimeGraph(bool forceRebuild = true)
         {
+            if (ContainsInvalidSerializedReferences())
+            {
+                Debug.LogWarning($"Graph asset {name} has missing types in managed references. Cannot build runtime graph.", this);
+                return null;
+            }
+
+            if (HasPlaceholderNode())
+            {
+                // Fallback in case the graph had missing types in both BlackboardVariable that are now resolved
+                // but still has pending placeholder node type. As the missing node type couldn't yet be stripped
+                // out of the runtime graph because the graph could not be rebuilt,
+                // we refresh the node models cache a last time before the rebuild.
+                CreateNodeModelsInfoCache();
+            }
             var runtimeGraph = GetOrCreateGraph(this);
             if (runtimeGraph == null)
             {
                 return null;
             }
 
-            // Some situations might require a full rebuild (new root, outdated subgraph dependency)
-            OnValidate();
-
             if (runtimeGraph.RootGraph == null || HasOutstandingChanges || forceRebuild)
             {
 #if BEHAVIOR_DEBUG_ASSET_IMPORT
                 Debug.Log($"GraphAsset[<b>{name}</b>].BuildRuntimeGraph", this);
 #endif
-                runtimeGraph.Graphs.Clear();
-                var graphAssetProcessor = new GraphAssetProcessor(this, runtimeGraph);
+                var graphAssetProcessor = GraphAssetProcessor.CreateInstanceForRebuild(this, runtimeGraph);
                 graphAssetProcessor.ProcessGraph();
                 SetDirtyAndSyncRuntimeGraphTimestamp(outstandingChange: true);
             }
-#if UNITY_EDITOR
             else if (EditorUtility.IsDirty(this))
             {
 #if BEHAVIOR_DEBUG_ASSET_IMPORT
@@ -702,39 +859,45 @@ namespace Unity.Behavior
                 // This happens when only serialized field of cosmetic data are changed (like node position).
                 SetDirtyAndSyncRuntimeGraphTimestamp(outstandingChange: false);
             }
-#endif
 
+            m_BlackboardMissingManagedRef = false;
+            m_GraphMissingManagedRef = false;
+            RefreshSubgraphDependencies();
             return runtimeGraph;
         }
 
         private void SetDirtyAndSyncRuntimeGraphTimestamp(bool outstandingChange)
         {
-            SetAssetDirty(outstandingChange); // Set dirty update the timestamp of the main asset.
-#if UNITY_EDITOR // We really need to make Authoring assembly editor only to be able to break free it.
-            m_RuntimeGraph.RootGraph.VersionTimestamp = VersionTimestamp; // So we need to sync it again here.
-#endif
+            SetAssetDirty(outstandingChange); // Set dirty update the timestamp of the main asset and dirty.
+            m_RuntimeGraph.RootGraph.VersionTimestamp = VersionTimestamp;
         }
 
-        public override void SaveAsset()
+        private void SyncRuntimeGraphTimestamp()
         {
-            var authoringBB = Blackboard as BehaviorBlackboardAuthoringAsset;
-            if (authoringBB != null)
+            m_RuntimeGraph.RootGraph.VersionTimestamp = VersionTimestamp;
+            EditorUtility.SetDirty(this); // set dirty to ensure the change is written on the disk at the next import.
+        }
+
+        public bool ContainsInvalidSerializedReferences()
+        {
+            foreach (var subgraphInfo in m_SubgraphsInfo)
             {
-                bool isBlackboardDirty = !authoringBB.IsAssetVersionUpToDate();
-                if (isBlackboardDirty)
+                if (subgraphInfo.Asset != null && subgraphInfo.Asset.ContainsInvalidSerializedReferences())
                 {
-                    authoringBB.BuildRuntimeBlackboard();
+                    return true;
                 }
-                
-                // Always rebuild runtime data if needed.
-                BuildRuntimeGraph(forceRebuild: isBlackboardDirty);
-                authoringBB.SaveAsset();
             }
 
-            base.SaveAsset();
+            return SerializationUtility.HasManagedReferencesWithMissingTypes(this)
+                || SerializationUtility.HasManagedReferencesWithMissingTypes(m_RuntimeGraph)
+                || SerializationUtility.HasManagedReferencesWithMissingTypes(Blackboard);
         }
 
-#if UNITY_EDITOR
+        /// <summary>
+        /// Expose graph framework API to BehaviorAssetPostProcessor.
+        /// </summary>
+        internal bool NeedRebuild => HasOutstandingChanges;
+
         /// <summary>
         /// Custom version of SaveAsset made for BehaviorAssetPostProcessor.
         /// This method manually rebuilds without saving the asset. Also rebuild the embedded asset if needed.
@@ -746,6 +909,11 @@ namespace Unity.Behavior
         /// </remark>
         internal void RebuildGraphAndBlackboardRuntimeData()
         {
+            if (ContainsInvalidSerializedReferences())
+            {
+                return;
+            }
+
             if (Blackboard == null)
             {
                 EnsureAssetHasBlackboard();
@@ -753,12 +921,14 @@ namespace Unity.Behavior
 
             if (Blackboard is BehaviorBlackboardAuthoringAsset authoringBB)
             {
-                if (!authoringBB.IsAssetVersionUpToDate())
+                // Rebuild embedded blackboard if needed
+                if (authoringBB.IsAssetVersionUpToDate())
                 {
                     authoringBB.BuildRuntimeBlackboard();
                 }
 
-                BuildRuntimeGraph();
+                // Force rebuild as this method is only called if it needs it.
+                BuildRuntimeGraph(forceRebuild: true);
                 authoringBB.HasOutstandingChanges = false;
                 HasOutstandingChanges = false;
             }
@@ -771,43 +941,45 @@ namespace Unity.Behavior
         /// </summary>
         /// <param name="assetObject"></param>
         /// <returns></returns>
-        public void EnsureAuthoringRuntimeGraphIsUpToDate()
+        public void EnsureAuthoringDataIsUpToDate()
         {
-            if (!EditorUtility.IsPersistent(this))
-            {
-                return;
-            }
-
             string assetPath = AssetDatabase.GetAssetPath(this);
             if (string.IsNullOrEmpty(assetPath))
             {
                 return;
             }
 
+            // AssetID is asset GUID.
+            string guid = AssetDatabase.AssetPathToGUID(assetPath);
+            AssetID = new SerializableGUID(guid);
+
+            bool needSaving = true;
+            // LoadAssetAtPath<T> doesn't work in some situation (Duplicated asset).
             BehaviorGraph graph = AssetDatabase.LoadAllAssetsAtPath(assetPath)
                 .FirstOrDefault(asset => asset is BehaviorGraph) as BehaviorGraph;
             if (graph != null)
             {
-                // Newly created graph soon to be generated.
-                if (m_RuntimeGraph == null || m_RuntimeGraph.RootGraph == null)
+                // The graph was just created and still need rebuilding. Skip for now.
+                if (this.m_RuntimeGraph != null && this.m_RuntimeGraph.RootGraph == null)
                 {
                     return;
                 }
 
-                // This usually happen when the asset is duplicated.
-                if (graph != this.m_RuntimeGraph)
+                // Usually happens when the asset is duplicated.
+                if (graph != this.m_RuntimeGraph || m_RuntimeGraph.RootGraph.AuthoringAssetID != AssetID)
                 {
                     m_RuntimeGraph = graph;
-                }
-
-                if (m_RuntimeGraph.RootGraph.AuthoringAssetID != AssetID)
-                {
                     m_RuntimeGraph.RootGraph.AuthoringAssetID = AssetID;
-                }
-
-                if (m_RuntimeGraph.RootGraph.VersionTimestamp != VersionTimestamp)
-                {
                     SetDirtyAndSyncRuntimeGraphTimestamp(outstandingChange: false);
+                }
+                else if (m_RuntimeGraph.RootGraph.VersionTimestamp != VersionTimestamp)
+                {
+                    SyncRuntimeGraphTimestamp();
+                }
+                else
+                {
+                    // If no change, no need to save.
+                    needSaving = false;
                 }
             }
             else if (m_RuntimeGraph != null)
@@ -816,7 +988,228 @@ namespace Unity.Behavior
                 m_RuntimeGraph = null;
                 SetAssetDirty(true);
             }
+            else
+            {
+                // Asset is still being created - create now.
+                graph = CreateInstance<BehaviorGraph>();
+                graph.name = name;
+                m_RuntimeGraph = graph;
+                AssetDatabase.AddObjectToAsset(graph, this);
+                SetAssetDirty(true);
+            }
+
+            BehaviorGraphDebugInfo debugInfo = AssetDatabase.LoadAssetAtPath<BehaviorGraphDebugInfo>(assetPath);
+            if (debugInfo == null)
+            {
+                debugInfo = CreateInstance<BehaviorGraphDebugInfo>();
+                debugInfo.name = name + " Debug Info";
+                AssetDatabase.AddObjectToAsset(debugInfo, this);
+                EditorUtility.SetDirty(this);
+                needSaving = true; // Ensure new asset is saved.
+            }
+            else if (m_DebugInfo != debugInfo)
+            {
+                // In case of duplication, ensure the asset is poiting toward the right debug
+                m_DebugInfo = debugInfo;
+            }
+
+            if (needSaving)
+            {
+                // Saving will re-import the asset and validate.
+                SaveAsset();
+            }
         }
-#endif
+
+        /// <summary>
+        /// Check if there are managed reference with missing type or placeholder data in the runtime graph.
+        /// If a state mismatched, queue the asset for further validation.
+        /// </summary>
+        internal void ValidateSerializeReferenceTypeAndPlaceholder()
+        {
+            // If not written on disk or have pending changes, skip.
+            if (EditorApplication.isCompiling || EditorApplication.isUpdating || !EditorUtility.IsPersistent(this))
+            {
+                return;
+            }
+
+            var runtimeGraph = GetOrCreateGraph(this);
+            if (runtimeGraph == null)
+            {
+                return;
+            }
+
+            bool hadPlaceholder = HasPlaceholderNode();
+            long previousTimestamp = m_VersionTimestamp;
+            bool isGraphMissingManagedRef = SerializationUtility.HasManagedReferencesWithMissingTypes(m_RuntimeGraph);
+            bool isBlackboardMissingManagedRef = SerializationUtility.HasManagedReferencesWithMissingTypes(Blackboard);
+            // If no placeholder but missing type in runtime graph - new placeholder
+            // If placeholder but no missing type in runtime graph - resolved
+            // if placeholder and missing type in runtime - potential new placeholder or type migration
+            if (isGraphMissingManagedRef || hadPlaceholder)
+            {
+                CreateNodeModelsInfoCache();
+            }
+            else
+            {
+                CheckNodeModelInfoForPlaceholder();
+            }
+
+            AssetLogger.Reset();
+            // Graph (Runtime)
+            bool stillHasPlaceholder = HasPlaceholderNode();
+            if (stillHasPlaceholder)
+            {
+                if (previousTimestamp != m_VersionTimestamp || runtimeGraph.ContainsPlaceholderNodes())
+                {
+                    s_GraphPathToValidate.Add(AssetDatabase.GetAssetPath(this));
+                }
+            }
+            else if (runtimeGraph.CompiledWithPlaceholderNode)
+            {
+                // If authoring graph no longer have placeholder but was compiled with them
+                s_GraphPathToValidate.Add(AssetDatabase.GetAssetPath(this));
+            }
+            else if (m_GraphMissingManagedRef && !isGraphMissingManagedRef)
+            {
+                RecordResolutionAndSetDirty(runtimeGraph);
+            }
+
+            // Blackboard
+            if (m_BlackboardMissingManagedRef && !isBlackboardMissingManagedRef)
+            {
+                RecordResolutionAndSetDirty(Blackboard);
+            }
+
+            AssetLogger.LogResults(this, "resolved missing types in managed references");
+
+            // If first time there is no placeholder but missing type in runtime graph
+            // OR If first time there is missing type in blackboard
+            // OR if authoring graph has missing type
+            if ((!stillHasPlaceholder && isGraphMissingManagedRef)
+                || isBlackboardMissingManagedRef
+                || SerializationUtility.HasManagedReferencesWithMissingTypes(this))
+            {
+                AssetLogger.LogAssetManagedReferenceError(this);
+            }
+
+            m_GraphMissingManagedRef = isGraphMissingManagedRef;
+            m_BlackboardMissingManagedRef = isBlackboardMissingManagedRef;
+
+            void RecordResolutionAndSetDirty(ScriptableObject asset)
+            {
+                AssetLogger.RecordAssetResolution(asset);
+                s_GraphPathToValidate.Add(AssetDatabase.GetAssetPath(this));
+            }
+        }
+
+        // Internal for testing purposes.
+        internal bool HasPlaceholderNode()
+        {
+            foreach (var info in m_NodeModelsInfo)
+            {
+                if (info.IsPlaceholder)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Clear managed reference of placeholder node from runtime graph and set asset dirty with outstanding change.
+        /// </summary>
+        /// <param name="reimport">Set to false when doing batch operation (AssetPostProcessor)</param>
+        internal static void CheckAndValidatePlaceholdersInGraphAssets(bool reimport = true)
+        {
+            if (s_GraphPathToValidate.Count == 0 || s_IsValidatingPlaceholderGraphAsset)
+            {
+                return;
+            }
+
+            s_IsValidatingPlaceholderGraphAsset = true;
+            foreach (var graphPath in s_GraphPathToValidate)
+            {
+                var graph = AssetDatabase.LoadAssetAtPath<BehaviorAuthoringGraph>(graphPath);
+                var runtimeGraph = GetOrCreateGraph(graph);
+                if (runtimeGraph == null)
+                {
+                    continue;
+                }
+
+                // If authoring graph has placeholder, ensure runtime graph don't reference them
+                var managedRefs = SerializationUtility.GetManagedReferencesWithMissingTypes(runtimeGraph);
+                foreach (var managedRef in managedRefs)
+                {
+                    bool managedRefCleared = false;
+                    foreach (var modelInfo in graph.NodeModelsInfo)
+                    {
+                        if (!modelInfo.IsPlaceholder)
+                        {
+                            continue;
+                        }
+
+                        foreach (NodeModel node in graph.Nodes)
+                        {
+                            if (node is not BehaviorGraphNodeModel behaviorNode)
+                            {
+                                continue;
+                            }
+
+                            // Find the exact node model to retrive the serializableType
+                            if (behaviorNode.NodeTypeID == modelInfo.RuntimeTypeID
+                                && behaviorNode.NodeType.text.Contains(managedRef.className))
+                            {
+                                SerializationUtility.ClearManagedReferenceWithMissingType(runtimeGraph, managedRef.referenceId);
+                                managedRefCleared = true;
+                                break;
+                            }
+                        }
+
+                        if (managedRefCleared)
+                        {
+                            break;
+                        }
+                    }
+                }
+
+                // Refresh now has we might have cleared out all managed ref with missing type.
+                graph.m_GraphMissingManagedRef = SerializationUtility.HasManagedReferencesWithMissingTypes(runtimeGraph);
+                // If graph was queue to be validated here, it means they need rebuild anyway.
+                graph.SetAssetDirty(true);
+            }
+
+            if (reimport)
+            {
+                EditorApplication.delayCall += DelayedReimport;
+            }
+            else
+            {
+                s_GraphPathToValidate.Clear();
+                s_IsValidatingPlaceholderGraphAsset = false;
+            }
+        }
+
+        [UnityEditor.InitializeOnLoadMethod]
+        private static void AssemblyReloadValidation()
+        {
+            AssemblyReloadEvents.afterAssemblyReload += () =>
+            {
+                CheckAndValidatePlaceholdersInGraphAssets();
+            };
+        }
+
+        private static void DelayedReimport()
+        {
+            EditorApplication.delayCall -= DelayedReimport;
+
+            foreach (var graphPath in s_GraphPathToValidate)
+            {
+                AssetDatabase.ImportAsset(graphPath);
+            }
+
+            s_GraphPathToValidate.Clear();
+            s_IsValidatingPlaceholderGraphAsset = false;
+        }
     }
 }

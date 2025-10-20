@@ -14,64 +14,63 @@ namespace Unity.Behavior
     /// Blackboard asset type used by Unity Behavior. The asset contains a collection of Blackboard variables.
     /// </summary>
     [Serializable]
-#if UNITY_EDITOR
     [CreateAssetMenu(fileName = "Blackboard", menuName = "Behavior/Blackboard")]
-#endif
-    internal class BehaviorBlackboardAuthoringAsset : BlackboardAsset
+    internal class BehaviorBlackboardAuthoringAsset : BlackboardAsset, ISerializationValidator
     {
         [SerializeField]
-        private SerializableCommandBuffer m_CommandBuffer = new SerializableCommandBuffer();        
+        private SerializableCommandBuffer m_CommandBuffer = new SerializableCommandBuffer();
         public SerializableCommandBuffer CommandBuffer => m_CommandBuffer;
-            
-        [SerializeReference]
+
+        [SerializeField]
         private RuntimeBlackboardAsset m_RuntimeBlackboardAsset;
-        
+
         internal RuntimeBlackboardAsset RuntimeBlackboardAsset => m_RuntimeBlackboardAsset;
-        
+
         private void OnEnable()
         {
-#if UNITY_EDITOR
-            bool HasGraphInPath(string path)
-            {
-                var objects = AssetDatabase.LoadAllAssetsAtPath(path);
-                foreach (var embeddedObject in objects)
-                {
-                    if (typeof(GraphAsset).IsAssignableFrom(embeddedObject.GetType()))
-                    {
-                        return true;
-                    }
-                }
-
-                return false;
-            }
-            var assetPath = AssetDatabase.GetAssetPath(this);
-            if (!string.IsNullOrEmpty(assetPath) && !EditorApplication.isPlayingOrWillChangePlaymode && !HasGraphInPath(assetPath))
-            {
-                string assetPathName =
-                    System.IO.Path.GetFileNameWithoutExtension(assetPath);
-                if (name != assetPathName)
-                {
-                    name = assetPathName;
-                    AssetDatabase.SetMainObject(this, assetPath);
-                }
-            }
-            if (m_RuntimeBlackboardAsset != null && m_RuntimeBlackboardAsset.name != name)
-            {
-                m_RuntimeBlackboardAsset.name = name;
-            }
-#endif
             if (m_RuntimeBlackboardAsset == null)
             {
                 BuildRuntimeBlackboard();
             }
+            else if (m_RuntimeBlackboardAsset.name != name)
+            {
+                m_RuntimeBlackboardAsset.name = name; // dirty the asset
+            }
         }
 
-        internal override void OnValidate()
+        private void OnValidate()
         {
-            base.OnValidate();
+            if (EditorApplication.isCompiling || !EditorUtility.IsPersistent(this)
+                || !ContainsInvalidSerializedReferences())
+            {
+                return;
+            }
+
+            // if a persistent standalone blackboard asset has missing type, warn user.
+            var assetPath = AssetDatabase.GetAssetPath(this);
+            if (!AssetDatabase.LoadAssetAtPath<GraphAsset>(assetPath))
+            {
+                AssetLogger.LogAssetManagedReferenceError(this);
+            }
         }
 
-#if UNITY_EDITOR
+        internal override void ValidateAsset()
+        {
+            // We can't validate if asset isn't written on the disk or have missing type from serialized data.
+            if (!EditorUtility.IsPersistent(this) || ContainsInvalidSerializedReferences())
+            {
+                return;
+            }
+
+            var assetPath = AssetDatabase.GetAssetPath(this);
+            // If this is a standalone Blackboard asset, make sure it's the main object.
+            if (!AssetDatabase.LoadAssetAtPath<GraphAsset>(assetPath) && !AssetDatabase.IsMainAsset(this))
+            {
+                AssetDatabase.SetMainObject(this, assetPath);
+            }
+            base.ValidateAsset();
+        }
+
         [OnOpenAsset(1)]
         public static bool OnOpenBlackboardAsset(int instanceID, int line)
         {
@@ -81,14 +80,12 @@ namespace Unity.Behavior
                 return false;
             }
             BlackboardWindowDelegate.Open(asset);
-            return true; 
+            return true;
         }
-#endif
-        
+
         private static RuntimeBlackboardAsset GetOrCreateBlackboardAsset(BehaviorBlackboardAuthoringAsset assetObject)
         {
             RuntimeBlackboardAsset reference;
-#if UNITY_EDITOR
             string assetPath = AssetDatabase.GetAssetPath(assetObject);
             if (!EditorUtility.IsPersistent(assetObject) || string.IsNullOrEmpty(assetPath))
             {
@@ -101,41 +98,31 @@ namespace Unity.Behavior
             {
                 return reference;
             }
-#endif
 
             reference = CreateInstance<RuntimeBlackboardAsset>();
             reference.name = assetObject.name;
             reference.AssetID = assetObject.AssetID;
-            
-#if UNITY_EDITOR
+
             AssetDatabase.AddObjectToAsset(reference, assetObject);
             EditorUtility.SetDirty(assetObject);
             AssetDatabase.SaveAssetIfDirty(assetObject);
-#endif
             return reference;
-        }
-
-        public override void SaveAsset()
-        {
-            if (HasOutstandingChanges)
-            {
-                BuildRuntimeBlackboard();
-            }
-
-            base.SaveAsset();
         }
 
         public bool IsAssetVersionUpToDate()
         {
             return !HasOutstandingChanges
-#if UNITY_EDITOR
                 && !EditorUtility.IsDirty(this); // Only efficient way to notice an undo action on Blackboard.
-#endif
-                ;
         }
 
         public RuntimeBlackboardAsset BuildRuntimeBlackboard()
         {
+            if (ContainsInvalidSerializedReferences())
+            {
+                Debug.LogWarning($"Blackboard asset {name} has missing types in managed references. Cannot build runtime blackboard.", this);
+                return null;
+            }
+
             m_RuntimeBlackboardAsset = GetOrCreateBlackboardAsset(this);
             if (m_RuntimeBlackboardAsset == null)
             {
@@ -149,7 +136,7 @@ namespace Unity.Behavior
             }
 
             if (m_RuntimeBlackboardAsset.VersionTimestamp == VersionTimestamp)
-            { 
+            {
                 return m_RuntimeBlackboardAsset;
             }
 
@@ -168,14 +155,25 @@ namespace Unity.Behavior
             m_RuntimeBlackboardAsset.m_SharedBlackboardVariableGuidHashset.Clear();
             foreach (VariableModel variable in Variables)
             {
-                var blackboardVariable = m_RuntimeBlackboardAsset.Blackboard.Variables.Find(obj => obj.GUID == variable.ID);
+                if (variable == null)
+                {
+                    continue;
+                }
+
+                var blackboardVariable = m_RuntimeBlackboardAsset.Blackboard.Variables.Find(obj =>
+                {
+                    // If missing type, variable will appear null.
+                    if (obj == null) return false;
+                    return obj.GUID == variable.ID;
+                });
+
                 if (blackboardVariable != null)
                 {
                     if (blackboardVariable.Name != variable.Name)
                     {
                         blackboardVariable.Name = variable.Name;
                     }
-                    
+
                     // No need to do complex check as this is done when the runtime variable is created.
                     if (blackboardVariable.ObjectValue != variable.ObjectValue)
                     {
@@ -195,7 +193,7 @@ namespace Unity.Behavior
                 blackboardVariable = BlackboardVariable.CreateForType(variable.Type);
                 blackboardVariable.Name = variable.Name;
                 blackboardVariable.GUID = variable.ID;
-                
+
                 if (typeof(UnityEngine.Object).IsAssignableFrom(variable.Type))
                 {
                     UnityEngine.Object unityObject = variable.ObjectValue as UnityEngine.Object;
@@ -213,7 +211,7 @@ namespace Unity.Behavior
                 {
                     m_RuntimeBlackboardAsset.m_SharedBlackboardVariableGuidHashset.Add(variable.ID);
                 }
-                
+
                 m_RuntimeBlackboardAsset.Blackboard.m_Variables.Add(blackboardVariable);
             }
 
@@ -227,19 +225,29 @@ namespace Unity.Behavior
             Dictionary<SerializableGUID, int> desiredPositions = new(Variables.Count);
             for (int i = 0; i < Variables.Count; i++)
             {
+                if (Variables[i] == null)
+                {
+                    continue;
+                }
+
                 desiredPositions[Variables[i].ID] = i;
             }
 
-            m_RuntimeBlackboardAsset.Blackboard.m_Variables.Sort((a, b) => {
+            m_RuntimeBlackboardAsset.Blackboard.m_Variables.Sort((a, b) =>
+            {
                 int posA = desiredPositions[a.GUID];
                 int posB = desiredPositions[b.GUID];
                 return posA.CompareTo(posB);
             });
 
-#if UNITY_EDITOR
             EditorUtility.SetDirty(this);
-#endif
             return m_RuntimeBlackboardAsset;
+        }
+
+        public bool ContainsInvalidSerializedReferences()
+        {
+            return SerializationUtility.HasManagedReferencesWithMissingTypes(this) ||
+                   SerializationUtility.HasManagedReferencesWithMissingTypes(m_RuntimeBlackboardAsset);
         }
     }
 }

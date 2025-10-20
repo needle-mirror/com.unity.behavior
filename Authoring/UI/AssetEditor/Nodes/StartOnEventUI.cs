@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Unity.Behavior.GraphFramework;
 using UnityEngine.UIElements;
 
