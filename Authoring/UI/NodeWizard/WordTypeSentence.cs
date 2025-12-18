@@ -200,6 +200,29 @@ namespace Unity.Behavior
             return text.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
         }
 
+        /// <summary>
+        /// Checks if a word is valid to be used as a variable name.
+        /// A valid variable name must start with a letter and contain only letters, digits, and underscores.
+        /// </summary>
+        internal static bool IsValidVariableName(string word)
+        {
+            if (string.IsNullOrEmpty(word))
+                return false;
+
+            // First character must be a letter
+            if (!char.IsLetter(word[0]))
+                return false;
+
+            // All characters must be letters, digits, or underscores
+            foreach (char c in word)
+            {
+                if (!char.IsLetterOrDigit(c) && c != '_')
+                    return false;
+            }
+
+            return true;
+        }
+
         private bool PairIsUnique(string word, Type type)
         {
 #if UNITY_EDITOR

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Unity.Properties;
+using UnityEngine;
 
 namespace Unity.Behavior.Serialization.Json
 {
@@ -601,7 +602,11 @@ namespace Unity.Behavior.Serialization.Json
             if (TypeTraits<TValue>.IsLazyLoadReference)
             {
                 var instanceID = PropertyContainer.GetValue<TValue, int>(ref value, "m_InstanceID");
+#if UNITY_6000_3_OR_NEWER
+                Writer.WriteValue(UnityEditor.GlobalObjectId.GetGlobalObjectIdSlow((EntityId)instanceID).ToString());
+#else
                 Writer.WriteValue(UnityEditor.GlobalObjectId.GetGlobalObjectIdSlow(instanceID).ToString());
+#endif
                 return;
             }
 #endif

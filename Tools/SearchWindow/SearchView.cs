@@ -237,7 +237,7 @@ namespace UnityEngine.UIExtras
                     string pathWithoutName = path.Remove(path.LastIndexOf(unformattedName)).TrimEnd('/');
 
                     const string kOtherPathString = "Other";
-                    const string kMonoBehaviourPathString = "Other/MonoBehaviours";
+                    const string kMonoBehaviourPathString = "Other/Components";
                     pathWithoutName = pathWithoutName.Replace(kMonoBehaviourPathString, "").Replace(kOtherPathString, "");
 
                     if (string.IsNullOrEmpty(pathWithoutName))

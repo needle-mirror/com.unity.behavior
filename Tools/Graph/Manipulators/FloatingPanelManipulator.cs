@@ -65,8 +65,11 @@ namespace Unity.Behavior.GraphFramework
         private void Move(PointerMoveEvent evt)
         {
             Vector3 pointerDelta = evt.position - PointerStartPosition;
-
+#if UNITY_6000_3_OR_NEWER
+            Panel.style.translate = new Vector2((TargetStartPosition.x + pointerDelta.x), (TargetStartPosition.y + pointerDelta.y));
+#else
             Panel.transform.position = new Vector2((TargetStartPosition.x + pointerDelta.x), (TargetStartPosition.y + pointerDelta.y));
+#endif
             Panel.ClampPositionWithinParent();
 
 #if UNITY_EDITOR
@@ -96,7 +99,7 @@ namespace Unity.Behavior.GraphFramework
         private void OnPointerDownEvent(PointerDownEvent evt)
         {
             PanelStartSize = Panel.layout.size;
-            PanelStartPosition = Panel.transform.position;
+            PanelStartPosition = Panel.resolvedStyle.translate;
             if (m_IsResizing)
             {
                 evt.StopImmediatePropagation();
@@ -120,7 +123,7 @@ namespace Unity.Behavior.GraphFramework
             // Enable dragging only when the floating panel content element or the AppBar is being dragged.
             if (targetElement.name == "PanelContent" || targetElement is AppBar)
             {
-                TargetStartPosition = Panel.transform.position;
+                TargetStartPosition = Panel.resolvedStyle.translate;
                 m_IsDragging = true;
                 PointerStartPosition = evt.position;
             }
@@ -200,7 +203,11 @@ namespace Unity.Behavior.GraphFramework
             Vector2 finalSizeDifference = clampedNewSize - PanelStartSize;
             positionOffset.x = Mathf.Min(Mathf.Abs(positionOffset.x), Mathf.Abs(finalSizeDifference.x)) * Mathf.Sign(positionOffset.x);
             positionOffset.y = Mathf.Min(Mathf.Abs(positionOffset.y), Mathf.Abs(finalSizeDifference.y)) * Mathf.Sign(positionOffset.y);
+#if UNITY_6000_3_OR_NEWER
+            Panel.style.translate = PanelStartPosition + positionOffset;
+#else
             Panel.transform.position = PanelStartPosition + positionOffset;
+#endif
         }
 
         private Selection GetPointerSelectionOnPanel(PointerDownEvent evt)
@@ -251,9 +258,8 @@ namespace Unity.Behavior.GraphFramework
         private void SaveFloatingPanelEditorPrefs()
         {
             bool inEditorContext = View.panel.contextType == ContextType.Editor;
-            GraphPrefsUtility.SetFloat(Panel.XPosPrefsKey, Panel.transform.position.x, inEditorContext);
-            GraphPrefsUtility.SetFloat(Panel.YPosPrefsKey, Panel.transform.position.y, inEditorContext);
-
+            GraphPrefsUtility.SetFloat(Panel.XPosPrefsKey, Panel.resolvedStyle.translate.x, inEditorContext);
+            GraphPrefsUtility.SetFloat(Panel.YPosPrefsKey, Panel.resolvedStyle.translate.y, inEditorContext);
             GraphPrefsUtility.SetFloat(Panel.WidthPrefsKey, Panel.layout.width, inEditorContext);
             GraphPrefsUtility.SetFloat(Panel.HeightPrefsKey, Panel.layout.height, inEditorContext);
         }

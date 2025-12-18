@@ -244,16 +244,13 @@ namespace Unity.Behavior
         // Sets the value stored in the field
         internal void SetField<TValue>(string fieldName, TValue value)
         {
-            // using the runtime type (value.GetType()) here is necessary for Enums, cause these types are only known at runtime
+            // using the runtime type (value.GetType()) here is necessary for Enums, because these types are only known at runtime
             var valueType = value == null ? typeof(TValue) : value.GetType();
             FieldModel field = GetOrCreateField(fieldName, valueType);
 
             if (valueType.IsEnum)
             {
-                // if it's an enum, we are now working with the index and need to retrieve the actual value.
-                Array enumValues = Enum.GetValues(valueType);
-                var valueToAssign = enumValues.GetValue(Convert.ToInt32(value));
-                field.LocalValue.ObjectValue = valueToAssign;
+                field.LocalValue.ObjectValue = Enum.ToObject(valueType, value);
             }
             else
             {

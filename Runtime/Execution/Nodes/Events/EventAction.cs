@@ -7,6 +7,7 @@ namespace Unity.Behavior
     /// <summary>
     /// Event actions are used to send and receive event messages.
     /// </summary>
+    [Serializable]
     public abstract class EventAction : Action
     {
         /// <summary>

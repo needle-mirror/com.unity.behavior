@@ -89,17 +89,14 @@ BaseLinkField {
     width: 12px;
     height: 12px;
     position: absolute;
-    right: 6px;
     align-self: center;
     flex-shrink: 0;
     color: var(--appui-foregrounds-50);
 }
 
 .LinkButtonSpacer {
-    width: 12px;
+    width: 20px;
     height: 100%;
-    margin-left: 4px;
-    margin-right: 6px;
     flex-shrink: 0;
     color: var(--appui-foregrounds-50);
 }
@@ -130,14 +127,14 @@ BaseLinkField .LinkButton {
 }
 
 .UnlinkButton {
-    width: 12px;
-    height: 12px;
+    width: 10px;
+    height: 10px;
     flex-shrink: 0;
     display: none;
     color: white;
     position: absolute;
     right: -4px;
-    top: -2px;
+    top: -4px;
     --unity-image-tint-color: white;
 }
 
@@ -148,6 +145,7 @@ BaseLinkField .LinkButton {
 
 .Linked:hover .UnlinkButton {
     visibility: visible;
+    cursor: link;
 }
 
 .LinkedLabelContainer {
@@ -275,6 +273,7 @@ BaseLinkField .LinkButton {
 
 EnumLinkField #appui-picker__trailingcontainer {
     min-width: 40px;
+    flex-direction: row-reverse;
 }
 
 EnumLinkField #appui-picker__caret {
@@ -344,6 +343,7 @@ EnumLinkField #appui-picker__caret {
 }
 
 .BehaviorVectorField #appui-vector4field__row {
+    padding-right: var(--appui-alias-control-gap-sm);    
     margin-right: 0;
 }
 

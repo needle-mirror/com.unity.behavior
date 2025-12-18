@@ -355,7 +355,10 @@ namespace Unity.Behavior
             m_VariablesMap = new Dictionary<SerializableGUID, BlackboardVariable>(m_Variables.Count);
             foreach (BlackboardVariable var in m_Variables)
             {
-                m_VariablesMap.Add(var.GUID, var);
+                if (var != null) // Ignore any variable whose type is lost.
+                {
+                    m_VariablesMap.Add(var.GUID, var);
+                }
             }
         }
     }

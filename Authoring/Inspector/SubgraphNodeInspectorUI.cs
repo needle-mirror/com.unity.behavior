@@ -9,6 +9,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Toggle = Unity.AppUI.UI.Toggle;
+using IconButton = Unity.AppUI.UI.IconButton;
 
 namespace Unity.Behavior
 {
@@ -18,6 +19,7 @@ namespace Unity.Behavior
         private SubgraphNodeModel m_NodeModel => InspectedNode as SubgraphNodeModel;
         private BaseLinkField m_SubgraphField;
         private BaseLinkField m_BlackboardAssetField;
+        private IconButton m_IconButton;
         private const string k_StaticNodeTitle = "Run Subgraph";
         private const string k_DynamicNodeTitle = "Run Subgraph Dynamically";
         private const string k_DefaultDescription = "Running subgraphs allows you to keep your graphs clean and to switch out functionality at runtime using dynamic subgraphs.";
@@ -44,6 +46,10 @@ namespace Unity.Behavior
                     CreateBlackboardFields();
                 }
             }
+
+            // Show/Hide the open subgraph button depending of if a local subgraph is assigned.
+            bool shouldDisplay = m_NodeModel.IsDynamic == false && m_NodeModel.RuntimeSubgraph != null;
+            m_IconButton.style.display = shouldDisplay ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         private void CreateSubgraphRepresentationToggle()
@@ -125,6 +131,17 @@ namespace Unity.Behavior
                 {
                     Refresh();
                 });
+
+                // Add open subgraph button
+                m_IconButton = new AppUI.UI.IconButton();
+                m_IconButton.AddToClassList("SubgraphOpenAssetIcon");
+                m_IconButton.icon = "pen";
+                m_IconButton.quiet = true;
+                m_IconButton.clicked += () =>
+                {
+                    BehaviorWindowDelegate.Open(m_NodeModel.SubgraphAuthoringAsset);
+                };
+                m_SubgraphField.Add(m_IconButton);
             }
 
             VisualElement fieldContainer = new VisualElement();

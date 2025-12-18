@@ -203,7 +203,11 @@ namespace Unity.Behavior.GraphFramework
 
                 }
                 int dropIndex = GetDropIndex(evt.position, dropTarget);
-                m_InsertIndicator.transform.position = new Vector2(dropTarget.localBound.x + offsetX + 2.0f, GetDropIndexYPosition(dropIndex, dropTarget));
+#if UNITY_6000_3_OR_NEWER
+                m_InsertIndicator.style.translate = new Vector2(dropTarget.localBound.x + offsetX + 2.0f, GetDropIndexYPosition(dropIndex, dropTarget));
+#else
+                m_InsertIndicator.transform.position = new Vector2(dropTarget.localBound.x + offsetX + 2.0f, GetDropIndexYPosition(dropIndex, dropTarget));                
+#endif
             }
             else if (m_IsIndicatorVisible)
             {

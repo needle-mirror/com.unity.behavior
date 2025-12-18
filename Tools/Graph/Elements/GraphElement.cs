@@ -12,7 +12,7 @@ namespace Unity.Behavior.GraphFramework
 
         public Vector2 Position
         {
-            get => transform.position;
+            get => resolvedStyle.translate;
         }
 
         public Translate Translate

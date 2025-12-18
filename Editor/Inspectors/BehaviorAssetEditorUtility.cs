@@ -112,7 +112,7 @@ namespace Unity.Behavior
             parent.Add(customHelpBox);
         }
 
-        public static VisualElement CreateBehaviorAssetField(ScriptableObject asset)
+        public static VisualElement CreateBehaviorAssetField(ScriptableObject asset, out DropdownMenu dropdownMenu)
         {
             var row = new VisualElement();
             row.AddToClassList("behavior-asset-field");
@@ -139,6 +139,8 @@ namespace Unity.Behavior
                 },
                 _ => asset != null ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
             row.Add(menu);
+
+            dropdownMenu = menu.menu;
 
             return row;
         }

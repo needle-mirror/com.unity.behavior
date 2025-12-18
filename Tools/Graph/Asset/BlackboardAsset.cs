@@ -29,10 +29,12 @@ namespace Unity.Behavior.GraphFramework
 
         private void Awake()
         {
-#if UNITY_EDITOR
+#if UNITY_6000_3_OR_NEWER
+            string guid = UnityEditor.AssetDatabase.AssetPathToGUID(UnityEditor.AssetDatabase.GetAssetPath(GetEntityId()));
+#else
             string guid = UnityEditor.AssetDatabase.AssetPathToGUID(UnityEditor.AssetDatabase.GetAssetPath(GetInstanceID()));
-            AssetID = new SerializableGUID(guid);
 #endif
+            AssetID = new SerializableGUID(guid);
         }
 
         public enum BlackboardChangedType

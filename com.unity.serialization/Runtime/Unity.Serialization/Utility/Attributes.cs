@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+#if UNITY_6000_5_OR_NEWER
+using UnityEngine.Assemblies;
+#endif
 
 namespace Unity.Behavior.Serialization
 {
@@ -50,7 +53,11 @@ namespace Unity.Behavior.Serialization
                 }
             }
 #else
+#if UNITY_6000_5_OR_NEWER
+            var types = CurrentAssemblies.GetLoadedAssemblies()
+#else
             var types = AppDomain.CurrentDomain.GetAssemblies()
+#endif
                                       .SelectMany(a => a.GetTypes())
                                       .Where(t => !(t.IsAbstract || t.IsGenericType));
 

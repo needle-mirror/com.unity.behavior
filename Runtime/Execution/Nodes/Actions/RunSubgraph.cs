@@ -1,8 +1,10 @@
+using System;
 using Unity.Properties;
 using UnityEngine;
 
 namespace Unity.Behavior
 {
+    [Serializable]
     [GeneratePropertyBag, NodeDescription(
         name: "Run Subgraph",
         description: "Runs the assigned subgraph and returns the graph's final status.",

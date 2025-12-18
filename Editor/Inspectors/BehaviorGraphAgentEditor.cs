@@ -764,7 +764,17 @@ namespace Unity.Behavior
             {
                 var value = (Enum)variable.ObjectValue;
                 EditorGUI.BeginChangeCheck();
-                value = EditorGUILayout.EnumPopup(label, value);
+
+                bool isFlagsEnum = type.IsDefined(typeof(FlagsAttribute), false);
+                if (isFlagsEnum)
+                {
+                    value = EditorGUILayout.EnumFlagsField(label, value);
+                }
+                else
+                {
+                    value = EditorGUILayout.EnumPopup(label, value);
+                }
+
                 if (EditorGUI.EndChangeCheck())
                 {
                     UpdateValueIfChanged(value, variable.GUID, type);

@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
-using Unity.Properties;
 using Unity.Behavior.Serialization.Json.Unsafe;
+using Unity.Properties;
+using UnityEngine;
 
 namespace Unity.Behavior.Serialization.Json
 {
@@ -568,7 +569,11 @@ namespace Unity.Behavior.Serialization.Json
 
                 if (UnityEditor.GlobalObjectId.TryParse(json, out var id))
                 {
+#if UNITY_6000_3_OR_NEWER
+                    var instanceID = UnityEditor.GlobalObjectId.GlobalObjectIdentifierToEntityIdSlow(id);
+#else
                     var instanceID = UnityEditor.GlobalObjectId.GlobalObjectIdentifierToInstanceIDSlow(id);
+#endif 
                     PropertyContainer.SetValue(ref value, "m_InstanceID", instanceID);
                     return;
                 }

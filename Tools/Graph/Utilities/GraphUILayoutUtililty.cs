@@ -30,8 +30,8 @@ namespace Unity.Behavior.GraphFramework
             public NodePositionData(NodeUI nodeUI)
             {
                 Node = nodeUI;
-                X = nodeUI.transform.position.x;
-                Y = nodeUI.transform.position.y;
+                X = nodeUI.resolvedStyle.translate.x;
+                Y = nodeUI.resolvedStyle.translate.y;
                 Height = nodeUI.layout.height;
                 Width = nodeUI.layout.width;
                 // Fallback in case the layout didn't had time to load before this is used.
@@ -80,7 +80,7 @@ namespace Unity.Behavior.GraphFramework
             // Prepare animation data once before starting
             var nodeData = nodesWithEndPositions.Select(pair => new NodeAnimationData(
                 pair.Key.Model,
-                pair.Key.transform.position,
+                pair.Key.resolvedStyle.translate,
                 pair.Value
             )).ToList();
 
@@ -205,7 +205,7 @@ namespace Unity.Behavior.GraphFramework
         {
             if (computedPositions.TryGetValue(node, out Vector2 position))
                 return position;
-            return node.transform.position;
+            return node.resolvedStyle.translate;
         }
 
         public static IEnumerable<KeyValuePair<NodeUI, Vector2>> ComputeSubgraphNodePositions(NodeUI node)
@@ -293,7 +293,7 @@ namespace Unity.Behavior.GraphFramework
                 }
 
                 // Downward -> set y; set child/parent links in virtual tree
-                float nextY = rootUI.transform.position.y;
+                float nextY = rootUI.resolvedStyle.translate.y;
                 for (int horizon = 0; horizon <= maxDepth; horizon++)
                 {
                     List<NodePositionData> horizonNodes = nodePositionDataByDepth[horizon];

@@ -1,7 +1,10 @@
+using System;
+
 namespace Unity.Behavior
 {
     [NodeModelInfo(typeof(WaitForAnyComposite))]
     [NodeModelInfo(typeof(WaitForAllComposite))]
+    [Serializable]
     internal class JoinNodeModel : BehaviorGraphNodeModel
     {
         public override int MaxInputsAccepted => int.MaxValue;

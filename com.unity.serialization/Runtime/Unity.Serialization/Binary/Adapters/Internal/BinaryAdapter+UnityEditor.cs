@@ -1,21 +1,27 @@
 #if UNITY_EDITOR
 using Unity.Collections.LowLevel.Unsafe.NotBurstCompatible;
 
+#if UNITY_6000_5_OR_NEWER
+using GUID = UnityEngine.GUID;
+#else
+using GUID = UnityEditor.GUID;
+#endif
+
 namespace Unity.Behavior.Serialization.Binary
 {
     unsafe partial class BinaryAdapter : IBinaryAdapter
-        , IBinaryAdapter<UnityEditor.GUID>
+        , IBinaryAdapter<GUID>
         , IBinaryAdapter<UnityEditor.GlobalObjectId>
     {
-        void IBinaryAdapter<UnityEditor.GUID>.Serialize(in BinarySerializationContext<UnityEditor.GUID> context, UnityEditor.GUID value)
+        void IBinaryAdapter<GUID>.Serialize(in BinarySerializationContext<GUID> context, GUID value)
         {
             context.Writer->AddNBC(value.ToString());
         }
 
-        UnityEditor.GUID IBinaryAdapter<UnityEditor.GUID>.Deserialize(in BinaryDeserializationContext<UnityEditor.GUID> context)
+        GUID IBinaryAdapter<GUID>.Deserialize(in BinaryDeserializationContext<GUID> context)
         {
             context.Reader->ReadNextNBC(out var str);
-            return UnityEditor.GUID.TryParse(str, out var value) ? value : default;
+            return GUID.TryParse(str, out var value) ? value : default;
         }
 
         void IBinaryAdapter<UnityEditor.GlobalObjectId>.Serialize(in BinarySerializationContext<UnityEditor.GlobalObjectId> context, UnityEditor.GlobalObjectId value)

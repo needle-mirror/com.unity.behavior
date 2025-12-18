@@ -39,36 +39,27 @@ namespace Unity.Behavior
 
         internal static string GetStringForType(Type type)
         {
-            if (type == typeof(int))
-            {
-                return "int";
-            }
+            // Handle primitive types
+            if (type == typeof(int)) return "int";
+            if (type == typeof(float)) return "float";
+            if (type == typeof(double)) return "double";
+            if (type == typeof(bool)) return "bool";
+            if (type == typeof(string)) return "string";
 
-            if (type == typeof(float))
-            {
-                return "float";
-            }
-
-            if (type == typeof(double))
-            {
-                return "double";
-            }
-
-            if (type == typeof(bool))
-            {
-                return "bool";
-            }
-
-            if (type == typeof(string))
-            {
-                return "string";
-            }
-
-            if (typeof(IList).IsAssignableFrom(type))
+            // Handle generic collections
+            if (typeof(IList).IsAssignableFrom(type) && type.IsGenericType)
             {
                 return $"List<{GetStringForType(type.GetGenericArguments().First())}>";
             }
 
+            // Handle nested types (like enums inside classes)
+            if (type.IsNested)
+            {
+                // Build the path from the declaring type to the nested type
+                return $"{GetStringForType(type.DeclaringType)}.{type.Name}";
+            }
+
+            // No need to handle namespace as it is handled separetly.
             return type.Name;
         }
 

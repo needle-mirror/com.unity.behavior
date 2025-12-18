@@ -130,6 +130,8 @@ namespace Unity.Behavior.GraphFramework
             }
             portModelNew.NodeModel = this;
             PortModels.Add(portModelNew);
+
+            Asset.CreateNodePortsForNode(this);
         }
 
         public void RemoveOutputPortModels()

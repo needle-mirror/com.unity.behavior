@@ -7,19 +7,15 @@ namespace Unity.Behavior.GraphFramework
     {
         public override bool Process(SetBlackboardVariableValueCommand command)
         {
-            command.Variable.ObjectValue = command.Value;
-
             Type variableType = command.Variable.GetType();
-            if (variableType.IsGenericType)
+            if (variableType.IsGenericType && variableType.GenericTypeArguments.Length == 1 
+                && variableType.GenericTypeArguments[0].IsEnum)
             {
-                Type[] genericTypeArgs = variableType.GenericTypeArguments;
-
-                if (genericTypeArgs.Length == 1 && genericTypeArgs[0].IsEnum)
-                {
-                    FieldInfo[] fields = genericTypeArgs[0].GetFields(BindingFlags.Public | BindingFlags.Static);
-
-                    command.Variable.ObjectValue = fields[(int)command.Value].GetValue(null);
-                }
+                command.Variable.ObjectValue = Enum.ToObject(variableType.GenericTypeArguments[0], command.Value);
+            }
+            else
+            {
+                command.Variable.ObjectValue = command.Value;
             }
 
             BlackboardAsset?.InvokeBlackboardChanged(BlackboardAsset.BlackboardChangedType.VariableValueChanged);

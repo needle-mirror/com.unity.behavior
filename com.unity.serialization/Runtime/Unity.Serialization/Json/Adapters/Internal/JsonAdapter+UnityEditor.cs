@@ -1,15 +1,22 @@
 #if UNITY_EDITOR
+
+#if UNITY_6000_5_OR_NEWER
+using GUID = UnityEngine.GUID;
+#else
+using GUID = UnityEditor.GUID;
+#endif
+
 namespace Unity.Behavior.Serialization.Json
 {
     partial class JsonAdapter : IJsonAdapter
-        , IJsonAdapter<UnityEditor.GUID>
+        , IJsonAdapter<GUID>
         , IJsonAdapter<UnityEditor.GlobalObjectId>
     {
-        void IJsonAdapter<UnityEditor.GUID>.Serialize(in JsonSerializationContext<UnityEditor.GUID> context, UnityEditor.GUID value)
+        void IJsonAdapter<GUID>.Serialize(in JsonSerializationContext<GUID> context, GUID value)
             => context.Writer.WriteValue(value.ToString());
 
-        UnityEditor.GUID IJsonAdapter<UnityEditor.GUID>.Deserialize(in JsonDeserializationContext<UnityEditor.GUID> context)
-            => UnityEditor.GUID.TryParse(context.SerializedValue.ToString(), out var value) ? value : default;
+        GUID IJsonAdapter<GUID>.Deserialize(in JsonDeserializationContext<GUID> context)
+            => GUID.TryParse(context.SerializedValue.ToString(), out var value) ? value : default;
 
         void IJsonAdapter<UnityEditor.GlobalObjectId>.Serialize(in JsonSerializationContext<UnityEditor.GlobalObjectId> context, UnityEditor.GlobalObjectId value)
             => context.Writer.WriteValue(value.ToString());

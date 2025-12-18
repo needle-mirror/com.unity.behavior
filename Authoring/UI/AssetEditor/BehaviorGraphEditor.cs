@@ -727,6 +727,20 @@ namespace Unity.Behavior
                                 LinkSubgraph((BehaviorGraph)variable.ObjectValue, variable.Name, subgraphNode, field, variable);
                             }, icon: variable.Type.GetIcon());
                     }
+
+                    // Check for variables in added Blackboard groups, and display them with the Blackboard asset name first.
+                    foreach (BehaviorBlackboardAuthoringAsset blackboard in Asset.m_Blackboards)
+                    {
+                        foreach (VariableModel variable in blackboard.Variables.Where(v => typeof(BehaviorGraph).IsAssignableFrom(v.Type)))
+                        {
+                            builder.AddOption($"{blackboard.name} " + BlackboardUtils.GetArrowUnicode() + $" {variable.Name}",
+                                () =>
+                                {
+                                    OnLinkFromSearcher(variable, field);
+                                    LinkSubgraph((BehaviorGraph)variable.ObjectValue, variable.Name, subgraphNode, field, variable);
+                                }, icon: variable.Type.GetIcon());
+                        }
+                    }
                 }
                 else if (subgraphField.LinkVariableType == typeof(BehaviorBlackboardAuthoringAsset))
                 {

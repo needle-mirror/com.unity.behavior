@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+#if UNITY_6000_5_OR_NEWER
+using UnityEngine.Assemblies;
+#endif
 
 namespace Unity.Behavior.GraphFramework
 {
@@ -98,7 +101,11 @@ namespace Unity.Behavior.GraphFramework
                 .Where(type => type.IsClass && !type.IsAbstract && typeof(UIClassType).IsAssignableFrom(type))
                 .ToList();
 #else
+#if UNITY_6000_5_OR_NEWER
+            List<Type> typeList = CurrentAssemblies.GetLoadedAssemblies()
+#else
             List<Type> typeList = AppDomain.CurrentDomain.GetAssemblies()
+#endif
                 .SelectMany(assembly => assembly.GetTypes()
                     .Where(type => type.IsClass && !type.IsAbstract && typeof(UIClassType).IsAssignableFrom(type))
                 ).ToList();

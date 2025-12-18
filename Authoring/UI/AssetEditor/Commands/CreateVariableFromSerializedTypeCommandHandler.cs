@@ -2,6 +2,9 @@ using System;
 using System.Linq;
 using Unity.Behavior.GraphFramework;
 using UnityEngine;
+#if UNITY_6000_5_OR_NEWER
+using UnityEngine.Assemblies;
+#endif
 
 namespace Unity.Behavior
 {
@@ -9,8 +12,11 @@ namespace Unity.Behavior
     {
         public override bool Process(CreateVariableFromSerializedTypeCommand command)
         {
-            Type type = AppDomain.CurrentDomain
-            .GetAssemblies()
+#if UNITY_6000_5_OR_NEWER
+            Type type = CurrentAssemblies.GetLoadedAssemblies()
+#else
+            Type type = AppDomain.CurrentDomain.GetAssemblies()
+#endif
             .SelectMany(x => x.GetTypes())
             // Note: This command is currently only called for newly generated Enums and EventChannels, which means the type should definitely either have EventChannelBase or BlackboardEnumAttribute.
             // If this is to change, we'll need a different check here.

@@ -85,7 +85,6 @@
 
 Label {
     font-size: var(--appui-font-sizes-100);
-    padding: 4px 0;
 }
 
 #EnumVariable {

@@ -3,13 +3,19 @@ using Unity.Behavior.GraphFramework;
 using Unity.Behavior;
 using System.Collections.Generic;
 using System.Linq;
+#if UNITY_6000_5_OR_NEWER
+using UnityEngine.Assemblies;
+#endif
 
 internal class AddConditionFromSerializedTypeCommandHandler : CommandHandler<AddConditionFromSerializedCommand>
 {
     public override bool Process(AddConditionFromSerializedCommand command)
     {
-        Type type = AppDomain.CurrentDomain
-            .GetAssemblies()
+#if UNITY_6000_5_OR_NEWER
+        Type type = CurrentAssemblies.GetLoadedAssemblies()
+#else
+        Type type = AppDomain.CurrentDomain.GetAssemblies()
+#endif
             .SelectMany(x => x.GetTypes())
             .FirstOrDefault(t => typeof(Condition).IsAssignableFrom(t) && t.Name == command.ConditionType + "Condition");
 

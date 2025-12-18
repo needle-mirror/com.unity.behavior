@@ -103,7 +103,7 @@ namespace Unity.Behavior
 
             foreach (var info in missingData)
             {
-                var fieldRow = BehaviorAssetEditorUtility.CreateBehaviorAssetField(info.Asset);
+                var fieldRow = BehaviorAssetEditorUtility.CreateBehaviorAssetField(info.Asset, out var _);
                 fieldRow.AddToClassList("behavior-indented-content");
                 container.Add(fieldRow);
             }
@@ -233,7 +233,7 @@ namespace Unity.Behavior
             {
                 foreach (var subgraphInfo in targetAsset.SubgraphsInfo)
                 {
-                    var fieldRow = BehaviorAssetEditorUtility.CreateBehaviorAssetField(subgraphInfo.Asset);
+                    var fieldRow = BehaviorAssetEditorUtility.CreateBehaviorAssetField(subgraphInfo.Asset, out var _);
                     fieldRow.AddToClassList("behavior-indented-content");
                     container.Add(fieldRow);
                 }
@@ -256,10 +256,20 @@ namespace Unity.Behavior
             fieldContainer.AddToClassList("behavior-indented-content");
             container.Add(fieldContainer);
 
-            var runtimeGraphRow = BehaviorAssetEditorUtility.CreateBehaviorAssetField(runtimeGraph);
+            var runtimeGraphRow = BehaviorAssetEditorUtility.CreateBehaviorAssetField(runtimeGraph, out var dropdownMenu);
+            dropdownMenu.AppendAction("Rebuild", _ => targetAsset.RebuildAndSave(),
+                targetAsset != null ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
             fieldContainer.Add(runtimeGraphRow);
 
-            var runtimeBlackboardRow = BehaviorAssetEditorUtility.CreateBehaviorAssetField(runtimeBlackboard);
+            var runtimeBlackboardRow = BehaviorAssetEditorUtility.CreateBehaviorAssetField(runtimeBlackboard, out dropdownMenu);
+            dropdownMenu.AppendAction("Rebuild", _ =>
+                {
+                    if (targetAsset.Blackboard is BehaviorBlackboardAuthoringAsset targetBlackboardAsset)
+                    {
+                        targetBlackboardAsset.RebuildAndSave();
+                    }
+                },
+                runtimeBlackboard != null ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
             fieldContainer.Add(runtimeBlackboardRow);
 
             // Blackboard references
@@ -275,7 +285,7 @@ namespace Unity.Behavior
 
                 foreach (var asset in targetAsset.m_Blackboards)
                 {
-                    var blackboardRow = BehaviorAssetEditorUtility.CreateBehaviorAssetField(asset);
+                    var blackboardRow = BehaviorAssetEditorUtility.CreateBehaviorAssetField(asset, out var _);
                     blackboardFieldContainer.Add(blackboardRow);
                 }
             }

@@ -203,7 +203,7 @@ namespace Unity.Behavior
                     m_HasMissingTypeInManagedRef = false;
                 }
             }
-
+            
             ValidateAssetNames();
 
             // Force update to catch up serialization version.
@@ -270,6 +270,11 @@ namespace Unity.Behavior
 
         public void AddOrUpdateDependency(BehaviorAuthoringGraph graph)
         {
+            if (graph == null)
+            {
+                return;
+            }
+
             var subgraphInfo = m_SubgraphsInfo.Find((info) => info.Asset == graph);
             if (subgraphInfo == null)
             {
@@ -383,8 +388,12 @@ namespace Unity.Behavior
 
             if (!AssetDatabase.IsMainAsset(this))
             {
-                // Ensures that the authoring asset is always the main asset.
-                AssetDatabase.SetMainObject(this, assetPath);
+                try
+                {
+                    // Ensures that the authoring asset is always the main asset.
+                    AssetDatabase.SetMainObject(this, assetPath);
+                }
+                catch { }
             }
         }
 
@@ -496,10 +505,18 @@ namespace Unity.Behavior
         [OnOpenAsset(1)]
         public static bool OpenAsset(int instanceID, int line)
         {
+#if UNITY_6000_3_OR_NEWER
+            BehaviorAuthoringGraph asset = EditorUtility.EntityIdToObject(instanceID) as BehaviorAuthoringGraph;
+#else
             BehaviorAuthoringGraph asset = EditorUtility.InstanceIDToObject(instanceID) as BehaviorAuthoringGraph;
+#endif
             if (asset == null)
             {
+#if UNITY_6000_3_OR_NEWER
+                BehaviorGraph runtimeGraph = EditorUtility.EntityIdToObject(instanceID) as BehaviorGraph;
+#else
                 BehaviorGraph runtimeGraph = EditorUtility.InstanceIDToObject(instanceID) as BehaviorGraph;
+#endif
                 if (runtimeGraph == null)
                 {
                     return false;
@@ -802,8 +819,7 @@ namespace Unity.Behavior
 
             // If we reached this far, that means we are generating a new blackboard.
             AssetDatabase.AddObjectToAsset(Blackboard, this);
-            blackboardAuthoring.BuildRuntimeBlackboard();
-            AssetDatabase.SaveAssetIfDirty(this);
+            blackboardAuthoring.RebuildAndSave();
         }
 
         public override string ToString() => name;
@@ -891,6 +907,27 @@ namespace Unity.Behavior
             return SerializationUtility.HasManagedReferencesWithMissingTypes(this)
                 || SerializationUtility.HasManagedReferencesWithMissingTypes(m_RuntimeGraph)
                 || SerializationUtility.HasManagedReferencesWithMissingTypes(Blackboard);
+        }
+
+        public bool ContainsLostBlackboardVariableType(out List<RuntimeBlackboardAsset> assetsContainingLostType)
+        {
+            assetsContainingLostType = null;
+            if (RuntimeGraph.Graphs == null)
+            {
+                return false;
+            }
+
+            foreach (var behaviorGraphModule in RuntimeGraph.Graphs)
+            {
+                var sourceBlackboardAsset = behaviorGraphModule.BlackboardReference.SourceBlackboardAsset;
+                if (sourceBlackboardAsset != null && sourceBlackboardAsset.Blackboard.Variables.Where(v => v == null).Any())
+                {
+                    assetsContainingLostType ??= new List<RuntimeBlackboardAsset>();
+                    assetsContainingLostType.Add(sourceBlackboardAsset);
+                }
+            }
+
+            return assetsContainingLostType != null;
         }
 
         /// <summary>
@@ -1210,6 +1247,13 @@ namespace Unity.Behavior
 
             s_GraphPathToValidate.Clear();
             s_IsValidatingPlaceholderGraphAsset = false;
+        }
+
+        // Utility method for inspector.
+        internal void RebuildAndSave()
+        {
+            BuildRuntimeGraph(true);
+            SaveAsset();
         }
     }
 }

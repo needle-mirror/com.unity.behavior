@@ -71,17 +71,33 @@ namespace Unity.Behavior
         /// <exception cref="Exception">Throws an exception when an unsupported type is specified.</exception>
         internal static BlackboardVariable CreateForType(Type type, bool isShared = false)
         {
+            BlackboardVariable variable;
+            
             if (isShared)
             {
-                return Activator.CreateInstance(typeof(SharedBlackboardVariable<>).MakeGenericType(type)) as BlackboardVariable;
+                variable = Activator.CreateInstance(typeof(SharedBlackboardVariable<>).MakeGenericType(type)) as BlackboardVariable;
             }
-
-            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(BlackboardVariable<>))
+            else if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(BlackboardVariable<>))
             {
-                return (BlackboardVariable)Activator.CreateInstance(type);
+                variable = (BlackboardVariable)Activator.CreateInstance(type);
             }
-
-            return Activator.CreateInstance(typeof(BlackboardVariable<>).MakeGenericType(type)) as BlackboardVariable;
+            else
+            {
+                variable = Activator.CreateInstance(typeof(BlackboardVariable<>).MakeGenericType(type)) as BlackboardVariable;
+            }
+            
+            // Initialize enum values properly
+            if (type.IsEnum && !type.IsDefined(typeof(FlagsAttribute), false))
+            {
+                // Get the first value of the enum (not necessarily 0)
+                Array enumValues = Enum.GetValues(type);
+                if (enumValues.Length > 0)
+                {
+                    variable.ObjectValue = enumValues.GetValue(0);
+                }
+            }
+            
+            return variable;
         }
 
         /// <summary>

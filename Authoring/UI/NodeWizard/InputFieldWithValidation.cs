@@ -152,6 +152,7 @@ namespace Unity.Behavior
         public StoryFieldWithValidation()
         {
             TextArea textArea = new TextArea();
+            textArea.maxLength = 256;
             textArea.autoResize = true;
             // A temporary fix to go around an issue where the App UI TextArea scroll is visible by default when the element has a smaller size than default.
             textArea.Q<ScrollView>().verticalScrollerVisibility = ScrollerVisibility.Hidden;

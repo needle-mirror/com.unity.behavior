@@ -74,7 +74,11 @@ namespace Unity.Behavior
         [OnOpenAsset(1)]
         public static bool OnOpenBlackboardAsset(int instanceID, int line)
         {
+#if UNITY_6000_3_OR_NEWER
+            BehaviorBlackboardAuthoringAsset asset = EditorUtility.EntityIdToObject(instanceID) as BehaviorBlackboardAuthoringAsset;
+#else
             BehaviorBlackboardAuthoringAsset asset = EditorUtility.InstanceIDToObject(instanceID) as BehaviorBlackboardAuthoringAsset;
+#endif
             if (asset == null)
             {
                 return false;
@@ -151,7 +155,10 @@ namespace Unity.Behavior
 
             // Need to check each value for change... We want to make sure we keep the rid identical
             // So, do not clear all the variables! (i.e. m_RuntimeBlackboardAsset.Blackboard.m_Variables.Clear())
-            HashSet<BlackboardVariable> remainingDirtyVariables = new HashSet<BlackboardVariable>(m_RuntimeBlackboardAsset.Blackboard.Variables);
+            // 1. Remove any null variable from the runtime blackboard.
+            m_RuntimeBlackboardAsset.Blackboard.Variables.RemoveAll(v => v == null);
+            // 2. Collect all existing blackboard variable and compare them to the variable model.
+            var remainingDirtyVariables = new HashSet<BlackboardVariable>(m_RuntimeBlackboardAsset.Blackboard.Variables.Where(v => v != null));
             m_RuntimeBlackboardAsset.m_SharedBlackboardVariableGuidHashset.Clear();
             foreach (VariableModel variable in Variables)
             {
@@ -215,6 +222,7 @@ namespace Unity.Behavior
                 m_RuntimeBlackboardAsset.Blackboard.m_Variables.Add(blackboardVariable);
             }
 
+            // 3. Any leftover variable are no longer part of the model and need to be removed (removed or undo/redo)
             foreach (var dirtyVar in remainingDirtyVariables)
             {
                 m_RuntimeBlackboardAsset.Blackboard.Variables.Remove(dirtyVar);
@@ -248,6 +256,29 @@ namespace Unity.Behavior
         {
             return SerializationUtility.HasManagedReferencesWithMissingTypes(this) ||
                    SerializationUtility.HasManagedReferencesWithMissingTypes(m_RuntimeBlackboardAsset);
+        }
+
+        public bool ContainsLostBlackboardVariableType(out List<RuntimeBlackboardAsset> assetsContainingLostType)
+        {
+            assetsContainingLostType = null;
+            if (m_RuntimeBlackboardAsset?.Blackboard?.Variables.Any(v => v == null) == true)
+            {
+                assetsContainingLostType ??= new List<RuntimeBlackboardAsset>();
+                assetsContainingLostType.Add(m_RuntimeBlackboardAsset);
+            }
+
+            return assetsContainingLostType != null;
+        }
+
+        internal void RebuildAndSave()
+        {
+            // Reset timestamp to force a rebuild of the runtime asset.
+            if (RuntimeBlackboardAsset != null)
+            {
+                RuntimeBlackboardAsset.VersionTimestamp = 0;
+            }
+            BuildRuntimeBlackboard();
+            SaveAsset();
         }
     }
 }

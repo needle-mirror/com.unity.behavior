@@ -5,6 +5,7 @@ using System.Reflection;
 
 namespace Unity.Behavior
 {
+    [Serializable]
     internal class ActionNodeModel : BehaviorGraphNodeModel
     {
         public override bool IsSequenceable => true;

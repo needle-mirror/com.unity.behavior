@@ -1,5 +1,8 @@
+using System;
+
 namespace Unity.Behavior
 {
+    [Serializable]
     internal class ModifierNodeModel : BehaviorGraphNodeModel
     {
         public ModifierNodeModel(NodeInfo nodeInfo) : base(nodeInfo) { }

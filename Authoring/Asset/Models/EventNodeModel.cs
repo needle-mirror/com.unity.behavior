@@ -6,6 +6,7 @@ using UnityEngine;
 
 namespace Unity.Behavior
 {
+    [Serializable]
     internal class EventNodeModel : BehaviorGraphNodeModel
     {
         public static readonly string ChannelFieldName = "ChannelVariable";

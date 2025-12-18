@@ -11,10 +11,11 @@ namespace Unity.Behavior
         {
 #if UNITY_6000_3_OR_NEWER
             DragAndDrop.AddDropHandlerV2(InspectorDropHandler);
+            DragAndDrop.AddDropHandlerV2(HierarchyDropHandler);
 #else
             DragAndDrop.AddDropHandler(InspectorDropHandler);
-#endif
             DragAndDrop.AddDropHandler(HierarchyDropHandler);
+#endif
         }
 
         static bool IsValidDragItem()
@@ -72,9 +73,15 @@ namespace Unity.Behavior
             return visualMode;
         }
 
+#if UNITY_6000_3_OR_NEWER
+        static DragAndDropVisualMode HierarchyDropHandler(EntityId dropTargetInstanceID, HierarchyDropFlags dropMode, Transform parentForDraggedObjects, bool perform)
+        {
+            GameObject targetGameObject = EditorUtility.EntityIdToObject(dropTargetInstanceID) as GameObject;
+#else
         static DragAndDropVisualMode HierarchyDropHandler(int dropTargetInstanceID, HierarchyDropFlags dropMode, Transform parentForDraggedObjects, bool perform)
         {
             GameObject targetGameObject = EditorUtility.InstanceIDToObject(dropTargetInstanceID) as GameObject;
+#endif
             if (!dropMode.HasFlag(HierarchyDropFlags.DropUpon) || !IsValidDragItem() || targetGameObject == null)
             {
                 return DragAndDropVisualMode.None;

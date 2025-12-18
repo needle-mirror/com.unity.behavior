@@ -184,6 +184,13 @@ internal class BlackboardVariableElement : VisualElement
 
     private void OnNameFieldValueChanged(ChangeEvent<string> evt)
     {
+        if (string.IsNullOrWhiteSpace(m_NameField.value))
+        {
+            Debug.LogWarning("Variable name cannot be empty or whitespace.");
+            m_NameField.SetValueWithoutNotify(Name);
+            return;
+        }
+        
         Name = m_NameField.value;
         OnNameChanged?.Invoke(m_NameField.value, m_VariableModel);
     }

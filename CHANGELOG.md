@@ -4,6 +4,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.14] - 2025-12-18
+
+### Added
+- Add open subgraph button to SubgraphNodeInspectorUI
+- Added "Rebuild" option to Behavior asset inspector dropdown menu.
+
+### Changed
+- Check Assets Integrity tool now logs warnings for blackboard variables with lost type information.
+- Added support for enumeration with `[Flag]` attribute.
+- Authoring variables of enumeration now initialize their value with first value of the enum. This fixes various issues with enumeration using explicit values.
+- Node wizard story editor now only displays words that are valid variable names.
+- Node wizard editor now have a character limit (256) and a window size limit.
+
+### Fixed
+- Fixed shared blackboard variable not listening to their source variable's OnValueChanged (BEHAVB-414)
+- Fixed a bug causing the deletion of composite with its edge selected to not delete the linked node port.
+- Fixed cursor arrow icon when hovering blackboard variable unlinked button.
+- Fixed a nullreference exception on playmode exit caused by blackboard variables with lost type information.
+- Fixed various UI styling issues (enum linkfield, unlink icon 'x', vector 4 linkfield)
+- Fixed a nullreference exception when updating the package to version 1.0.13 for existing projects using RunSubgraph nodes.
+- Fixed creating a Blackboard Variable of a typed enumeration cause exception (BEHAVB-362)
+- Fixed Behavior node using typed enumeration causes exception and graph view to be unusable (BEHAVB-363)
+- Fixed Unity Behavior Node Wizard generates incorrect type reference for nested enums in BlackboardVariable (BEHAVB-366)
+- Fixed invisible scrollbar in blackboard window.
+- Fixed blackboard type registration for `Component` derived types.
+- Fixed `Run Subgraph` node not being able to detect the subgraph from a linked blackboard asset (BEHAVB-315)
+- Fixed icons when selecting asset from RunSubgraph node.
+- Fixed exception being thrown and the graph becoming unusable when a `Composite` node type goes missing.
+- Fixed `Composite` ports not being properly synchronized. 
+
+### Known Issues
+- Same Known Issues as 1.0.13
+- Runtime serialization does not support `LazyLoadReference<T>` in Unity 6000.3 due to a missing EntityID API.
+
 ## [1.0.13] - 2025-10-20
 
 ### Added

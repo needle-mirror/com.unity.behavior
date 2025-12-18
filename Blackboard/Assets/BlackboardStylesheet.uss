@@ -52,7 +52,7 @@ BlackboardView {
 }
 
 #Variables #unity-slider {
-    display: none;
+    margin-bottom: 4px;
 }
 
 .unity-list-view {

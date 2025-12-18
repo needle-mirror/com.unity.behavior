@@ -1,4 +1,5 @@
 using System;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -58,12 +59,12 @@ namespace Unity.Behavior.GraphFramework
         }
 
         private Vector2 m_StartWorldPosition => m_Start != null
-            ? m_Start.LocalToWorld((Vector2)m_Start.transform.position
+            ? m_Start.LocalToWorld((Vector2)m_Start.resolvedStyle.translate
                                    + new Vector2(m_Start.resolvedStyle.width, 10.0f) / 2)
             : m_StartPosition;
 
         private Vector2 m_EndWorldPosition => m_End != null
-            ? m_End.LocalToWorld((Vector2)m_End.transform.position
+            ? m_End.LocalToWorld((Vector2)m_End.resolvedStyle.translate
                                  + new Vector2(m_End.resolvedStyle.width, m_End.resolvedStyle.height) / 2)
             : m_EndPosition;
 
@@ -425,7 +426,11 @@ namespace Unity.Behavior.GraphFramework
             float width = Math.Abs(bottomRightWorld.x - topLeftWorld.x) / scale.x;
             float height = Math.Abs(bottomRightWorld.y - topLeftWorld.y) / scale.y;
 
+#if UNITY_6000_3_OR_NEWER
+            style.translate = m_GraphView != null ? m_GraphView.Viewport.WorldToLocal(topLeftWorld) : topLeftWorld;
+#else
             transform.position = m_GraphView != null ? m_GraphView.Viewport.WorldToLocal(topLeftWorld) : topLeftWorld;
+#endif
 
             style.width = width;
             style.height = height;

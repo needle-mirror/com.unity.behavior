@@ -17,6 +17,7 @@ StoryEditor {
 }
 
 StoryFieldWithValidation TextArea {
+    max-height: 150px;
     min-height: 30px;
     height: 30px;
 }

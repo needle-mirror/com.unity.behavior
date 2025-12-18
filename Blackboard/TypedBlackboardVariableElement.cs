@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Unity.AppUI.UI;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -52,7 +53,41 @@ namespace Unity.Behavior.GraphFramework
 
         private void OnValueChanged(ChangeEvent<IEnumerable<int>> evt)
         {
-            m_View.Dispatcher.DispatchImmediate(new SetBlackboardVariableValueCommand(VariableModel, evt.newValue.FirstOrDefault()));
+            Type type = VariableModel.ObjectValue?.GetType();
+            if (type == null || !type.IsEnum)
+            {
+                // Fallback
+                m_View.Dispatcher.DispatchImmediate(new SetBlackboardVariableValueCommand(VariableModel, evt.newValue.FirstOrDefault()));
+                return;
+            }
+
+            Array enumValues = Enum.GetValues(type);
+            if (type.IsDefined(typeof(FlagsAttribute), false))
+            {
+                // Handle flags enum
+                int combinedValue = 0;
+
+                foreach (int index in evt.newValue)
+                {
+                    if (index >= 0 && index < enumValues.Length)
+                    {
+                        combinedValue |= Convert.ToInt32(enumValues.GetValue(index));
+                    }
+                }
+
+                // If nothing selected for flag enum, use 0 (None)
+                m_View.Dispatcher.DispatchImmediate(new SetBlackboardVariableValueCommand(VariableModel, combinedValue));
+            }
+            else
+            {
+                // Handle regular enum
+                int selectedIndex = evt.newValue.FirstOrDefault();
+                if (selectedIndex >= 0 && selectedIndex < enumValues.Length)
+                {
+                    object enumValue = enumValues.GetValue(selectedIndex);
+                    m_View.Dispatcher.DispatchImmediate(new SetBlackboardVariableValueCommand(VariableModel, enumValue));
+                }
+            }
         }
 
         private void OnValueChanged(ChangeEvent<T> evt)
@@ -415,22 +450,53 @@ namespace Unity.Behavior.GraphFramework
             m_Field.size = Size.M;
             Type variableEnumType = variableModel.ObjectValue.GetType();
             Array enumValues = Enum.GetValues(variableEnumType);
+
             m_Field.bindItem = (item, i) => item.label = Enum.GetName(variableEnumType, enumValues.GetValue(i));
             m_Field.sourceItems = enumValues;
-            m_Field.SetValueWithoutNotify(GetEnumValueIndex((int)variableModel.ObjectValue, enumValues));
+
+            // Check if this is a flags enum
+            if (variableEnumType.GetCustomAttribute<FlagsAttribute>() != null)
+            {
+                m_Field.selectionType = PickerSelectionType.Multiple;
+                m_Field.SetValueWithoutNotify(GetFlagIndices(variableModel.ObjectValue, enumValues));
+            }
+            else
+            {
+                m_Field.SetValueWithoutNotify(GetEnumValueIndex(variableModel.ObjectValue, enumValues));
+            }
         }
 
-        // Returns the index of the enum value in the enumValues array.
-        public static IEnumerable<int> GetEnumValueIndex(int variableValue, Array enumValues)
+        private static List<int> GetFlagIndices(object enumValue, Array enumValues)
         {
-            var i = 0;
-            foreach (var value in enumValues)
+            var currentValue = Convert.ToInt32(enumValue);
+            var selectedIndices = new List<int>();
+
+            for (int i = 0; i < enumValues.Length; i++)
             {
-                if ((int)value == variableValue) return new[] { i };
-                ++i;
+                long flagValue = Convert.ToInt32(enumValues.GetValue(i));
+
+                // Handles zero flag
+                if (flagValue == 0)
+                {
+                    if (currentValue == 0)
+                    {
+                        selectedIndices.Add(i);
+                    }
+                }
+                else if ((currentValue & flagValue) == flagValue)
+                {
+                    selectedIndices.Add(i);
+                }
             }
 
-            return null;
+            return selectedIndices;
+        }
+
+        private static IEnumerable<int> GetEnumValueIndex(object enumValue, Array enumValues)
+        {
+            // Use Array.IndexOf for direct comparison
+            int index = Array.IndexOf(enumValues, enumValue);
+            return new[] { index >= 0 ? index : 0 };
         }
     }
 }

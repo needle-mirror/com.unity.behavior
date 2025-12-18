@@ -100,7 +100,9 @@ namespace Unity.Behavior
             runtimeLabel.AddToClassList("behavior-section-title");
             container.Add(runtimeLabel);
 
-            var runtimeBlackboardRow = BehaviorAssetEditorUtility.CreateBehaviorAssetField(asset.RuntimeBlackboardAsset);
+            var runtimeBlackboardRow = BehaviorAssetEditorUtility.CreateBehaviorAssetField(asset.RuntimeBlackboardAsset, out var dropdownMenu);
+            dropdownMenu.AppendAction("Rebuild", _ => asset.RebuildAndSave(),
+                asset != null ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
             runtimeBlackboardRow.AddToClassList("behavior-indented-content");
             container.Add(runtimeBlackboardRow);
 

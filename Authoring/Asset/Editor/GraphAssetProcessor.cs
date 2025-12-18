@@ -363,7 +363,7 @@ namespace Unity.Behavior
             {
                 List<NodeModel> connections = GetSortedConnections(outputPortModel);
                 // Dirty hack for switches to work
-                if (connections.Count == 0 && parent is SwitchComposite)
+                if (connections.Count == 0 && (parent is SwitchComposite || parent is SwitchFlagComposite))
                 {
                     parent.Add(null);
                 }
@@ -376,7 +376,7 @@ namespace Unity.Behavior
                     }
 
                     // Check for the switch hack
-                    if (child == null && parent is not SwitchComposite)
+                    if (child == null && parent is not SwitchComposite && parent is not SwitchFlagComposite)
                     {
                         continue;
                     }

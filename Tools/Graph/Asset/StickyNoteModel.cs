@@ -1,7 +1,9 @@
+using System;
 using UnityEngine;
 
 namespace Unity.Behavior.GraphFramework
 {
+    [Serializable]
     internal class StickyNoteModel : NodeModel
     {
         [SerializeField]

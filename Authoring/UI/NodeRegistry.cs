@@ -5,6 +5,9 @@ using System.Reflection;
 using Unity.Behavior.GraphFramework;
 using UnityEngine;
 using UnityEngine.Rendering;
+#if UNITY_6000_5_OR_NEWER
+using UnityEngine.Assemblies;
+#endif
 
 namespace Unity.Behavior
 {
@@ -126,7 +129,11 @@ namespace Unity.Behavior
                 .Where(type => type.IsClass && !type.IsAbstract && typeof(NodeModel).IsAssignableFrom(type))
                 .ToList();
 #else
+#if UNITY_6000_5_OR_NEWER
+            List<Type> typeList = CurrentAssemblies.GetLoadedAssemblies()
+#else
             List<Type> typeList = AppDomain.CurrentDomain.GetAssemblies()
+#endif
                 .SelectMany(assembly => assembly.GetTypes()
                     .Where(type => type.IsClass && !type.IsAbstract && typeof(NodeModel).IsAssignableFrom(type))
                 ).ToList();
@@ -195,7 +202,11 @@ namespace Unity.Behavior
                 .Where(type => type.IsClass && !type.IsAbstract && type.IsSubclassOf(typeof(Node)))
                 .ToList();
 #else
+#if UNITY_6000_5_OR_NEWER
+            List<Type> typeList = CurrentAssemblies.GetLoadedAssemblies()
+#else
             List<Type> typeList = AppDomain.CurrentDomain.GetAssemblies()
+#endif
                 .SelectMany(assembly => assembly.GetTypes()
                     .Where(type => type.IsClass && !type.IsAbstract && type.IsSubclassOf(typeof(Node)))
                 ).ToList();
@@ -227,7 +238,7 @@ namespace Unity.Behavior
                         }
                         else if (type.IsSubclassOf(typeof(Composite)))
                         {
-                            if (type == typeof(SwitchComposite))
+                            if (type == typeof(SwitchComposite) || type == typeof(SwitchFlagComposite))
                             {
                                 modelType = typeof(SwitchNodeModel);
                             }

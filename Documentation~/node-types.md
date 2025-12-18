@@ -90,7 +90,8 @@ To use the **Action** nodes, select **Add** > **Action**.
 | Restart | Restarts the branch when the assigned conditions are true. |
 | **Conditional** | To use the **Conditional** options, select **Add** > **Flow** > **Conditional**. |
 | Conditional Branch | Selects a branch based on whether the condition evaluates to true or false. |
-| Switch | Branches off based on the `Enumeration` value. |
+| Switch | Branches off based on the `Enumeration` value. Logs a warning when used with a flag enum that has multiple flags set, and only executes the branch for the first matching flag. |
+| Switch Flag | Executes all branches that match the set flags in the enum value in parallel. Works with regular enums as a fallback. |
 | **Parallel Execution** | To use the **Parallel Execution** options, select **Add** > **Flow** > **Parallel Execution**. |
 | Run In Parallel | Runs all the branches simultaneously. You can set different execution modes in this node to handle parallel branches. |
 | Wait For All | Activates a child when all parents have started this node. It can't restart until the child's subgraph has ended. |

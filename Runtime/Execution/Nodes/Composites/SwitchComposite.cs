@@ -1,19 +1,22 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;
+using System.Reflection;
 using Unity.Properties;
+using UnityEngine;
 
 namespace Unity.Behavior
 {
     [Serializable, GeneratePropertyBag]
     [NodeDescription(
         name: "Switch",
-        description: "Branches off based on enum value.",
+        description: "Branches off based on enum value. When used with a flag enum, only the first active flag will be considered.", 
         icon: "Icons/Sequence",
         category: "Flow/Conditional",
         id: "ef072beedcccd16ac0cd3cb5295fe4cd")]
     internal partial class SwitchComposite : Composite
     {
+        private static readonly Dictionary<Type, bool> s_FlagEnumCache = new();
+
         // The returned status when no node is attached to the desired port.
         internal Status DefaultStatus = Status.Success;
 
@@ -100,20 +103,75 @@ namespace Unity.Behavior
             if (m_IsInitialized == false && EnumVariable?.ObjectValue != null) // boxing cost ONLY when not initialized.
             {
                 m_IsInitialized = true;
-                EnumVariable.OnValueChanged += () => m_HasEnumChanged = true;
+                EnumVariable.OnValueChanged += SetEnumValueChanged;
                 UpdateCaches();
             }
         }
 
+        // Cache in a static lookup table as the attribute won't change for a given type.
+        private static bool IsFlagEnum(Type enumType)
+        {
+            if (s_FlagEnumCache.TryGetValue(enumType, out bool isFlagEnum))
+                return isFlagEnum;
+
+            isFlagEnum = enumType.GetCustomAttribute<FlagsAttribute>() != null;
+            s_FlagEnumCache[enumType] = isFlagEnum;
+            return isFlagEnum;
+        }
+
+        private void SetEnumValueChanged()
+        {
+            m_HasEnumChanged = true;
+        }
+
         private void UpdateCaches()
         {
-            // Boxing value is unavoidable because enum type is unknown at compile time.
-            // If you need a GC free solution, consider creating a new Composite that uses the explicit enum type.
             var enumValue = EnumVariable.ObjectValue;
-            m_CachedIntValue = (int)enumValue;
-            m_HasEnumChanged = false;
+            var enumType = enumValue.GetType();
+            int intValue = Convert.ToInt32(enumValue);
 
-            EnsureEnumCacheIsValid(enumValue.GetType());
+            if (UpdateAsEnumFlag(enumType, intValue))
+            {
+                return;
+            }
+
+            // Standard enum handling
+            m_CachedIntValue = intValue;
+            m_HasEnumChanged = false;
+            EnsureEnumCacheIsValid(enumType);
+        }
+
+        private bool UpdateAsEnumFlag(Type enumType, int intValue)
+        {
+            if (!IsFlagEnum(enumType))
+            {
+                return false;
+            }
+
+#if UNITY_EDITOR
+            // Check if multiple flags are set
+            if (intValue > 0 && (intValue & (intValue - 1)) != 0)
+            {
+                Debug.LogWarning($"Switch node is using a flag enum '{enumType.Name}' with multiple flags set ({intValue}). " +
+                               "Only the first matching flag will be executed. Consider using a Switch Flag node instead for parallel execution.");
+            }
+#endif
+            // Find the first set flag (lowest bit)
+            var enumValues = Enum.GetValues(enumType);
+            for (int i = 0; i < enumValues.Length; i++)
+            {
+                int flagValue = Convert.ToInt32(enumValues.GetValue(i));
+                if (flagValue > 0 && (intValue & flagValue) != 0)
+                {
+                    // Use this flag's index as the child index
+                    m_CachedIntValue = flagValue;
+                    m_HasEnumChanged = false;
+                    EnsureEnumCacheIsValid(enumType);
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void EnsureEnumCacheIsValid(Type enumType)

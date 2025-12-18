@@ -288,3 +288,8 @@ ActionButton {
     border-bottom-width: 1px;
     border-bottom-color: #C9B33F;
 }
+
+.SubgraphOpenAssetIcon {
+    align-self: center;
+    margin-left: 4px;
+}

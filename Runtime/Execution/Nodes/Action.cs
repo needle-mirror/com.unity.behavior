@@ -1,3 +1,4 @@
+using System;
 using Unity.Behavior.Serialization;
 using Unity.Properties;
 using UnityEngine;
@@ -7,6 +8,7 @@ namespace Unity.Behavior
     /// <summary>
     /// The base class for action nodes used in Behavior Graphs.
     /// </summary>
+    [Serializable]
     public abstract class Action : Node
     {
         /// <summary>

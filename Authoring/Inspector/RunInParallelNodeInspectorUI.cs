@@ -9,7 +9,8 @@ namespace Unity.Behavior
     [NodeInspectorUI(typeof(RunInParallelNodeModel))]
     internal class RunInParallelNodeInspectorUI : BehaviorGraphNodeInspectorUI
     {
-        Dropdown m_ModeDropdown;
+        private VisualElement m_InspectorField;
+        private Dropdown m_ModeDropdown;
         private RunInParallelNodeModel ParallelNodeModel => InspectedNode as RunInParallelNodeModel;
 
         public RunInParallelNodeInspectorUI(NodeModel nodeModel) : base(nodeModel) { }
@@ -37,6 +38,12 @@ namespace Unity.Behavior
             }
             else
             {
+                // Refresh will clear NodeProperties if the node model has any field.
+                if (!NodeProperties.Contains(m_InspectorField))
+                {
+                    NodeProperties.Add(m_InspectorField);
+                }
+
                 RunInParallelNodeModel.ParallelMode parallelMode = (RunInParallelNodeModel.ParallelMode)m_ModeDropdown.selectedIndex;
                 if (ParallelNodeModel.Mode != parallelMode)
                 {
@@ -47,14 +54,12 @@ namespace Unity.Behavior
 
         void CreateDropdownElement()
         {
-            VisualElement dropdownContainer = new VisualElement();
-            dropdownContainer.style.flexDirection = FlexDirection.Row;
-            dropdownContainer.style.justifyContent = Justify.SpaceBetween;
-            dropdownContainer.style.alignItems = Align.Center;
-            NodeProperties.Add(dropdownContainer);
+            m_InspectorField = new VisualElement();
+            m_InspectorField.AddToClassList("Inspector-FieldContainer");
+            NodeProperties.Add(m_InspectorField);
 
             Label parallelModeLabel = new Label("Parallel Mode");
-            dropdownContainer.Add(parallelModeLabel);
+            m_InspectorField.Add(parallelModeLabel);
 
             m_ModeDropdown = new Dropdown();
             var parallelModes = Enum.GetNames(typeof(RunInParallelNodeModel.ParallelMode));
@@ -66,7 +71,7 @@ namespace Unity.Behavior
             m_ModeDropdown.sourceItems = parallelModes;
             m_ModeDropdown.selectedIndex = (int)ParallelNodeModel.Mode;
             m_ModeDropdown.RegisterValueChangedCallback(OnModeValueChanged);
-            dropdownContainer.Add(m_ModeDropdown);
+            m_InspectorField.Add(m_ModeDropdown);
         }
     }
 }

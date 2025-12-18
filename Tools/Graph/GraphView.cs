@@ -831,7 +831,11 @@ namespace Unity.Behavior.GraphFramework
 
             nodeUI.RemoveFromHierarchy(); // remove the node from the prior parent, as it will be added to sequence
             nodeUI.style.position = Position.Relative;
+#if UNITY_6000_3_OR_NEWER
+            nodeUI.style.translate = Vector2.zero;
+#else
             nodeUI.transform.position = Vector2.zero;
+#endif         
             nodeUI.style.left = StyleKeyword.Auto;
             nodeUI.style.top = StyleKeyword.Auto;
             nodeUI.AddToClassList("SequencedNode");

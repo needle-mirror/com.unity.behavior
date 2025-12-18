@@ -132,7 +132,11 @@ namespace Unity.Behavior.GraphFramework
             // If position and size are saved to graph preferences, set those.
             if (GraphPrefsUtility.HasKey(XPosPrefsKey, inEditorContext) && GraphPrefsUtility.HasKey(YPosPrefsKey, inEditorContext))
             {
-                transform.position = new Vector3(
+#if UNITY_6000_3_OR_NEWER
+                style.translate = new Vector2(
+#else
+                transform.position = new Vector2(
+#endif
                     GraphPrefsUtility.GetFloat(XPosPrefsKey, 0f, inEditorContext),
                     GraphPrefsUtility.GetFloat(YPosPrefsKey, 0f, inEditorContext)
                     );
@@ -248,21 +252,29 @@ namespace Unity.Behavior.GraphFramework
             {
                 return;
             }
-            Vector3 position = transform.position;
+            Vector3 position = resolvedStyle.translate;
+#if UNITY_6000_3_OR_NEWER
+            style.translate = new Vector2(
+#else
             transform.position = new Vector2(
+#endif            
                 Mathf.Clamp(position.x, 0, parent.worldBound.width - resolvedStyle.width),
                 Mathf.Clamp(position.y, 0, parent.worldBound.height - resolvedStyle.height));
         }
 
         private void SetPositionFromDefaultPosition()
         {
+#if UNITY_6000_3_OR_NEWER
+            style.translate = m_DefaultPosition switch
+#else
             transform.position = m_DefaultPosition switch
+#endif
             {
                 DefaultPosition.TopLeft => new Vector3(0, 0, 0),
                 DefaultPosition.TopRight => new Vector3(float.PositiveInfinity, 0, 0),
                 DefaultPosition.BottomLeft => new Vector3(0, float.PositiveInfinity, 0),
                 DefaultPosition.BottomRight => new Vector3(float.PositiveInfinity, float.PositiveInfinity, 0),
-                _ => transform.position
+                _ => resolvedStyle.translate
             };
         }
     }

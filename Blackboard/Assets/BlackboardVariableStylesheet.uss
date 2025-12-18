@@ -155,7 +155,7 @@ Vector4Field {
 }
 
 #appui-vector4field__row {
-    margin-right: 6px;
+    padding-right: var(--appui-alias-control-gap-sm);
     margin-bottom: 0;
 }
 

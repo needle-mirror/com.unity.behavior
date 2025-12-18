@@ -80,6 +80,9 @@ namespace Unity.Behavior
             get => m_Graph;
             set
             {
+                // unregister blackboard variables overrides before losing the graph.
+                UnregisterSharedBlackboardVariable();
+
                 m_Graph = value;
                 m_IsInitialised = false;
                 m_IsStarted = false;
@@ -642,6 +645,7 @@ namespace Unity.Behavior
             }
 
             m_Graph.BlackboardReference.Blackboard.CreateMetadata();
+            RegisterSharedBlackboardVariable();
         }
 
         /// <summary>
@@ -778,6 +782,8 @@ namespace Unity.Behavior
             {
                 m_Graph.End();
             }
+
+            UnregisterSharedBlackboardVariable();
         }
 
         /// <summary>
@@ -953,6 +959,75 @@ namespace Unity.Behavior
 
             guid = default;
             return false;
+        }
+
+        /// <summary>
+        /// Registers value changed callbacks for all shared blackboard variables in the graph.
+        /// </summary>
+        /// <remarks>
+        /// We are not handling the registration during OnEnable/OnDisable because 
+        /// some users expects to be able to manually tick the graph with the BehaviorGraphAgent beind disabled.
+        /// </remarks>
+        private void RegisterSharedBlackboardVariable()
+        {
+            if (Graph == null)
+            {
+                return;
+            }
+
+            ExecuteOverSharedVariables((ISharedBlackboardVariable variable) =>
+            {
+                variable.RegisterValueChangedCallback();
+            });
+        }
+
+        /// <summary>
+        /// Unregisters value changed callbacks for all shared blackboard variables in the graph.
+        /// </summary>
+        private void UnregisterSharedBlackboardVariable()
+        {
+            if (Graph == null)
+            {
+                return;
+            }
+
+            ExecuteOverSharedVariables((ISharedBlackboardVariable variable) =>
+            {
+                variable.UnregisterValueChangedCallback();
+            });
+        }
+
+        private void ExecuteOverSharedVariables(System.Action<ISharedBlackboardVariable> action)
+        {
+            foreach (var graphModule in Graph.Graphs)
+            {
+                if (graphModule.Blackboard != null)
+                {
+                    foreach (var variable in graphModule.Blackboard.Variables)
+                    {
+                        if (variable is ISharedBlackboardVariable sharedBlackboardVariable)
+                        {
+                            action(sharedBlackboardVariable);
+                        }
+                    }
+                }
+
+                foreach (var blackboardReference in graphModule.BlackboardGroupReferences)
+                {
+                    if (blackboardReference == null || blackboardReference.Blackboard == null)
+                    {
+                        continue;
+                    }
+
+                    foreach (var variable in blackboardReference.Blackboard.Variables)
+                    {
+                        if (variable is ISharedBlackboardVariable sharedBlackboardVariable)
+                        {
+                            action(sharedBlackboardVariable);
+                        }
+                    }
+                }
+            }
         }
 
 #if UNITY_EDITOR // Used for testing

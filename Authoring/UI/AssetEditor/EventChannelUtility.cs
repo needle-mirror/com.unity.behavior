@@ -4,6 +4,9 @@ using System.Linq;
 using System.Reflection;
 using Unity.Behavior.GraphFramework;
 using UnityEngine;
+#if UNITY_6000_5_OR_NEWER
+using UnityEngine.Assemblies;
+#endif
 
 namespace Unity.Behavior
 {
@@ -32,7 +35,11 @@ namespace Unity.Behavior
 
         internal static IEnumerable<EventChannelInfo> GetEventChannelTypes()
         {
+#if UNITY_6000_5_OR_NEWER
+            foreach (var type in CurrentAssemblies.GetLoadedAssemblies().SelectMany(assembly => assembly.GetTypes()))
+#else
             foreach (var type in AppDomain.CurrentDomain.GetAssemblies().SelectMany(assembly => assembly.GetTypes()))
+#endif
             {
                 if (!IsEventChannelType(type, out Type eventChannelModelType) || type.IsGenericType || type.IsAbstract || type.IsNestedPrivate)
                 {

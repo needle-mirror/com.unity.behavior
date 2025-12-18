@@ -9,6 +9,7 @@ namespace Unity.Behavior
     /// <summary>
     /// A node that can have multiple inputs nodes.
     /// </summary>
+    [Serializable]
     public abstract class Join : Node, IParent
     {
         /// <summary>

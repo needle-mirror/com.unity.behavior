@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Behavior.GraphFramework;
+#if UNITY_6000_5_OR_NEWER
+using UnityEngine.Assemblies;
+#endif
 
 namespace Unity.Behavior
 {
@@ -26,7 +29,11 @@ namespace Unity.Behavior
                 .Where(type => type.IsClass && !type.IsAbstract && type.IsSubclassOf(typeof(Condition)))
                 .ToList();
 #else
+#if UNITY_6000_5_OR_NEWER
+            List<Type> typeList = CurrentAssemblies.GetLoadedAssemblies()
+#else
             List<Type> typeList = AppDomain.CurrentDomain.GetAssemblies()
+#endif
                 .SelectMany(assembly => assembly.GetTypes()
                     .Where(type => type.IsClass && !type.IsAbstract && type.IsSubclassOf(typeof(Condition)))
                 ).ToList();

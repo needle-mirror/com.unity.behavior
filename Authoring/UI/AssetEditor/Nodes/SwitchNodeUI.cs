@@ -9,6 +9,7 @@ namespace Unity.Behavior
     {
         private readonly LinkField<Enum, RuntimeEnumField> m_EnumLinkField;
         private VariableModel m_LastAssignedEnumVariable;
+        private SwitchNodeModel SwitchNodeModel => Model as SwitchNodeModel;
 
         public SwitchNodeUI(NodeModel nodeModel) : base(nodeModel)
         {
@@ -16,7 +17,8 @@ namespace Unity.Behavior
             AddToClassList("SwitchNodeUI");
             AddToClassList("TwoLineNode");
 
-            Title = "Switch";
+            var switchNodeModel = nodeModel as SwitchNodeModel;
+            Title = switchNodeModel.NodeType.Type == typeof(SwitchComposite) ? "Switch" : "Switch Flag";
 
             m_EnumLinkField = new BehaviorLinkField<Enum, RuntimeEnumField>()
             {
@@ -61,6 +63,7 @@ namespace Unity.Behavior
         public override void Refresh(bool isDragging)
         {
             base.Refresh(isDragging);
+            UpdateNodeTitle();
             if (m_EnumLinkField.LinkedVariable != m_LastAssignedEnumVariable)
             {
                 RefreshOutputPortUIs();
@@ -71,6 +74,15 @@ namespace Unity.Behavior
             {
                 AlignImmediateChildren();
                 model.UpdatedPorts = false;
+            }
+        }
+
+        private void UpdateNodeTitle()
+        {
+            NodeInfo info = NodeRegistry.GetInfo(SwitchNodeModel.NodeType);
+            if (info != null)
+            {
+                Title = info.Name;
             }
         }
 

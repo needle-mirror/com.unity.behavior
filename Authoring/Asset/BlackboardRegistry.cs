@@ -8,6 +8,9 @@ using UnityEngine.Audio;
 using System.Linq;
 #else
 using System.Reflection;
+#if UNITY_6000_5_OR_NEWER
+using UnityEngine.Assemblies;
+#endif
 #endif
 
 namespace Unity.Behavior
@@ -82,7 +85,11 @@ namespace Unity.Behavior
                 enumOptions.Add(new BlackboardOption(type, "Enumeration/" + Util.NicifyVariableName(type.Name), icon: "enum"));
             }
 #else
+#if UNITY_6000_5_OR_NEWER
+            foreach (var assembly in CurrentAssemblies.GetLoadedAssemblies())
+#else
             foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+#endif
             {
                 foreach (var type in assembly.GetTypes())
                 {
@@ -104,7 +111,7 @@ namespace Unity.Behavior
             var enums = GetEnumVariableTypes();
             options.Insert(0, new BlackboardOption { Type = typeof(RegularText), Path = "Regular Text" });
 
-            AddCustomTypes<Behaviour>(options, "Other/MonoBehaviours");
+            AddCustomTypes<Component>(options, "Other/Components");
             AddCustomTypes<ScriptableObject>(options, "Other/ScriptableObjects");
 
             options.AddRange(enums);
@@ -127,7 +134,7 @@ namespace Unity.Behavior
             if (m_CustomVariableOptions == null)
             {
                 m_CustomVariableOptions = new List<BlackboardOption>();
-                AddCustomTypes<Component>(m_CustomVariableOptions, "MonoBehaviours");
+                AddCustomTypes<Component>(m_CustomVariableOptions, "Components");
                 AddCustomTypes<ScriptableObject>(m_CustomVariableOptions, "ScriptableObjects");
             }
             return m_CustomVariableOptions;
@@ -149,7 +156,11 @@ namespace Unity.Behavior
             foreach (var type in monobehaviourTypes)
             {
 #else
+#if UNITY_6000_5_OR_NEWER
+            foreach (var assembly in CurrentAssemblies.GetLoadedAssemblies())
+#else
             foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+#endif
             {
                 foreach (var type in assembly.GetTypes())
                 {

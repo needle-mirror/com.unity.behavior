@@ -78,7 +78,7 @@ namespace Unity.Behavior.GraphFramework
 
         internal virtual void ValidateAsset()
         {
-            for (int i = 0; i < Nodes.Count; i++)
+            for (int i = Nodes.Count - 1; i >= 0; i--)
             {
                 NodeModel node = Nodes[i];
                 // holdovers for supporting older graphs - remove for 1.0.0
@@ -90,6 +90,15 @@ namespace Unity.Behavior.GraphFramework
                 {
                     node.OnDefineNode();
                 }
+
+                // If the node is a floating port with no connections, remove it.
+                // This should no longer happens in 1.0.14 and later, but we keep this here to clean up older graphs.
+                if (node is FloatingPortNodeModel && !node.HasIncomingConnections)
+                {
+                    Nodes.RemoveAt(i);
+                    continue;
+                }
+
                 node.OnValidate();
             }
 
@@ -291,6 +300,13 @@ namespace Unity.Behavior.GraphFramework
 
         public void DeleteEdge(PortModel startPort, PortModel endPort)
         {
+            // If either port belongs to a floating port node, do not delete the edge.
+            // Floating port edges are going to be handled in DeleteNode.
+            if (startPort.NodeModel is FloatingPortNodeModel || endPort.NodeModel is FloatingPortNodeModel)
+            {
+                return;
+            }
+
             startPort.RemoveConnectionTo(endPort);
             endPort.RemoveConnectionTo(startPort);
         }

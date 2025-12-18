@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using Unity.Behavior.GraphFramework;
 using UnityEngine;
+#if UNITY_6000_5_OR_NEWER
+using UnityEngine.Assemblies;
+#endif
 
 namespace Unity.Behavior
 {
@@ -11,8 +14,11 @@ namespace Unity.Behavior
         public override bool Process(SwapNodeFromSerializedTypeCommand command)
         {
             //Find the type of the new node
-            Type type = AppDomain.CurrentDomain
-                .GetAssemblies()
+#if UNITY_6000_5_OR_NEWER
+            Type type = CurrentAssemblies.GetLoadedAssemblies()
+#else
+            Type type = AppDomain.CurrentDomain.GetAssemblies()
+#endif
                 .SelectMany(x => x.GetTypes())
                 .FirstOrDefault(t => typeof(Node).IsAssignableFrom(t) && t.Name == command.NewNodeTypeName);
             NodeInfo newNodeInfo = type == null ? null : NodeRegistry.GetInfo(type);

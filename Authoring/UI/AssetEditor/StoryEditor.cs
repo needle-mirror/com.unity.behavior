@@ -83,7 +83,11 @@ namespace Unity.Behavior
             propertiesContainer.style.display = DisplayStyle.Flex;
             for (int i = 0; i < Sentence.WordTypePairs.Count; ++i)
             {
-                propertiesContainer.Add(CreatePropertyUI(i));
+                // Only show UI for words that are valid variable names
+                if (WordTypeSentence.IsValidVariableName(Sentence.WordTypePairs[i].Word))
+                {
+                    propertiesContainer.Add(CreatePropertyUI(i));
+                }
             }
 
             // using a local function here to make sure the captured variable i in the value changed callback is correct

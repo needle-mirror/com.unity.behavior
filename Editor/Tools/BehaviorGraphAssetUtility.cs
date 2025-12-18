@@ -51,6 +51,13 @@ namespace Unity.Behavior
                     {
                         Debug.LogWarning($"BehaviorGraph asset has placeholder nodes: {path}.", graph);
                     }
+                    if (graph.ContainsLostBlackboardVariableType(out var affectedAssets))
+                    {
+                        foreach (var asset in affectedAssets)
+                        {
+                            ErrorMessages.LogAssetLostBlackboardVariableTypeError(asset);
+                        }
+                    }
                 }
             }
 
@@ -63,10 +70,19 @@ namespace Unity.Behavior
                 {
                     string path = AssetDatabase.GUIDToAssetPath(guid);
                     var blackboard = AssetDatabase.LoadAssetAtPath<BehaviorBlackboardAuthoringAsset>(path);
-                    if (blackboard != null && AssetDatabase.IsMainAsset(blackboard)
-                        && blackboard.ContainsInvalidSerializedReferences())
+                    if (blackboard != null && AssetDatabase.IsMainAsset(blackboard))
                     {
-                        AssetLogger.LogAssetManagedReferenceError(blackboard);
+                        if (blackboard.ContainsInvalidSerializedReferences())
+                        {
+                            AssetLogger.LogAssetManagedReferenceError(blackboard);
+                        }
+                        else if (blackboard.ContainsLostBlackboardVariableType(out var affectedAssets))
+                        {
+                            foreach (var asset in affectedAssets)
+                            {
+                                ErrorMessages.LogAssetLostBlackboardVariableTypeError(asset);
+                            }
+                        }
                     }
                 }
             }

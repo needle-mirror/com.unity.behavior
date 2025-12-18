@@ -34,6 +34,14 @@ namespace Unity.Behavior
             "The Behavior asset '{0}' has missing types in its managed references. " +
             "Inspect the asset for more information.";
 
+        public const string k_LostBlackboardVariableTypeWarning =
+            "The Behavior asset '{0}' has blackboard variable(s) with lost type information. " +
+            "This typically occurs after upgrading from an earlier version where type information was not preserved." +
+            "\n\nTo fix this issue:" +
+            "\n- Select the main (root) Behavior asset in the Project window." +
+            "\n- Click on the dropdown kebab menu next to the Blackboard asset and select 'Rebuild'." +
+            "\n- The runtime blackboard will be rebuilt with only valid variables.";
+
         public const string k_SerializedReferenceBuildWarning =
             "Missing managed reference types detected in behavior assets: {0}";
 
@@ -62,6 +70,12 @@ namespace Unity.Behavior
         {
             var name = asset == null ? "Unknown" : asset.name;
             Debug.LogError(string.Format(ErrorMessages.k_SerializedRefenceWindowError, name), asset);
+        }
+
+        public static void LogAssetLostBlackboardVariableTypeError(ScriptableObject asset)
+        {
+            var name = asset == null ? "Unknown" : asset.name;
+            Debug.LogWarning(string.Format(ErrorMessages.k_LostBlackboardVariableTypeWarning, name), asset);
         }
 
         public static void DisplayWindowClosingDialog(ScriptableObject asset)

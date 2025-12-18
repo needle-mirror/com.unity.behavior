@@ -98,10 +98,47 @@ namespace Unity.Behavior
                 // We don't InvokeValueChanged as it is going to be self propagated - see Duplicate().
             }
         }
+
+        public void RegisterValueChangedCallback()
+        {
+            bool found = m_SharedVariablesRuntimeAsset.Blackboard.GetVariable(GUID, out BlackboardVariable<DataType> variable);
+            if (found == false || this == variable)
+            {
+                return;
+            }
+
+            variable.OnValueChanged -= InvokeValueChanged;
+            variable.OnValueChanged += InvokeValueChanged;
+        }
+
+        public void UnregisterValueChangedCallback()
+        {
+            bool found = m_SharedVariablesRuntimeAsset.Blackboard.GetVariable(GUID, out BlackboardVariable<DataType> variable);
+            if (found == false || this == variable)
+            {
+                return;
+            }
+
+            variable.OnValueChanged -= InvokeValueChanged;
+        }
     }
 
     internal interface ISharedBlackboardVariable
     {
+        /// <summary>
+        /// Set the shared variables runtime asset.
+        /// </summary>
+        /// <param name="globalVariablesRuntimeAsset"></param>
         void SetSharedVariablesRuntimeAsset(RuntimeBlackboardAsset globalVariablesRuntimeAsset);
+        
+        /// <summary>
+        /// Register OnValueChanged callback to listen for source variable value changes.
+        /// </summary>
+        void RegisterValueChangedCallback();
+
+        /// <summary>
+        /// Unregister OnValueChanged callback.
+        /// </summary>
+        void UnregisterValueChangedCallback();
     }
 }

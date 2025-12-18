@@ -2,6 +2,9 @@ using System;
 using System.Linq;
 using Unity.Behavior.GraphFramework;
 using UnityEngine;
+#if UNITY_6000_5_OR_NEWER
+using UnityEngine.Assemblies;
+#endif
 
 namespace Unity.Behavior
 {
@@ -9,8 +12,11 @@ namespace Unity.Behavior
     {
         public override bool Process(CreateNodeFromSerializedTypeCommand command)
         {
-            Type type = AppDomain.CurrentDomain
-                .GetAssemblies()
+#if UNITY_6000_5_OR_NEWER
+            Type type = CurrentAssemblies.GetLoadedAssemblies()
+#else
+            Type type = AppDomain.CurrentDomain.GetAssemblies()
+#endif
                 .SelectMany(x => x.GetTypes())
                 .FirstOrDefault(t => typeof(Node).IsAssignableFrom(t) && t.Name == command.NodeTypeName);
             NodeInfo nodeInfo = type == null ? null : NodeRegistry.GetInfo(type);

@@ -7,6 +7,7 @@ using UnityEngine;
 
 namespace Unity.Behavior
 {
+    [Serializable]
     [NodeModelInfo(typeof(RunSubgraph))]
     internal class SubgraphNodeModel : BehaviorGraphNodeModel
     {

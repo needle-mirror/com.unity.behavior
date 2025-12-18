@@ -20,19 +20,13 @@ namespace Unity.Behavior
             for (int i = 0; i < words.Length; ++i)
             {
                 string word = words[i];
-                if (word.StartsWith("[") && word.EndsWith("]"))
-                {
-                    if (currentLabel.Length != 0)
-                    {
-                        Label label = new Label(currentLabel);
-                        label.AddToClassList("BTLabelExtraSpace");
-                        element.Add(label);
-                        currentLabel = string.Empty;
-                    }
 
-                    word = word.TrimStart('[');
-                    word = word.TrimEnd(']');
-                    FindAndAddField(word, variables, element, onCreateLinkField, comparisonElementCallback);
+                // Check if word contains a variable pattern [variable]
+                if (word.Contains("[") && word.Contains("]"))
+                {
+                    // Process the word to extract variable and surrounding text
+                    ProcessWordWithVariable(word, variables, element, onCreateLinkField, comparisonElementCallback, ref currentLabel);
+
                     if (i == 0)
                     {
                         element.AddToClassList("BehaviorGraphNode-Offset");
@@ -44,7 +38,6 @@ namespace Unity.Behavior
                     {
                         currentLabel += " ";
                     }
-
                     currentLabel += word;
                 }
             }
@@ -57,7 +50,6 @@ namespace Unity.Behavior
                 {
                     continue;
                 }
-                // If the comparison element has been defined as a blackboard variable comparison, link the variable fields.
                 LinkComparisonElementFields(comparisonElement, element);
             }
 
@@ -65,6 +57,54 @@ namespace Unity.Behavior
             {
                 Label label = new Label(currentLabel);
                 element.Add(label);
+            }
+        }
+
+        private static void ProcessWordWithVariable(string word, List<VariableInfo> variables, VisualElement element, OnCreateLinkField onCreateLinkField, OnCreateComparisonElement comparisonElementCallback, ref string currentLabel)
+        {
+            int startIndex = word.IndexOf('[');
+            int endIndex = word.IndexOf(']');
+
+            if (startIndex == -1 || endIndex == -1 || endIndex <= startIndex)
+            {
+                // Malformed variable, treat as regular text
+                if (currentLabel.Length != 0)
+                {
+                    currentLabel += " ";
+                }
+                currentLabel += word;
+                return;
+            }
+
+            // Extract parts: prefix + [variable] + suffix
+            string prefix = word.Substring(0, startIndex);
+            string variableName = word.Substring(startIndex + 1, endIndex - startIndex - 1);
+            string suffix = word.Substring(endIndex + 1);
+
+            // Accumulated label text
+            if (currentLabel.Length != 0)
+            {
+                Label label = new Label(currentLabel);
+                label.AddToClassList("BTLabelExtraSpace");
+                element.Add(label);
+                currentLabel = string.Empty;
+            }
+
+            // Add prefix if it exists
+            if (!string.IsNullOrEmpty(prefix))
+            {
+                Label prefixLabel = new Label(prefix);
+                prefixLabel.AddToClassList("BTLabelExtraSpace");
+                element.Add(prefixLabel);
+            }
+
+            // Add the variable field
+            FindAndAddField(variableName, variables, element, onCreateLinkField, comparisonElementCallback);
+
+            // Set suffix as current label (it will be added later, either when we encounter another variable or at the end)
+            if (!string.IsNullOrEmpty(suffix))
+            {
+                currentLabel = suffix;
             }
         }
 

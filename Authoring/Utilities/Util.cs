@@ -12,6 +12,9 @@ using Unity.AppUI.UI;
 using UnityEditor;
 #else
 using System.Reflection;
+#if UNITY_6000_5_OR_NEWER
+using UnityEngine.Assemblies;
+#endif
 #endif
 
 namespace Unity.Behavior
@@ -50,7 +53,7 @@ namespace Unity.Behavior
         // Todo: Check if we're using the correct icon here. Also this should be moved to a global UI Utils class later.
         public static Texture2D GetBehaviorGraphIcon()
         {
-            return ResourceLoadAPI.Load<Texture2D>("Packages/com.unity.behavior/Editor/Icons/GraphAssetDark@2x.png");
+            return typeof(BehaviorGraph).GetIcon();
         }
 
         public static IEnumerable<Type> GetSupportedTypes() =>
@@ -265,7 +268,11 @@ namespace Unity.Behavior
             return UnityEditor.TypeCache.GetTypesWithAttribute<BlackboardEnumAttribute>()
                 .Where(type => type.IsEnum && Enum.GetValues(type).Length > 0);
 #else
+#if UNITY_6000_5_OR_NEWER
+            foreach (var assembly in CurrentAssemblies.GetLoadedAssemblies())
+#else
             foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+#endif
             {
                 foreach (var type in assembly.GetTypes())
                 {
@@ -313,7 +320,8 @@ namespace Unity.Behavior
             // Enums menu
             builder.Add("Enumeration", iconName: "enum");
 #if UNITY_EDITOR
-            builder.Add($"Enumeration/Create new enum type...", onSelected: () => OnCreateNewEnum(referenceView, buffer), priority: 1);
+            builder.Add($"Enumeration/Create new enum type...", onSelected: () => OnCreateNewEnum(referenceView, buffer, false), priority: 2);
+            builder.Add($"Enumeration/Create new flag enum type...", onSelected: () => OnCreateNewEnum(referenceView, buffer, true), priority: 1);
 #endif
             foreach (Type enumType in GetEnumVariableTypes())
             {
@@ -336,7 +344,7 @@ namespace Unity.Behavior
 
             List<BlackboardOption> customTypes = BlackboardRegistry.GetCustomTypes();
             builder.Add($"Other", priority: -1, iconName: "others");
-            builder.Add($"Other/MonoBehaviours", iconName: "others");
+            builder.Add($"Other/Components", iconName: "others");
             builder.Add($"Other/ScriptableObjects", iconName: "others");
             foreach (var customType in customTypes)
             {
@@ -372,14 +380,14 @@ namespace Unity.Behavior
 
 #endif
 
-        private static void OnCreateNewEnum(VisualElement target, SerializableCommandBuffer buffer)
+        private static void OnCreateNewEnum(VisualElement target, SerializableCommandBuffer buffer, bool isEnumFlag)
         {
 #if UNITY_EDITOR
             WizardStepper stepper = new WizardStepper();
             Modal modal = Modal.Build(target, stepper);
-            stepper.WizardAppBar.title = "New Enum Type";
+            stepper.WizardAppBar.title = $"New{(isEnumFlag ? " Flag" : string.Empty)} Enum Type";
             stepper.CloseButton.clicked += modal.Dismiss;
-            EnumWizard wizard = new EnumWizard(modal, stepper);
+            EnumWizard wizard = new EnumWizard(modal, stepper, isEnumFlag);
             wizard.OnEnumTypeCreated += enumClassName =>
             {
                 buffer.SerializeDeferredCommand(new CreateVariableFromSerializedTypeCommand(enumClassName, true));
