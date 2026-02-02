@@ -30,6 +30,13 @@ namespace Unity.Behavior
         public BehaviorGraphNodeModel()
         { }
 
+        public bool CanUseObserverAbort()
+        {
+            return PreviousNodeModels.OfType<CompositeNodeModel>()
+                .Where(n => (n.NodeType.Type == typeof(SelectorComposite) || n.NodeType.Type == typeof(SequenceComposite)))
+                .Any();
+        }
+
         protected BehaviorGraphNodeModel(BehaviorGraphNodeModel nodeModelOriginal, BehaviorAuthoringGraph asset) : base(nodeModelOriginal, asset)
         {
             NodeType = nodeModelOriginal.NodeType;

@@ -7,6 +7,19 @@ using UnityEngine;
 namespace Unity.Behavior
 {
     /// <summary>
+    /// Registered observer abort that can interrupt lower-priority siblings.
+    /// </summary>
+    [Serializable]
+    internal class ObserverAbortInfo
+    {
+        /// <summary>
+        /// Reference to the observer node (AbortModifier or RestartModifier).
+        /// </summary>
+        [SerializeReference]
+        public IObserverAbort Observer;
+    }
+
+    /// <summary>
     /// Composite nodes serves as a control structure that manages the flow and organization of other nodes within the tree.
     /// </summary>
     [Serializable]
@@ -27,6 +40,13 @@ namespace Unity.Behavior
         public List<Node> Children { get => m_Children; internal set => m_Children = value; }
         [SerializeReference]
         internal List<Node> m_Children = new List<Node>();
+
+        /// <summary>
+        /// List of observers registered with this composite that can interrupt lower-priority siblings.
+        /// Populated when the authoring graph is built into runtime graph.
+        /// </summary>
+        [SerializeField]
+        internal List<ObserverAbortInfo> m_RegisteredObservers = new List<ObserverAbortInfo>();
 
         /// <inheritdoc cref="ResetStatus" />
         protected internal override void ResetStatus()

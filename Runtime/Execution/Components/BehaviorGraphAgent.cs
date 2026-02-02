@@ -230,6 +230,12 @@ namespace Unity.Behavior
                 {
                     continue;
                 }
+                
+                if (m_Graph.RootGraph.BlackboardGroupReferences.Any(blackboardReference =>
+                        blackboardReference.Blackboard.Variables.Any(bbVariable => bbVariable.GUID == guid)))
+                {
+                    continue;
+                }
 
                 m_BlackboardOverrides.Remove(guid);
                 var indexToRemove = m_BlackboardVariableOverridesList.FindIndex((item) => item.GUID == guid);
@@ -242,7 +248,16 @@ namespace Unity.Behavior
 
         private void UpdateBlackboardOverridesToMatchBlackboard()
         {
-            foreach (BlackboardVariable variable in m_Graph.BlackboardReference.Blackboard.Variables)
+            AddOverrideVariables(m_Graph.BlackboardReference);
+            foreach (BlackboardReference blackboardReference in m_Graph.RootGraph.BlackboardGroupReferences)
+            {
+                AddOverrideVariables(blackboardReference);
+            }
+        }
+
+        private void AddOverrideVariables(BlackboardReference blackboardReference)
+        {
+            foreach (BlackboardVariable variable in blackboardReference.Blackboard.Variables)
             {
 #if UNITY_EDITOR
                 // This strange case sometimes happens when the inspector is open during a domain reload.
@@ -260,11 +275,13 @@ namespace Unity.Behavior
                 {
                     foreach (var blackboardOverride in m_BlackboardOverrides)
                     {
-                        if (blackboardOverride.Value.Name == variable.Name)
+                        if (blackboardOverride.Value.GUID == variable.GUID)
                         {
                             m_BlackboardOverrides.Remove(blackboardOverride.Key);
                             blackboardOverride.Value.GUID = variable.GUID;
                             m_BlackboardOverrides.Add(variable.GUID, blackboardOverride.Value);
+
+                            break;
                         }
                     }
                 }

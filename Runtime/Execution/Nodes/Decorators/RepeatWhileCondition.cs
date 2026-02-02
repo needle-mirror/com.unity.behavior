@@ -11,13 +11,16 @@ namespace Unity.Behavior
     [Serializable, GeneratePropertyBag]
     [NodeDescription(
         name: "Repeat While",
-        description: "Repeats the flow underneath as long as the specified condition(s) are true.",
+        description: "Repeats the flow underneath as long as the specified condition(s) are true. Supports lower priority observer abort.",
         category: "Flow",
         hideInSearch: true,
         icon: "Icons/repeat_until_change",
         id: "bcd62844ac1b14f074e31df34956441a")]
-    internal partial class RepeatWhileConditionModifier : Modifier, IConditional, IRepeater
+    internal partial class RepeatWhileConditionModifier : Modifier, IObserverAbort, IRepeater
     {
+        public const string kReturnFailureOnConditionFailName = "Return Failure On Condition Fail";
+        public const string kReturnFailureOnConditionFailTooltip = "When enabled, returns Failure when conditions are no longer met. When disabled, returns Success.";
+
         [SerializeReference]
         protected List<Condition> m_Conditions = new List<Condition>();
         public List<Condition> Conditions { get => m_Conditions; set => m_Conditions = value; }
@@ -35,6 +38,33 @@ namespace Unity.Behavior
         private int m_CurrentFrame;
         [CreateProperty] private int m_FrameDelta;
         public bool RequiresAllConditions { get => m_RequiresAllConditions; set => m_RequiresAllConditions = value; }
+
+        /// <summary>
+        /// The observer behavior type for this node.
+        /// </summary>
+        [SerializeField]
+        protected ObserverAbortTarget m_ObserverType = ObserverAbortTarget.None;
+
+        public ObserverAbortTarget AbortTarget
+        {
+            get => m_ObserverType;
+            set => m_ObserverType = value;
+        }
+
+        // Made it reversed for backward compatibility
+        [SerializeField]
+        private bool m_ReturnFailureOnConditionFail = false;
+        public bool ReturnFailureOnConditionFail
+        {
+            get => m_ReturnFailureOnConditionFail;
+            internal set => m_ReturnFailureOnConditionFail = value;
+        }
+
+        public bool EvaluateObserver()
+        {
+            // No need to check for observer type as it would not be registered during authoring time if it was not lower priority.
+            return ConditionUtils.CheckConditions(Conditions, RequiresAllConditions);
+        }
 
         /// <inheritdoc cref="OnStart" />
         protected override Status OnStart()
@@ -54,7 +84,7 @@ namespace Unity.Behavior
             bool conditionIsTrue = ConditionUtils.CheckConditions(Conditions, RequiresAllConditions);
             if (!conditionIsTrue)
             {
-                return Status.Success;
+                return m_ReturnFailureOnConditionFail ? Status.Failure : Status.Success;
             }
 
             Status childStatus = StartNode(Child);
@@ -77,7 +107,7 @@ namespace Unity.Behavior
                 return (childStatus == Status.Running || childStatus == Status.Waiting) ? Status.Waiting : Status.Running;
             }
 
-            return Status.Success;
+            return m_ReturnFailureOnConditionFail ? Status.Failure : Status.Success;
         }
 
         private Status RestartChild()

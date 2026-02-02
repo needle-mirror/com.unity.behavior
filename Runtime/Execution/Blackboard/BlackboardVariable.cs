@@ -86,8 +86,8 @@ namespace Unity.Behavior
                 variable = Activator.CreateInstance(typeof(BlackboardVariable<>).MakeGenericType(type)) as BlackboardVariable;
             }
             
-            // Initialize enum values properly
-            if (type.IsEnum && !type.IsDefined(typeof(FlagsAttribute), false))
+            // If not shared, initialize enum values properly.
+            if (!isShared && type.IsEnum && !type.IsDefined(typeof(FlagsAttribute), false))
             {
                 // Get the first value of the enum (not necessarily 0)
                 Array enumValues = Enum.GetValues(type);

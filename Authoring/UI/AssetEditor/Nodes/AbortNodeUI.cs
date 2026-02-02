@@ -1,6 +1,5 @@
 using System.Linq;
 using Unity.Behavior.GraphFramework;
-using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Unity.Behavior
@@ -8,26 +7,38 @@ namespace Unity.Behavior
     [NodeUI(typeof(AbortNodeModel))]
     internal class AbortNodeUI : ConditionalNodeUI
     {
-        private VisualElement m_ConditionFieldContainer;
         private AbortNodeModel m_AbortNodeModel => Model as AbortNodeModel;
+        private IObserverAbortNodeModel m_ObserverAbortNodeModel;
 
         public AbortNodeUI(NodeModel nodeModel) : base(nodeModel)
         {
             styleSheets.Add(ResourceLoadAPI.Load<StyleSheet>("Packages/com.unity.behavior/Authoring/UI/AssetEditor/Assets/ConditionNodeStylesheet.uss"));
             AddToClassList("Modifier");
             AddToClassList("TwoLineNode");
+            m_ObserverAbortNodeModel = Model as IObserverAbortNodeModel;
         }
 
         private void UpdateNodeTitle()
         {
+            string titleName = m_AbortNodeModel.ModelAbortType switch
+            {
+                AbortNodeModel.AbortType.Restart => nameof(AbortNodeModel.AbortType.Restart),
+                _ => "Fail",
+            };
+
             if (m_AbortNodeModel.ConditionModels.Count > 1)
             {
-                Title = !m_AbortNodeModel.RequiresAllConditionsTrue ? $"{m_AbortNodeModel.ModelAbortType.ToString()} If Any Are True" : $"{m_AbortNodeModel.ModelAbortType.ToString()} If All Are True";
+                Title = !m_AbortNodeModel.RequiresAllConditionsTrue
+                    ? $"{titleName} If Any Are True"
+                    : $"{titleName} If All Are True";
             }
             else
             {
-                Title = $"{m_AbortNodeModel.ModelAbortType.ToString()} If";
+                Title = $"{titleName} If";
             }
+
+            // Add observer type to title if applicable
+            Title += m_ObserverAbortNodeModel.GetObserverTypeUITitle();
         }
 
         public override void Refresh(bool isDragging)

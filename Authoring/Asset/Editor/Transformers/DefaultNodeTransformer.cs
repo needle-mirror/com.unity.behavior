@@ -18,7 +18,11 @@ namespace Unity.Behavior
             {
                 return null;
             }
+            
+            // Ensure node model is up to date.
+            behaviorGraphNodeModel.OnValidate();
 
+            // Create instance of the appropriate runtime type.
             var node = Activator.CreateInstance(behaviorGraphNodeModel.NodeType) as Node;
 
             return node;
@@ -60,6 +64,13 @@ namespace Unity.Behavior
                 }
             }
 
+            // Set the observer type on the runtime node
+            if (node is IObserverAbort observerNode && nodeModel is IObserverAbortNodeModel observerNodeModel)
+            {
+                observerNode.AbortTarget = observerNodeModel.ObserverType;
+            }
+
+            // Process condition
             if (node is IConditional conditionalNode)
             {
                 ProcessNodeConditions(graphAssetProcessor, nodeModel, conditionalNode);

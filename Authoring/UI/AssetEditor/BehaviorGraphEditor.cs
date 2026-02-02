@@ -82,7 +82,8 @@ namespace Unity.Behavior
             BehaviorGraphView.ViewState.ViewStateUpdated += OnGraphViewUpdated;
             RegisterCallback<LinkFieldLinkButtonEvent>(OnVariableLinkButton);
             RegisterCallback<FocusInEvent>(_ => IsAssetVersionUpToDate());
-
+            RegisterCallback<DetachFromPanelEvent>(OnDetachFromPanel);
+            RegisterCallback<AttachToPanelEvent>(OnAttachToPanel);
             BlackboardUtils.AddCustomIconName(typeof(EventChannelBase), "event");
         }
 
@@ -99,6 +100,18 @@ namespace Unity.Behavior
             stepper.ConfirmButton.clicked += SaveSubgraphRepresentation;
             modal.Show();
 #endif
+        }
+
+        private void OnAttachToPanel(AttachToPanelEvent evt)
+        {
+            schedule.Execute(AttachToPanel).Until(() => Asset != null);
+            m_BehaviorGraphToolbar.OpenAssetButton.clicked += OnOpenAssetButtonClick;
+            Selection.selectionChanged += OnSelectionChanged;
+        }
+
+        private void OnDetachFromPanel(DetachFromPanelEvent evt)
+        {
+            Selection.selectionChanged -= OnSelectionChanged;
         }
 
         public override void Load(GraphAsset asset)
@@ -134,6 +147,29 @@ namespace Unity.Behavior
             DispatchOutstandingAssetCommands();
 
             CacheDependentAssets();
+        }
+
+        protected void AttachToPanel()
+        {
+            if (Asset == null)
+            {
+                return;
+            }
+            
+            CacheDependentAssets();
+
+            Asset.MainBlackboardAuthoringAsset.OnBlackboardChanged -= RefreshViewDelayed;
+            Asset.MainBlackboardAuthoringAsset.OnBlackboardChanged += RefreshViewDelayed;
+            foreach (BehaviorBlackboardAuthoringAsset blackboardDependency in m_BlackboardDependencies.Keys)
+            {
+                blackboardDependency.OnBlackboardChanged -= RefreshViewDelayed;
+                blackboardDependency.OnBlackboardChanged += RefreshViewDelayed;
+            }
+        }
+        
+        private void RefreshViewDelayed(BlackboardAsset.BlackboardChangedType changeType)
+        {
+            schedule.Execute(()=> GraphView.ViewState.RefreshFromAsset(false));
         }
 
         private void RefreshPlaceholderNodeModelInfoCache()
@@ -393,6 +429,42 @@ namespace Unity.Behavior
             RefreshPlaceholderNodeToast();
         }
 
+#if UNITY_EDITOR
+        private void OnSelectionChanged()
+        {
+            // Only auto-connect in playmode when no debug target is currently set
+            if (!EditorApplication.isPlaying || !m_DebugElement.CanAutoConnect)
+            {
+                return;
+            }
+
+            var selectedGameObject = Selection.activeGameObject;
+            if (selectedGameObject == null)
+            {
+                return;
+            }
+
+            var graphAgent = selectedGameObject.GetComponent<BehaviorGraphAgent>();
+            if (graphAgent == null || !graphAgent.Graph || graphAgent.Graph.RootGraph == null)
+            {
+                return;
+            }
+
+            // Agent already attached.
+            if (m_SelectedAgent != null && m_SelectedAgent == graphAgent)
+            {
+                return;
+            }
+
+            // Check if the agent has a graph module matching the currently open asset
+            var matchingModule = graphAgent.Graph.Graphs.FirstOrDefault(module => module != null && Asset != null && module.AuthoringAssetID == Asset.AssetID);
+            if (matchingModule != null)
+            {
+                SetupDebugTarget(graphAgent);
+            }
+        }
+#endif
+
         private void OnDebugButtonClicked()
         {
 #if UNITY_2022_2_OR_NEWER
@@ -404,6 +476,7 @@ namespace Unity.Behavior
                 return;
 
             List<SearchView.Item> searchItems = new List<SearchView.Item>();
+            searchItems.Add(new SearchView.Item(path: "None", data: null, priority: 1000));
             List<BehaviorGraphAgent> matchingAgents = new List<BehaviorGraphAgent>();
             foreach (BehaviorGraphAgent agent in agents)
             {
@@ -476,6 +549,7 @@ namespace Unity.Behavior
             else
             {
                 UnselectDebugTarget();
+                m_DebugElement.ResetToggle();
             }
         }
 
@@ -509,7 +583,9 @@ namespace Unity.Behavior
             }
 #endif
             m_DebugElement.DebugToggle.value = true;
-            m_DebugElement.SetAgentToToggle(m_SelectedAgent.name, true);
+            string agentName = m_SelectedAgent.name;
+            m_DebugElement.SetAgentToToggle(agentName, true);
+            m_BehaviorGraphToolbar.SetButtonName(agentName);
         }
 
         private void UnselectDebugTarget()
@@ -517,6 +593,7 @@ namespace Unity.Behavior
             BehaviorGraphView.ActiveDebugGraph = null;
             BehaviorGraphView.ResetNodesUI();
             DebugAgentSelected?.Invoke(0);
+            m_BehaviorGraphToolbar.SetButtonName(string.Empty);
         }
 
         private void OnOpenAssetButtonClick()

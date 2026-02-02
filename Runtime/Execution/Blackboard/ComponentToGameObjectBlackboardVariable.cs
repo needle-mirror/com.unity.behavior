@@ -1,7 +1,9 @@
+using System;
 using UnityEngine;
 
 namespace Unity.Behavior
 {
+    [Serializable]
     internal class ComponentToGameObjectBlackboardVariable<SourceType> : BlackboardVariableCaster<SourceType, GameObject>
         where SourceType : Component
     {

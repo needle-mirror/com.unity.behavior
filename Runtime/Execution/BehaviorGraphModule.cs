@@ -4,7 +4,6 @@ using System.Runtime.CompilerServices;
 using Unity.Behavior.GraphFramework;
 using Unity.Properties;
 using UnityEngine;
-using UnityEngine.Serialization;
 using Status = Unity.Behavior.Node.Status;
 
 [assembly: InternalsVisibleTo("Assembly-CSharp-Editor")]
@@ -42,19 +41,13 @@ namespace Unity.Behavior
         /// </summary>
         internal Blackboard Blackboard => BlackboardReference.Blackboard;
 
-        [CreateProperty, SerializeReference]
-        [FormerlySerializedAs("ProcessedNodes")]
-        internal List<Node> m_ActiveNodes = new List<Node>(4);
-        [CreateProperty, SerializeReference]
-        [FormerlySerializedAs("m_RunningNodes")]
-        private List<Node> m_NodesToTick = new List<Node>(4);
-        [CreateProperty, SerializeReference]
-        private Stack<Node> m_NodesToEnd = new Stack<Node>(1);
-        [CreateProperty, SerializeReference]
-        private HashSet<Node> m_EndedNodes = new HashSet<Node>();
+        [CreateProperty] internal List<Node> m_ActiveNodes = new List<Node>(16);
+        [CreateProperty] private List<Node> m_NodesToTick = new List<Node>(16);
+        [CreateProperty] private Stack<Node> m_NodesToEnd = new Stack<Node>(4);
+        [CreateProperty] private HashSet<Node> m_EndedNodes = new HashSet<Node>();
+        [CreateProperty] private bool m_NodesChanged;
+        
         internal bool IsEndingBranch { get; private set; } = false;
-        [CreateProperty]
-        private bool m_NodesChanged;
 
         [SerializeField]
         [HideInInspector]
@@ -69,6 +62,11 @@ namespace Unity.Behavior
         public delegate void GraphStatusChangeEventHandler(BehaviorGraphModule graph);
         public event GraphStatusChangeEventHandler OnGraphStatusChange;
 
+        private Stack<Node> m_NodeTraversalQueue;
+        private HashSet<Node> m_VisitedNodes;
+        // Maintained in sync with m_ActiveNodes for performance while preserving list order for determinism
+        private HashSet<Node> m_ActiveNodesLookup = new HashSet<Node>(16);
+
         /// <summary>
         /// Executes one step of the graph.
         /// </summary>
@@ -77,6 +75,12 @@ namespace Unity.Behavior
             double timeAtStart = Time.realtimeSinceStartupAsDouble;
             RebuildNodeLists();
 
+            // Check observers for all active composites BEFORE processing nodes
+            // Observers remain active as long as their parent composite is active,
+            // even if the composite itself is not currently being ticked
+            CheckAllActiveObservers();
+
+            // Process all nodes that need to tick
             while (m_NodesToTick.Count > 0)
             {
                 bool isDebuggerAttached = false;
@@ -89,6 +93,7 @@ namespace Unity.Behavior
                     Debug.Break();
                     return;
                 }
+      
                 Node node = m_NodesToTick[0];
                 m_NodesToTick.RemoveAt(0);
                 if (node.CurrentStatus == Status.Waiting)
@@ -96,6 +101,7 @@ namespace Unity.Behavior
                     // Waking up node.
                     node.SetCurrentStatus(Status.Running);
                 }
+                
                 Status status = node.Update();
 
                 // check for change in status
@@ -103,7 +109,7 @@ namespace Unity.Behavior
                 if (status != Status.Running)
                 {
                     m_NodesChanged = true;
-                    if (status is Status.Success or Status.Failure)
+                    if (status is Status.Success or Status.Failure or Status.Interrupted)
                     {
                         EndNode(node);
                         node.AwakeParents();
@@ -126,6 +132,7 @@ namespace Unity.Behavior
         {
             node.ResetStatus();
             m_ActiveNodes.Add(node);
+            m_ActiveNodesLookup.Add(node);
 
             Status status = node.Start();
             node.SetCurrentStatus(status);
@@ -181,6 +188,7 @@ namespace Unity.Behavior
                 // If each child has been visited, pop the node and end it.
                 m_NodesToEnd.Pop();
                 m_ActiveNodes.Remove(currentNode);
+                m_ActiveNodesLookup.Remove(currentNode);
                 m_NodesToTick.Remove(currentNode);
                 if (currentNode.IsRunning)
                 {
@@ -226,7 +234,10 @@ namespace Unity.Behavior
         {
             m_NodesChanged = false;
             m_ActiveNodes.Clear();
+            m_ActiveNodesLookup.Clear();
             m_NodesToTick.Clear();
+            m_NodesToEnd.Clear();
+            m_EndedNodes.Clear();
         }
 
         /// <summary>
@@ -237,7 +248,7 @@ namespace Unity.Behavior
         {
             if (m_NodesToEnd.Contains(node)
                 || m_NodesToTick.Contains(node)
-                || !m_ActiveNodes.Contains(node)
+                || !m_ActiveNodesLookup.Contains(node)
                 || node.CurrentStatus is not (Status.Waiting or Status.Running))
             {
                 return;
@@ -250,9 +261,8 @@ namespace Unity.Behavior
         private void RebuildNodeLists()
         {
             // Copy running nodes from processed list to running list
-            for (int i = 0; i < m_ActiveNodes.Count; i++)
+            foreach (Node node in m_ActiveNodes)
             {
-                Node node = m_ActiveNodes[i];
                 if (node.CurrentStatus is Status.Running && !m_NodesToTick.Contains(node))
                 {
                     m_NodesToTick.Add(node);
@@ -260,9 +270,6 @@ namespace Unity.Behavior
             }
             m_NodesChanged = false;
         }
-
-        private Stack<Node> m_NodeTraversalQueue;
-        private HashSet<Node> m_VisitedNodes;
 
         internal IEnumerable<Node> Nodes()
         {
@@ -462,6 +469,14 @@ namespace Unity.Behavior
 
         public void Deserialize()
         {
+            // Rebuild lookup table for active nodes after deserialization
+            m_ActiveNodesLookup ??= new HashSet<Node>(16);
+            m_ActiveNodesLookup.Clear();
+            foreach (Node node in m_ActiveNodes)
+            {
+                m_ActiveNodesLookup.Add(node);
+            }
+
             HashSet<Node> candidates = new(10);
             foreach (Node node in m_ActiveNodes)
             {
@@ -508,6 +523,109 @@ namespace Unity.Behavior
                 GatherActiveNodes(modifier.Child, ref outCollection);
                 return;
             }
+        }
+
+        /// <summary>
+        /// Checks observers for all active composite nodes in the graph.
+        /// This ensures observers remain active as long as their parent composite is active,
+        /// even if the composite is not currently being ticked (e.g., in Waiting state).
+        /// </summary>
+        /// <returns>True if any observer triggered an interruption, false otherwise.</returns>
+        private void CheckAllActiveObservers()
+        {
+            Composite compositeToRestart = null;
+
+            // Iterate through all active nodes to find composites with observers
+            // Use indexed loop to preserve deterministic order
+            for (int i = 0; i < m_ActiveNodes.Count; i++)
+            {
+                if (m_ActiveNodes[i] is Composite composite)
+                {
+                    if (ShouldCompositeHandleAbort(composite))
+                    {
+                        compositeToRestart = composite;
+                        // Only handle one observer interruption per tick
+                        break;
+                    }
+                }
+            }
+
+            // Moved the operation out of the loop because End/StartNode is modifying m_ActiveNodes.
+            if (compositeToRestart != null)
+            {
+                // Stop and Restart the composite
+                // 1. End the composite to terminate all children subtree.
+                EndNode(compositeToRestart);
+                // 2. Reset the composite before starting it again. The node is also added to m_NodesToTick.
+                StartNode(compositeToRestart);
+            }
+        }
+
+        /// <summary>
+        /// Checks all registered observers on a specific composite and identifies lower-priority
+        /// branches that should be interrupted if observer conditions are met.
+        /// </summary>
+        /// <param name="composite">The composite node to check observers for.</param>
+        /// <returns>Data about what interruption should occur, if any.</returns>
+        private bool ShouldCompositeHandleAbort(Composite composite)
+        {
+            // No registered observers, nothing to check
+            if (composite.m_RegisteredObservers?.Count == 0)
+            {
+                return false;
+            }
+
+            // Check ALL registered observers (not just currently running branches)
+            // Observers remain active as long as parent composite is active
+            foreach (var registration in composite.m_RegisteredObservers)
+            {
+                Node observerNode = registration.Observer as Node;
+                // Skip if observer node haven't run yet.
+                // No need to check for observer type as they are only registred when needed (see GraphAssetProcessor.RegisterObserverWithParent).
+                if (observerNode.CurrentStatus == Status.Uninitialized)
+                {
+                    continue;
+                }
+
+                switch (registration.Observer.AbortTarget)
+                {
+                    case ObserverAbortTarget.Self:
+                        if (observerNode.IsRunning == false || registration.Observer.EvaluateObserver() == true)
+                        {
+                            // Skip if the observed node is not running OR if the condition is still satisfied.
+                            continue;
+                        }
+                        break;
+
+                    case ObserverAbortTarget.LowerPriority:
+                        if (observerNode.IsRunning == true || registration.Observer.EvaluateObserver() == false)
+                        {
+                            // Skip if the observed node is running OR if the condition is not yet satisfied.
+                            continue;
+                        }
+                        break;
+
+                    case ObserverAbortTarget.Both:
+                        // shouldAbortSelf = observerNode.IsRunning && isConditionTrue == false;
+                        // shouldAbortLowerPriority = observerNode.IsRunning == false && isConditionTrue;
+                        // Simplified with XOR - if both true or both false, skip.
+                        if (observerNode.IsRunning == registration.Observer.EvaluateObserver())
+                        {
+                            continue;
+                        }
+                        break;
+                    
+                    default:
+                        // Safety fallback.
+                        continue;
+                }
+
+                // Composite needs to be interrupted.
+                return true;
+            }
+
+            // No interruption occurred
+            return false;
         }
 
 #if DEBUG && UNITY_EDITOR

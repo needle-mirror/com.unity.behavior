@@ -64,6 +64,7 @@ namespace Unity.Behavior
             private const string ChildKey = "Child";
             private const string ParentsKey = "Parents";
             private const string ParentKey = "Parent";
+            private const string RegisteredObserversKey = "RegisteredObservers";
 
             public void Serialize(in JsonSerializationContext<Node> context, Node node)
             {
@@ -107,6 +108,15 @@ namespace Unity.Behavior
                             foreach (var cChild in composite.m_Children)
                             {
                                 context.SerializeValue(cChild);
+                            }
+                        }
+
+                        if (composite.m_RegisteredObservers != null && composite.m_RegisteredObservers.Count > 0)
+                        {
+                            using var _ = context.Writer.WriteArrayScope(RegisteredObserversKey);
+                            foreach (var observerAbortInfo in composite.m_RegisteredObservers)
+                            {
+                                context.SerializeValue(observerAbortInfo);
                             }
                         }
 
@@ -217,6 +227,12 @@ namespace Unity.Behavior
                     {
                         var childrenNodes = context.DeserializeValue<List<Node>>(childrenView);
                         composite.m_Children = childrenNodes;
+                    }
+
+                    if (context.SerializedValue.TryGetValue(RegisteredObserversKey, out SerializedValueView registeredObserverView))
+                    {
+                        var registeredObservers = context.DeserializeValue<List<ObserverAbortInfo>>(registeredObserverView);
+                        composite.m_RegisteredObservers = registeredObservers;
                     }
 
                     if (node is BranchingConditionComposite branchingConditionComposite)

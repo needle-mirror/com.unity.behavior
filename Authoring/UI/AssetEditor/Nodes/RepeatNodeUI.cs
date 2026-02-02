@@ -10,6 +10,7 @@ namespace Unity.Behavior
         RepeatNodeModel RepeatModel => Model as RepeatNodeModel;
         public RepeatNodeUI(NodeModel nodeModel) : base(nodeModel)
         {
+            EnableInClassList("Condition", false);
             AddToClassList("Modifier");
             UpdateConditionVisuals();
             CreateNodeConditionElements();
@@ -31,10 +32,24 @@ namespace Unity.Behavior
             {
                 Title = info.Name;
 
-                if (RepeatModel.ConditionModels.Count > 1 && RepeatModel.Mode == RepeatNodeModel.RepeatMode.Condition)
+                if (RepeatModel.Mode == RepeatNodeModel.RepeatMode.Condition)
                 {
-                    string titleString = !RepeatModel.RequiresAllConditionsTrue ? " Any Are True" : " All Are True";
-                    Title += titleString;
+                    EnableInClassList("Condition", true);
+
+                    if (RepeatModel.ConditionModels.Count > 1)
+                    {
+                        string titleString = !RepeatModel.RequiresAllConditionsTrue ? " Any Are True" : " All Are True";
+                        Title += titleString;
+                    }
+
+                    if (RepeatModel.ObserverType != ObserverAbortTarget.None)
+                    {
+                        Title += RepeatModel.GetObserverTypeUITitle();
+                    }
+                }
+                else
+                {
+                    EnableInClassList("Condition", false);
                 }
             }
         }

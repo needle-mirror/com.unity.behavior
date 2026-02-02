@@ -300,13 +300,6 @@ namespace Unity.Behavior.GraphFramework
 
         public void DeleteEdge(PortModel startPort, PortModel endPort)
         {
-            // If either port belongs to a floating port node, do not delete the edge.
-            // Floating port edges are going to be handled in DeleteNode.
-            if (startPort.NodeModel is FloatingPortNodeModel || endPort.NodeModel is FloatingPortNodeModel)
-            {
-                return;
-            }
-
             startPort.RemoveConnectionTo(endPort);
             endPort.RemoveConnectionTo(startPort);
         }

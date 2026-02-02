@@ -319,9 +319,12 @@ namespace Unity.Behavior
             if (asset.DebugInfo.IsNodeBreakpointEnabled(nodeModel.ID) && !System.Diagnostics.Debugger.IsAttached)
             {
                 // There is no debugger attached. Inform the user they should attach the debugger.
-                EditorUtility.DisplayDialog("Code Debugger Not Attached",
-                    "You currently don't have a debugger attached. For the breakpoints to work, please attach a debugger using your code IDE (Visual Studio, Rider, etc).",
-                    "OK", DialogOptOutDecisionType.ForThisSession, "Behavior.Breakpoint.DebuggerNotAttachedWarning");
+                EditorUtility.DisplayDialog("About Behavior node breakpoint",
+                    "Breakpoint will pause the editor when the node is executed during playmode. " +
+                    "Note that the editor will pause at the beginning of the following frame. " +
+                    "This means that node executing in less than a frame might finish execution before the break happens." +
+                    "\n\nYou can attach an IDE debugger (Visual Studio, Rider, etc) to trigger more precise code breakpoint.",
+                    "OK", DialogOptOutDecisionType.ForThisSession, "Behavior.Breakpoint.Info");
             }
         }
 #endif

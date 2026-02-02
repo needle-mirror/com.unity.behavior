@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 using UnityEngine;
 
 namespace Unity.Behavior.GraphFramework
@@ -66,6 +69,14 @@ namespace Unity.Behavior.GraphFramework
             if (command.MarkUndo)
             {
                 DispatchAndProcessUndoableCommand(command, setHasOutstandingChanges, commandHandlers);
+
+                if (command.SetAssetDirty)
+                {
+                    if (command is IBlackboardAssetCommand && m_DispatcherContext.BlackboardAsset != null)
+                    {
+                        AssetDatabase.SaveAssetIfDirty(m_DispatcherContext.BlackboardAsset);
+                    }
+                }
             }
             else
             {

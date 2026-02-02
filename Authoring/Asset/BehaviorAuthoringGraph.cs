@@ -26,8 +26,12 @@ namespace Unity.Behavior
          *    - Added IsPlaceholder and RuntimeTypeString properties to NodeModelInfo
          *    - Converted SubgraphGraphInfo to use direct asset reference instead of GUID
          *    - Removed redundant RootGraph property
+         * 2: Schema updates:
+         *    - Removed BehaviorGraphModule transient data from serialization
+         *    - Added RegisteredObservers list to Composite node
+         *    - Added RepeatConditionModifier.ReturnFailureOnConditionFail
          */
-        private const int kLatestSerializationVersion = 1;
+        private const int kLatestSerializationVersion = 2;
         // Consumed on asset reimport to clean runtime graph from unavailable node type.
         // Do not handle missing type wrapped by BlackboardVariable inside of a node.
         private static HashSet<string> s_GraphPathToValidate = new();
@@ -110,6 +114,8 @@ namespace Unity.Behavior
 
         [SerializeField] private BehaviorBlackboardAuthoringAsset m_MainBlackboardAuthoringAsset;
 
+        public BehaviorBlackboardAuthoringAsset MainBlackboardAuthoringAsset { get => m_MainBlackboardAuthoringAsset; }
+        
         [Serializable]
         public class NodeModelInfo : IEquatable<NodeModelInfo>
         {
@@ -1048,6 +1054,13 @@ namespace Unity.Behavior
             {
                 // In case of duplication, ensure the asset is poiting toward the right debug
                 m_DebugInfo = debugInfo;
+            }
+
+            if (m_RuntimeGraph && m_RuntimeGraph.m_DebugInfo != m_DebugInfo)
+            {
+                needSaving = true;
+                m_RuntimeGraph.m_DebugInfo = m_DebugInfo;
+                m_RuntimeGraph.RefreshModuleDebugInfo();
             }
 
             if (needSaving)

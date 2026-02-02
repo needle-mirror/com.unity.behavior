@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.AppUI.UI;
 using Unity.Behavior.GraphFramework;
 using UnityEngine;
@@ -14,6 +15,29 @@ namespace Unity.Behavior
     [NodeInspectorUI(typeof(JoinNodeModel))]
     internal class BehaviorGraphNodeInspectorUI : NodeInspectorUI
     {
+        public const string k_ObserverAbortDisabledTooltip =
+            "Observer functionality is only available when the node is a direct child of TryInOrder or Sequence node.";
+        protected const string k_ObserverAbortTypeNoneTooltip =
+            "<b>None</b>: Condition is evaluated only when entering the node.";
+        protected const string k_ObserverAbortTypeSelfTooltip =
+            "<b>Self</b>: Condition is monitored while this branch is running. Aborts if condition is no longer satisfied.";
+        protected const string k_ObserverAbortTypeLowerPriorityTooltip =
+            "<b>Lower Priority</b>: Condition is monitored while lower-priority siblings are running. Aborts them if condition becomes satisfied.";
+        protected const string k_ObserverAbortTypeBothTooltip =
+            "<b>Both</b>: Combines Self and Lower Priority monitoring.";
+        protected const string k_ObserverAbortConditionDetailsTooltip = "\n<i>Aborting forces the parent composite to re-evaluate from the beginning. " +
+            "Conditions are evaluated once per graph tick while the parent composite is active.</i>";
+
+        protected const string k_ObserverAbortTypeAllTooltip =
+            k_ObserverAbortTypeNoneTooltip + "\n" + 
+            k_ObserverAbortTypeSelfTooltip + "\n" + 
+            k_ObserverAbortTypeLowerPriorityTooltip + "\n" + 
+            k_ObserverAbortTypeBothTooltip + "\n" +
+            k_ObserverAbortConditionDetailsTooltip;
+
+        protected const string k_ObserverAbortLowerPriorityOnlyTooltip = 
+            k_ObserverAbortTypeNoneTooltip + "\n" + k_ObserverAbortTypeLowerPriorityTooltip;
+
         private readonly VisualElement m_NodeProperties;
         internal VisualElement NodeProperties => m_NodeProperties;
 
@@ -26,6 +50,8 @@ namespace Unity.Behavior
         private readonly Label m_CategoryField;
         private readonly ActionButton m_EditDefinition;
         private readonly ActionButton m_EditScript;
+
+        public BehaviorGraphNodeModel GraphNodeModel => InspectedNode as BehaviorGraphNodeModel;
 
         protected string Title
         { get => m_NodeTitle.text; set { m_NodeTitle.text = value; } }
@@ -64,10 +90,8 @@ namespace Unity.Behavior
             m_EditDefinition = this.Q<ActionButton>("EditDefinition");
             m_EditScript = this.Q<ActionButton>("EditScript");
 
-            BehaviorGraphNodeModel behaviorNodeModel = nodeModel as BehaviorGraphNodeModel;
-
             // Handling placeholder node.
-            if (behaviorNodeModel.NodeType == null)
+            if (GraphNodeModel.NodeType == null)
             {
                 VisualElement container = new VisualElement();
                 container.name = "PlaceholderWarningContainer";
@@ -85,7 +109,7 @@ namespace Unity.Behavior
                 return;
             }
 
-            NodeInfo nodeInfo = NodeRegistry.GetInfoFromTypeID(behaviorNodeModel.NodeTypeID);
+            NodeInfo nodeInfo = NodeRegistry.GetInfoFromTypeID(GraphNodeModel.NodeTypeID);
             RefreshNodeInformation(nodeInfo);
 
 #if UNITY_EDITOR
@@ -109,13 +133,12 @@ namespace Unity.Behavior
         public override void Refresh()
         {
             base.Refresh();
-
-            BehaviorGraphNodeModel behaviorNodeModel = InspectedNode as BehaviorGraphNodeModel;
+            
             // Placeholder node handling.
-            if (behaviorNodeModel.NodeType == null)
+            if (GraphNodeModel.NodeType == null)
             {
-                if (behaviorNodeModel.Asset is BehaviorAuthoringGraph authoringGraph
-                    && authoringGraph.RuntimeNodeTypeIDToNodeModelInfo.TryGetValue(behaviorNodeModel.NodeTypeID, out var nodeModelInfo))
+                if (GraphNodeModel.Asset is BehaviorAuthoringGraph authoringGraph
+                    && authoringGraph.RuntimeNodeTypeIDToNodeModelInfo.TryGetValue(GraphNodeModel.NodeTypeID, out var nodeModelInfo))
                 {
                     Title = $"{nodeModelInfo.Name} (Placeholder)";
                     Description = nodeModelInfo.Story;
@@ -125,13 +148,9 @@ namespace Unity.Behavior
 
                 return;
             }
-
-            NodeInfo nodeInfo = NodeRegistry.GetInfoFromTypeID(behaviorNodeModel.NodeTypeID);
-            if (behaviorNodeModel.m_FieldValues.Count != 0)
-            {
-                CreateFields();
-            }
-
+            
+            RefreshNodeProperties();
+            NodeInfo nodeInfo = NodeRegistry.GetInfoFromTypeID(GraphNodeModel.NodeTypeID);
             RefreshNodeInformation(nodeInfo);
 
             foreach (BaseLinkField field in this.Query<BaseLinkField>().ToList())
@@ -141,7 +160,49 @@ namespace Unity.Behavior
             }
         }
 
-        private void RefreshNodeInformation(NodeInfo nodeInfo)
+        /// <summary>
+        /// Method that generate the inspector fields and populate NodeProperties.
+        /// </summary>
+        protected virtual void RefreshNodeProperties()
+        {
+            NodeProperties.Clear();
+            CreateObserverDropdownField();
+            if (GraphNodeModel.m_FieldValues.Count != 0)
+            {
+                CreateFields();
+            }
+        }
+
+        /// <summary>
+        /// Default implementation for ObserverAbort.
+        /// </summary>
+        protected virtual void CreateObserverDropdownField()
+        {
+            // Skip Node model or Node type don't implement the proper interface.
+            if (InspectedNode is not IObserverAbortNodeModel ||
+                !typeof(IObserverAbort).IsAssignableFrom(GraphNodeModel.NodeType.Type))
+            {
+                return;
+            }
+            
+            IObserverAbortNodeModel observer = GraphNodeModel as IObserverAbortNodeModel;
+
+            bool isValidObserverAbort = GraphNodeModel.CanUseObserverAbort();
+            var observerTypeDropdown = CreateDropdownField("Abort Target",
+                tooltips: isValidObserverAbort ? k_ObserverAbortTypeAllTooltip : k_ObserverAbortDisabledTooltip,
+                items: Enum.GetNames(typeof(ObserverAbortTarget)),
+                selectedIndex: (int)observer.ObserverType,
+                valueChangedCallback: evt =>
+                {
+                    GraphNodeModel.Asset.MarkUndo("Change Observer Type");
+                    observer.ObserverType = (ObserverAbortTarget)evt.newValue.First();
+                    GraphNodeModel.OnValidate();
+                    Refresh(); // Refresh to update condition requirement label
+                });
+            observerTypeDropdown.SetEnabled(isValidObserverAbort);
+        }
+
+        protected void RefreshNodeInformation(NodeInfo nodeInfo)
         {
             if (nodeInfo == null)
             {
@@ -168,7 +229,6 @@ namespace Unity.Behavior
 
         private void CreateFields()
         {
-            NodeProperties.Clear();
             BehaviorGraphNodeModel behaviorGraphNodeModel = InspectedNode as BehaviorGraphNodeModel;
             NodeInfo nodeInfo = NodeRegistry.GetInfoFromTypeID(behaviorGraphNodeModel.NodeTypeID);
 
@@ -253,7 +313,8 @@ namespace Unity.Behavior
             return field;
         }
 
-        protected Dropdown CreateDropdownField(string fieldName, string tooltips, string[] items, int selectedIndex)
+        protected Dropdown CreateDropdownField(string fieldName, string tooltips, string[] items, int selectedIndex, 
+            EventCallback<ChangeEvent<IEnumerable<int>>> valueChangedCallback)
         {
             VisualElement typeDropdownContainer = new VisualElement();
             typeDropdownContainer.AddToClassList("DropdownPropertyElement");
@@ -265,6 +326,7 @@ namespace Unity.Behavior
             dropdown.bindItem = (item, i) => item.label = Util.NicifyVariableName(items[i]);
             dropdown.sourceItems = items;
             dropdown.selectedIndex = selectedIndex;
+            dropdown.RegisterValueChangedCallback(valueChangedCallback);
             typeDropdownContainer.Add(dropdown);
             NodeProperties.Add(typeDropdownContainer);
             return dropdown;

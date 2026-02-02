@@ -5,16 +5,18 @@ using Unity.Properties;
 
 namespace Unity.Behavior
 {
+    // Renamed Fail because "Abort" was causing semantic conflict with Priority Abort.
+
     /// <summary>
     /// Aborts child node execution on given conditions.
     /// </summary>
     [Serializable, GeneratePropertyBag]
     [NodeDescription(
-        name: "Abort",
-        description: "Aborts branch when assigned conditions are true.",
+        name: "Fail",
+        description: "Stop child and return Status.Failure when assigned conditions are true.",
         category: "Flow/Abort",
         id: "f3c6242eed224ca2955906276c0497b6")]
-    internal partial class AbortModifier : Modifier, IConditional
+    internal partial class AbortModifier : Modifier, IObserverAbort
     {
         [SerializeReference]
         protected List<Condition> m_Conditions = new List<Condition>();
@@ -23,6 +25,27 @@ namespace Unity.Behavior
         [SerializeField]
         protected bool m_RequiresAllConditions;
         public bool RequiresAllConditions { get => m_RequiresAllConditions; set => m_RequiresAllConditions = value; }
+
+        /// <summary>
+        /// The observer behavior type for this node.
+        /// </summary>
+        [SerializeField]
+        protected ObserverAbortTarget m_ObserverType = ObserverAbortTarget.None;
+
+        public ObserverAbortTarget AbortTarget
+        {
+            get => m_ObserverType;
+            set => m_ObserverType = value;
+        }
+
+        /// <summary>
+        /// Checks if this observer should trigger interruption of lower-priority siblings.
+        /// </summary>
+        /// <returns>True if observer conditions are met and lower-priority siblings should be interrupted.</returns>
+        public bool EvaluateObserver()
+        {
+            return ConditionUtils.CheckConditions(Conditions, RequiresAllConditions);
+        }
 
         protected override Status OnStart()
         {

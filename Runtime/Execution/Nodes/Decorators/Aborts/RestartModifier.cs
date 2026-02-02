@@ -14,7 +14,7 @@ namespace Unity.Behavior
         description: "Restarts branch when assigned conditions are true.",
         category: "Flow/Abort",
         id: "4d0888f06af04abd987e4b7d61f72e36")]
-    internal partial class RestartModifier : Modifier, IConditional
+    internal partial class RestartModifier : Modifier, IObserverAbort
     {
         [SerializeReference]
         protected List<Condition> m_Conditions = new List<Condition>();
@@ -23,6 +23,27 @@ namespace Unity.Behavior
         [SerializeField]
         protected bool m_RequiresAllConditions;
         public bool RequiresAllConditions { get => m_RequiresAllConditions; set => m_RequiresAllConditions = value; }
+
+        /// <summary>
+        /// The observer behavior type for this node.
+        /// </summary>
+        [SerializeField]
+        protected ObserverAbortTarget m_ObserverType = ObserverAbortTarget.None;
+
+        public ObserverAbortTarget AbortTarget
+        {
+            get => m_ObserverType;
+            set => m_ObserverType = value;
+        }
+
+        /// <summary>
+        /// Checks if this observer should trigger interruption of lower-priority siblings.
+        /// </summary>
+        /// <returns>True if observer conditions are met and lower-priority siblings should be interrupted.</returns>
+        public bool EvaluateObserver()
+        {
+            return ConditionUtils.CheckConditions(Conditions, RequiresAllConditions);
+        }
 
         protected override Status OnStart()
         {

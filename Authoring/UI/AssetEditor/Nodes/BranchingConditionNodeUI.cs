@@ -14,19 +14,25 @@ namespace Unity.Behavior
         private const string k_MultiConditionAnyTruePortTitle = "If Any Is True";
         private const string k_MultiConditionAllFalsePortTitle = "If All Are False";
 
+        private IObserverAbortNodeModel m_ObserverAbortNodeModel;
+        
         public BranchingConditionNodeUI(NodeModel nodeModel) : base(nodeModel)
         {
             AddToClassList("Composite");
             AddToClassList("Condition");
             AddToClassList("TwoLineNode");
 
-            Title = "Branch on";
+            Title = "Branch On";
             CreateNodeConditionElements();
+            m_ObserverAbortNodeModel = Model as IObserverAbortNodeModel;
         }
 
         public override void Refresh(bool isDragging)
         {
             base.Refresh(isDragging);
+
+            Title = "Branch On" + m_ObserverAbortNodeModel.GetObserverTypeUITitle();
+
             UpdatePortTitles();
         }
 

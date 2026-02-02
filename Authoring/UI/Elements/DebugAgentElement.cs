@@ -8,10 +8,14 @@ namespace Unity.Behavior
 {
     internal class DebugAgentElement : VisualElement
     {
+        internal bool CanAutoConnect => m_AutoConnectToggle.value;
         internal Toggle DebugToggle => m_DebugToggle;
         private readonly Toggle m_DebugToggle;
+        private readonly Toggle m_AutoConnectToggle;
 
-        private string k_NoAgentSelectedText = "No agent selected";
+        private const string k_NoAgentSelectedText = "No agent selected";
+        private const string k_AutoConnectText = "Auto-Connect Debugger";
+        private const string k_AutoConnectTooltip = "When enabled, automatically connect debugger when selecting an agent in the scene.";
 
         public DebugAgentElement()
         {
@@ -27,7 +31,19 @@ namespace Unity.Behavior
             debugLabel.name = "DebugInfoText";
             debugLabel.style.whiteSpace = WhiteSpace.Normal;
 
+            m_AutoConnectToggle = new Toggle();
+            m_AutoConnectToggle.name = "AutoConnectToggle";
+            m_AutoConnectToggle.label = k_AutoConnectText;
+            m_AutoConnectToggle.tooltip = k_AutoConnectTooltip;
+            m_AutoConnectToggle.value = true;
+            m_AutoConnectToggle.SetEnabled(true);
+
+            Divider divider = new Divider();
+            divider.size = Size.S;
+            
             Add(m_DebugToggle);
+            Add(divider);
+            Add(m_AutoConnectToggle);
             Add(debugLabel);
         }
 

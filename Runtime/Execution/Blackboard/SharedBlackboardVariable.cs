@@ -23,8 +23,14 @@ namespace Unity.Behavior
         {
             get
             {
+                if (m_SharedVariablesRuntimeAsset == null)
+                {
+                    Debug.LogError($"Shared variable '{Name}' is missing its source of truth. Returning initial value.");
+                    return m_Value;
+                }
+
                 m_SharedVariablesRuntimeAsset.Blackboard.GetVariable(GUID, out BlackboardVariable<DataType> variable);
-                if (this == variable)
+                if (variable == null || this == variable)
                 {
                     return m_Value;
                 }
@@ -69,6 +75,12 @@ namespace Unity.Behavior
 
         private void SetValue(DataType newValue, bool notifyChange)
         {
+            if (m_SharedVariablesRuntimeAsset == null)
+            {
+                Debug.LogError($"Failed to set value of shared variable '{Name}'. Variable was not properly initialized and is missing its source of truth.");
+                return;
+            }
+
             m_SharedVariablesRuntimeAsset.Blackboard.GetVariable(GUID, out BlackboardVariable<DataType> variable);
 
             if (this == variable)

@@ -383,12 +383,52 @@ namespace Unity.Behavior
 
                     parent.Add(child);
 
+                    // Register observer with parent composite if LowerPriority or Both
+                    // This must happen after parent.Add(child) so the parent relationship is established
+                    RegisterObserverWithParent(parent as Composite, child);
+
                     if (!outputPortModel.IsDefaultOutputPort && TryFindingField(parent.GetType(), outputPortModel.Name, out FieldInfo fieldInfo))
                     {
                         fieldInfo.SetValue(parent, child);
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Registers observers with their parent composite for lower-priority interruption.
+        /// This is called after parent-child relationships are established in CreateAndAddConnections().
+        /// </summary>
+        private void RegisterObserverWithParent(Composite parentComposite, Node child)
+        {
+            if (parentComposite == null || child == null)
+            {
+                return;
+            }
+
+            // ObserverAbort currently only supported by Selector and Sequence.
+            if (parentComposite is not SelectorComposite && parentComposite is not SequenceComposite)
+            {
+                return;
+            }
+
+            if (child is not IObserverAbort observer || observer.AbortTarget == ObserverAbortTarget.None)
+            {
+                return;
+            }
+
+            // Find this node's index in parent's child list
+            int childIndex = parentComposite.Children.IndexOf(child);
+            if (childIndex < 0)
+            {
+                return;
+            }
+
+            // Register with parent
+            parentComposite.m_RegisteredObservers.Add(new ObserverAbortInfo
+            {
+                Observer = observer
+            });
         }
 
         internal Node GetOrCreateNode(NodeModel nodeModel)
@@ -404,17 +444,15 @@ namespace Unity.Behavior
                 throw new Exception($"No node transformer found for \"{nodeModel.Asset}\"({nodeModel.GetType()}) in graph {Graph.name}.");
             }
 
+            if (nodeModel is ObserverAbortNodeModel observerAbortNodeModel && observerAbortNodeModel.ObserverType == ObserverAbortTarget.None)
+            {
+                // Skip inactive PriorityAbort node.
+                return null;
+            }
+
             Node node = nodeTransformer.CreateNodeFromModel(this, nodeModel);
             if (node == null)
             {
-                string nodeName = "Unknown";
-                if (nodeModel is BehaviorGraphNodeModel behaviorGraphNodeModel
-                    && Asset.RuntimeNodeTypeIDToNodeModelInfo.TryGetValue(
-                        behaviorGraphNodeModel.NodeTypeID, out var nodeModelInfo))
-                {
-                    nodeName = nodeModelInfo.Name;
-                }
-
                 AssetLogger.RecordPlaceholderStripping(Asset, nodeModel);
                 m_Graph.CompiledWithPlaceholderNode = true;
                 return null;
@@ -499,6 +537,13 @@ namespace Unity.Behavior
             {
                 m_Graph.CompiledWithPlaceholderNode = true;
                 AssetLogger.RecordPlaceholderStripping(Asset, nodeModel);
+                return true;
+            }
+
+            // Priority Abort handling. If the observer abort node cannot be used, we treat it as an implicit sequence.
+            if (behaviorNodeModel is ObserverAbortNodeModel observerAbortNodeModel 
+                && observerAbortNodeModel.ObserverType == ObserverAbortTarget.None)
+            {
                 return true;
             }
 

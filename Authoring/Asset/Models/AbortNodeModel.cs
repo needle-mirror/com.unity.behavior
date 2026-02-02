@@ -8,7 +8,7 @@ namespace Unity.Behavior
     [Serializable]
     [NodeModelInfo(typeof(AbortModifier))]
     [NodeModelInfo(typeof(RestartModifier))]
-    internal class AbortNodeModel : ModifierNodeModel, IConditionalNodeModel
+    internal class AbortNodeModel : ModifierNodeModel, IObserverAbortNodeModel
     {
         public AbortType ModelAbortType { get => m_ModelAbortType; set => m_ModelAbortType = value; }
         [SerializeField]
@@ -16,7 +16,7 @@ namespace Unity.Behavior
 
         internal enum AbortType
         {
-            Abort,
+            Fail,
             Restart
         }
 
@@ -29,9 +29,12 @@ namespace Unity.Behavior
         [field: SerializeField]
         public bool ShouldTruncateNodeUI { get; set; }
 
+        [field: SerializeField]
+        public ObserverAbortTarget ObserverType { get; set; } = ObserverAbortTarget.None;
+
         public AbortNodeModel(NodeInfo nodeInfo) : base(nodeInfo)
         {
-            ModelAbortType = typeof(RestartModifier).IsAssignableFrom(NodeType) ? AbortType.Restart : AbortType.Abort;
+            ModelAbortType = typeof(RestartModifier).IsAssignableFrom(NodeType) ? AbortType.Restart : AbortType.Fail;
         }
 
         protected AbortNodeModel(AbortNodeModel originalModel, BehaviorAuthoringGraph asset) : base(
@@ -41,12 +44,28 @@ namespace Unity.Behavior
             ModelAbortType = originalModel.ModelAbortType;
             RequiresAllConditionsTrue = originalModel.RequiresAllConditionsTrue;
             ShouldTruncateNodeUI = originalModel.ShouldTruncateNodeUI;
+            ObserverType = originalModel.ObserverType;
         }
 
         public override void OnValidate()
         {
             base.OnValidate();
             UpdateNodeType();
+
+            if (CanUseObserverAbort())
+            {
+                // Abort/Restart nodes only support None or LowerPriority (Self/Both don't make semantic sense)
+                if (ObserverType == ObserverAbortTarget.Self || ObserverType == ObserverAbortTarget.Both)
+                {
+                    ObserverType = ObserverAbortTarget.None;
+                    Asset.SetAssetDirty(true);
+                }
+            }
+            else if (ObserverType != ObserverAbortTarget.None)
+            {
+                ObserverType = ObserverAbortTarget.None;
+                Asset.SetAssetDirty(true);
+            }
 
             IConditionalNodeModel.UpdateConditionModels(this);
         }
@@ -63,7 +82,7 @@ namespace Unity.Behavior
         // Ensures the node model type is up to date. If not, dirty asset as runtime graph needs to rebuild.
         private void UpdateNodeType()
         {
-            Type expectedType = ModelAbortType == AbortType.Abort ? typeof(AbortModifier) : typeof(RestartModifier);
+            Type expectedType = ModelAbortType == AbortType.Fail ? typeof(AbortModifier) : typeof(RestartModifier);
             if (NodeType != null && NodeType.Type == expectedType)
             {
                 return;

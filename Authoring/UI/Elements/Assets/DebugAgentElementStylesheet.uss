@@ -1,10 +1,9 @@
-#DebugAgentToggle {
+Toggle {
     flex-direction: row-reverse;
     justify-content: space-between;
     height: 30px;
     padding-left: 12px;
     padding-right: 12px;
-    padding-top: 12px;
 }
 
 HelpText {
@@ -22,4 +21,12 @@ Toggle LocalizedTextElement {
     overflow: hidden;
     text-overflow: ellipsis;
     margin-right: 4px;
+}
+
+Divider {
+    padding: 2px 12px;
+}
+
+.appui-divider__content {
+    background-color: var(--behavior-ui-edge-color);
 }

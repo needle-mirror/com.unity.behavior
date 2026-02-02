@@ -6,7 +6,7 @@ namespace Unity.Behavior
 {
     [Serializable]
     [NodeModelInfo(typeof(BranchingConditionComposite))]
-    internal class BranchingConditionNodeModel : CompositeNodeModel, IConditionalNodeModel
+    internal class BranchingConditionNodeModel : CompositeNodeModel, IObserverAbortNodeModel
     {
         [field: SerializeField]
         public List<ConditionModel> ConditionModels { get; set; } = new List<ConditionModel>();
@@ -16,6 +16,9 @@ namespace Unity.Behavior
 
         [field: SerializeField]
         public bool ShouldTruncateNodeUI { get; set; }
+
+        [field: SerializeField]
+        public ObserverAbortTarget ObserverType { get; set; } = ObserverAbortTarget.None;
 
         public BranchingConditionNodeModel(NodeInfo nodeInfo) : base(nodeInfo)
         {
@@ -42,6 +45,12 @@ namespace Unity.Behavior
         public override void OnValidate()
         {
             base.OnValidate();
+
+            if (CanUseObserverAbort() == false && ObserverType != ObserverAbortTarget.None)
+            {
+                ObserverType = ObserverAbortTarget.None;
+                Asset.SetAssetDirty(true);
+            }
 
             IConditionalNodeModel.UpdateConditionModels(this);
         }

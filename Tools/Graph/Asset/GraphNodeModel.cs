@@ -14,6 +14,9 @@ namespace Unity.Behavior.GraphFramework
         [SerializeField]
         public SerializableGUID ID = SerializableGUID.Generate();
 
+        // Note: Currently only used for tracking SequenceNodeModel parent.
+        // Edge-based parent relationships are currently not saved in this property (but can be queried via PreviousNodeModels).
+        // This property is serialized but could potentially be cached/rebuilt during asset load to reduce redundant serialized data.
         [SerializeReference]
         internal List<NodeModel> Parents = new();
 

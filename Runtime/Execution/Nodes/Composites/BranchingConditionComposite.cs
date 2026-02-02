@@ -15,7 +15,7 @@ namespace Unity.Behavior
         description: "Redirects the flow to the appropriate branch based on whether the condition is true or false.",
         category: "Flow/Conditional",
         id: "15fd229322992eabc0f7186e51eabcca")]
-    internal partial class BranchingConditionComposite : Composite, IConditional
+    internal partial class BranchingConditionComposite : Composite, IObserverAbort
     {
         [SerializeReference]
         protected List<Condition> m_Conditions = new List<Condition>();
@@ -38,6 +38,29 @@ namespace Unity.Behavior
         [SerializeReference] private Node m_CurrentChild;
         [CreateProperty, DontSerialize]
         public Node CurrentChild { get => m_CurrentChild; internal set => m_CurrentChild = value; }
+        
+        /// <summary>
+        /// The observer behavior type for this node.
+        /// </summary>
+        [SerializeField]
+        protected ObserverAbortTarget m_ObserverType = ObserverAbortTarget.None;
+
+        public ObserverAbortTarget AbortTarget
+        {
+            get => m_ObserverType;
+            set => m_ObserverType = value;
+        }
+
+        /// <summary>
+        /// Checks if this observer should trigger interruption of lower-priority siblings.
+        /// ConditionalGuard only supports LowerPriority observation.
+        /// </summary>
+        /// <returns>True if observer conditions are met and lower-priority siblings should be interrupted.</returns>
+        public bool EvaluateObserver()
+        {
+            // No need to check for observer type as it would not be registered during authoring time if it was not lower priority.
+            return ConditionUtils.CheckConditions(Conditions, RequiresAllConditions);
+        }
 
         /// <inheritdoc cref="OnStart" />
         protected override Status OnStart()

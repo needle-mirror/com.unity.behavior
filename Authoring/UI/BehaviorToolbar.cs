@@ -29,5 +29,17 @@ namespace Unity.Behavior
             DebugButton.icon = "debug";
             this.Q<ActionGroup>("AssetActionsGroup").Add(DebugButton);
         }
+
+        public void SetButtonName(string assetName)
+        {
+            if (string.IsNullOrEmpty(assetName))
+            {
+                DebugButton.label = "Debug";
+            }
+            else
+            {
+                DebugButton.label = $"Debug ({assetName})";
+            }
+        }
     }
 }

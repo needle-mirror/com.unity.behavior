@@ -15,7 +15,6 @@ namespace Unity.Behavior
         private readonly GUIContent k_BehaviorGraphGUIContent = new GUIContent("Behavior Graph",
             "The runtime graph used as a reference. It is instantiated and executed on the agent at runtime.");
         private readonly List<BehaviorGraphAgent> m_TargetAgents = new();
-        private bool m_ShowBlackboard = true;
         private readonly Dictionary<SerializableGUID, bool> m_ListVariableFoldoutStates = new Dictionary<SerializableGUID, bool>();
         private readonly Dictionary<SerializableGUID, VariableModel> m_VariableGUIDToVariableModel = new Dictionary<SerializableGUID, VariableModel>();
         private long m_MappedBlackboardVersion = 0;
@@ -81,7 +80,23 @@ namespace Unity.Behavior
             m_MappedBlackboardVersion = SharedAuthoringGraph.VersionTimestamp;
             foreach (var variableModel in SharedAuthoringGraph.Blackboard.Variables)
             {
-                m_VariableGUIDToVariableModel.Add(variableModel.ID, variableModel);
+                bool successful = m_VariableGUIDToVariableModel.TryAdd(variableModel.ID, variableModel);
+                if (!successful)
+                {
+                    Debug.LogError($"Failed to map variable model to GUID in BehaviorGraphAgentEditor.{variableModel.ID}");
+                }
+            }
+            
+            foreach (var blackboard in SharedAuthoringGraph.m_Blackboards)
+            {
+                foreach (var variableModel in blackboard.Variables)
+                {
+                    bool successful = m_VariableGUIDToVariableModel.TryAdd(variableModel.ID, variableModel);
+                    if (!successful)
+                    {
+                        Debug.LogError($"Failed to map variable model to GUID in BehaviorGraphAgentEditor.{variableModel.ID}");
+                    }
+                }
             }
         }
 
@@ -187,7 +202,11 @@ namespace Unity.Behavior
             if (SharedGraph != null && SharedGraph.BlackboardReference?.Blackboard != null)
             {
                 UpdateVariableModelMap();
-                DrawBlackboard(SharedGraph.BlackboardReference.Blackboard.Variables);
+                DrawBlackboard(SharedGraph.BlackboardReference);
+                foreach (var blackboardReference in SharedGraph.RootGraph.BlackboardGroupReferences)
+                {
+                    DrawBlackboard(blackboardReference);
+                }
             }
 
             // Debug.Log($"m_Targets count = {m_TargetAgents.Count} - SharedGraph = {SharedGraph?.name}");
@@ -347,16 +366,25 @@ namespace Unity.Behavior
             return SharedAuthoringGraph == null;
         }
 
-        private void DrawBlackboard(IEnumerable<BlackboardVariable> variables)
+        private void DrawBlackboard(BlackboardReference blackboard)
         {
-            m_ShowBlackboard = EditorGUILayout.Foldout(m_ShowBlackboard, "Blackboard Variables");
-            if (!m_ShowBlackboard)
+            var show = IsBlackboardFoldedOut(blackboard);
+            if (!show)
             {
                 return;
+            } 
+            
+            if (blackboard.Blackboard.Variables.Count == 0)
+            {
+                EditorGUI.indentLevel++;
+                EditorGUILayout.HelpBox("No variable exposed in the blackboard", MessageType.Info);
+                EditorGUI.indentLevel--;
+                return;
             }
+                
 
             EditorGUI.indentLevel++;
-            foreach (BlackboardVariable variable in variables)
+            foreach (BlackboardVariable variable in blackboard.Blackboard.Variables)
             {
                 if (!IsVariablePublic(variable))
                 {
@@ -400,6 +428,15 @@ namespace Unity.Behavior
                 DrawFieldForBlackboardVariable(firstTargetVariable, isOverride);
             }
             EditorGUI.indentLevel--;
+        }
+
+        private bool IsBlackboardFoldedOut(BlackboardReference blackboard)
+        {
+            var foldoutStateKey = $"{GetType().Name}.{blackboard.SourceBlackboardAsset.GetInstanceID()}";
+            var show = SessionState.GetBool(foldoutStateKey, true);
+            show = EditorGUILayout.Foldout(show, blackboard.SourceBlackboardAsset.name);
+            SessionState.SetBool(foldoutStateKey, show);
+            return show;
         }
 
         private void DrawFieldForBlackboardVariable(BlackboardVariable variable, bool isOverride)
@@ -940,6 +977,19 @@ namespace Unity.Behavior
 
             // If the application is playing, use the runtime graph's blackboard.
             agent.Graph.BlackboardReference.GetVariable(variableID, out BlackboardVariable runtimeVariableInstance);
+            
+            if (runtimeVariableInstance == null)
+            {
+                foreach (var blackboardReference in agent.Graph.RootGraph.BlackboardGroupReferences)
+                {
+                    blackboardReference.GetVariable(variableID, out runtimeVariableInstance);
+                    if (runtimeVariableInstance != null)
+                    {
+                        break;
+                    }
+                }
+            }
+            
             if (Application.isPlaying && agent.m_IsInitialised)
             {
                 return runtimeVariableInstance;

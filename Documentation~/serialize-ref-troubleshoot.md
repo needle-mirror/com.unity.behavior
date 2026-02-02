@@ -57,6 +57,8 @@ If the issue is caused by refactoring or missing scripts, restore or recreate th
 
 #### For custom nodes
 
+If you can’t open a behavior graph due to a missing type error, the graph contains a missing type used by a Blackboard variable. This can occur either directly through a Blackboard variable or indirectly through a node that references the type. In this case, follow the steps in [For Blackboard variables](#for-blackboard-variables) first, then return to this section.
+
 1. Identify placeholder nodes in your Behavior graph.
 2. Choose one of the following:
 

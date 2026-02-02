@@ -4,6 +4,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.15] - 2026-02-02
+
+### Added
+- Blackboards inside behavior graphs are now visible and overridable from the behavior graph agent inspector.
+- Adds auto-connect debug target on selection in playmode.
+- Added ObserverAbort capability to graph execution. Only `Conditional Guard (Modifier)`, `Conditional Branch`, `Repeat While` and `Observer Abort` nodes are currently supported. The nodes needs to be linked from a `TryInOrder` or `Sequence` in order to make the functionality available in the node inspector. 
+- Added new `ConditionalGuardModifier` node with observer abort support. `ConditionalGuardAction` is automatically changed to use its Modifier variant when linked directly from a `Sequence` or `TryInOrder` node.
+- Added toggle to truncate conditions on `ConditionalGuardAction`.
+
+### Changed
+- Bumped authoring graph serialization number to version 2.
+- Renamed `Abort` node `Fail` to avoid semantics conflict with new observer abort feature.
+- Node breakpoints can now pause playmode without attaching the IDE debugger.
+
+### Fixed
+- Fixes node connections cannot be removed when connected to Conditional Branch or Switch outputs (UUM-131340)
+- Fixed `ComponentToComponent` and `ComponentToGameObject` BlackboardVariableCasters throwing warning about missing `Serializable` attribute.
+- Removed `VariableValueChangedCondition` redundant GC allocations.
+- Added primitive value access to `SetVariableValueAction` and `ConditionUtils.cs` to reduce GC allocations.
+- Improved node checks performance when running large graphs.
+- Fixed a few NodeUI and InspectorUI minor issues. 
+- Added undo support to Abort/Restart inspector UI mode change.
+- Fixed conditional node UI color.
+- Fixed node breakpoint not working.
+- Fixed shared blackboard variable enum exception on creation causing variable to disapear in BehaviorGraphAgent inspector and runtime graph from missing any subsequent variables.
+
 ## [1.0.14] - 2025-12-18
 
 ### Added

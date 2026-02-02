@@ -34,19 +34,18 @@ namespace Unity.Behavior
             m_BehaviorDropdown = CreateDropdownField(StartOnEventModel.k_TriggerModeFieldName,
                 StartOnEventModel.k_TriggerModeTooltips,
                 Enum.GetNames(typeof(StartOnEvent.TriggerBehavior)),
-                (int)m_StartOnEventModel.TriggerBehavior);
-
-            m_BehaviorDropdown.RegisterValueChangedCallback(evt =>
-            {
-                m_StartOnEventModel.Asset.MarkUndo("Change Trigger Mode");
-                using (var newVal = evt.newValue.GetEnumerator())
+                (int)m_StartOnEventModel.TriggerBehavior,
+                valueChangedCallback: evt =>
                 {
-                    if (newVal.MoveNext())
+                    m_StartOnEventModel.Asset.MarkUndo("Change Trigger Mode");
+                    using (var newVal = evt.newValue.GetEnumerator())
                     {
-                        m_StartOnEventModel.TriggerBehavior = (StartOnEvent.TriggerBehavior)newVal.Current;
+                        if (newVal.MoveNext())
+                        {
+                            m_StartOnEventModel.TriggerBehavior = (StartOnEvent.TriggerBehavior)newVal.Current;
+                        }
                     }
-                }
-            });
+                });
         }
 
         private void CreateEventChannelField()

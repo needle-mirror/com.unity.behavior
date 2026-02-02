@@ -12,7 +12,7 @@ namespace Unity.Behavior
     /// defined within a BehaviorAuthoringGraph.
     /// </summary>
     [Serializable, GeneratePropertyBag]
-    public partial class BehaviorGraph : ScriptableObject, ISerializationCallbackReceiver
+    public partial class BehaviorGraph : ScriptableObject
     {
         internal static readonly SerializableGUID k_GraphSelfOwnerID = new SerializableGUID(1, 0);
 
@@ -143,24 +143,17 @@ namespace Unity.Behavior
             }
         }
 
-        /// <inheritdoc cref="OnBeforeSerialize"/>
-        public void OnBeforeSerialize()
+#if UNITY_EDITOR
+#if DEBUG
+        internal void RefreshModuleDebugInfo()
         {
-        }
-
-        /// <inheritdoc cref="OnAfterDeserialize"/>
-        public void OnAfterDeserialize()
-        {
-#if DEBUG && UNITY_EDITOR
             foreach (BehaviorGraphModule graph in Graphs)
             {
                 graph.DebugInfo = m_DebugInfo;
             }
-#endif
         }
+#endif
 
-
-#if UNITY_EDITOR
         internal bool ContainsPlaceholderNodes()
         {
             if (!UnityEditor.EditorUtility.IsPersistent(this))

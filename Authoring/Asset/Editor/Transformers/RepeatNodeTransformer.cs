@@ -24,6 +24,10 @@ namespace Unity.Behavior
                 repeater.AllowMultipleRepeatsPerTick = repeatNodeModel.AllowMultipleRepeatsPerTick;
             }
 
+            if (node is RepeatWhileConditionModifier repeatWhileNode)
+            {
+                repeatWhileNode.ReturnFailureOnConditionFail = repeatNodeModel.ReturnFailureOnConditionFail;
+            }
         }
     }
 }

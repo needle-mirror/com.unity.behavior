@@ -10,7 +10,7 @@ namespace Unity.Behavior
     [NodeModelInfo(typeof(RepeatUntilFailModifier))]
     [NodeModelInfo(typeof(RepeatUntilSuccessModifier))]
     [NodeModelInfo(typeof(RepeatWhileConditionModifier))]
-    internal class RepeatNodeModel : ModifierNodeModel, IConditionalNodeModel
+    internal class RepeatNodeModel : ModifierNodeModel, IObserverAbortNodeModel
     {
         public bool AllowMultipleRepeatsPerTick = false;
 
@@ -38,11 +38,14 @@ namespace Unity.Behavior
         public RepeatMode Mode
         {
             get => m_RepeatMode;
-            set
-            {
-                m_RepeatMode = value;
-            }
+            set => m_RepeatMode = value;
         }
+        
+        [field: SerializeField]
+        public ObserverAbortTarget ObserverType { get; set; } = ObserverAbortTarget.None;
+
+        [field: SerializeField]
+        public bool ReturnFailureOnConditionFail { get; set; } = true;
 
         public RepeatNodeModel(NodeInfo nodeInfo) : base(nodeInfo)
         {
@@ -55,6 +58,8 @@ namespace Unity.Behavior
             ConditionModels = IConditionalNodeModel.GetConditionModelCopies(originalModel, this);
             RequiresAllConditionsTrue = originalModel.RequiresAllConditionsTrue;
             ShouldTruncateNodeUI = originalModel.ShouldTruncateNodeUI;
+            ObserverType = originalModel.ObserverType;
+            ReturnFailureOnConditionFail = originalModel.ReturnFailureOnConditionFail;
             UpdateNodeType();
         }
 
@@ -71,6 +76,16 @@ namespace Unity.Behavior
         {
             base.OnValidate();
             UpdateNodeType();
+
+            // Condition mode only supports None or LowerPriority
+            if (ObserverType != ObserverAbortTarget.None)
+            {
+                if (Mode != RepeatMode.Condition || CanUseObserverAbort() == false)
+                {
+                    ObserverType = ObserverAbortTarget.None;
+                    Asset.SetAssetDirty(true);
+                }
+            }
 
             IConditionalNodeModel.UpdateConditionModels(this);
         }

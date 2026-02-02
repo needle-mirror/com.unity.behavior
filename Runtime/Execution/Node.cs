@@ -97,8 +97,7 @@ namespace Unity.Behavior
             CurrentStatus = Status.Running;
             IsRunning = true;
 #if DEBUG && UNITY_EDITOR
-            // The user set a breakpoint in the graph editor. Call a break on the debugger.
-            if (Graph.ShouldDebuggerBreak(ID)) System.Diagnostics.Debugger.Break();
+            HandleBreakpoint();
 #endif
             return OnStart();
         }
@@ -106,8 +105,7 @@ namespace Unity.Behavior
         internal Status Update()
         {
 #if DEBUG && UNITY_EDITOR
-            // The user set a breakpoint in the graph editor. Call a break on the debugger.
-            if (Graph.ShouldDebuggerBreak(ID)) System.Diagnostics.Debugger.Break();
+            HandleBreakpoint();
 #endif
             return OnUpdate();
         }
@@ -122,8 +120,7 @@ namespace Unity.Behavior
 
             IsRunning = false;
 #if DEBUG && UNITY_EDITOR
-            // The user set a breakpoint in the graph editor. Call a break on the debugger.
-            if (Graph.ShouldDebuggerBreak(ID)) System.Diagnostics.Debugger.Break();
+            HandleBreakpoint();
 #endif
             OnEnd();
         }
@@ -213,5 +210,24 @@ namespace Unity.Behavior
         /// </summary>
         protected virtual void OnDeserialize()
         { }
+
+#if DEBUG && UNITY_EDITOR
+        private void HandleBreakpoint([System.Runtime.CompilerServices.CallerMemberName] string callerName = "")
+        {
+            if (Graph.ShouldDebuggerBreak(ID))
+            {
+                // The user set a breakpoint in the graph editor. Call a break on the debugger.
+                if (System.Diagnostics.Debugger.IsAttached)
+                {
+                    System.Diagnostics.Debugger.Break();
+                }
+                else
+                {
+                    Debug.Log($"[{Time.frameCount}] Playmode pause requested by {this}.{callerName}", GameObject);
+                    Debug.Break();
+                }
+            }
+        }
+#endif
     }
 }

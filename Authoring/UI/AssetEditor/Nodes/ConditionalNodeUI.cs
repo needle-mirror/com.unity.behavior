@@ -8,6 +8,7 @@ namespace Unity.Behavior
     internal class ConditionalNodeUI : BehaviorNodeUI
     {
         private VisualElement m_ConditionFieldContainer;
+        protected VisualElement ConditionFieldContainer => m_ConditionFieldContainer;
         internal IConditionalNodeModel ConditionalNodeModel => Model as IConditionalNodeModel;
 
         private const string k_NoConditionAssignedText = "No Condition Assigned";
@@ -18,6 +19,7 @@ namespace Unity.Behavior
         protected ConditionalNodeUI(NodeModel nodeModel) : base(nodeModel)
         {
             styleSheets.Add(ResourceLoadAPI.Load<StyleSheet>("Packages/com.unity.behavior/Authoring/UI/AssetEditor/Assets/ConditionNodeStylesheet.uss"));
+            AddToClassList("Condition");
             CreateNodeConditionElements();
         }
 
@@ -73,17 +75,11 @@ namespace Unity.Behavior
 
         private void CreateTruncatedNodeUI(IConditionalNodeModel model)
         {
+            ConditionsAssignedPostfix = model.ConditionModels.Count > 1 ? " Conditions are true" : k_ConditionAssignedPostfix;
+
             if (!string.IsNullOrEmpty(ConditionElementPrefix))
             {
-                switch (model.ConditionModels.Count)
-                {
-                    case > 1:
-                        m_ConditionFieldContainer.Add(new Label(ConditionElementPrefix + " " + model.ConditionModels.Count + ConditionsAssignedPostfix));
-                        break;
-                    default:
-                        m_ConditionFieldContainer.Add(new Label(ConditionElementPrefix + " " + model.ConditionModels.Count + k_ConditionAssignedPostfix));
-                        break;
-                }
+                m_ConditionFieldContainer.Add(new Label(ConditionElementPrefix + " " + model.ConditionModels.Count + ConditionsAssignedPostfix));
             }
             else
             {
@@ -92,6 +88,7 @@ namespace Unity.Behavior
                     case > 1:
                         m_ConditionFieldContainer.Add(new Label(model.ConditionModels.Count + ConditionsAssignedPostfix));
                         break;
+
                     default:
                         m_ConditionFieldContainer.Add(new Label(model.ConditionModels.Count + k_ConditionAssignedPostfix));
                         break;
@@ -112,12 +109,19 @@ namespace Unity.Behavior
                 // Add a prefix to the condition element if one is assigned.
                 if (!string.IsNullOrEmpty(ConditionElementPrefix))
                 {
-                    element.Insert(0, new Label(ConditionElementPrefix));
+                    // When no truncated, make sure the first element is prefixed with just "If" (instead of "AND If" for instance).
+                    if (index == 0 && ConditionalNodeModel.ShouldTruncateNodeUI == false)
+                    {
+                        element.Insert(0, new Label("If"));
+                    }
+                    else
+                    {
+                        element.Insert(0, new Label(ConditionElementPrefix));
+                    }
                 }
 
                 container.Add(element);
             }
         }
-
     }
 }
