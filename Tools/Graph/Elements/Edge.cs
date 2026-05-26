@@ -19,6 +19,8 @@ namespace Unity.Behavior.GraphFramework
             get => m_Start;
             set
             {
+                if (m_Start == value)
+                    return;
                 m_Start?.GetFirstAncestorOfType<GraphElement>().UnregisterCallback<GeometryChangedEvent>(OnLinkMove);
                 m_Start = value;
                 m_Start?.GetFirstAncestorOfType<GraphElement>().RegisterCallback<GeometryChangedEvent>(OnLinkMove);
@@ -31,6 +33,8 @@ namespace Unity.Behavior.GraphFramework
             get => m_End;
             set
             {
+                if (m_End == value)
+                    return;
                 m_End?.GetFirstAncestorOfType<GraphElement>().UnregisterCallback<GeometryChangedEvent>(OnLinkMove);
                 m_End = value;
                 m_End?.GetFirstAncestorOfType<GraphElement>().RegisterCallback<GeometryChangedEvent>(OnLinkMove);
@@ -43,6 +47,8 @@ namespace Unity.Behavior.GraphFramework
             get => m_StartPosition;
             set
             {
+                if (m_StartPosition == value)
+                    return;
                 m_StartPosition = value;
                 MarkDirtyAndRepaint();
             }
@@ -53,6 +59,8 @@ namespace Unity.Behavior.GraphFramework
             get => m_EndPosition;
             set
             {
+                if (m_EndPosition == value)
+                    return;
                 m_EndPosition = value;
                 MarkDirtyAndRepaint();
             }
@@ -94,6 +102,10 @@ namespace Unity.Behavior.GraphFramework
         private readonly ushort[] m_Indices = new ushort[6 * k_NumEdgeSegments];
 
         internal EdgeVisualisationType EdgeVisualisation { get; set; } = EdgeVisualisationType.Sharp;
+
+        private float m_PrevWidth = -1;
+        private float m_PrevHeight = -1;
+        private Vector2 m_PrevTranslate = new Vector2(float.NaN, float.NaN);
 
         public Edge()
         {
@@ -398,12 +410,13 @@ namespace Unity.Behavior.GraphFramework
 
         private void OnLinkMove(GeometryChangedEvent evt)
         {
-            SetStyle();
-
-            MarkDirtyAndRepaint();
+            if (SetStyle())
+            {
+                MarkDirtyAndRepaint();
+            }
         }
 
-        private void SetStyle()
+        private bool SetStyle()
         {
             Vector2 startPositionWorld = m_StartWorldPosition;
             Vector2 endPositionWorld = m_EndWorldPosition;
@@ -426,14 +439,34 @@ namespace Unity.Behavior.GraphFramework
             float width = Math.Abs(bottomRightWorld.x - topLeftWorld.x) / scale.x;
             float height = Math.Abs(bottomRightWorld.y - topLeftWorld.y) / scale.y;
 
-#if UNITY_6000_3_OR_NEWER
-            style.translate = m_GraphView != null ? m_GraphView.Viewport.WorldToLocal(topLeftWorld) : topLeftWorld;
-#else
-            transform.position = m_GraphView != null ? m_GraphView.Viewport.WorldToLocal(topLeftWorld) : topLeftWorld;
-#endif
+            bool changed = false;
 
-            style.width = width;
-            style.height = height;
+            Vector2 newTranslate = m_GraphView != null ? m_GraphView.Viewport.WorldToLocal(topLeftWorld) : topLeftWorld;
+            if (!Mathf.Approximately(m_PrevTranslate.x, newTranslate.x) || !Mathf.Approximately(m_PrevTranslate.y, newTranslate.y))
+            {
+#if UNITY_6000_3_OR_NEWER
+                style.translate = new Translate(newTranslate.x, newTranslate.y);
+#else
+                transform.position = newTranslate;
+#endif
+                m_PrevTranslate = newTranslate;
+                changed = true;
+            }
+
+            if (!Mathf.Approximately(m_PrevWidth, width))
+            {
+                style.width = width;
+                m_PrevWidth = width;
+                changed = true;
+            }
+            if (!Mathf.Approximately(m_PrevHeight, height))
+            {
+                style.height = height;
+                m_PrevHeight = height;
+                changed = true;
+            }
+
+            return changed;
         }
 
         private void InitEdgeDrawData()

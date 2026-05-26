@@ -6,12 +6,17 @@ namespace Unity.Behavior
 {
     internal class BehaviorNodeUI : NodeUI
     {
+        private Node.Status m_CurrentStatus = Node.Status.Uninitialized;
+        private List<BaseLinkField> m_CachedLinkFields;
+        private bool m_LinkFieldsDirty = true;
+
         public override NodeModel Model
         {
             get => base.Model;
             set
             {
                 base.Model = value;
+                m_LinkFieldsDirty = true;
                 UpdateLinkFields();
             }
         }
@@ -93,20 +98,29 @@ namespace Unity.Behavior
 
         internal List<BaseLinkField> GetLinkFields()
         {
-            return this.Query<BaseLinkField>().ToList();
+            if (m_LinkFieldsDirty || m_CachedLinkFields == null)
+            {
+                m_CachedLinkFields = this.Query<BaseLinkField>().ToList();
+                m_LinkFieldsDirty = false;
+            }
+            return m_CachedLinkFields;
         }
 
         internal virtual void UpdateLinkFields()
         {
-            // Refresh the fields.
-            this.Query<BaseLinkField>().ForEach(linkField =>
+            m_LinkFieldsDirty = true;
+            foreach (var linkField in GetLinkFields())
             {
                 linkField.Model = Model;
-            });
+            }
         }
 
         internal virtual void UpdateStatus(Node.Status status)
         {
+            if (m_CurrentStatus == status)
+                return;
+            m_CurrentStatus = status;
+
             EnableInClassList("NodeStatus_Uninitialized", status is Node.Status.Uninitialized);
             EnableInClassList("NodeStatus_Running", status is Node.Status.Running);
             EnableInClassList("NodeStatus_Success", status is Node.Status.Success);

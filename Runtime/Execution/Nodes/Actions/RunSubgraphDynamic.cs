@@ -19,28 +19,20 @@ namespace Unity.Behavior
         internal const string kMissingTypesErrorMessage = "Cannot run dynamic subgraph '{0}' because it contains SerializeReference types which are missing.";
         internal const string kCyclicReferenceErrorMessage = "Running '{0}' would create a cyclic reference. Please choose a different subgraph to run dynamically.";
         internal const string kInitFailsDuringUpdateErrorMessage = "Failed to initialize subgraph on update. This can happen when setting the subgraph to null while it is running.";
-        // Serialize the list of additional BehaviorGraphModule for runtime serialization -> Override module method in BehaviorGraph
-        // We may still need a reference or id to grab the runtime asset to duplicate from -> BehaviorGraph has no asset id, it needs one -> Get it from the behaviorGraphModule.
-        // Copy this asset & override the BehaviorGraphModule's at runtime.
-
-        [SerializeReference, DontCreateProperty] public BlackboardVariable<BehaviorGraph> SubgraphVariable;
+        [SerializeReference] public BlackboardVariable<BehaviorGraph> SubgraphVariable;
         // The source asset.
-        private BehaviorGraph SourceSubgraph { get => SubgraphVariable.Value; }
+        private BehaviorGraph SourceSubgraph { get => SubgraphVariable?.Value; }
 
-        // Just save the assetId for runtime -> Investigate the removal of the RequiredBlackboard field, but don't take risks. Use AssetId Below.
-        [SerializeField, DontCreateProperty] public RuntimeBlackboardAsset RequiredBlackboard;
+        [SerializeField] public RuntimeBlackboardAsset RequiredBlackboard;
 
         [SerializeReference] public List<DynamicBlackboardVariableOverride> DynamicOverrides;
 
-        // The instantiated asset used by this node.
-        [CreateProperty]
+        // Runtime instance, re-created from SourceSubgraph during deserialization.
         private BehaviorGraph m_InstancedSubgraph = null;
 
-        [SerializeField, CreateProperty]
-        private bool m_IsInitialized = false;
-
-        [CreateProperty]
-        private bool m_SubgraphStarted = false;
+#if UNITY_EDITOR        
+        internal BehaviorGraph InstancedSubgraph => m_InstancedSubgraph; // For testing purposes.
+#endif
 
         // Keeps track of the subgraph's variable and dynamic override that needs to be kept in sync.
         private List<DynamicBinding> m_ActiveBindings = new List<DynamicBinding>();
@@ -79,7 +71,6 @@ namespace Unity.Behavior
         {
             if (SourceSubgraph == null || SourceSubgraph.RootGraph == null)
             {
-                LogFailure("No valid graph asset assigned.");
                 return Status.Failure;
             }
 #if UNITY_EDITOR
@@ -91,133 +82,140 @@ namespace Unity.Behavior
             }
 #endif
 
-            if (GameObject != null && Agent != null)
-            {
-                if (SourceSubgraph.HasSameSourceAssetAs(Agent.Graph))
-                {
-                    LogFailure(string.Format(kCyclicReferenceErrorMessage, SourceSubgraph.name), true);
-                    return Status.Failure;
-                }
-            }
-
-            if (TryInitialize() == false)
+            if (TryAcquireInstance() == false)
             {
                 LogFailure($"Failed to initialize subgraph '{SourceSubgraph.name}'.");
                 return Status.Failure;
             }
 
-            m_SubgraphStarted = true;
-            return m_InstancedSubgraph.RootGraph.StartNode(m_InstancedSubgraph.RootGraph.Root) switch
-            {
-                Status.Success => Status.Success,
-                Status.Failure => Status.Failure,
-                _ => Status.Running,
-            };
+            m_InstancedSubgraph.Start();
+            return GetSubgraphResultStatus();
         }
 
         /// <inheritdoc cref="OnUpdate" />
         protected override Status OnUpdate()
         {
-            if (!m_IsInitialized && TryInitialize() == false)
+            if (m_InstancedSubgraph == null)
             {
                 LogFailure(kInitFailsDuringUpdateErrorMessage);
                 return Status.Failure;
             }
 
-            if (m_InstancedSubgraph == null)
+            if (!m_InstancedSubgraph.IsRunning)
             {
-                LogFailure("The dynamic subgraph you are trying to run is null.");
-                return Status.Failure;
-            }
-
-            // Start subgraph if needed.
-            if (m_SubgraphStarted == false && m_InstancedSubgraph.RootGraph.StartNode(m_InstancedSubgraph.RootGraph.Root) == Status.Failure)
-            {
-                return Status.Failure;
+                return GetSubgraphResultStatus();
             }
 
             m_InstancedSubgraph.Tick();
-            return m_InstancedSubgraph.RootGraph.Root.CurrentStatus switch
-            {
-                Status.Success => Status.Success,
-                Status.Failure => Status.Failure,
-                _ => Status.Running,
-            };
+            return GetSubgraphResultStatus();
         }
 
         /// <inheritdoc cref="OnEnd" />
         protected override void OnEnd()
         {
-            if (!m_IsInitialized || m_InstancedSubgraph == null)
+            if (m_InstancedSubgraph == null)
             {
                 return;
             }
 
             ClearVariableBindings();
-
-            SubgraphVariable.OnValueChanged -= OnSubgraphChanged;
-            if (m_InstancedSubgraph?.RootGraph?.Root != null)
-            {
-                m_InstancedSubgraph.RootGraph.EndNode(m_InstancedSubgraph.RootGraph.Root);
-            }
+            m_InstancedSubgraph.End();
         }
 
-        private bool TryInitialize()
+        /// <summary>
+        /// Acquires a subgraph instance from the source asset when needed.
+        /// If a valid instance already exists for the current source authoring asset, it is reused.
+        /// If the source changed, the existing instance is released and a new one is acquired.
+        /// </summary>
+        /// <remarks>
+        /// Do NOT warm up in OnSetup as acquiring nested dynamic subgraphs during setup can recurse through graph initialization.
+        /// </remarks>
+        private bool TryAcquireInstance()
         {
-            if (!IsInstancedRuntimeGraphValid())
-            {
-                m_IsInitialized = false;
-            }
-
-            if (m_IsInitialized)
-            {
-                return true;
-            }
-
-            // Can happens when setting Subgraph to null while the node is running.
             if (SourceSubgraph == null || SourceSubgraph.RootGraph == null)
             {
                 return false;
             }
 
-            ClearVariableBindings();
+            if (GameObject != null && Agent != null && SourceSubgraph.HasSameSourceAssetAs(Agent.Graph))
+            {
+                LogFailure(string.Format(kCyclicReferenceErrorMessage, SourceSubgraph.name), true);
+                return false;
+            }
 
-            SubgraphVariable.OnValueChanged -= OnSubgraphChanged;
-            // Instantiate a new copy based on the source asset
-            m_InstancedSubgraph = ScriptableObject.Instantiate(SourceSubgraph);
-            m_InstancedSubgraph.AssignGameObjectToGraphModules(GameObject);
-            // Listens to the source asset changing
-            SubgraphVariable.OnValueChanged += OnSubgraphChanged;
+            if (IsInstancedRuntimeGraphValid())
+            {
+                SetVariablesOnSubgraph();
+                return true;
+            }
 
-            InitChannelAndBlackboard();
+            CleanupGraphInstance();
 
-            m_IsInitialized = true;
-            m_SubgraphStarted = false;
+            // Acquire new instance.
+            m_InstancedSubgraph = BehaviorGraph.AcquireInstance(GameObject, SourceSubgraph);
+            SetVariablesOnSubgraph();
+            if (SubgraphVariable != null)
+            {
+                SubgraphVariable.OnValueChanged += OnSubgraphChanged;
+            }
             return true;
         }
 
         private void OnSubgraphChanged()
         {
-            m_IsInitialized = false;
-            TryInitialize();
-        }
+            // The source changed at runtime: stop and release the currently running instance first.
+            // If the new source is invalid (null), the next OnUpdate will fail initialization.
+            CleanupGraphInstance();
 
-        private void InitChannelAndBlackboard()
-        {
-            // Initialize default event channels for unassigned channel variables.
-            foreach (BlackboardVariable variable in m_InstancedSubgraph.RootGraph.Blackboard.Variables)
+            if (!TryAcquireInstance() || m_InstancedSubgraph == null)
             {
-                if (typeof(EventChannelBase).IsAssignableFrom(variable.Type) && variable.ObjectValue == null)
-                {
-                    ScriptableObject channel = ScriptableObject.CreateInstance(variable.Type);
-                    channel.name = $"Default {variable.Name} Channel";
-                    variable.ObjectValue = channel;
-                }
+                return;
             }
 
-            SetVariablesOnSubgraph();
+            // If the RunSubgraphDynamic is currently running, start the newly acquired instance immediately.
+            if (IsRunning)
+            {
+                m_InstancedSubgraph.Restart();
+            }
         }
 
+        protected override void OnTeardown()
+        {
+            CleanupGraphInstance();
+        }
+
+        private void CleanupGraphInstance()
+        {
+            ClearVariableBindings();
+            if (SubgraphVariable != null)
+            {
+                SubgraphVariable.OnValueChanged -= OnSubgraphChanged;
+            }
+            BehaviorGraph.ReleaseInstance(m_InstancedSubgraph);
+            m_InstancedSubgraph = null;
+        }
+
+        private Status GetSubgraphResultStatus()
+        {
+            // This should never happen as graph always has a Start node.
+            // But just in case, we return Failure by default.
+            if (m_InstancedSubgraph?.RootGraph?.Root == null)
+            {
+                return Status.Failure;
+            }
+
+            return m_InstancedSubgraph.CurrentStatus switch
+            {
+                Status.Success => Status.Success,
+                Status.Failure => Status.Failure,
+                _ => Status.Running
+            };
+        }
+
+        /// <summary>
+        /// Sets the variables on the subgraph by applying the dynamic overrides to the blackboard reference.
+        /// Needs to be called every time the subgraph is started (or re-initialized).
+        /// </summary>
         private void SetVariablesOnSubgraph()
         {
             // Blackboard value cannot be null but the list can be empty.
@@ -251,6 +249,10 @@ namespace Unity.Behavior
             }
         }
 
+        /// <summary>
+        /// Registers the dynamic overrides to the given blackboard reference.
+        /// We use a double binding mechanism to ensure the variables are kept in sync between the subgraph and the override.
+        /// </summary>
         private void ApplyOverridesToBlackboardReference(BlackboardReference reference)
         {
             foreach (DynamicBlackboardVariableOverride dynamicOverride in DynamicOverrides)
@@ -303,34 +305,44 @@ namespace Unity.Behavior
 
         protected override void OnSerialize()
         {
-            m_InstancedSubgraph.SerializeGraphModules();
-            if (IsInstancedRuntimeGraphValid())
+            if (m_InstancedSubgraph == null)
             {
-                m_IsInitialized = false;
+                return;
             }
+
+            m_InstancedSubgraph.SerializeGraphModules();
         }
 
         protected override void OnDeserialize()
         {
+            if (SubgraphVariable == null || SourceSubgraph == null)
+            {
+                return;
+            }
+
+            if (TryAcquireInstance() && IsRunning)
+            {
+                m_InstancedSubgraph.Start();
+            }
         }
 
         private bool IsInstancedRuntimeGraphValid()
         {
-            if (SourceSubgraph == null)
+            if (SourceSubgraph?.RootGraph == null || m_InstancedSubgraph?.RootGraph == null)
             {
                 return false;
             }
 
-            return m_InstancedSubgraph != null && m_InstancedSubgraph.RootGraph.AuthoringAssetID == SourceSubgraph.RootGraph.AuthoringAssetID;
+            return m_InstancedSubgraph.RootGraph.AuthoringAssetID == SourceSubgraph.RootGraph.AuthoringAssetID;
         }
 
         private class DynamicBinding
         {
             // Guard flags used to only propagate changes if they didn't come from a sync operation
-            public bool m_IsSyncingToParent = false;
-            public bool m_IsSyncingToChild = false;
-            public BlackboardVariable m_SubgraphVariable; // Reference to the loop variable
-            public BlackboardVariable m_OverrideVariable; // Reference to the loop variable
+            private bool m_IsSyncingToParent = false;
+            private bool m_IsSyncingToChild = false;
+            private BlackboardVariable m_SubgraphVariable; // Reference to the loop variable
+            private BlackboardVariable m_OverrideVariable; // Reference to the loop variable
 
             public void Register(BlackboardVariable subgraphVar, BlackboardVariable overrideVar)
             {

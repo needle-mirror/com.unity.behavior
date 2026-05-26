@@ -339,6 +339,7 @@ namespace Unity.Behavior
         public class JsonBehaviorSerializer : IBehaviorSerializer<string>
         {
             private static UnityMonoBehaviourAdapter s_UnityMonoBehaviourAdapter;
+            private static ScriptableObjectAdapter s_ScriptableObjectAdapter;
             private static GameObjectAdapter s_GameObjectAdapter;
             private static ComponentAdapter s_ComponentAdapter;
 
@@ -353,6 +354,7 @@ namespace Unity.Behavior
                         new NodeJsonAdapter(),
                         (s_GameObjectAdapter = new GameObjectAdapter()),
                         (s_ComponentAdapter = new ComponentAdapter()),
+                        (s_ScriptableObjectAdapter = new ScriptableObjectAdapter()),
                         new SerializableGUIDAdapter(),
                     }
                 };
@@ -398,11 +400,12 @@ namespace Unity.Behavior
                 }
             }
 
-            private class UnityMonoBehaviourAdapter : IContravariantJsonAdapter<MonoBehaviour>
+            private abstract class UnityObjectAdapter<T> : IContravariantJsonAdapter<T>
+                where T : UnityEngine.Object
             {
                 public IUnityObjectResolver<string> Resolver;
 
-                public void Serialize(IJsonSerializationContext context, MonoBehaviour value)
+                public void Serialize(IJsonSerializationContext context, T value)
                 {
                     if (value == null)
                     {
@@ -439,13 +442,22 @@ namespace Unity.Behavior
                         return null;
                     }
 
-                    var resolverInvoke = typeof(IUnityObjectResolver<string>).GetMethod("Resolve").MakeGenericMethod(serializableType.Type).Invoke(Resolver, new object[]
+                    var resolverInvoke = typeof(IUnityObjectResolver<string>).GetMethod("Resolve")
+                        .MakeGenericMethod(serializableType.Type).Invoke(Resolver, new object[]
                     {
                         value
                     });
 
                     return resolverInvoke;
                 }
+            }
+
+            private class UnityMonoBehaviourAdapter : UnityObjectAdapter<MonoBehaviour>
+            {
+            }
+
+            private class ScriptableObjectAdapter : UnityObjectAdapter<ScriptableObject>
+            {
             }
 
             /// <summary>
@@ -457,6 +469,7 @@ namespace Unity.Behavior
             public string Serialize(BehaviorGraph graph, IUnityObjectResolver<string> resolver)
             {
                 s_UnityMonoBehaviourAdapter.Resolver = resolver;
+                s_ScriptableObjectAdapter.Resolver = resolver;
                 s_GameObjectAdapter.Resolver = resolver;
                 s_ComponentAdapter.Resolver = resolver;
                 return JsonSerialization.ToJson(graph, s_JsonPackageSerializationParameters);
@@ -471,6 +484,7 @@ namespace Unity.Behavior
             public void Deserialize(string graphJson, BehaviorGraph graph, IUnityObjectResolver<string> resolver)
             {
                 s_UnityMonoBehaviourAdapter.Resolver = resolver;
+                s_ScriptableObjectAdapter.Resolver = resolver;
                 s_GameObjectAdapter.Resolver = resolver;
                 s_ComponentAdapter.Resolver = resolver;
                 JsonSerialization.FromJsonOverride(graphJson, ref graph, s_JsonPackageSerializationParameters);

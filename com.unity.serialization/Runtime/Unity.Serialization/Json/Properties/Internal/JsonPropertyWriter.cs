@@ -601,10 +601,11 @@ namespace Unity.Behavior.Serialization.Json
 #if UNITY_EDITOR
             if (TypeTraits<TValue>.IsLazyLoadReference)
             {
-                var instanceID = PropertyContainer.GetValue<TValue, int>(ref value, "m_InstanceID");
 #if UNITY_6000_3_OR_NEWER
-                Writer.WriteValue(UnityEditor.GlobalObjectId.GetGlobalObjectIdSlow((EntityId)instanceID).ToString());
+                var entityId = PropertyContainer.GetValue<TValue, EntityId>(ref value, "m_EntityId");
+                Writer.WriteValue(UnityEditor.GlobalObjectId.GetGlobalObjectIdSlow(entityId).ToString());
 #else
+                var instanceID = PropertyContainer.GetValue<TValue, int>(ref value, "m_InstanceID");
                 Writer.WriteValue(UnityEditor.GlobalObjectId.GetGlobalObjectIdSlow(instanceID).ToString());
 #endif
                 return;

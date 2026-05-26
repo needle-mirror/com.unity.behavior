@@ -92,6 +92,16 @@ namespace Unity.Behavior
         internal Node()
         { }
 
+        internal void Setup()
+        {
+            OnSetup();
+        }
+
+        internal void Teardown()
+        {
+            OnTeardown();
+        }
+
         internal Status Start()
         {
             CurrentStatus = Status.Running;
@@ -136,6 +146,14 @@ namespace Unity.Behavior
         }
 
         /// <summary>
+        /// OnSetup is called once when the behavior graph instance is initialized, before any OnStart or OnUpdate calls.
+        /// Use this method to cache data or perform one-time node setup.
+        /// The order in which nodes are set up is not guaranteed.
+        /// </summary>
+        protected virtual void OnSetup()
+        { }
+
+        /// <summary>
         /// OnStart is called when the node starts running.
         /// </summary>
         /// <returns>The status of the node.</returns>
@@ -151,6 +169,14 @@ namespace Unity.Behavior
         /// OnEnd is called when the node has stopped running.
         /// </summary>
         protected virtual void OnEnd()
+        { }
+
+        /// <summary>
+        /// OnTeardown is called once when the behavior graph instance is released.
+        /// Use this method to unregister callbacks, release temporary resources,
+        /// and clean up one-time setup done in <see cref="OnSetup"/>.
+        /// </summary>
+        protected virtual void OnTeardown()
         { }
 
         /// <summary>

@@ -120,24 +120,62 @@ namespace Unity.Behavior
                 }
 
                 VariableModel foundVariable = GetLinkedVariableFromBlackboard(behaviorGraph.Blackboard, field.LinkedVariable);
-                if (foundVariable != null && foundVariable != field.LinkedVariable)
+                if (foundVariable != null)
                 {
-                    // This action changed the reference id (rid) of the model silently.
-                    field.LinkedVariable = foundVariable;
-                    // So, the asset needs to be manually dirty.
-                    Asset.SetAssetDirty();
+                    if (foundVariable != field.LinkedVariable)
+                    {
+                        // This action changed the reference id (rid) of the model silently.
+                        field.LinkedVariable = foundVariable;
+                        // So, the asset needs to be manually dirty.
+                        Asset.SetAssetDirty();
+                    }
+                    continue;
                 }
 
+                bool foundInLinkedBlackboard = false;
                 foreach (BehaviorBlackboardAuthoringAsset blackboard in behaviorGraph.m_Blackboards)
                 {
                     VariableModel foundBlackboardVariable = GetLinkedVariableFromBlackboard(blackboard, field.LinkedVariable);
-                    if (foundBlackboardVariable != null && foundBlackboardVariable != field.LinkedVariable)
+                    if (foundBlackboardVariable != null)
                     {
-                        field.LinkedVariable = foundBlackboardVariable;
-                        Asset.SetAssetDirty(true);
+                        if (foundBlackboardVariable != field.LinkedVariable)
+                        {
+                            field.LinkedVariable = foundBlackboardVariable;
+                            Asset.SetAssetDirty(true);
+                        }
+                        foundInLinkedBlackboard = true;
+                        break;
                     }
                 }
+
+                // Clear stale references to variables that no longer exist in any blackboard.
+                if (!foundInLinkedBlackboard && IsBlackboardLinkedField(field))
+                {
+                    // Migrate: if the inline variable has a value, preserve it in LocalValue
+                    // before clearing LinkedVariable. This handles graphs saved before the
+                    // LinkSubgraph fix where asset values were stored in LinkedVariable instead
+                    // of LocalValue for exposed fields on SubgraphNodeModel.
+                    if (field.LocalValue != null && field.LinkedVariable.ObjectValue != null
+                        && field.LocalValue.ObjectValue == null)
+                    {
+                        field.LocalValue.ObjectValue = field.LinkedVariable.ObjectValue;
+                    }
+
+                    Debug.LogWarning($"{Asset.name}: Linked variable '{field.LinkedVariable.Name}' on field '{field.FieldName}' no longer exists in any blackboard. Clearing the reference.", Asset);
+                    Asset.MarkUndo("Clear linked variable", true);
+                    field.LinkedVariable = null;
+                    Asset.SetAssetDirty(true);
+                }
             }
+        }
+
+        /// <summary>
+        /// Returns whether the given field's LinkedVariable is expected to reference a blackboard variable.
+        /// Override to exclude fields that use inline variable models (e.g. direct asset references).
+        /// </summary>
+        protected virtual bool IsBlackboardLinkedField(FieldModel field)
+        {
+            return true;
         }
 
         public override void OnDefineNode()
@@ -181,6 +219,49 @@ namespace Unity.Behavior
             {
                 m_FieldValues.Remove(model);
             }
+
+            RegisterEnumDependenciesFromFields();
+        }
+
+        private void RegisterEnumDependenciesFromFields()
+        {
+            if (Asset is not BehaviorAuthoringGraph behaviorGraph)
+            {
+                return;
+            }
+
+            foreach (FieldModel field in m_FieldValues)
+            {
+                Type enumType = GetEnumTypeFromField(field);
+                if (enumType == null)
+                {
+                    continue;
+                }
+
+                behaviorGraph.RegisterEnumDependency(enumType);
+            }
+        }
+
+        private static Type GetEnumTypeFromField(FieldModel field)
+        {
+            if (field == null)
+            {
+                return null;
+            }
+
+            Type candidateType = field.LinkedVariable?.Type;
+            if (candidateType != null && candidateType.IsEnum)
+            {
+                return candidateType;
+            }
+
+            candidateType = field.LocalValue?.Type;
+            if (candidateType != null && candidateType.IsEnum)
+            {
+                return candidateType;
+            }
+
+            return null;
         }
 
         protected internal virtual void EnsurePortsAreUpToDate()

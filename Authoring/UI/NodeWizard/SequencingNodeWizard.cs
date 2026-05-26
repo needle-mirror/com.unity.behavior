@@ -14,7 +14,8 @@ namespace Unity.Behavior
         internal Button AddPortButton => m_CustomPortsRegion.AddButton;
         private NodeInfo m_Info;
 
-        private const string k_CustomPortsHelpText = "Add output ports for your new node. You can customize the ports by adding a name.";
+        private const string k_CustomPortsHelpText = "Optionally add named output ports. Each port becomes a fixed connector on the node." +
+                                                     "\n\nLeave empty to allow a dynamic number of children.";
         private const string k_PortsPreviewElementName = "Ports-Preview";
 
         private readonly HelpText m_CustomPortHelpBox;

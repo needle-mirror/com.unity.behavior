@@ -4,6 +4,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.16] - 2026-05-26
+
+### Added
+- Added new node lifecycle APIs: `Node.OnSetup()` and `Node.OnTeardown()`.
+- Added enum dependency signature tracking on authoring graphs. Enables automatic detection of enum changes and graph reimport/rebuild, even when the graph is not open in the editor.
+- Added a `Metadata` field on floating port nodes for parent composite-specific state tracking.
+- Added `Tools/Behavior` actions to select graphs affected by the last enum-change reimport pass.
+
+### Changed
+- Bumped authoring graph serialization number to version 3.
+- Improve documentation about creation of `Composite` with dynamic amount of children.
+
+### Fixed
+- Fixed navigation action nodes (NavigateToLocation, NavigateToTarget) staying in Running status indefinitely when destination is unreachable. Added configurable `FailIfUnreachable` bool field (defaults to true). [UUM-135687](https://jira.unity3d.com/browse/UUM-135687)
+- Fixed NavigateToLocationAction not updating NavMeshAgent destination when the Location blackboard variable changes during execution.
+- Fixed BehaviorGraphAgent prefab workflow: blackboard variable overrides now show standard Unity prefab styling, and per-variable Apply to Prefab / Revert from Prefab context menu options are available. Apply to Prefab is greyed out for scene references with no prefab counterpart. [BEHAVB-260](https://jira.unity3d.com/browse/BEHAVB-260)
+- Migrated use of InstanceID to EntityId to support engine version 6.5 and newer.
+- Fixed a regression where editing an enum used by `SwitchComposite` would trigger a null-reference exception while the graph editor was open. [UUM-135864](https://jira.unity3d.com/browse/UUM-135864)
+- Fixed floating port node placement offset during node creation.
+- Fixed RunSubgraphDynamic linking blackboard variables when initialized only once. [UUM-133575](https://jira.unity3d.com/browse/UUM-133575)
+- Fixed swapped position/localPosition assignment.
+- Aligned `BehaviorGraphAgent` and `RunSubgraphDynamic` runtime instance management.
+- Fixed RunSubgraphDynamic runtime subgraph instance not registering shared blackboard variable internal callback.
+- Fixed `UnityObjectToUnityObjectBlackboardVariable` and `BaseCastBlackboardVariable` derived classes throwing warning about missing `Serializable` attribute.
+- Fixed scrolling no longer working when opening a Behavior Graph via the "Open" menu [UUM-140964](https://jira.unity3d.com/browse/UUM-140964)
+- Fixed editor stutter when panning and dragging connections in large Behavior Graphs. [UUM-139944](https://jira.unity3d.com/browse/UUM-139944)
+- Fixed HelpURL attributes for BehaviorAuthoringGraph, BehaviorBlackboardAuthoringAsset, BehaviorGraph, and BehaviorGraphAgent [BEHAVB-416](https://jira.unity3d.com/browse/BEHAVB-416)
+- Fixed node fields retaining stale references to deleted blackboard variables from linked BlackboardAuthoringAssets.
+- Fixed RunSubgraph node retaining a stale reference when the assigned subgraph asset is deleted from the project.
+- Fixed duplicating a static RunSubgraph node losing its subgraph asset reference. [BEHAVB-355](https://jira.unity3d.com/browse/BEHAVB-355)
+- Fixed BehaviorGraph variable assigned directly on a static RunSubgraph node's exposed field not being passed to the subgraph at runtime. [BEHAVB-146](https://jira.unity3d.com/browse/BEHAVB-146)
+
+### Known Issues
+- 'Right-click on the BehaviorGraphAgent component header > Modified Component > Apply to Prefab' may not work or throw `"Destination property underlying types does not match the given one"`. This is a Unity limitation with `[SerializeReference]` polymorphic list property modifications. Use the per-variable Apply to Prefab from the blackboard variable context menu, or the top-level 'Overrides > Apply All' as workarounds.
+- Also refer to 1.0.14 Known Issues section
+
 ## [1.0.15] - 2026-02-02
 
 ### Added

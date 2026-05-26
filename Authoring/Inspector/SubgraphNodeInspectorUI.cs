@@ -110,6 +110,7 @@ namespace Unity.Behavior
 
                 m_SubgraphField.OnLinkChanged += (variableModel, wasUndo) =>
                 {
+                    m_SubgraphField.Dispatcher.DispatchImmediate(new SetNodeVariableLinkCommand(m_NodeModel, m_SubgraphField.FieldName, m_SubgraphField.LinkVariableType, m_SubgraphField.LinkedVariable, !wasUndo));
                     m_NodeModel.OnValidate();
                     m_NodeModel.CacheRuntimeGraphId();
 

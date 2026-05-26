@@ -37,11 +37,11 @@ namespace Unity.Behavior
             {
                 if (UseLocal.Value)
                 {
-                    Transform.Value.position = Location.Value;
+                    Transform.Value.localPosition = Location.Value;
                 }
                 else
                 {
-                    Transform.Value.localPosition = Location.Value;
+                    Transform.Value.position = Location.Value;
                 }
 
                 return Status.Success;

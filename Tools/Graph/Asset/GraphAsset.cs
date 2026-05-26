@@ -72,12 +72,18 @@ namespace Unity.Behavior.GraphFramework
             m_VersionTimestamp = DateTime.Now.Ticks;
             HasOutstandingChanges |= setHasOutStandingChange;
 #if UNITY_EDITOR
-            UnityEditor.EditorUtility.SetDirty(this);
+            if (!UnityEditor.EditorUtility.IsDirty(this))
+            {
+                UnityEditor.EditorUtility.SetDirty(this);
+            }
 #endif
         }
 
         internal virtual void ValidateAsset()
         {
+            // Clean up orphaned floating port nodes before validation
+            GraphAssetUtility.CleanupOrphanedFloatingPortNodes(this);
+            
             for (int i = Nodes.Count - 1; i >= 0; i--)
             {
                 NodeModel node = Nodes[i];
@@ -89,14 +95,6 @@ namespace Unity.Behavior.GraphFramework
                 if (!node.HasPortModels)
                 {
                     node.OnDefineNode();
-                }
-
-                // If the node is a floating port with no connections, remove it.
-                // This should no longer happens in 1.0.14 and later, but we keep this here to clean up older graphs.
-                if (node is FloatingPortNodeModel && !node.HasIncomingConnections)
-                {
-                    Nodes.RemoveAt(i);
-                    continue;
                 }
 
                 node.OnValidate();
@@ -152,10 +150,18 @@ namespace Unity.Behavior.GraphFramework
         public NodeModel CreateNode(Type nodeType, Vector2 position, PortModel connectedPort = null, object[] args = null)
         {
             var node = Activator.CreateInstance(nodeType, args) as NodeModel;
+            if (node == null)
+            {
+                Debug.LogError($"Failed to create node of type {nodeType}");
+                return null;
+            }
             node.Asset = this;
             node.Position = position;
             node.OnDefineNode();
             Nodes.Add(node);
+
+            // Mark asset dirty whenever nodes are created (including FloatingPortNodeModel during validation)
+            SetAssetDirty(true);
 
             // Connect the node to the specified port.
             if (connectedPort != null)
@@ -177,19 +183,71 @@ namespace Unity.Behavior.GraphFramework
 
         internal void CreateNodePortsForNode(NodeModel parentNode)
         {
-            float offsetDeltaX = 200.0f * (parentNode.OutputPortModels.Count() - 1);
-            float offsetX = -offsetDeltaX * (parentNode.OutputPortModels.Count() - 1) * 0.5f;
-            foreach (PortModel portModel in parentNode.OutputPortModels)
+            if (parentNode == null)
             {
-                if (portModel.Connections.Count() != 0 || portModel.IsDefaultOutputPort)
+                return;
+            }
+
+            const float horizontalSpacing = 200.0f;
+            List<PortModel> nonDefaultOutputPorts = parentNode.OutputPortModels
+                .Where(portModel => !portModel.IsDefaultOutputPort)
+                .ToList();
+            int portCount = nonDefaultOutputPorts.Count;
+            if (portCount == 0)
+            {
+                return;
+            }
+
+            float leftMostOffsetX = -0.5f * (portCount - 1) * horizontalSpacing;
+            int index = 0;
+
+            foreach (PortModel portModel in nonDefaultOutputPorts)
+            {
+                float offsetX = leftMostOffsetX + index * horizontalSpacing;
+                Vector2 targetPosition = parentNode.Position + new Vector2(offsetX, 120.0f);
+
+                // Check if a FloatingPortNodeModel already exists for this port
+                FloatingPortNodeModel existingNode = FindFloatingPortNodeForPort(parentNode, portModel);
+
+                if (existingNode != null)
                 {
-                    // Port already exists.
-                    continue;
+                    // Update position of existing floating port node
+                    if (existingNode.Position != targetPosition)
+                    {
+                        existingNode.Position = targetPosition;
+                        SetAssetDirty(setHasOutStandingChange: false);
+                    }
+                }
+                else if (portModel.Connections.Count() == 0)
+                {
+                    // Create new floating port node only if no connections exist
+                    CreateNode(typeof(FloatingPortNodeModel), targetPosition, portModel,
+                        new object[] { parentNode.ID, portModel.Name });
                 }
 
-                NodeModel newNode = CreateNode(typeof(FloatingPortNodeModel), parentNode.Position + new Vector2(offsetX, 200.0f), portModel, new object[] { parentNode.ID, portModel.Name });
-                offsetX += offsetDeltaX;
+                index++;
             }
+        }
+
+        private FloatingPortNodeModel FindFloatingPortNodeForPort(NodeModel parentNode, PortModel portModel)
+        {
+            if (parentNode == null || portModel == null)
+            {
+                return null;
+            }
+
+            // Look through connections to find if a FloatingPortNodeModel is connected to this port
+            foreach (PortModel connection in portModel.Connections)
+            {
+                if (connection?.NodeModel is FloatingPortNodeModel floatingNode &&
+                    floatingNode.ParentNodeID == parentNode.ID &&
+                    floatingNode.PortName == portModel.Name)
+                {
+                    return floatingNode;
+                }
+            }
+
+            return null;
         }
 
         public void DeleteNode(NodeModel node)
@@ -266,6 +324,9 @@ namespace Unity.Behavior.GraphFramework
                 }
             }
             Nodes.Remove(node);
+            
+            // Mark asset dirty whenever nodes are deleted
+            SetAssetDirty(true);
 
             foreach (NodeModel nodeToDelete in nodesToDelete)
             {
@@ -300,6 +361,11 @@ namespace Unity.Behavior.GraphFramework
 
         public void DeleteEdge(PortModel startPort, PortModel endPort)
         {
+            if (startPort == null || endPort == null)
+            {
+                return;
+            }
+
             startPort.RemoveConnectionTo(endPort);
             endPort.RemoveConnectionTo(startPort);
         }

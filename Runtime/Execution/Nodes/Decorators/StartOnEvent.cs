@@ -391,7 +391,7 @@ namespace Unity.Behavior
         [System.Serializable]
         private class QueuedMessage
         {
-            public object[] VariableValues;
+            [SerializeReference] public object[] VariableValues;
 
             public QueuedMessage() { }
 

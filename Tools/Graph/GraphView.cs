@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.UIElements;
 using Canvas = Unity.AppUI.UI.Canvas;
+using Cursor = UnityEngine.UIElements.Cursor;
 
 namespace Unity.Behavior.GraphFramework
 {
@@ -31,6 +32,8 @@ namespace Unity.Behavior.GraphFramework
         private const string k_LastSavedZoomLevel = "lastSavedZoomLevel";
         private const string k_LastScrollOffset_X = "lastScrollOffsetX";
         private const string k_LastScrollOffset_Y = "lastScrollOffsetY";
+        // Used to inline cursor pan style.
+        private static StyleCursor? k_PanCursor = null;
 
         public GraphAsset Asset { get; private set; }
         public GraphViewState ViewState { get; private set; }
@@ -49,6 +52,9 @@ namespace Unity.Behavior.GraphFramework
         private string m_LastSavedZoomLevel;
         private string m_LastScrollOffsetX;
         private string m_LastScrollOffsetY;
+
+        private int m_PanPointerId = -1;
+        private Vector3 m_PanPointerPosition;
 
         public GraphView()
         {
@@ -74,6 +80,16 @@ namespace Unity.Behavior.GraphFramework
             Background.dampingEffectDuration = 0;
             Background.scrollOffsetChanged += OnScrollOffsetChanged;
             Background.zoomChanged += ZoomChanged;
+
+            // Handle middle-mouse panning directly, bypassing PanAndZoomable.
+            // PanAndZoomable toggles cursor--grab/grabbing/none classes on Canvas root,
+            // triggering expensive UIElements full style resolution on all descendants.
+            // By intercepting in TrickleDown phase and capturing the pointer first,
+            // PanAndZoomable's handler never fires, avoiding the class change.
+            Background.RegisterCallback<PointerDownEvent>(OnPanPointerDown, TrickleDown.TrickleDown);
+            Background.RegisterCallback<PointerMoveEvent>(OnPanPointerMove, TrickleDown.TrickleDown);
+            Background.RegisterCallback<PointerUpEvent>(OnPanPointerUp, TrickleDown.TrickleDown);
+            Background.RegisterCallback<PointerCaptureOutEvent>(OnPointerCaptureOutEvent, TrickleDown.TrickleDown);
 
             schedule.Execute(CreateManipulators);
             schedule.Execute(RefreshFromAsset);
@@ -187,6 +203,65 @@ namespace Unity.Behavior.GraphFramework
             {
                 SessionState.SetFloat(m_LastScrollOffsetX, Background.scrollOffset.x);
                 SessionState.SetFloat(m_LastScrollOffsetY, Background.scrollOffset.y);
+            }
+        }
+
+        private static bool IsPanInput(PointerDownEvent evt)
+        {
+            return evt.button == (int)MouseButton.MiddleMouse ||
+                   (evt.button == (int)MouseButton.LeftMouse && evt.altKey);
+        }
+
+        private void OnPanPointerDown(PointerDownEvent evt)
+        {
+            if (!IsPanInput(evt))
+                return;
+
+            m_PanPointerId = evt.pointerId;
+            m_PanPointerPosition = evt.localPosition;
+            Background.CapturePointer(evt.pointerId);
+
+            if (!k_PanCursor.HasValue)
+            {
+                k_PanCursor = new(new Cursor
+                {
+                    texture = ResourceLoadAPI.Load<Texture2D>("Packages/com.unity.behavior/Tools/Graph/Assets/Icons/HandCursor32.png"),
+                    hotspot = new Vector2(16, 16)
+                });
+            }
+            Background.style.cursor = k_PanCursor.Value;
+            evt.StopImmediatePropagation();
+        }
+
+        private void OnPanPointerMove(PointerMoveEvent evt)
+        {
+            if (m_PanPointerId < 0 || evt.pointerId != m_PanPointerId)
+                return;
+
+            Background.scrollOffset -= (Vector2)(evt.localPosition - m_PanPointerPosition);
+            m_PanPointerPosition = evt.localPosition;
+            evt.StopImmediatePropagation();
+        }
+
+        private void OnPanPointerUp(PointerUpEvent evt)
+        {
+            if (m_PanPointerId < 0 || evt.pointerId != m_PanPointerId)
+                return;
+
+            if (Background.HasPointerCapture(evt.pointerId))
+                Background.ReleasePointer(evt.pointerId);
+            Background.style.cursor = StyleKeyword.Null;
+            m_PanPointerId = -1;
+            evt.StopImmediatePropagation();
+        }
+
+        // If the pointer capture is lost due to an OS interruption, PointerUpEvent will not fire.
+        private void OnPointerCaptureOutEvent(PointerCaptureOutEvent evt)
+        {
+            if (m_PanPointerId >= 0 && evt.pointerId == m_PanPointerId)
+            {
+                Background.style.cursor = StyleKeyword.Null;
+                m_PanPointerId = -1;
             }
         }
 
@@ -524,6 +599,11 @@ namespace Unity.Behavior.GraphFramework
 
         private void DeletePortUI(Port portUI)
         {
+            if (portUI?.PortModel == null)
+            {
+                return;
+            }
+
             if (m_PortToEdges.TryGetValue(portUI.PortModel, out List<Edge> edges))
             {
                 m_EdgesToDelete.Clear();
@@ -599,6 +679,10 @@ namespace Unity.Behavior.GraphFramework
                 {
                     foreach (PortModel outputPort in inputPort.Connections)
                     {
+                        if (outputPort?.NodeModel == null || inputPort?.NodeModel == null)
+                        {
+                            continue;
+                        }
                         var key = (outputPort.NodeModel.ID, inputPort.NodeModel.ID);
                         if (!m_EdgesInAsset.ContainsKey(key))
                         {
@@ -612,6 +696,10 @@ namespace Unity.Behavior.GraphFramework
             m_EdgeUIs.Clear();
             foreach (Edge edge in m_Edges)
             {
+                if (edge?.Start?.PortModel?.NodeModel == null || edge?.End?.PortModel?.NodeModel == null)
+                {
+                    continue;
+                }
                 var key = (edge.Start.PortModel.NodeModel.ID, edge.End.PortModel.NodeModel.ID);
                 m_EdgeUIs[key] = edge;
             }
@@ -678,6 +766,17 @@ namespace Unity.Behavior.GraphFramework
             Assert.IsTrue(startPort.IsInputPort != endPort.IsInputPort, "Cannot connect ports of the same type.");
             PortModel outputPort = startPort.IsOutputPort ? startPort : endPort;
             PortModel inputPort = startPort.IsInputPort ? startPort : endPort;
+
+            if (outputPort?.NodeModel == null || inputPort?.NodeModel == null)
+            {
+                return;
+            }
+            
+            if (!Asset.Nodes.Contains(outputPort.NodeModel) || !Asset.Nodes.Contains(inputPort.NodeModel))
+            {
+                // One or both nodes have been deleted, skip edge creation
+                return;
+            }
 
             // Find associated node and port UI instances.
             NodeUI startNodeUI = null;
@@ -768,11 +867,16 @@ namespace Unity.Behavior.GraphFramework
 
         private void DeleteEdgeUI(Edge edgeUI)
         {
-            if (m_PortToEdges.TryGetValue(edgeUI.Start.PortModel, out List<Edge> startEdges))
+            if (edgeUI == null)
+            {
+                return;
+            }
+
+            if (edgeUI.Start?.PortModel != null && m_PortToEdges.TryGetValue(edgeUI.Start.PortModel, out List<Edge> startEdges))
             {
                 startEdges.Remove(edgeUI);
             }
-            if (m_PortToEdges.TryGetValue(edgeUI.End.PortModel, out List<Edge> endEdges))
+            if (edgeUI.End?.PortModel != null && m_PortToEdges.TryGetValue(edgeUI.End.PortModel, out List<Edge> endEdges))
             {
                 endEdges.Remove(edgeUI);
             }

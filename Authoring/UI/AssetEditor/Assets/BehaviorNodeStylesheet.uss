@@ -227,9 +227,6 @@ JoinNodeUI .InputPort:hover #Port-Icon  {
 
 /* Debugging mode node styles */
 
-.NodeStatus_Uninitialized #Content {
-
-}
 
 #DebugIconContainer {
     width: 32px;

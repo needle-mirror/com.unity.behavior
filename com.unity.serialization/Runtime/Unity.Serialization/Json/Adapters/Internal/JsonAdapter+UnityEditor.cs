@@ -1,6 +1,6 @@
 #if UNITY_EDITOR
 
-#if UNITY_6000_5_OR_NEWER
+#if UNITY_6000_4_OR_NEWER
 using GUID = UnityEngine.GUID;
 #else
 using GUID = UnityEditor.GUID;

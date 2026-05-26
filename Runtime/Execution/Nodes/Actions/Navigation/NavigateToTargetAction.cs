@@ -27,7 +27,6 @@ namespace Unity.Behavior
         [SerializeReference] public BlackboardVariable<float> Speed = new BlackboardVariable<float>(1.0f);
         [SerializeReference] public BlackboardVariable<float> DistanceThreshold = new BlackboardVariable<float>(0.2f);
         [SerializeReference] public BlackboardVariable<string> AnimatorSpeedParam = new BlackboardVariable<string>("SpeedMagnitude");
-
         // This will only be used in movement without a navigation agent.
         [SerializeReference] public BlackboardVariable<float> SlowDownDistance = new BlackboardVariable<float>(1.0f);
         [Tooltip("Defines how the target position is determined for navigation:" +
@@ -35,6 +34,8 @@ namespace Unity.Behavior
             "\n- ClosestPointOnTargetCollider: Use the closest point on the target's own collider only" +
             "\n- ExactTargetPosition: Use the exact position of the target, ignoring colliders. Default if no collider is found.")]
         [SerializeReference] public BlackboardVariable<TargetPositionMode> m_TargetPositionMode = new(TargetPositionMode.ClosestPointOnAnyCollider);
+        [Tooltip("(NavMeshAgent only) If true, the node returns Failure when the agent cannot reach the destination (e.g. unreachable position or outside navmesh bounds). If false, returns Success.")]
+        [SerializeReference] public BlackboardVariable<bool> FailIfUnreachable = new(true);
 
         private NavMeshAgent m_NavMeshAgent;
         private Animator m_Animator;
@@ -85,9 +86,17 @@ namespace Unity.Behavior
                 m_CurrentSpeed = NavigationUtility.SimpleMoveTowardsLocation(Agent.Value.transform, m_ColliderAdjustedTargetPosition,
                     Speed, distance, SlowDownDistance);
             }
-            else if (boolUpdateTargetPosition) // navmesh-based destination update (if needed)
+            else
             {
-                m_NavMeshAgent.SetDestination(m_ColliderAdjustedTargetPosition);
+                if (boolUpdateTargetPosition) // navmesh-based destination update (if needed)
+                {
+                    m_NavMeshAgent.SetDestination(m_ColliderAdjustedTargetPosition);
+                }
+                else if (!m_NavMeshAgent.pathPending && !m_NavMeshAgent.hasPath && m_NavMeshAgent.pathStatus == NavMeshPathStatus.PathPartial)
+                {
+                    // Agent cannot come closer to the target (out of navmesh bound)
+                    return FailIfUnreachable.Value ? Status.Failure : Status.Success;
+                }
             }
 
             UpdateAnimatorSpeed();

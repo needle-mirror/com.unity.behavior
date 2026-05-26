@@ -12,6 +12,7 @@ namespace Unity.Behavior
     /// defined within a BehaviorAuthoringGraph.
     /// </summary>
     [Serializable, GeneratePropertyBag]
+    [HelpURL(DocumentationUrls.BehaviorGraphAsset)]
     public partial class BehaviorGraph : ScriptableObject
     {
         internal static readonly SerializableGUID k_GraphSelfOwnerID = new SerializableGUID(1, 0);
@@ -25,6 +26,12 @@ namespace Unity.Behavior
         /// True if the graph is running, false otherwise.
         /// </summary>
         public bool IsRunning => RootGraph?.Root is { CurrentStatus: Status.Running or Status.Waiting };
+
+        /// <summary>
+        /// Current execution status of the root node.
+        /// Returns <see cref="Node.Status.Uninitialized"/> when the graph has no root node.
+        /// </summary>
+        internal Status CurrentStatus => RootGraph?.Root?.CurrentStatus ?? Status.Uninitialized;
 
         /// <summary>
         /// The set of linked graphs that make up the behaviour.
@@ -49,8 +56,13 @@ namespace Unity.Behavior
             set => m_WasCompileWithPlaceholderNode = value;
         }
 
+        // Ensures SBBV callbacks are only active while the graph is running.
+        private bool m_AreSharedCallbacksRegistered;
+
         /// <summary>
         /// Begins execution of the behavior graph.
+        /// Shared blackboard variable callbacks are registered here so they are only
+        /// active while the graph is running.
         /// </summary>
         public void Start()
         {
@@ -58,6 +70,7 @@ namespace Unity.Behavior
             {
                 return;
             }
+            RegisterSharedVariableCallbacks();
             RootGraph.StartNode(RootGraph.Root);
         }
 
@@ -71,6 +84,8 @@ namespace Unity.Behavior
 
         /// <summary>
         /// Ends the execution of the behavior graph.
+        /// Shared blackboard variable callbacks are unregistered here so stopped graphs
+        /// do not react to shared variable changes.
         /// </summary>
         public void End()
         {
@@ -83,6 +98,8 @@ namespace Unity.Behavior
             {
                 graphModule.Reset();
             }
+            
+            UnregisterSharedVariableCallbacks();
         }
 
         /// <summary>
@@ -107,18 +124,163 @@ namespace Unity.Behavior
             return areAssetValid && this.RootGraph.AuthoringAssetID == other.RootGraph.AuthoringAssetID;
         }
 
-        internal void AssignGameObjectToGraphModules(GameObject gameObject)
+#region Graph Instance Lifecycle
+        ////////////////////////////////////////////////////////////////////////////////////////
+        // Keep BehaviorGraphAgent and RunSubgraphDynamic graph instance lifecycles in sync.
+        ////////////////////////////////////////////////////////////////////////////////////////
+
+        /// <summary>
+        /// Acquires and initializes a new graph instance from the source graph.
+        /// The instance is initialized but not yet running. Call <see cref="Start"/> to begin execution.
+        /// The owner is responsible for releasing and nullifying its reference when the instance is no longer needed.
+        /// </summary>
+        /// <param name="owner">The game object that owns the graph instance.</param>
+        /// <param name="sourceGraph">The source graph to clone (deep copy).</param>
+        /// <returns>The newly instantiated graph instance.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when the provided source graph is null.</exception>
+        internal static BehaviorGraph AcquireInstance(GameObject owner, 
+#if UNITY_EDITOR
+            [System.Diagnostics.CodeAnalysis.DisallowNull] 
+#endif
+            BehaviorGraph sourceGraph)
         {
-            if (RootGraph == null)
+            if (sourceGraph == null)
+            {
+                throw new ArgumentNullException(nameof(sourceGraph), "Source graph cannot be null.");
+            }
+
+            var instance = ScriptableObject.Instantiate(sourceGraph);
+            instance.InitializeInstance(owner);
+            return instance;
+        }
+
+        /// <summary>
+        /// Acquires and initializes a new graph instance from serialized data, restoring its runtime state.
+        /// The instance is initialized but not yet running. Call <see cref="Start"/> to begin execution.
+        /// The owner is responsible for releasing and nullifying its reference when the instance is no longer needed.
+        /// </summary>
+        /// <param name="owner">The game object that owns the graph instance.</param>
+        /// <param name="serialized">The serialized data to restore the graph from.</param>
+        /// <param name="serializer">The serializer used to deserialize the data.</param>
+        /// <param name="resolver">The object resolver used during deserialization.</param>
+        /// <typeparam name="TSerializedFormat">The type of the serialized data.</typeparam>
+        /// <returns>The newly instantiated and restored graph instance.</returns>
+        internal static BehaviorGraph AcquireDeserializedInstance<TSerializedFormat>(
+            GameObject owner,
+            TSerializedFormat serialized,
+            RuntimeSerializationUtility.IBehaviorSerializer<TSerializedFormat> serializer,
+            RuntimeSerializationUtility.IUnityObjectResolver<string> resolver)
+        {
+            var instance = ScriptableObject.CreateInstance<BehaviorGraph>();
+            serializer.Deserialize(serialized, instance, resolver);
+            instance.InitializeInstance(owner);
+            instance.DeserializeGraphModules();
+            return instance;
+        }
+
+        /// <summary>
+        /// Ends execution of the graph instance and unregisters all internal callbacks.
+        /// Calls <see cref="End"/> as a safety guarantee even if the caller already stopped execution.
+        /// The owner is responsible for nullifying its reference after calling this.
+        /// </summary>
+        /// <param name="instance">The graph instance to release.</param>
+        internal static void ReleaseInstance(BehaviorGraph instance)
+        {
+#if UNITY_EDITOR
+            if (UnityEditor.EditorUtility.IsPersistent(instance))
+            {
+                return;
+            }
+#endif
+            if (instance == null)
             {
                 return;
             }
 
-            RootGraph.GameObject = gameObject;
-            foreach (var graphModule in Graphs)
+            instance.End();
+            TeardownInstance(instance);
+        }
+
+        /// <summary>
+        /// Initializes the graph instance by assigning the owner, creating metadata, initializing
+        /// default event channels, and calling <see cref="Node.Setup"/> on all nodes.
+        /// </summary>
+        /// <param name="owner">The game object that owns the graph instance.</param>
+        private void InitializeInstance(GameObject owner)
+        {
+#if UNITY_EDITOR
+            if (UnityEditor.EditorUtility.IsPersistent(this))
             {
-                graphModule.GameObject = gameObject;
+                Debug.LogError($"Cannot initialize a persistent graph instance: {name}. Please first create a new graph instance " +
+                               $"from the source asset by calling ScriptableObject.Instantiate(SourceGraphAsset).", owner);
+                return;
             }
+#endif
+            foreach (BehaviorGraphModule graphModule in Graphs)
+            {
+                graphModule.GameObject = owner;
+                graphModule.InitializeDefaultEventChannels();
+                graphModule.BlackboardReference?.Blackboard?.CreateMetadata();
+                graphModule.InitializeNodes();
+            }
+        }
+
+        /// <summary>
+        /// Tears down a graph instance by invoking node teardown callbacks on all modules.
+        /// This is called when the runtime instance is released and about to be returned to the pool.
+        /// </summary>
+        /// <param name="instance">The graph instance to tear down.</param>
+        internal static void TeardownInstance(BehaviorGraph instance)
+        {
+            if (instance == null)
+            {
+                return;
+            }
+
+            foreach (BehaviorGraphModule graphModule in instance.Graphs)
+            {
+                graphModule.TeardownNodes();
+            }
+        }
+
+        private void RegisterSharedVariableCallbacks()
+        {
+            if (m_AreSharedCallbacksRegistered)
+            {
+                return;
+            }
+
+            foreach (BehaviorGraphModule graphModule in Graphs)
+            {
+                graphModule.ForEachBlackboardVariable(variable =>
+                {
+                    if (variable is ISharedBlackboardVariable sharedVariable)
+                    {
+                        sharedVariable.RegisterValueChangedCallback();
+                    }
+                });
+            }
+            m_AreSharedCallbacksRegistered = true;
+        }
+
+        private void UnregisterSharedVariableCallbacks()
+        {
+            if (!m_AreSharedCallbacksRegistered)
+            {
+                return;
+            }
+
+            foreach (BehaviorGraphModule graphModule in Graphs)
+            {
+                graphModule.ForEachBlackboardVariable(variable =>
+                {
+                    if (variable is ISharedBlackboardVariable sharedVariable)
+                    {
+                        sharedVariable.UnregisterValueChangedCallback();
+                    }
+                });
+            }
+            m_AreSharedCallbacksRegistered = false;
         }
 
         /// <summary>
@@ -142,6 +304,8 @@ namespace Unity.Behavior
                 Graphs[i].Deserialize();
             }
         }
+
+#endregion Graph Instance Lifecycle
 
 #if UNITY_EDITOR
 #if DEBUG

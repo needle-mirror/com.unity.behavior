@@ -57,20 +57,46 @@ namespace Unity.Behavior
 
         public SubgraphNodeModel(NodeInfo nodeInfo) : base(nodeInfo) { }
 
-        protected SubgraphNodeModel(SubgraphNodeModel nodeModelOriginal, BehaviorAuthoringGraph asset) : base(nodeModelOriginal, asset)
+        // Chain captures of LinkedVariable references before base constructor's
+        // SynchronizeNodeFieldsWithOriginal clears them (as inline vars aren't in any blackboard).
+        protected SubgraphNodeModel(SubgraphNodeModel nodeModelOriginal, BehaviorAuthoringGraph asset)
+            : this(nodeModelOriginal, asset,
+                  nodeModelOriginal.SubgraphField?.LinkedVariable,
+                  nodeModelOriginal.BlackboardAssetField?.LinkedVariable)
         {
+        }
+
+        private SubgraphNodeModel(SubgraphNodeModel nodeModelOriginal, BehaviorAuthoringGraph asset,
+            VariableModel originalSubgraphLinkedVariable, VariableModel originalBlackboardLinkedVariable)
+            : base(nodeModelOriginal, asset)
+        {
+            // Restore the original's inline LinkedVariables that SynchronizeNodeFieldsWithOriginal cleared.
+            if (originalSubgraphLinkedVariable != null)
+            {
+                nodeModelOriginal.SubgraphField.LinkedVariable = originalSubgraphLinkedVariable;
+            }
+            if (originalBlackboardLinkedVariable != null)
+            {
+                nodeModelOriginal.BlackboardAssetField.LinkedVariable = originalBlackboardLinkedVariable;
+            }
+
+            m_SubgraphAuthoringAsset = nodeModelOriginal.m_SubgraphAuthoringAsset;
+            m_IsDynamic = nodeModelOriginal.m_IsDynamic;
+            m_OveriddenblackboardVariableGuids = nodeModelOriginal.m_OveriddenblackboardVariableGuids != null
+                ? new List<SerializableGUID>(nodeModelOriginal.m_OveriddenblackboardVariableGuids)
+                : new List<SerializableGUID>();
             ShowStaticSubgraphRepresentation = nodeModelOriginal.ShowStaticSubgraphRepresentation;
 
             GetOrCreateField(k_SubgraphFieldName, typeof(BehaviorGraph));
-            if (nodeModelOriginal.RuntimeSubgraph != null)
+            if (originalSubgraphLinkedVariable != null)
             {
-                SubgraphField.LinkedVariable = nodeModelOriginal.SubgraphField.LinkedVariable;
+                SubgraphField.LinkedVariable = originalSubgraphLinkedVariable;
             }
 
             GetOrCreateField(k_BlackboardFieldName, typeof(BehaviorBlackboardAuthoringAsset));
-            if (nodeModelOriginal.RequiredBlackboard != null)
+            if (originalBlackboardLinkedVariable != null)
             {
-                BlackboardAssetField.LinkedVariable = nodeModelOriginal.BlackboardAssetField.LinkedVariable;
+                BlackboardAssetField.LinkedVariable = originalBlackboardLinkedVariable;
             }
         }
 
@@ -104,6 +130,13 @@ namespace Unity.Behavior
             GetOrCreateField(k_SubgraphFieldName, typeof(BehaviorGraph));
             GetOrCreateField(k_BlackboardFieldName, typeof(BehaviorBlackboardAuthoringAsset));
             UpdateIsDynamic();
+        }
+
+        protected override bool IsBlackboardLinkedField(FieldModel field)
+        {
+            // Subgraph and Blackboard fields use inline variable models (direct asset references),
+            // not blackboard variable references.
+            return field.FieldName != k_SubgraphFieldName && field.FieldName != k_BlackboardFieldName;
         }
 
         private BehaviorAuthoringGraph GetAuthoringAssetFromRuntimeGraph()
@@ -378,7 +411,32 @@ namespace Unity.Behavior
             }
             else
             {
+                bool wasDynamic = m_IsDynamic;
                 UpdateIsDynamic();
+
+                // If the node was dynamic but the BBV was deleted from its blackboard,
+                // IsDynamic transitions to false. Clear the stale BBV reference.
+                if (wasDynamic && !m_IsDynamic && !IsSubgraphFieldLinkedToBlackboardVariable())
+                {
+                    Debug.LogWarning($"{Asset.name}: Linked subgraph blackboard variable has been deleted. Clearing the RunSubgraph node reference.", Asset);
+                    Asset.MarkUndo("Clear linked subgraph variable", true);
+                    SubgraphField.LinkedVariable = null;
+                    ClearFields();
+                    Asset.SetAssetDirty(true);
+                    return;
+                }
+            }
+
+            // If the referenced subgraph asset has been deleted, clear the stale reference.
+            // Skip if the linked variable is a blackboard variable (from any blackboard, including linked ones).
+            if (!RuntimeSubgraph && !m_SubgraphAuthoringAsset && !IsSubgraphFieldLinkedToBlackboardVariable())
+            {
+                Debug.LogWarning($"{Asset.name}: Referenced subgraph asset has been deleted. Clearing the RunSubgraph node reference.", Asset);
+                Asset.MarkUndo("Clear linked subgraph reference", true);
+                SubgraphField.LinkedVariable = null;
+                ClearFields();
+                Asset.SetAssetDirty(true);
+                return;
             }
 
             // For RunSubgraph (Static):
@@ -420,6 +478,36 @@ namespace Unity.Behavior
 #endif
         }
 
+        private bool IsSubgraphFieldLinkedToBlackboardVariable()
+        {
+            if (Asset is not BehaviorAuthoringGraph behaviorGraph || SubgraphField.LinkedVariable == null)
+            {
+                return false;
+            }
+
+            SerializableGUID id = SubgraphField.LinkedVariable.ID;
+            foreach (VariableModel variable in behaviorGraph.Blackboard.Variables)
+            {
+                if (variable.ID == id)
+                {
+                    return true;
+                }
+            }
+
+            foreach (BehaviorBlackboardAuthoringAsset blackboard in behaviorGraph.m_Blackboards)
+            {
+                foreach (VariableModel variable in blackboard.Variables)
+                {
+                    if (variable.ID == id)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
         private void UpdateIsDynamic()
         {
             if (SubgraphField.LinkedVariable == null)
@@ -436,6 +524,7 @@ namespace Unity.Behavior
             }
 
             // Ensure that node is linked to a BBV for Dynamic to be valid.
+            // Check main blackboard and linked blackboards.
             bool isExpectedDynamic = false;
             foreach (VariableModel variable in Asset.Blackboard.Variables)
             {
@@ -443,6 +532,22 @@ namespace Unity.Behavior
                 {
                     isExpectedDynamic = true;
                     break;
+                }
+            }
+
+            if (!isExpectedDynamic && Asset is BehaviorAuthoringGraph behaviorGraph)
+            {
+                foreach (BehaviorBlackboardAuthoringAsset blackboard in behaviorGraph.m_Blackboards)
+                {
+                    foreach (VariableModel variable in blackboard.Variables)
+                    {
+                        if (variable == SubgraphField.LinkedVariable)
+                        {
+                            isExpectedDynamic = true;
+                            break;
+                        }
+                    }
+                    if (isExpectedDynamic) break;
                 }
             }
 

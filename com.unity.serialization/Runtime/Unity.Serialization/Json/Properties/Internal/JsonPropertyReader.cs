@@ -571,10 +571,11 @@ namespace Unity.Behavior.Serialization.Json
                 {
 #if UNITY_6000_3_OR_NEWER
                     var instanceID = UnityEditor.GlobalObjectId.GlobalObjectIdentifierToEntityIdSlow(id);
+                    PropertyContainer.SetValue(ref value, "m_EntityId", instanceID);
 #else
                     var instanceID = UnityEditor.GlobalObjectId.GlobalObjectIdentifierToInstanceIDSlow(id);
-#endif 
                     PropertyContainer.SetValue(ref value, "m_InstanceID", instanceID);
+#endif
                     return;
                 }
 

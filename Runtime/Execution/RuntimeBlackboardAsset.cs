@@ -14,6 +14,7 @@ namespace Unity.Behavior
     /// The data is baked at authoring time.
     /// </summary>
     [Serializable]
+    [HelpURL(DocumentationUrls.Blackboard)]
     public class RuntimeBlackboardAsset : ScriptableObject, ISerializationCallbackReceiver
     {
         [SerializeField]

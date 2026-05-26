@@ -8,6 +8,12 @@ using UnityEditor.Callbacks;
 #endif
 using UnityEngine;
 
+#if UNITY_6000_3_OR_NEWER
+using EntityId = UnityEngine.EntityId;
+#else
+using EntityId = System.Int32;
+#endif
+
 namespace Unity.Behavior
 {
     /// <summary>
@@ -15,6 +21,7 @@ namespace Unity.Behavior
     /// </summary>
     [Serializable]
     [CreateAssetMenu(fileName = "Blackboard", menuName = "Behavior/Blackboard")]
+    [HelpURL(DocumentationUrls.Blackboard)]
     internal class BehaviorBlackboardAuthoringAsset : BlackboardAsset, ISerializationValidator
     {
         [SerializeField]
@@ -72,12 +79,12 @@ namespace Unity.Behavior
         }
 
         [OnOpenAsset(1)]
-        public static bool OnOpenBlackboardAsset(int instanceID, int line)
+        public static bool OnOpenBlackboardAsset(EntityId id, int line)
         {
 #if UNITY_6000_3_OR_NEWER
-            BehaviorBlackboardAuthoringAsset asset = EditorUtility.EntityIdToObject(instanceID) as BehaviorBlackboardAuthoringAsset;
+            BehaviorBlackboardAuthoringAsset asset = EditorUtility.EntityIdToObject(id) as BehaviorBlackboardAuthoringAsset;
 #else
-            BehaviorBlackboardAuthoringAsset asset = EditorUtility.InstanceIDToObject(instanceID) as BehaviorBlackboardAuthoringAsset;
+            BehaviorBlackboardAuthoringAsset asset = EditorUtility.InstanceIDToObject(id) as BehaviorBlackboardAuthoringAsset;
 #endif
             if (asset == null)
             {

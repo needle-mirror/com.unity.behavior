@@ -279,11 +279,20 @@ namespace Unity.Behavior.GraphFramework
                 return;
             }
 
-            View.AddToClassList("HighlightInputs");
-            Target.GetFirstAncestorOfType<NodeUI>().AddToClassList("EdgeConnectPort");
-            foreach (NodeUI node in m_ValidConnectTargets)
+            // Inline style optimization (skip selector matching)
+            // Apply opacity via inline styles instead of adding "HighlightInputs" class
+            // to the GraphView root. A class change on the root triggers O(N*R) UIElements
+            // style resolution on all descendants.
+            NodeUI sourceNode = Target.GetFirstAncestorOfType<NodeUI>();
+            sourceNode.AddToClassList("EdgeConnectPort");
+
+            foreach (NodeUI node in View.ViewState.Nodes)
             {
-                node.AddToClassList("PotentialNodeConnect");
+                node.style.opacity = m_ValidConnectTargets.Contains(node) || node == sourceNode ? 1.0f : 0.4f;
+            }
+            foreach (Edge edge in View.ViewState.Edges)
+            {
+                edge.style.opacity = 0.4f;
             }
         }
 
@@ -297,11 +306,14 @@ namespace Unity.Behavior.GraphFramework
                 return;
             }
 
-            View.RemoveFromClassList("HighlightInputs");
             Target.GetFirstAncestorOfType<NodeUI>().RemoveFromClassList("EdgeConnectPort");
-            foreach (NodeUI node in m_ValidConnectTargets)
+            foreach (NodeUI node in View.ViewState.Nodes)
             {
-                node.RemoveFromClassList("PotentialNodeConnect");
+                node.style.opacity = StyleKeyword.Null;
+            }
+            foreach (Edge edge in View.ViewState.Edges)
+            {
+                edge.style.opacity = StyleKeyword.Null;
             }
         }
 

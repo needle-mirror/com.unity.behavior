@@ -8,7 +8,7 @@ namespace Unity.Behavior
         // Used by testing suite to disabled blocking process.
         public static bool DialogMessageEnabled { get; set; } = true;
 
-        public const string k_TroubleshootingLink = "https://docs.unity3d.com/Packages/com.unity.behavior@1.0/manual/serialize-ref-troubleshoot.html";
+        public const string k_TroubleshootingLink = DocumentationUrls.SerializeRefTroubleshoot;
 
         // Serialize Reference messages
         public const string k_MissingTypeInAssetHelpboxError =

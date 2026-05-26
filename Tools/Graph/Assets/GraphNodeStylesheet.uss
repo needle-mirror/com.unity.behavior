@@ -11,6 +11,7 @@
 
 .GraphNode {
     align-self: center;
+    cursor: arrow;
 }
 
 .Group > .GraphNode {
@@ -83,7 +84,7 @@
     justify-content: center;
 }
 
-Label {
+.GraphNode Label {
     font-size: var(--appui-font-sizes-100);
 }
 

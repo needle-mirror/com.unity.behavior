@@ -23,9 +23,12 @@ namespace Unity.Behavior
 
         // This will only be used in movement without a navigation agent.
         [SerializeReference] public BlackboardVariable<float> SlowDownDistance = new BlackboardVariable<float>(1.0f);
+        [Tooltip("(NavMeshAgent only) If true, the node returns Failure when the agent cannot reach the destination (e.g. unreachable position or outside navmesh bounds). If false, returns Success.")]
+        [SerializeReference] public BlackboardVariable<bool> FailIfUnreachable = new(true);
 
         private NavMeshAgent m_NavMeshAgent;
         private Animator m_Animator;
+        private Vector3 m_LastLocationPosition;
         [CreateProperty] private float m_OriginalStoppingDistance = -1f;
         [CreateProperty] private float m_OriginalSpeed = -1f;
         private float m_CurrentSpeed;
@@ -49,6 +52,15 @@ namespace Unity.Behavior
 
             Vector3 agentPosition, locationPosition;
             float distance = GetDistanceToLocation(out agentPosition, out locationPosition);
+
+            // Check if the location has changed.
+            bool locationChanged = m_LastLocationPosition != locationPosition;
+
+            if (locationChanged)
+            {
+                m_LastLocationPosition = locationPosition;
+            }
+
             bool destinationReached = distance <= DistanceThreshold;
 
             if (destinationReached && (m_NavMeshAgent == null || !m_NavMeshAgent.pathPending))
@@ -58,6 +70,18 @@ namespace Unity.Behavior
             else if (m_NavMeshAgent == null) // transform-based movement
             {
                 m_CurrentSpeed = NavigationUtility.SimpleMoveTowardsLocation(Agent.Value.transform, locationPosition, Speed, distance, SlowDownDistance);
+            }
+            else
+            {
+                if (locationChanged)
+                {
+                    m_NavMeshAgent.SetDestination(locationPosition);
+                }
+                else if (!m_NavMeshAgent.pathPending && !m_NavMeshAgent.hasPath && m_NavMeshAgent.pathStatus == NavMeshPathStatus.PathPartial)
+                {
+                    // Agent cannot come closer to the target (out of navmesh bound)
+                    return FailIfUnreachable.Value ? Status.Failure : Status.Success;
+                }
             }
 
             UpdateAnimatorSpeed();
@@ -102,7 +126,10 @@ namespace Unity.Behavior
 
         private Status Initialize()
         {
-            if (GetDistanceToLocation(out Vector3 agentPosition, out Vector3 locationPosition) <= DistanceThreshold)
+            float distance = GetDistanceToLocation(out Vector3 agentPosition, out Vector3 locationPosition);
+            m_LastLocationPosition = locationPosition;
+
+            if (distance <= DistanceThreshold)
             {
                 return Status.Success;
             }

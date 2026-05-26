@@ -7,6 +7,12 @@ using UnityEngine;
 using UnityEditor;
 using UnityEditor.Callbacks;
 
+#if UNITY_6000_3_OR_NEWER
+using EntityId = UnityEngine.EntityId;
+#else
+using EntityId = System.Int32;
+#endif
+
 namespace Unity.Behavior
 {
     /// <summary>
@@ -15,6 +21,7 @@ namespace Unity.Behavior
     /// </summary>
     [Serializable]
     [CreateAssetMenu(fileName = "Behavior Graph", menuName = "Behavior/Behavior Graph")]
+    [HelpURL(DocumentationUrls.BehaviorGraphAsset)]
     internal class BehaviorAuthoringGraph : GraphAsset, ISerializationCallbackReceiver
         , ISerializationValidator
     {
@@ -30,8 +37,11 @@ namespace Unity.Behavior
          *    - Removed BehaviorGraphModule transient data from serialization
          *    - Added RegisteredObservers list to Composite node
          *    - Added RepeatConditionModifier.ReturnFailureOnConditionFail
+         * 3: Schema updates:
+         *    - Added enum dependency cache field to track enum dependencies
+         *    - Added Metadata field to FloatingPortNodeModel
          */
-        private const int kLatestSerializationVersion = 2;
+        private const int kLatestSerializationVersion = 3;
         // Consumed on asset reimport to clean runtime graph from unavailable node type.
         // Do not handle missing type wrapped by BlackboardVariable inside of a node.
         private static HashSet<string> s_GraphPathToValidate = new();
@@ -190,6 +200,30 @@ namespace Unity.Behavior
         private long m_LastSerializedTimestamp;
         private long m_LastRootGraphGenerationTimestamp = 0;
 
+        [Serializable]
+        private class EnumDependencyCacheEntry
+        {
+            public string EnumTypeId;
+            public string SignatureHash;
+        }
+
+        [Serializable]
+        private class EnumDependencyCacheContainer
+        {
+            public List<EnumDependencyCacheEntry> Entries = new();
+        }
+
+        [SerializeField]
+        [HideInInspector]
+        private EnumDependencyCacheContainer m_EnumDependencyCache = new();
+        internal int EnumDependencyCacheCount => m_EnumDependencyCache?.Entries?.Count ?? 0; // For testing purposes.
+
+        private Dictionary<string, string> m_EnumDependencySignatures = new(StringComparer.Ordinal);
+        private Dictionary<string, string> m_CollectedEnumDependencySignatures = new(StringComparer.Ordinal);
+        internal IReadOnlyDictionary<string, string> EnumDependencySignatures => m_EnumDependencySignatures;
+        // Collection of enum types that have been registered for this graph. Reset on every domain reload.
+        private HashSet<Type> m_RegisteredEnumTypes = new();
+
         protected override void OnEnable()
         {
             // When object is first loaded in memory, set the last version timestamp (transient).
@@ -271,7 +305,9 @@ namespace Unity.Behavior
             EnsureBlackboardsAreUpToDate();
             EnsureSubgraphsDependencyAreUpToDate();
 
+            BeginEnumDependencyCollection();
             base.ValidateAsset();
+            EndEnumDependencyCollection();
         }
 
         public void AddOrUpdateDependency(BehaviorAuthoringGraph graph)
@@ -509,19 +545,19 @@ namespace Unity.Behavior
         }
 
         [OnOpenAsset(1)]
-        public static bool OpenAsset(int instanceID, int line)
+        public static bool OpenAsset(EntityId id, int line)
         {
 #if UNITY_6000_3_OR_NEWER
-            BehaviorAuthoringGraph asset = EditorUtility.EntityIdToObject(instanceID) as BehaviorAuthoringGraph;
+            BehaviorAuthoringGraph asset = EditorUtility.EntityIdToObject(id) as BehaviorAuthoringGraph;
 #else
-            BehaviorAuthoringGraph asset = EditorUtility.InstanceIDToObject(instanceID) as BehaviorAuthoringGraph;
+            BehaviorAuthoringGraph asset = EditorUtility.InstanceIDToObject(id) as BehaviorAuthoringGraph;
 #endif
             if (asset == null)
             {
 #if UNITY_6000_3_OR_NEWER
-                BehaviorGraph runtimeGraph = EditorUtility.EntityIdToObject(instanceID) as BehaviorGraph;
+                BehaviorGraph runtimeGraph = EditorUtility.EntityIdToObject(id) as BehaviorGraph;
 #else
-                BehaviorGraph runtimeGraph = EditorUtility.InstanceIDToObject(instanceID) as BehaviorGraph;
+                BehaviorGraph runtimeGraph = EditorUtility.InstanceIDToObject(id) as BehaviorGraph;
 #endif
                 if (runtimeGraph == null)
                 {
@@ -592,6 +628,7 @@ namespace Unity.Behavior
                 return;
             }
 
+            SerializeEnumDependencyCache();
             CreateNodeModelsInfoCache();
             m_LastSerializedTimestamp = VersionTimestamp;
         }
@@ -599,7 +636,96 @@ namespace Unity.Behavior
         /// <inheritdoc cref="OnAfterDeserialize"/>
         public void OnAfterDeserialize()
         {
+            DeserializeEnumDependencyCache();
             CreateNodeModelInfosDictionaryFromList();
+        }
+
+        internal void RegisterEnumDependency(Type enumType)
+        {
+            if (enumType == null || !enumType.IsEnum || m_RegisteredEnumTypes.Contains(enumType))
+            {
+                return;
+            }
+
+            string enumTypeId = GraphAssetUtility.GetEnumTypeId(enumType);
+            if (string.IsNullOrEmpty(enumTypeId))
+            {
+                return;
+            }
+
+            if (GraphAssetUtility.TryComputeEnumDependencySignature(enumType, out string signature))
+            {
+                m_CollectedEnumDependencySignatures[enumTypeId] = signature;
+            }
+
+            m_RegisteredEnumTypes.Add(enumType);
+        }
+
+        private void BeginEnumDependencyCollection()
+        {
+            m_CollectedEnumDependencySignatures.Clear();
+            m_RegisteredEnumTypes.Clear();
+        }
+
+        private void EndEnumDependencyCollection()
+        {
+            var latestEnumSignatures = new Dictionary<string, string>(m_CollectedEnumDependencySignatures, StringComparer.Ordinal);
+            // If the enum dependency signatures have changed, update the cache.
+            if (!GraphAssetUtility.AreEnumDependencyDictionariesEqual(m_EnumDependencySignatures, latestEnumSignatures))
+            {
+                m_EnumDependencySignatures = latestEnumSignatures;
+                SetAssetDirty(false);
+            }
+
+            // Register the enum dependencies with the asset registry.
+            BehaviorGraphAssetRegistry.RegisterGraphEnumDependencies(this, m_EnumDependencySignatures);
+        }        
+
+        /// <summary>
+        /// Serialize the enum dependency signatures dictionary to the cache.
+        /// </summary>
+        private void SerializeEnumDependencyCache()
+        {
+            // Reset the cache.
+            m_EnumDependencyCache ??= new EnumDependencyCacheContainer();
+            m_EnumDependencyCache.Entries.Clear();
+            foreach (var kvp in m_EnumDependencySignatures.OrderBy(p => p.Key, StringComparer.Ordinal))
+            {
+                m_EnumDependencyCache.Entries.Add(new EnumDependencyCacheEntry
+                {
+                    EnumTypeId = kvp.Key,
+                    SignatureHash = kvp.Value
+                });
+            }
+        }
+
+        /// <summary>
+        /// Rebuild the enum dependency signatures dictionary from the cache.
+        /// </summary>
+        private void DeserializeEnumDependencyCache()
+        {
+            if (m_EnumDependencyCache == null)
+            {
+                return;
+            }
+
+            m_EnumDependencySignatures = new Dictionary<string, string>(StringComparer.Ordinal);
+            if (m_EnumDependencyCache?.Entries == null || m_EnumDependencyCache.Entries.Count == 0)
+            {
+                return;
+            }
+
+            foreach (var entry in m_EnumDependencyCache.Entries)
+            {
+                if (entry == null
+                    || string.IsNullOrEmpty(entry.EnumTypeId)
+                    || string.IsNullOrEmpty(entry.SignatureHash))
+                {
+                    continue;
+                }
+
+                m_EnumDependencySignatures[entry.EnumTypeId] = entry.SignatureHash;
+            }
         }
 
         private void CreateNodeModelsInfoCache()

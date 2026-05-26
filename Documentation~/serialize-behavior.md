@@ -11,6 +11,7 @@ Unity Behavior stores nodes and Blackboard variables in assets using `SerializeR
 | ----- | ----------- |
 | [Understanding `SerializeReference` limitations](understand-limitations.md) | Learn when Unity’s `SerializeReference` can lose a referenced type and why that matters for assets. |
 | [How `SerializeReference` limitations affect Behavior assets](behavior-assets-editor-serialization.md) | Understand how lost type references affect nodes and Blackboard variables. |
+| [Track enumeration dependencies in authoring graphs](enum-dependency-tracking.md) | Learn how Unity Behavior tracks enum signatures and reimports affected graphs when enum definitions change. |
 | [Mitigation systems in Behavior](mitigation.md) | Review Editor, Play mode, and build-time safeguards that reduce the risk and impact of missing types.|
 
 ## Additional resources

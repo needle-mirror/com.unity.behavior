@@ -4,6 +4,12 @@ using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
+#if UNITY_6000_3_OR_NEWER
+using EntityId = UnityEngine.EntityId;
+#else
+using EntityId = System.Int32;
+#endif
+
 namespace Unity.Behavior
 {
     internal class BehaviorWindow : EditorWindow
@@ -26,7 +32,7 @@ namespace Unity.Behavior
         }
 
         [SerializeField]
-        private int m_DebugAgentId;
+        private EntityId m_DebugAgentId;
 
         internal BehaviorGraphEditor m_Editor;
         private Panel m_AppUIPanel;
@@ -95,7 +101,7 @@ namespace Unity.Behavior
             m_AppUIPanel.forceUseTooltipSystem = (change == PlayModeStateChange.EnteredPlayMode);
         }
 
-        private void SetDebugAgent(int agentID)
+        private void SetDebugAgent(EntityId agentID)
         {
             m_DebugAgentId = agentID;
         }

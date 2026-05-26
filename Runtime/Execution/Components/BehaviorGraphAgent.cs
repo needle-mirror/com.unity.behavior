@@ -45,6 +45,7 @@ namespace Unity.Behavior
     /// </example>
     [DefaultExecutionOrder(-50)]
     [AddComponentMenu("AI/Behavior Agent")]
+    [HelpURL(DocumentationUrls.BehaviorAgent)]
 #if NETCODE_FOR_GAMEOBJECTS
     public class BehaviorGraphAgent : NetworkBehaviour, ISerializationCallbackReceiver
 #else
@@ -80,8 +81,11 @@ namespace Unity.Behavior
             get => m_Graph;
             set
             {
-                // unregister blackboard variables overrides before losing the graph.
-                UnregisterSharedBlackboardVariable();
+                if (m_IsInitialised)
+                {
+                    BehaviorGraph.ReleaseInstance(m_Graph);
+                    m_Graph = null;
+                }
 
                 m_Graph = value;
                 m_IsInitialised = false;
@@ -361,9 +365,8 @@ namespace Unity.Behavior
                 m_OriginalGraph = m_Graph;
             }
 #endif
-            m_Graph = ScriptableObject.Instantiate(m_Graph);
-            m_Graph.AssignGameObjectToGraphModules(gameObject);
-            InitChannelsAndMetadata();
+            m_Graph = BehaviorGraph.AcquireInstance(gameObject, m_Graph);
+            ApplyBlackboardOverrides();
             m_IsInitialised = true;
             m_IsStarted = false;
         }
@@ -610,59 +613,14 @@ namespace Unity.Behavior
             RuntimeSerializationUtility.IBehaviorSerializer<TSerializedFormat> serializer,
             RuntimeSerializationUtility.IUnityObjectResolver<string> resolver)
         {
-            m_Graph = ScriptableObject.CreateInstance<BehaviorGraph>();
-            serializer.Deserialize(serialized, m_Graph, resolver);
-            m_Graph.AssignGameObjectToGraphModules(gameObject);
-            InitChannelsAndMetadata(applyOverride: false);
-            m_Graph.DeserializeGraphModules();
+            BehaviorGraph.ReleaseInstance(m_Graph);
+            m_Graph = BehaviorGraph.AcquireDeserializedInstance(gameObject, serialized, serializer, resolver);
 #if UNITY_EDITOR
+            // Notify the editor that the graph has been deserialized.
             OnRuntimeDeserializationEvent?.Invoke();
 #endif
             m_IsInitialised = true;
             m_IsStarted = m_Graph.IsRunning;
-        }
-
-        private void InitChannelsAndMetadata(bool applyOverride = true)
-        {
-            if (applyOverride)
-            {
-                ApplyBlackboardOverrides();
-            }
-
-            // Initialize default event channels for unassigned channel variables.
-            foreach (BehaviorGraphModule graph in Graph.Graphs)
-            {
-                foreach (BlackboardVariable variable in graph.Blackboard.Variables)
-                {
-                    if (typeof(EventChannelBase).IsAssignableFrom(variable.Type) && variable.ObjectValue == null)
-                    {
-                        ScriptableObject channel = ScriptableObject.CreateInstance(variable.Type);
-                        channel.name = $"Default {variable.Name} Channel";
-                        variable.ObjectValue = channel;
-                    }
-                }
-
-                foreach (var bbref in graph.BlackboardGroupReferences)
-                {
-                    foreach (BlackboardVariable variable in bbref.Blackboard.Variables)
-                    {
-                        if (typeof(EventChannelBase).IsAssignableFrom(variable.Type) && variable.ObjectValue == null)
-                        {
-                            ScriptableObject channel = ScriptableObject.CreateInstance(variable.Type);
-                            channel.name = $"Default {variable.Name} Channel";
-                            variable.ObjectValue = channel;
-                        }
-                    }
-                }
-
-                foreach (Node node in graph.Nodes())
-                {
-                    node.Graph = graph;
-                }
-            }
-
-            m_Graph.BlackboardReference.Blackboard.CreateMetadata();
-            RegisterSharedBlackboardVariable();
         }
 
         /// <summary>
@@ -795,12 +753,11 @@ namespace Unity.Behavior
         private void OnDestroy()
         {
 #endif
-            if (m_Graph)
+            if (m_IsInitialised)
             {
-                m_Graph.End();
+                BehaviorGraph.ReleaseInstance(m_Graph);
+                m_Graph = null;
             }
-
-            UnregisterSharedBlackboardVariable();
         }
 
         /// <summary>
@@ -808,19 +765,22 @@ namespace Unity.Behavior
         /// </summary>
         private void ApplyBlackboardOverrides()
         {
+            // Ensure Self override exists before applying (may be missing on first graph assignment).
+            CreateOrUpdateSelfOverride();
+
             foreach (var varOverride in m_BlackboardOverrides)
             {
                 if (varOverride.Key == BehaviorGraph.k_GraphSelfOwnerID &&
                     varOverride.Value is BlackboardVariable<GameObject> gameObjectBlackboardVariable &&
                     gameObjectBlackboardVariable.Value == null)
                 {
-                    gameObjectBlackboardVariable.Value = gameObject;
+                    gameObjectBlackboardVariable.SetValueWithoutNotify(gameObject);
                 }
 
                 if (m_Graph != null && m_Graph.BlackboardReference != null &&
                     m_Graph.BlackboardReference.GetVariable(varOverride.Key, out BlackboardVariable var))
                 {
-                    var.ObjectValue = varOverride.Value.ObjectValue;
+                    var.SetObjectValueWithoutNotify(varOverride.Value.ObjectValue);
                 }
 
                 foreach (var graphModule in Graph.Graphs)
@@ -829,7 +789,7 @@ namespace Unity.Behavior
                         graphModule.BlackboardReference.GetVariable(varOverride.Key,
                             out BlackboardVariable subGraphVariable))
                     {
-                        subGraphVariable.ObjectValue = varOverride.Value.ObjectValue;
+                        subGraphVariable.SetObjectValueWithoutNotify(varOverride.Value.ObjectValue);
                     }
 
                     foreach (var blackboardReference in graphModule.BlackboardGroupReferences)
@@ -837,7 +797,7 @@ namespace Unity.Behavior
                         if (blackboardReference.GetVariable(varOverride.Key,
                                 out BlackboardVariable blackboardReferenceVar))
                         {
-                            blackboardReferenceVar.ObjectValue = varOverride.Value.ObjectValue;
+                            blackboardReferenceVar.SetObjectValueWithoutNotify(varOverride.Value.ObjectValue);
                         }
                     }
                 }
@@ -978,74 +938,6 @@ namespace Unity.Behavior
             return false;
         }
 
-        /// <summary>
-        /// Registers value changed callbacks for all shared blackboard variables in the graph.
-        /// </summary>
-        /// <remarks>
-        /// We are not handling the registration during OnEnable/OnDisable because 
-        /// some users expects to be able to manually tick the graph with the BehaviorGraphAgent beind disabled.
-        /// </remarks>
-        private void RegisterSharedBlackboardVariable()
-        {
-            if (Graph == null)
-            {
-                return;
-            }
-
-            ExecuteOverSharedVariables((ISharedBlackboardVariable variable) =>
-            {
-                variable.RegisterValueChangedCallback();
-            });
-        }
-
-        /// <summary>
-        /// Unregisters value changed callbacks for all shared blackboard variables in the graph.
-        /// </summary>
-        private void UnregisterSharedBlackboardVariable()
-        {
-            if (Graph == null)
-            {
-                return;
-            }
-
-            ExecuteOverSharedVariables((ISharedBlackboardVariable variable) =>
-            {
-                variable.UnregisterValueChangedCallback();
-            });
-        }
-
-        private void ExecuteOverSharedVariables(System.Action<ISharedBlackboardVariable> action)
-        {
-            foreach (var graphModule in Graph.Graphs)
-            {
-                if (graphModule.Blackboard != null)
-                {
-                    foreach (var variable in graphModule.Blackboard.Variables)
-                    {
-                        if (variable is ISharedBlackboardVariable sharedBlackboardVariable)
-                        {
-                            action(sharedBlackboardVariable);
-                        }
-                    }
-                }
-
-                foreach (var blackboardReference in graphModule.BlackboardGroupReferences)
-                {
-                    if (blackboardReference == null || blackboardReference.Blackboard == null)
-                    {
-                        continue;
-                    }
-
-                    foreach (var variable in blackboardReference.Blackboard.Variables)
-                    {
-                        if (variable is ISharedBlackboardVariable sharedBlackboardVariable)
-                        {
-                            action(sharedBlackboardVariable);
-                        }
-                    }
-                }
-            }
-        }
 
 #if UNITY_EDITOR // Used for testing
         [UnityEngine.ContextMenu("Reinitialize And Restart Graph", false)]

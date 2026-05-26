@@ -12,6 +12,12 @@ using UnityEditor;
 using System.IO;
 #endif
 
+#if UNITY_6000_3_OR_NEWER
+using EntityId = UnityEngine.EntityId;
+#else
+using EntityId = System.Int32;
+#endif
+
 namespace Unity.Behavior
 {
 #if ENABLE_UXML_UI_SERIALIZATION
@@ -43,7 +49,7 @@ namespace Unity.Behavior
         private readonly SubGraphStoryEditor m_StoryEditor;
         private Toast m_PlaceholderNodeWarningToast;
 
-        internal event Action<int> DebugAgentSelected;
+        internal event Action<EntityId> DebugAgentSelected;
 
         private static readonly string k_PrefsKeyDefaultGraphOwnerName = "DefaultGraphOwnerName";
         public static readonly string k_SelfDefaultGraphOwnerName = "Self";
@@ -105,7 +111,6 @@ namespace Unity.Behavior
         private void OnAttachToPanel(AttachToPanelEvent evt)
         {
             schedule.Execute(AttachToPanel).Until(() => Asset != null);
-            m_BehaviorGraphToolbar.OpenAssetButton.clicked += OnOpenAssetButtonClick;
             Selection.selectionChanged += OnSelectionChanged;
         }
 
@@ -467,7 +472,9 @@ namespace Unity.Behavior
 
         private void OnDebugButtonClicked()
         {
-#if UNITY_2022_2_OR_NEWER
+#if UNITY_6000_5_OR_NEWER
+            BehaviorGraphAgent[] agents = UnityEngine.Object.FindObjectsByType<BehaviorGraphAgent>(FindObjectsInactive.Include);
+#elif UNITY_2022_2_OR_NEWER
             BehaviorGraphAgent[] agents = UnityEngine.Object.FindObjectsByType<BehaviorGraphAgent>(FindObjectsInactive.Include, FindObjectsSortMode.None);
 #else
             BehaviorGraphAgent[] agents = UnityEngine.Object.FindObjectsOfType<BehaviorGraphAgent>(true);
@@ -575,7 +582,11 @@ namespace Unity.Behavior
             BehaviorGraphView.ResetNodesUI();
             BehaviorGraphView.ActiveDebugGraph = agent.Graph.Graphs.FirstOrDefault(module => module.AuthoringAssetID == Asset.AssetID);
 
+#if UNITY_6000_3_OR_NEWER
+            DebugAgentSelected?.Invoke(m_SelectedAgent.GetEntityId());
+#else
             DebugAgentSelected?.Invoke(m_SelectedAgent.GetInstanceID());
+#endif
 #if UNITY_EDITOR
             if (m_SelectedAgent.gameObject != null)
             {
@@ -592,7 +603,11 @@ namespace Unity.Behavior
         {
             BehaviorGraphView.ActiveDebugGraph = null;
             BehaviorGraphView.ResetNodesUI();
+#if UNITY_6000_3_OR_NEWER
+            DebugAgentSelected?.Invoke(UnityEngine.EntityId.None);
+#else
             DebugAgentSelected?.Invoke(0);
+#endif
             m_BehaviorGraphToolbar.SetButtonName(string.Empty);
         }
 
@@ -992,6 +1007,17 @@ namespace Unity.Behavior
 
         private void LinkSubgraph(BehaviorGraph subgraph, string variableName, SubgraphNodeModel subgraphNode, BaseLinkField field, VariableModel variableModel = null)
         {
+            // For exposed variable fields (not the SubgraphField), store directly assigned assets
+            // in LocalValue via SetValue. Using LinkedVariable would cause the reference to be
+            // cleared by EnsureLinkedVariablesAreUpToDate, since inline variables aren't in any
+            // blackboard. BBV links (variableModel != null) are fine — they survive validation.
+            bool isSubgraphField = field.FieldName == SubgraphNodeModel.k_SubgraphFieldName;
+            if (!isSubgraphField && variableModel == null)
+            {
+                field.SetValue(subgraph);
+                return;
+            }
+
             VariableModel variable =
                 // Link the selected variable.
                 variableModel != null ? variableModel :
@@ -1098,25 +1124,37 @@ namespace Unity.Behavior
             GraphPrefsUtility.SetBool(k_PrefsKeyEdgeTutorialShown, true, IsInEditorContext);
         }
 
-        internal void SetActiveGraphToDebugAgent(int agentId)
+        internal void SetActiveGraphToDebugAgent(EntityId agentId)
         {
             BehaviorGraphAgent agent = GetDebugAgentInScene(agentId);
             SetupDebugTarget(agent);
         }
 
-        private BehaviorGraphAgent GetDebugAgentInScene(int id)
+        private BehaviorGraphAgent GetDebugAgentInScene(EntityId id)
         {
+#if UNITY_6000_3_OR_NEWER
+            if (id == EntityId.None)
+#else
             if (id == 0)
+#endif
+            {
                 return null;
+            }
 
-#if UNITY_2022_2_OR_NEWER
+#if UNITY_6000_5_OR_NEWER
+            var agents = UnityEngine.Object.FindObjectsByType<BehaviorGraphAgent>(FindObjectsInactive.Include);
+#elif UNITY_2022_2_OR_NEWER
             var agents = UnityEngine.Object.FindObjectsByType<BehaviorGraphAgent>(FindObjectsInactive.Include, FindObjectsSortMode.None);
 #else
             var agents = UnityEngine.Object.FindObjectsOfType<BehaviorGraphAgent>(true);
 #endif
             foreach (var agent in agents)
             {
+#if UNITY_6000_3_OR_NEWER
+                if (agent.GetEntityId() == id)
+#else
                 if (agent.GetInstanceID() == id)
+#endif
                     return agent;
             }
 

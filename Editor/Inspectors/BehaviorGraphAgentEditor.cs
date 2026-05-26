@@ -12,6 +12,7 @@ namespace Unity.Behavior
     [CanEditMultipleObjects]
     internal class BehaviorGraphAgentEditor : Editor
     {
+        private static readonly Color k_PrefabOverrideBarColor = new Color(0.26f, 0.56f, 0.85f);
         private readonly GUIContent k_BehaviorGraphGUIContent = new GUIContent("Behavior Graph",
             "The runtime graph used as a reference. It is instantiated and executed on the agent at runtime.");
         private readonly List<BehaviorGraphAgent> m_TargetAgents = new();
@@ -23,6 +24,7 @@ namespace Unity.Behavior
         bool m_ModificationsMade = false;
 
         private BehaviorGraphAgent m_TargetAgent;
+        private BehaviorGraphAgent m_PrefabSourceAgent;
         private SerializableGUID m_CurrentGraphID;
         private SerializedProperty m_GraphProperty;
 
@@ -86,7 +88,7 @@ namespace Unity.Behavior
                     Debug.LogError($"Failed to map variable model to GUID in BehaviorGraphAgentEditor.{variableModel.ID}");
                 }
             }
-            
+
             foreach (var blackboard in SharedAuthoringGraph.m_Blackboards)
             {
                 foreach (var variableModel in blackboard.Variables)
@@ -120,6 +122,9 @@ namespace Unity.Behavior
 
             // We need the agent in order to set the Graph property in case of playmode assignment.
             m_TargetAgent = target as BehaviorGraphAgent;
+            m_PrefabSourceAgent = PrefabUtility.IsPartOfPrefabInstance(m_TargetAgent)
+                ? PrefabUtility.GetCorrespondingObjectFromSource(m_TargetAgent)
+                : null;
             RefreshAssignedGraph();
         }
 
@@ -372,8 +377,8 @@ namespace Unity.Behavior
             if (!show)
             {
                 return;
-            } 
-            
+            }
+
             if (blackboard.Blackboard.Variables.Count == 0)
             {
                 EditorGUI.indentLevel++;
@@ -381,7 +386,7 @@ namespace Unity.Behavior
                 EditorGUI.indentLevel--;
                 return;
             }
-                
+
 
             EditorGUI.indentLevel++;
             foreach (BlackboardVariable variable in blackboard.Blackboard.Variables)
@@ -425,399 +430,454 @@ namespace Unity.Behavior
                     }
                 }
 
-                DrawFieldForBlackboardVariable(firstTargetVariable, isOverride);
+                bool hasPrefabOverride = HasPrefabOverride(variable.GUID);
+                DrawFieldForBlackboardVariable(firstTargetVariable, isOverride, hasPrefabOverride);
             }
             EditorGUI.indentLevel--;
         }
 
+        private bool HasPrefabOverride(SerializableGUID guid)
+        {
+            if (m_PrefabSourceAgent == null)
+                return false;
+
+            bool instanceHasOverride = m_TargetAgent.m_BlackboardOverrides.ContainsKey(guid);
+            bool prefabHasOverride = m_PrefabSourceAgent.m_BlackboardOverrides.ContainsKey(guid);
+
+            if (!instanceHasOverride && !prefabHasOverride)
+                return false;
+            if (instanceHasOverride != prefabHasOverride)
+                return true;
+
+            var instanceVar = m_TargetAgent.m_BlackboardOverrides[guid];
+            var prefabVar = m_PrefabSourceAgent.m_BlackboardOverrides[guid];
+
+            if (instanceVar.ValueEquals(prefabVar))
+                return false;
+
+            // Check if the difference is an internal prefab reference — instance and prefab
+            // versions of the same object within the prefab hierarchy (e.g., a child GameObject).
+            if (instanceVar.ObjectValue is UnityEngine.Object instanceObj &&
+                prefabVar.ObjectValue is UnityEngine.Object prefabObj &&
+                instanceObj != null && prefabObj != null)
+            {
+                var correspondingObj = PrefabUtility.GetCorrespondingObjectFromSource(instanceObj);
+                if (ReferenceEquals(correspondingObj, prefabObj))
+                    return false;
+            }
+
+            return true;
+        }
+
         private bool IsBlackboardFoldedOut(BlackboardReference blackboard)
         {
+#if UNITY_6000_3_OR_NEWER
+            var foldoutStateKey = $"{GetType().Name}.{blackboard.SourceBlackboardAsset.GetEntityId()}";
+#else
             var foldoutStateKey = $"{GetType().Name}.{blackboard.SourceBlackboardAsset.GetInstanceID()}";
+#endif
             var show = SessionState.GetBool(foldoutStateKey, true);
             show = EditorGUILayout.Foldout(show, blackboard.SourceBlackboardAsset.name);
             SessionState.SetBool(foldoutStateKey, show);
             return show;
         }
 
-        private void DrawFieldForBlackboardVariable(BlackboardVariable variable, bool isOverride)
+        private void DrawFieldForBlackboardVariable(BlackboardVariable variable, bool isOverride, bool hasPrefabOverride)
         {
             string varName = isOverride ? $"{variable.Name} (Override)" : variable.Name;
             GUIContent label = isOverride ? new GUIContent(varName, "The value of this variable has been changed from the value set on the graph asset.") : new GUIContent(varName);
             Type type = variable.Type;
 
-            if (type == typeof(float) && variable is BlackboardVariable<float> floatVariable)
+            // Standard Unity convention: bold labels for prefab overrides.
+            var originalFontStyle = EditorStyles.label.fontStyle;
+            if (hasPrefabOverride)
+                EditorStyles.label.fontStyle = FontStyle.Bold;
+            try
             {
-                float value = floatVariable.Value;
-                EditorGUI.BeginChangeCheck();
-                value = EditorGUILayout.FloatField(label, value);
-                if (EditorGUI.EndChangeCheck())
+                if (type == typeof(float) && variable is BlackboardVariable<float> floatVariable)
                 {
-                    UpdateValueIfChanged(value, variable.GUID);
+                    float value = floatVariable.Value;
+                    EditorGUI.BeginChangeCheck();
+                    value = EditorGUILayout.FloatField(label, value);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        UpdateValueIfChanged(value, variable.GUID);
+                    }
                 }
-            }
-            else if (type == typeof(List<float>) && variable is BlackboardVariable<List<float>> floatListVariable)
-            {
-                List<float> value = GetVariableDataCopy(floatListVariable);
-                EditorGUI.BeginChangeCheck();
-                ReorderableList reorderableList = CreateVariableListElement(value, variable, varName);
-                reorderableList.drawElementCallback = (rect, index, _, _) =>
+                else if (type == typeof(List<float>) && variable is BlackboardVariable<List<float>> floatListVariable)
                 {
-                    rect.height = EditorGUIUtility.singleLineHeight;
-                    value[index] = EditorGUI.FloatField(rect, $"Element {index}", value[index]);
-                    ShowContextMenuForVariable(variable.GUID, isOverride);
-                };
-                if (m_ListVariableFoldoutStates[variable.GUID])
-                {
-                    reorderableList.DoLayoutList();
-                }
+                    List<float> value = GetVariableDataCopy(floatListVariable);
+                    EditorGUI.BeginChangeCheck();
+                    ReorderableList reorderableList = CreateVariableListElement(value, variable, varName);
+                    reorderableList.drawElementCallback = (rect, index, _, _) =>
+                    {
+                        rect.height = EditorGUIUtility.singleLineHeight;
+                        value[index] = EditorGUI.FloatField(rect, $"Element {index}", value[index]);
+                        ShowContextMenuForVariable(variable, isOverride, hasPrefabOverride);
+                    };
+                    if (m_ListVariableFoldoutStates[variable.GUID])
+                    {
+                        reorderableList.DoLayoutList();
+                    }
 
-                if (EditorGUI.EndChangeCheck())
-                {
-                    UpdateValueIfChanged(value, variable.GUID);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        UpdateValueIfChanged(value, variable.GUID);
+                    }
                 }
-            }
-            else if (type == typeof(double) && variable is BlackboardVariable<double> doubleVariable)
-            {
-                double value = doubleVariable.Value;
-                EditorGUI.BeginChangeCheck();
-                value = EditorGUILayout.DoubleField(label, value);
-                if (EditorGUI.EndChangeCheck())
+                else if (type == typeof(double) && variable is BlackboardVariable<double> doubleVariable)
                 {
-                    UpdateValueIfChanged(value, variable.GUID);
+                    double value = doubleVariable.Value;
+                    EditorGUI.BeginChangeCheck();
+                    value = EditorGUILayout.DoubleField(label, value);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        UpdateValueIfChanged(value, variable.GUID);
+                    }
                 }
-            }
-            else if (type == typeof(List<double>) && variable is BlackboardVariable<List<double>> doubleListVariable)
-            {
-                List<double> value = GetVariableDataCopy(doubleListVariable);
-                EditorGUI.BeginChangeCheck();
-                ReorderableList reorderableList = CreateVariableListElement(value, variable, varName);
-                reorderableList.drawElementCallback = (rect, index, _, _) =>
+                else if (type == typeof(List<double>) && variable is BlackboardVariable<List<double>> doubleListVariable)
                 {
-                    rect.height = EditorGUIUtility.singleLineHeight;
-                    value[index] = EditorGUI.DoubleField(rect, $"Element {index}", value[index]);
-                    ShowContextMenuForVariable(variable.GUID, isOverride);
-                };
-                if (m_ListVariableFoldoutStates[variable.GUID])
-                {
-                    reorderableList.DoLayoutList();
-                }
+                    List<double> value = GetVariableDataCopy(doubleListVariable);
+                    EditorGUI.BeginChangeCheck();
+                    ReorderableList reorderableList = CreateVariableListElement(value, variable, varName);
+                    reorderableList.drawElementCallback = (rect, index, _, _) =>
+                    {
+                        rect.height = EditorGUIUtility.singleLineHeight;
+                        value[index] = EditorGUI.DoubleField(rect, $"Element {index}", value[index]);
+                        ShowContextMenuForVariable(variable, isOverride, hasPrefabOverride);
+                    };
+                    if (m_ListVariableFoldoutStates[variable.GUID])
+                    {
+                        reorderableList.DoLayoutList();
+                    }
 
-                if (EditorGUI.EndChangeCheck())
-                {
-                    UpdateValueIfChanged(value, variable.GUID);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        UpdateValueIfChanged(value, variable.GUID);
+                    }
                 }
-            }
-            else if (type == typeof(int) && variable is BlackboardVariable<int> intVariable)
-            {
-                int value = intVariable.Value;
-                EditorGUI.BeginChangeCheck();
-                value = EditorGUILayout.IntField(label, value);
-                if (EditorGUI.EndChangeCheck())
+                else if (type == typeof(int) && variable is BlackboardVariable<int> intVariable)
                 {
-                    UpdateValueIfChanged(value, variable.GUID);
+                    int value = intVariable.Value;
+                    EditorGUI.BeginChangeCheck();
+                    value = EditorGUILayout.IntField(label, value);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        UpdateValueIfChanged(value, variable.GUID);
+                    }
                 }
-            }
-            else if (type == typeof(List<int>) && variable is BlackboardVariable<List<int>> intListVariable)
-            {
-                List<int> value = GetVariableDataCopy(intListVariable);
-                EditorGUI.BeginChangeCheck();
+                else if (type == typeof(List<int>) && variable is BlackboardVariable<List<int>> intListVariable)
+                {
+                    List<int> value = GetVariableDataCopy(intListVariable);
+                    EditorGUI.BeginChangeCheck();
 
-                ReorderableList reorderableList = CreateVariableListElement(value, variable, varName);
-                reorderableList.drawElementCallback = (rect, index, _, _) =>
-                {
-                    rect.height = EditorGUIUtility.singleLineHeight;
-                    value[index] = EditorGUI.IntField(rect, $"Element {index}", value[index]);
-                    ShowContextMenuForVariable(variable.GUID, isOverride);
-                };
-                if (m_ListVariableFoldoutStates[variable.GUID])
-                {
-                    reorderableList.DoLayoutList();
-                }
+                    ReorderableList reorderableList = CreateVariableListElement(value, variable, varName);
+                    reorderableList.drawElementCallback = (rect, index, _, _) =>
+                    {
+                        rect.height = EditorGUIUtility.singleLineHeight;
+                        value[index] = EditorGUI.IntField(rect, $"Element {index}", value[index]);
+                        ShowContextMenuForVariable(variable, isOverride, hasPrefabOverride);
+                    };
+                    if (m_ListVariableFoldoutStates[variable.GUID])
+                    {
+                        reorderableList.DoLayoutList();
+                    }
 
-                if (EditorGUI.EndChangeCheck())
-                {
-                    UpdateValueIfChanged(value, variable.GUID);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        UpdateValueIfChanged(value, variable.GUID);
+                    }
                 }
-            }
-            else if (type == typeof(bool) && variable is BlackboardVariable<bool> boolVariable)
-            {
-                bool value = boolVariable.Value;
-                EditorGUI.BeginChangeCheck();
-                value = EditorGUILayout.Toggle(label, value);
-                if (EditorGUI.EndChangeCheck())
+                else if (type == typeof(bool) && variable is BlackboardVariable<bool> boolVariable)
                 {
-                    UpdateValueIfChanged(value, variable.GUID);
+                    bool value = boolVariable.Value;
+                    EditorGUI.BeginChangeCheck();
+                    value = EditorGUILayout.Toggle(label, value);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        UpdateValueIfChanged(value, variable.GUID);
+                    }
                 }
-            }
-            else if (type == typeof(List<bool>) && variable is BlackboardVariable<List<bool>> boolListVariable)
-            {
-                List<bool> value = GetVariableDataCopy(boolListVariable);
-                EditorGUI.BeginChangeCheck();
-                ReorderableList reorderableList = CreateVariableListElement(value, variable, varName);
-                reorderableList.drawElementCallback = (rect, index, _, _) =>
+                else if (type == typeof(List<bool>) && variable is BlackboardVariable<List<bool>> boolListVariable)
                 {
-                    rect.height = EditorGUIUtility.singleLineHeight;
-                    value[index] = EditorGUI.Toggle(rect, $"Element {index}", value[index]);
-                    ShowContextMenuForVariable(variable.GUID, isOverride);
-                };
-                if (m_ListVariableFoldoutStates[variable.GUID])
-                {
-                    reorderableList.DoLayoutList();
-                }
+                    List<bool> value = GetVariableDataCopy(boolListVariable);
+                    EditorGUI.BeginChangeCheck();
+                    ReorderableList reorderableList = CreateVariableListElement(value, variable, varName);
+                    reorderableList.drawElementCallback = (rect, index, _, _) =>
+                    {
+                        rect.height = EditorGUIUtility.singleLineHeight;
+                        value[index] = EditorGUI.Toggle(rect, $"Element {index}", value[index]);
+                        ShowContextMenuForVariable(variable, isOverride, hasPrefabOverride);
+                    };
+                    if (m_ListVariableFoldoutStates[variable.GUID])
+                    {
+                        reorderableList.DoLayoutList();
+                    }
 
-                if (EditorGUI.EndChangeCheck())
-                {
-                    UpdateValueIfChanged(value, variable.GUID);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        UpdateValueIfChanged(value, variable.GUID);
+                    }
                 }
-            }
-            else if (type == typeof(string) && variable is BlackboardVariable<string> stringVariable)
-            {
-                string value = stringVariable.Value;
-                EditorGUI.BeginChangeCheck();
-                value = EditorGUILayout.TextField(label, value);
-                if (EditorGUI.EndChangeCheck())
+                else if (type == typeof(string) && variable is BlackboardVariable<string> stringVariable)
                 {
-                    UpdateValueIfChanged(value, variable.GUID);
+                    string value = stringVariable.Value;
+                    EditorGUI.BeginChangeCheck();
+                    value = EditorGUILayout.TextField(label, value);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        UpdateValueIfChanged(value, variable.GUID);
+                    }
                 }
-            }
-            else if (type == typeof(List<string>) && variable is BlackboardVariable<List<string>> stringListVariable)
-            {
-                List<string> value = GetVariableDataCopy(stringListVariable);
-                EditorGUI.BeginChangeCheck();
-                ReorderableList reorderableList = CreateVariableListElement(value, variable, varName);
-                reorderableList.drawElementCallback = (rect, index, _, _) =>
+                else if (type == typeof(List<string>) && variable is BlackboardVariable<List<string>> stringListVariable)
                 {
-                    rect.height = EditorGUIUtility.singleLineHeight;
-                    value[index] = EditorGUI.TextField(rect, $"Element {index}", value[index]);
-                    ShowContextMenuForVariable(variable.GUID, isOverride);
-                };
-                if (m_ListVariableFoldoutStates[variable.GUID])
-                {
-                    reorderableList.DoLayoutList();
-                }
+                    List<string> value = GetVariableDataCopy(stringListVariable);
+                    EditorGUI.BeginChangeCheck();
+                    ReorderableList reorderableList = CreateVariableListElement(value, variable, varName);
+                    reorderableList.drawElementCallback = (rect, index, _, _) =>
+                    {
+                        rect.height = EditorGUIUtility.singleLineHeight;
+                        value[index] = EditorGUI.TextField(rect, $"Element {index}", value[index]);
+                        ShowContextMenuForVariable(variable, isOverride, hasPrefabOverride);
+                    };
+                    if (m_ListVariableFoldoutStates[variable.GUID])
+                    {
+                        reorderableList.DoLayoutList();
+                    }
 
-                if (EditorGUI.EndChangeCheck())
-                {
-                    UpdateValueIfChanged(value, variable.GUID);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        UpdateValueIfChanged(value, variable.GUID);
+                    }
                 }
-            }
-            else if (type == typeof(Color) && variable is BlackboardVariable<Color> colorVariable)
-            {
-                Color value = colorVariable.Value;
-                EditorGUI.BeginChangeCheck();
-                value = EditorGUILayout.ColorField(label, value);
-                if (EditorGUI.EndChangeCheck())
+                else if (type == typeof(Color) && variable is BlackboardVariable<Color> colorVariable)
                 {
-                    UpdateValueIfChanged(value, variable.GUID);
+                    Color value = colorVariable.Value;
+                    EditorGUI.BeginChangeCheck();
+                    value = EditorGUILayout.ColorField(label, value);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        UpdateValueIfChanged(value, variable.GUID);
+                    }
                 }
-            }
-            else if (type == typeof(List<Color>) && variable is BlackboardVariable<List<Color>> colorListVariable)
-            {
-                List<Color> value = GetVariableDataCopy(colorListVariable);
-                EditorGUI.BeginChangeCheck();
-                ReorderableList reorderableList = CreateVariableListElement(value, variable, varName);
-                reorderableList.drawElementCallback = (rect, index, _, _) =>
+                else if (type == typeof(List<Color>) && variable is BlackboardVariable<List<Color>> colorListVariable)
                 {
-                    rect.height = EditorGUIUtility.singleLineHeight;
-                    value[index] = EditorGUI.ColorField(rect, $"Element {index}", value[index]);
-                    ShowContextMenuForVariable(variable.GUID, isOverride);
-                };
-                if (m_ListVariableFoldoutStates[variable.GUID])
-                {
-                    reorderableList.DoLayoutList();
-                }
+                    List<Color> value = GetVariableDataCopy(colorListVariable);
+                    EditorGUI.BeginChangeCheck();
+                    ReorderableList reorderableList = CreateVariableListElement(value, variable, varName);
+                    reorderableList.drawElementCallback = (rect, index, _, _) =>
+                    {
+                        rect.height = EditorGUIUtility.singleLineHeight;
+                        value[index] = EditorGUI.ColorField(rect, $"Element {index}", value[index]);
+                        ShowContextMenuForVariable(variable, isOverride, hasPrefabOverride);
+                    };
+                    if (m_ListVariableFoldoutStates[variable.GUID])
+                    {
+                        reorderableList.DoLayoutList();
+                    }
 
-                if (EditorGUI.EndChangeCheck())
-                {
-                    UpdateValueIfChanged(value, variable.GUID);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        UpdateValueIfChanged(value, variable.GUID);
+                    }
                 }
-            }
-            else if (type == typeof(Vector4) && variable is BlackboardVariable<Vector4> vec4Variable)
-            {
-                Vector4 value = vec4Variable.Value;
-                EditorGUI.BeginChangeCheck();
-                value = EditorGUILayout.Vector4Field(label, value);
-                if (EditorGUI.EndChangeCheck())
+                else if (type == typeof(Vector4) && variable is BlackboardVariable<Vector4> vec4Variable)
                 {
-                    UpdateValueIfChanged(value, variable.GUID);
+                    Vector4 value = vec4Variable.Value;
+                    EditorGUI.BeginChangeCheck();
+                    value = EditorGUILayout.Vector4Field(label, value);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        UpdateValueIfChanged(value, variable.GUID);
+                    }
                 }
-            }
-            else if (type == typeof(List<Vector4>) && variable is BlackboardVariable<List<Vector4>> vec4ListVariable)
-            {
-                List<Vector4> value = GetVariableDataCopy(vec4ListVariable);
-                EditorGUI.BeginChangeCheck();
-                ReorderableList reorderableList = CreateVariableListElement(value, variable, varName);
-                reorderableList.drawElementCallback = (rect, index, _, _) =>
+                else if (type == typeof(List<Vector4>) && variable is BlackboardVariable<List<Vector4>> vec4ListVariable)
                 {
-                    rect.height = EditorGUIUtility.singleLineHeight;
-                    value[index] = EditorGUI.Vector4Field(rect, $"Element {index}", value[index]);
-                    ShowContextMenuForVariable(variable.GUID, isOverride);
-                };
-                if (m_ListVariableFoldoutStates[variable.GUID])
-                {
-                    reorderableList.DoLayoutList();
-                }
+                    List<Vector4> value = GetVariableDataCopy(vec4ListVariable);
+                    EditorGUI.BeginChangeCheck();
+                    ReorderableList reorderableList = CreateVariableListElement(value, variable, varName);
+                    reorderableList.drawElementCallback = (rect, index, _, _) =>
+                    {
+                        rect.height = EditorGUIUtility.singleLineHeight;
+                        value[index] = EditorGUI.Vector4Field(rect, $"Element {index}", value[index]);
+                        ShowContextMenuForVariable(variable, isOverride, hasPrefabOverride);
+                    };
+                    if (m_ListVariableFoldoutStates[variable.GUID])
+                    {
+                        reorderableList.DoLayoutList();
+                    }
 
-                if (EditorGUI.EndChangeCheck())
-                {
-                    UpdateValueIfChanged(value, variable.GUID);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        UpdateValueIfChanged(value, variable.GUID);
+                    }
                 }
-            }
-            else if (type == typeof(Vector3) && variable is BlackboardVariable<Vector3> vec3Variable)
-            {
-                Vector3 value = vec3Variable.Value;
-                EditorGUI.BeginChangeCheck();
-                value = EditorGUILayout.Vector3Field(label, value);
-                if (EditorGUI.EndChangeCheck())
+                else if (type == typeof(Vector3) && variable is BlackboardVariable<Vector3> vec3Variable)
                 {
-                    UpdateValueIfChanged(value, variable.GUID);
+                    Vector3 value = vec3Variable.Value;
+                    EditorGUI.BeginChangeCheck();
+                    value = EditorGUILayout.Vector3Field(label, value);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        UpdateValueIfChanged(value, variable.GUID);
+                    }
                 }
-            }
-            else if (type == typeof(List<Vector3>) && variable is BlackboardVariable<List<Vector3>> vec3ListVariable)
-            {
-                List<Vector3> value = GetVariableDataCopy(vec3ListVariable);
-                EditorGUI.BeginChangeCheck();
-                ReorderableList reorderableList = CreateVariableListElement(value, variable, varName);
-                reorderableList.drawElementCallback = (rect, index, _, _) =>
+                else if (type == typeof(List<Vector3>) && variable is BlackboardVariable<List<Vector3>> vec3ListVariable)
                 {
-                    rect.height = EditorGUIUtility.singleLineHeight;
-                    value[index] = EditorGUI.Vector3Field(rect, $"Element {index}", value[index]);
-                    ShowContextMenuForVariable(variable.GUID, isOverride);
-                };
-                if (m_ListVariableFoldoutStates[variable.GUID])
-                {
-                    reorderableList.DoLayoutList();
-                }
+                    List<Vector3> value = GetVariableDataCopy(vec3ListVariable);
+                    EditorGUI.BeginChangeCheck();
+                    ReorderableList reorderableList = CreateVariableListElement(value, variable, varName);
+                    reorderableList.drawElementCallback = (rect, index, _, _) =>
+                    {
+                        rect.height = EditorGUIUtility.singleLineHeight;
+                        value[index] = EditorGUI.Vector3Field(rect, $"Element {index}", value[index]);
+                        ShowContextMenuForVariable(variable, isOverride, hasPrefabOverride);
+                    };
+                    if (m_ListVariableFoldoutStates[variable.GUID])
+                    {
+                        reorderableList.DoLayoutList();
+                    }
 
-                if (EditorGUI.EndChangeCheck())
-                {
-                    UpdateValueIfChanged(value, variable.GUID);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        UpdateValueIfChanged(value, variable.GUID);
+                    }
                 }
-            }
-            else if (type == typeof(Vector2) && variable is BlackboardVariable<Vector2> vec2Variable)
-            {
-                Vector2 value = vec2Variable.Value;
-                EditorGUI.BeginChangeCheck();
-                value = EditorGUILayout.Vector2Field(label, value);
-                if (EditorGUI.EndChangeCheck())
+                else if (type == typeof(Vector2) && variable is BlackboardVariable<Vector2> vec2Variable)
                 {
-                    UpdateValueIfChanged(value, variable.GUID);
+                    Vector2 value = vec2Variable.Value;
+                    EditorGUI.BeginChangeCheck();
+                    value = EditorGUILayout.Vector2Field(label, value);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        UpdateValueIfChanged(value, variable.GUID);
+                    }
                 }
-            }
-            else if (type == typeof(List<Vector4>) && variable is BlackboardVariable<List<Vector4>> vec2ListVariable)
-            {
-                List<Vector4> value = GetVariableDataCopy(vec2ListVariable);
-                EditorGUI.BeginChangeCheck();
-                ReorderableList reorderableList = CreateVariableListElement(value, variable, varName);
-                reorderableList.drawElementCallback = (rect, index, _, _) =>
+                else if (type == typeof(List<Vector4>) && variable is BlackboardVariable<List<Vector4>> vec2ListVariable)
                 {
-                    rect.height = EditorGUIUtility.singleLineHeight;
-                    value[index] = EditorGUI.Vector2Field(rect, $"Element {index}", value[index]);
-                    ShowContextMenuForVariable(variable.GUID, isOverride);
-                };
-                if (m_ListVariableFoldoutStates[variable.GUID])
-                {
-                    reorderableList.DoLayoutList();
-                }
+                    List<Vector4> value = GetVariableDataCopy(vec2ListVariable);
+                    EditorGUI.BeginChangeCheck();
+                    ReorderableList reorderableList = CreateVariableListElement(value, variable, varName);
+                    reorderableList.drawElementCallback = (rect, index, _, _) =>
+                    {
+                        rect.height = EditorGUIUtility.singleLineHeight;
+                        value[index] = EditorGUI.Vector2Field(rect, $"Element {index}", value[index]);
+                        ShowContextMenuForVariable(variable, isOverride, hasPrefabOverride);
+                    };
+                    if (m_ListVariableFoldoutStates[variable.GUID])
+                    {
+                        reorderableList.DoLayoutList();
+                    }
 
-                if (EditorGUI.EndChangeCheck())
-                {
-                    UpdateValueIfChanged(value, variable.GUID);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        UpdateValueIfChanged(value, variable.GUID);
+                    }
                 }
-            }
-            else if (type == typeof(GameObject) && variable is BlackboardVariable<GameObject> gameObjectVar)
-            {
-                GameObject value = gameObjectVar.Value;
-                EditorGUI.BeginChangeCheck();
-                value = EditorGUILayout.ObjectField(label, value, typeof(GameObject), true) as GameObject;
-                if (EditorGUI.EndChangeCheck())
+                else if (type == typeof(GameObject) && variable is BlackboardVariable<GameObject> gameObjectVar)
                 {
-                    UpdateValueIfChanged(value, variable.GUID);
+                    GameObject value = gameObjectVar.Value;
+                    EditorGUI.BeginChangeCheck();
+                    value = EditorGUILayout.ObjectField(label, value, typeof(GameObject), true) as GameObject;
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        UpdateValueIfChanged(value, variable.GUID);
+                    }
                 }
-            }
-            else if (type == typeof(List<GameObject>) && variable is BlackboardVariable<List<GameObject>> gameObjectListVariable)
-            {
-                List<GameObject> value = GetVariableDataCopy(gameObjectListVariable);
-                EditorGUI.BeginChangeCheck();
-                ReorderableList reorderableList = CreateVariableListElement(value, variable, varName);
-                reorderableList.drawElementCallback = (rect, index, _, _) =>
+                else if (type == typeof(List<GameObject>) && variable is BlackboardVariable<List<GameObject>> gameObjectListVariable)
                 {
-                    rect.height = EditorGUIUtility.singleLineHeight;
-                    value[index] = EditorGUI.ObjectField(rect, $"Element {index}", value[index], typeof(GameObject), true) as GameObject;
-                    ShowContextMenuForVariable(variable.GUID, isOverride);
-                };
-                if (m_ListVariableFoldoutStates[variable.GUID])
-                {
-                    reorderableList.DoLayoutList();
-                }
+                    List<GameObject> value = GetVariableDataCopy(gameObjectListVariable);
+                    EditorGUI.BeginChangeCheck();
+                    ReorderableList reorderableList = CreateVariableListElement(value, variable, varName);
+                    reorderableList.drawElementCallback = (rect, index, _, _) =>
+                    {
+                        rect.height = EditorGUIUtility.singleLineHeight;
+                        value[index] = EditorGUI.ObjectField(rect, $"Element {index}", value[index], typeof(GameObject), true) as GameObject;
+                        ShowContextMenuForVariable(variable, isOverride, hasPrefabOverride);
+                    };
+                    if (m_ListVariableFoldoutStates[variable.GUID])
+                    {
+                        reorderableList.DoLayoutList();
+                    }
 
-                if (EditorGUI.EndChangeCheck())
-                {
-                    UpdateValueIfChanged(value, variable.GUID);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        UpdateValueIfChanged(value, variable.GUID);
+                    }
                 }
-            }
-            else if (type.IsSubclassOf(typeof(ScriptableObject)))
-            {
-                ScriptableObject value = (ScriptableObject)variable.ObjectValue;
-                EditorGUI.BeginChangeCheck();
-                value = EditorGUILayout.ObjectField(label, value, type, false) as ScriptableObject;
-                if (EditorGUI.EndChangeCheck())
+                else if (type.IsSubclassOf(typeof(ScriptableObject)))
                 {
-                    ValidateTypeAndUpdateValueIfChanged(value, variable.GUID);
+                    ScriptableObject value = (ScriptableObject)variable.ObjectValue;
+                    EditorGUI.BeginChangeCheck();
+                    value = EditorGUILayout.ObjectField(label, value, type, false) as ScriptableObject;
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        ValidateTypeAndUpdateValueIfChanged(value, variable.GUID);
+                    }
                 }
-            }
-            else if (type == typeof(List<ScriptableObject>) && variable is BlackboardVariable<List<ScriptableObject>> scriptableObjectListVariable)
-            {
-                List<ScriptableObject> value = GetVariableDataCopy(scriptableObjectListVariable);
-                EditorGUI.BeginChangeCheck();
-                ReorderableList reorderableList = CreateVariableListElement(value, variable, varName);
-                reorderableList.drawElementCallback = (rect, index, _, _) =>
+                else if (type == typeof(List<ScriptableObject>) && variable is BlackboardVariable<List<ScriptableObject>> scriptableObjectListVariable)
                 {
-                    rect.height = EditorGUIUtility.singleLineHeight;
-                    value[index] = EditorGUI.ObjectField(rect, $"Element {index}", value[index], typeof(GameObject), true) as ScriptableObject;
-                    ShowContextMenuForVariable(variable.GUID, isOverride);
-                };
-                if (m_ListVariableFoldoutStates[variable.GUID])
-                {
-                    reorderableList.DoLayoutList();
-                }
+                    List<ScriptableObject> value = GetVariableDataCopy(scriptableObjectListVariable);
+                    EditorGUI.BeginChangeCheck();
+                    ReorderableList reorderableList = CreateVariableListElement(value, variable, varName);
+                    reorderableList.drawElementCallback = (rect, index, _, _) =>
+                    {
+                        rect.height = EditorGUIUtility.singleLineHeight;
+                        value[index] = EditorGUI.ObjectField(rect, $"Element {index}", value[index], typeof(GameObject), true) as ScriptableObject;
+                        ShowContextMenuForVariable(variable, isOverride, hasPrefabOverride);
+                    };
+                    if (m_ListVariableFoldoutStates[variable.GUID])
+                    {
+                        reorderableList.DoLayoutList();
+                    }
 
-                if (EditorGUI.EndChangeCheck())
-                {
-                    UpdateValueIfChanged(value, variable.GUID);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        UpdateValueIfChanged(value, variable.GUID);
+                    }
                 }
-            }
-            else if (type.IsSubclassOf(typeof(UnityEngine.Object)) || type == typeof(UnityEngine.Object))
-            {
-                UnityEngine.Object value = (UnityEngine.Object)variable.ObjectValue;
-                EditorGUI.BeginChangeCheck();
-                value = EditorGUILayout.ObjectField(label, value, type, true);
-                if (EditorGUI.EndChangeCheck())
+                else if (type.IsSubclassOf(typeof(UnityEngine.Object)) || type == typeof(UnityEngine.Object))
                 {
-                    UpdateValueIfChanged(value, variable.GUID, type);
+                    UnityEngine.Object value = (UnityEngine.Object)variable.ObjectValue;
+                    EditorGUI.BeginChangeCheck();
+                    value = EditorGUILayout.ObjectField(label, value, type, true);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        UpdateValueIfChanged(value, variable.GUID, type);
+                    }
                 }
-            }
-            else if (typeof(Enum).IsAssignableFrom(type))
-            {
-                var value = (Enum)variable.ObjectValue;
-                EditorGUI.BeginChangeCheck();
+                else if (typeof(Enum).IsAssignableFrom(type))
+                {
+                    var value = (Enum)variable.ObjectValue;
+                    EditorGUI.BeginChangeCheck();
 
-                bool isFlagsEnum = type.IsDefined(typeof(FlagsAttribute), false);
-                if (isFlagsEnum)
-                {
-                    value = EditorGUILayout.EnumFlagsField(label, value);
-                }
-                else
-                {
-                    value = EditorGUILayout.EnumPopup(label, value);
-                }
+                    bool isFlagsEnum = type.IsDefined(typeof(FlagsAttribute), false);
+                    if (isFlagsEnum)
+                    {
+                        value = EditorGUILayout.EnumFlagsField(label, value);
+                    }
+                    else
+                    {
+                        value = EditorGUILayout.EnumPopup(label, value);
+                    }
 
-                if (EditorGUI.EndChangeCheck())
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        UpdateValueIfChanged(value, variable.GUID, type);
+                    }
+                }
+                ShowContextMenuForVariable(variable, isOverride, hasPrefabOverride);
+
+            }
+            finally
+            {
+                EditorStyles.label.fontStyle = originalFontStyle;
+                if (hasPrefabOverride)
                 {
-                    UpdateValueIfChanged(value, variable.GUID, type);
+                    Rect lastRect = GUILayoutUtility.GetLastRect();
+                    EditorGUI.DrawRect(new Rect(lastRect.x - 2, lastRect.y, 2, lastRect.height), k_PrefabOverrideBarColor);
                 }
             }
-            ShowContextMenuForVariable(variable.GUID, isOverride);
         }
 
         private ReorderableList CreateVariableListElement<T>(List<T> value, BlackboardVariable variable, string name)
@@ -977,7 +1037,7 @@ namespace Unity.Behavior
 
             // If the application is playing, use the runtime graph's blackboard.
             agent.Graph.BlackboardReference.GetVariable(variableID, out BlackboardVariable runtimeVariableInstance);
-            
+
             if (runtimeVariableInstance == null)
             {
                 foreach (var blackboardReference in agent.Graph.RootGraph.BlackboardGroupReferences)
@@ -989,7 +1049,7 @@ namespace Unity.Behavior
                     }
                 }
             }
-            
+
             if (Application.isPlaying && agent.m_IsInitialised)
             {
                 return runtimeVariableInstance;
@@ -1032,9 +1092,9 @@ namespace Unity.Behavior
             m_ModificationsMade = true;
         }
 
-        private void ShowContextMenuForVariable(SerializableGUID guid, bool isOverride)
+        private void ShowContextMenuForVariable(BlackboardVariable variable, bool isOverride, bool hasPrefabOverride)
         {
-            if (!isOverride) return;
+            if (!isOverride && !hasPrefabOverride) return;
 
             var lastRect = GUILayoutUtility.GetLastRect();
             if (Event.current.type == EventType.ContextClick)
@@ -1043,10 +1103,125 @@ namespace Unity.Behavior
                 {
                     Event.current.Use();
                     GenericMenu menu = new GenericMenu();
-                    menu.AddItem(new GUIContent("Revert Variable"), false, () => ResetVariable(guid));
+                    var guid = variable.GUID;
+
+                    if (isOverride)
+                    {
+                        menu.AddItem(new GUIContent("Revert Variable"), false, () => ResetVariable(guid));
+                    }
+
+                    if (hasPrefabOverride)
+                    {
+                        if (isOverride)
+                            menu.AddSeparator("");
+
+                        string prefabName = m_PrefabSourceAgent != null ? m_PrefabSourceAgent.gameObject.name : "Prefab";
+
+                        if (CanApplyVariableToPrefab(variable))
+                            menu.AddItem(new GUIContent($"Apply to Prefab '{prefabName}'"), false, () => ApplyVariableToPrefab(guid));
+                        else
+                            menu.AddDisabledItem(new GUIContent($"Apply to Prefab '{prefabName}'"));
+
+                        menu.AddItem(new GUIContent($"Revert from Prefab '{prefabName}'"), false, () => RevertVariableFromPrefab(guid));
+                    }
+
                     menu.ShowAsContext();
                 }
             }
+        }
+
+        /// <summary>
+        /// Resolves a scene object reference to its prefab counterpart.
+        /// Returns null if the object has no prefab counterpart (pure scene object).
+        /// Persistent objects and null are returned as-is.
+        /// </summary>
+        private static object ResolveValueForPrefab(object value)
+        {
+            if (value is UnityEngine.Object obj)
+            {
+                if (obj == null) return null;
+                if (EditorUtility.IsPersistent(obj)) return obj;
+                return PrefabUtility.GetCorrespondingObjectFromSource(obj);
+            }
+            return value;
+        }
+
+        private bool CanApplyVariableToPrefab(BlackboardVariable variable)
+        {
+            return ResolveValueForPrefab(variable.ObjectValue) != null || variable.ObjectValue == null;
+        }
+
+        private void ApplyVariableToPrefab(SerializableGUID guid)
+        {
+            foreach (BehaviorGraphAgent targetAgent in m_TargetAgents)
+            {
+                var prefabAgent = PrefabUtility.GetCorrespondingObjectFromSource(targetAgent);
+                if (prefabAgent == null) continue;
+
+                Undo.RecordObject(prefabAgent, "Apply Variable Override to Prefab");
+
+                if (targetAgent.m_BlackboardOverrides.TryGetValue(guid, out var instanceOverride))
+                {
+                    object valueToApply = ResolveValueForPrefab(instanceOverride.ObjectValue);
+
+                    if (prefabAgent.m_BlackboardOverrides.ContainsKey(guid))
+                    {
+                        prefabAgent.m_BlackboardOverrides[guid].SetObjectValueWithoutNotify(valueToApply);
+                    }
+                    else
+                    {
+                        var duplicate = instanceOverride.Duplicate();
+                        duplicate.SetObjectValueWithoutNotify(valueToApply);
+                        prefabAgent.m_BlackboardOverrides[guid] = duplicate;
+                        prefabAgent.m_BlackboardVariableOverridesList.Add(duplicate);
+                    }
+                }
+                else
+                {
+                    // Instance uses graph default — remove override from prefab to match.
+                    prefabAgent.m_BlackboardOverrides.Remove(guid);
+                }
+
+                prefabAgent.OnBeforeSerialize();
+                EditorUtility.SetDirty(prefabAgent);
+            }
+            serializedObject.Update();
+        }
+
+        private void RevertVariableFromPrefab(SerializableGUID guid)
+        {
+            foreach (BehaviorGraphAgent targetAgent in m_TargetAgents)
+            {
+                var prefabAgent = PrefabUtility.GetCorrespondingObjectFromSource(targetAgent);
+                if (prefabAgent == null) continue;
+
+                Undo.RecordObject(targetAgent, "Revert Variable from Prefab");
+
+                if (prefabAgent.m_BlackboardOverrides.TryGetValue(guid, out var prefabOverride))
+                {
+                    if (targetAgent.m_BlackboardOverrides.ContainsKey(guid))
+                    {
+                        targetAgent.m_BlackboardOverrides[guid].SetObjectValueWithoutNotify(prefabOverride.ObjectValue);
+                    }
+                    else
+                    {
+                        var duplicate = prefabOverride.Duplicate();
+                        targetAgent.m_BlackboardOverrides[guid] = duplicate;
+                        targetAgent.m_BlackboardVariableOverridesList.Add(duplicate);
+                    }
+                }
+                else
+                {
+                    targetAgent.m_BlackboardOverrides.Remove(guid);
+                }
+
+                if (PrefabUtility.IsPartOfPrefabThatCanBeAppliedTo(targetAgent))
+                {
+                    PrefabUtility.RecordPrefabInstancePropertyModifications(targetAgent);
+                }
+                EditorUtility.SetDirty(targetAgent);
+            }
+            serializedObject.Update();
         }
 
         private void ResetVariable(SerializableGUID guid)

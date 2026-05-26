@@ -62,8 +62,8 @@ namespace Unity.Behavior
         public delegate void GraphStatusChangeEventHandler(BehaviorGraphModule graph);
         public event GraphStatusChangeEventHandler OnGraphStatusChange;
 
-        private Stack<Node> m_NodeTraversalQueue;
-        private HashSet<Node> m_VisitedNodes;
+        // Cache of all the nodes that could be run at runtime. Built from the linked list structure during InitializeNodes().
+        private HashSet<Node> Nodes { get; set; }
         // Maintained in sync with m_ActiveNodes for performance while preserving list order for determinism
         private HashSet<Node> m_ActiveNodesLookup = new HashSet<Node>(16);
 
@@ -271,26 +271,90 @@ namespace Unity.Behavior
             m_NodesChanged = false;
         }
 
-        internal IEnumerable<Node> Nodes()
+        /// <summary>
+        /// Returns an immutable enumerable of the nodes able to run at runtime.
+        /// </summary>
+        internal IEnumerable<Node> GetNodes()
         {
-            m_NodeTraversalQueue ??= new Stack<Node>(4);
-            m_VisitedNodes ??= new HashSet<Node>(4);
-            m_VisitedNodes.Clear();
+            if (Nodes == null)
+            {
+                InitializeNodes();
+            }
+
+            return Nodes;
+        }
+
+        /// <summary>
+        /// Calls <see cref="Node.Setup"/> on every node in the graph.
+        /// Invoked once after the graph is initialized, before any node starts executing.
+        /// </summary>
+        internal void InitializeNodes()
+        {
+            BuildNodeSet();
+            foreach (Node node in Nodes)
+            {
+                node.Graph = this;
+                try
+                {
+                    node.Setup();
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"OnSetup failed on {node.GetType().Name} (ID: {node.ID}): {e.Message}", GameObject);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Calls <see cref="Node.Teardown"/> on every node in the graph.
+        /// Invoked once when the graph instance is released, before returning it to the pool.
+        /// </summary>
+        internal void TeardownNodes()
+        {
+            if (Nodes == null)
+            {
+                return;
+            }
+
+            foreach (Node node in Nodes)
+            {
+                try
+                {
+                    node.Teardown();
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"OnTeardown failed on {node.GetType().Name} (ID: {node.ID}): {e.Message}", GameObject);
+                }
+            }
+        }
+
+        // Must be called after root node is populated.
+        private void BuildNodeSet()
+        {
+            if (Root == null)
+            {
+                Nodes = new HashSet<Node>();
+                return;
+            }
+
+            var nodeTraversalQueue = new Stack<Node>(4);
+            var visitedNodes = new HashSet<Node>(4);
 
             void QueueNode(Node child)
             {
-                if (child != null && !m_VisitedNodes.Contains(child))
+                if (child != null && !visitedNodes.Contains(child))
                 {
-                    m_VisitedNodes.Add(child);
-                    m_NodeTraversalQueue.Push(child);
+                    visitedNodes.Add(child);
+                    nodeTraversalQueue.Push(child);
                 }
             }
 
-            m_NodeTraversalQueue.Push(Root);
-            m_VisitedNodes.Add(Root);
-            while (m_NodeTraversalQueue.Count != 0)
+            nodeTraversalQueue.Push(Root);
+            visitedNodes.Add(Root);
+            while (nodeTraversalQueue.Count != 0)
             {
-                var current = m_NodeTraversalQueue.Pop();
+                var current = nodeTraversalQueue.Pop();
                 switch (current)
                 {
                     case Action:
@@ -310,7 +374,7 @@ namespace Unity.Behavior
                 }
             }
 
-            return m_VisitedNodes;
+            Nodes = visitedNodes;
         }
 
         /// <see cref="Behavior.BlackboardReference.GetVariable{TValue}(string,out Unity.Behavior.BlackboardVariable{TValue})"/>
@@ -626,6 +690,60 @@ namespace Unity.Behavior
 
             // No interruption occurred
             return false;
+        }
+        
+        internal void ForEachBlackboardVariable(Action<BlackboardVariable> action, bool includeGroupBlackboards = true)
+        {
+            if (action == null)
+            {
+                return;
+            }
+
+            if (Blackboard != null)
+            {
+                foreach (BlackboardVariable variable in Blackboard.Variables)
+                {
+                    action(variable);
+                }
+            }
+
+            if (!includeGroupBlackboards)
+            {
+                return;
+            }
+
+            foreach (BlackboardReference blackboardReference in BlackboardGroupReferences)
+            {
+                if (blackboardReference?.Blackboard == null)
+                {
+                    continue;
+                }
+
+                foreach (BlackboardVariable variable in blackboardReference.Blackboard.Variables)
+                {
+                    action(variable);
+                }
+            }
+        }
+
+        internal void InitializeDefaultEventChannels(bool includeGroupBlackboards = true)
+        {
+            ForEachBlackboardVariable(variable =>
+            {
+                if (variable == null || variable.ObjectValue != null)
+                {
+                    return;
+                }
+
+                if (!typeof(EventChannelBase).IsAssignableFrom(variable.Type))
+                {
+                    return;
+                }
+
+                ScriptableObject channel = ScriptableObject.CreateInstance(variable.Type);
+                channel.name = $"Default {variable.Name} Channel";
+                variable.ObjectValue = channel;
+            }, includeGroupBlackboards);
         }
 
 #if DEBUG && UNITY_EDITOR

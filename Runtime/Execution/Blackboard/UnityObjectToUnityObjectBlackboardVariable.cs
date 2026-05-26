@@ -1,7 +1,9 @@
+using System;
 using UnityEngine;
 
 namespace Unity.Behavior
 {
+    [Serializable]
     internal class UnityObjectToUnityObjectBlackboardVariable<SourceType, TargetType> : BlackboardVariable<TargetType>
         where SourceType : UnityEngine.Object where TargetType : UnityEngine.Object
     {

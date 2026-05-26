@@ -108,6 +108,11 @@ namespace Unity.Behavior.GraphFramework
 
         public void AddPortModel(PortModel portModelNew)
         {
+            AddPortModel(portModelNew, true);
+        }
+
+        public void AddPortModel(PortModel portModelNew, bool createNodePorts)
+        {
             if (string.IsNullOrEmpty(portModelNew.Name))
             {
                 throw new Exception("Port name is empty.");
@@ -134,7 +139,10 @@ namespace Unity.Behavior.GraphFramework
             portModelNew.NodeModel = this;
             PortModels.Add(portModelNew);
 
-            Asset.CreateNodePortsForNode(this);
+            if (createNodePorts && Asset != null)
+            {
+                Asset.CreateNodePortsForNode(this);
+            }
         }
 
         public void RemoveOutputPortModels()
@@ -152,12 +160,21 @@ namespace Unity.Behavior.GraphFramework
 
         public void RemovePort(PortModel port)
         {
-            if (!PortModels.Contains(port))
+            if (port == null || !PortModels.Contains(port))
             {
+                return;
+            }
+            if (Asset == null)
+            {
+                PortModels.Remove(port);
                 return;
             }
             foreach (PortModel connection in port.Connections.ToList())
             {
+                if (connection == null)
+                {
+                    continue;
+                }
                 Asset.DeleteEdge(port, connection);
                 if (connection.NodeModel is FloatingPortNodeModel portNodeModel)
                 {

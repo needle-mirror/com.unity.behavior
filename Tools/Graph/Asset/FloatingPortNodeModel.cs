@@ -7,6 +7,7 @@ namespace Unity.Behavior.GraphFramework
     {
         public SerializableGUID ParentNodeID;
         public string PortName;
+        public string Metadata;
 
         public override bool IsDuplicatable => false;
 
@@ -16,9 +17,15 @@ namespace Unity.Behavior.GraphFramework
         }
 
         public FloatingPortNodeModel(SerializableGUID parentNodeID, string portName)
+            : this(parentNodeID, portName, null)
+        {
+        }
+
+        public FloatingPortNodeModel(SerializableGUID parentNodeID, string portName, string metadata)
         {
             ParentNodeID = parentNodeID;
             PortName = portName;
+            Metadata = metadata;
         }
 
         public override void OnDefineNode()

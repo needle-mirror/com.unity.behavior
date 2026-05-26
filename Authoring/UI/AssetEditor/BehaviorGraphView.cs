@@ -95,12 +95,10 @@ namespace Unity.Behavior
 
         private void OnDebugGraphStatusUpdate(BehaviorGraphModule graph)
         {
-            foreach (Node node in graph.Nodes())
+            foreach (Node node in graph.GetNodes())
             {
                 Node.Status status = node.CurrentStatus;
-                SerializableGUID id = node.ID;
-
-                NodeUI nodeUI = ViewState.Nodes.FirstOrDefault(nodeUI => nodeUI.Model.ID == id);
+                NodeUI nodeUI = ViewState.GetNodeUIFromID(node.ID);
                 switch (nodeUI)
                 {
                     case BehaviorNodeUI aidNodeUI:

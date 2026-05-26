@@ -59,6 +59,14 @@ To create a custom node, perform the following steps:
 
     ![Behavior graph](Images/custom-node-create.png)
 
+## Sequencing nodes: dynamic and named ports
+
+When you create a custom **Sequencing** node, the final step of the wizard lets you optionally define named output ports.
+
+- **No ports added**: The node accepts a dynamic number of children, identical to the built-in **Try In Order** and **Random** nodes. Use the inherited `Children` list in your script to iterate over them.
+
+- **Named ports**: Each port you add becomes a `public Node` field in the generated script and appears as a separate named connector on the node. Use the named ports when the number and role of each child branch is fixed, such as a node with explicit `OnSuccess` and `OnFailure` branches.
+
 ## Additional resources
 
 * [Create a behavior graph](create-behavior-graph.md)
